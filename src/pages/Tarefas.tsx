@@ -27,9 +27,8 @@ const PRIORIDADES = [
   { value: "urgente", label: "Urgente", color: "bg-red-700/20 text-red-300" },
 ];
 
-function NovaTarefaDialog({ colunas, onSubmit, onSubmitBatch }: { colunas: TarefaColuna[]; onSubmit: (data: any) => void; onSubmitBatch: (tasks: any[]) => void }) {
+function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSubmit: (data: any) => void }) {
   const [open, setOpen] = useState(false);
-  const [modo, setModo] = useState<"manual" | "produto">("manual");
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [responsaveisSelecionados, setResponsaveisSelecionados] = useState<string[]>([]);
@@ -38,11 +37,8 @@ function NovaTarefaDialog({ colunas, onSubmit, onSubmitBatch }: { colunas: Taref
   const [dataLimite, setDataLimite] = useState("");
   const [subtarefasTotal, setSubtarefasTotal] = useState(0);
   const [colunaId, setColunaId] = useState(colunas[0]?.id || "");
-  const [produtoId, setProdutoId] = useState<string>("");
   const { membros: profissionais } = useTarefasMembros();
   const { clientes } = useTarefasClientes();
-  const { data: produtos = [] } = useProdutoTemplates();
-  const { data: produtoTarefas = [] } = useProdutoTemplateTarefas(produtoId || null);
 
   const toggleResponsavel = (nome: string) => {
     setResponsaveisSelecionados(prev =>
@@ -50,11 +46,7 @@ function NovaTarefaDialog({ colunas, onSubmit, onSubmitBatch }: { colunas: Taref
     );
   };
 
-  const resetForm = () => {
-    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setSubtarefasTotal(0); setColunaId(colunas[0]?.id || ""); setProdutoId(""); setModo("manual");
-  };
-
-  const handleSubmitManual = () => {
+  const handleSubmit = () => {
     if (!titulo.trim()) { toast.error("Título obrigatório"); return; }
     onSubmit({
       titulo: titulo.trim(),
@@ -66,34 +58,12 @@ function NovaTarefaDialog({ colunas, onSubmit, onSubmitBatch }: { colunas: Taref
       coluna_id: colunaId,
       subtarefas_total: subtarefasTotal,
     });
-    resetForm();
+    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setSubtarefasTotal(0); setColunaId(colunas[0]?.id || "");
     setOpen(false);
   };
-
-  const handleSubmitProduto = () => {
-    if (!produtoId) { toast.error("Selecione um produto"); return; }
-    if (!colunaId) { toast.error("Selecione uma coluna"); return; }
-    if (produtoTarefas.length === 0) { toast.error("Este produto não tem tarefas configuradas"); return; }
-
-    const responsavel = responsaveisSelecionados.length > 0 ? responsaveisSelecionados.join(", ") : undefined;
-    const tasks = produtoTarefas.map(t => ({
-      titulo: t.titulo,
-      descricao: t.descricao || undefined,
-      responsavel_nome: responsavel,
-      cliente_id: clienteId && clienteId !== "none" ? clienteId : undefined,
-      prioridade,
-      data_limite: dataLimite || undefined,
-      coluna_id: colunaId,
-    }));
-    onSubmitBatch(tasks);
-    resetForm();
-    setOpen(false);
-  };
-
-  const produtoSelecionado = produtos.find(p => p.id === produtoId);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" /> Nova Tarefa
@@ -101,53 +71,9 @@ function NovaTarefaDialog({ colunas, onSubmit, onSubmitBatch }: { colunas: Taref
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader><DialogTitle>Nova Tarefa</DialogTitle></DialogHeader>
-        
-        {/* Mode toggle */}
-        <div className="flex gap-2 pb-2">
-          <Button variant={modo === "manual" ? "default" : "outline"} size="sm" onClick={() => setModo("manual")} className="gap-2">
-            <ListChecks className="h-4 w-4" /> Manual
-          </Button>
-          <Button variant={modo === "produto" ? "default" : "outline"} size="sm" onClick={() => setModo("produto")} className="gap-2">
-            <Package className="h-4 w-4" /> A partir de produto
-          </Button>
-        </div>
-
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-          {modo === "manual" ? (
-            <>
-              <div><Label>Título *</Label><Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Criar landing page" /></div>
-              <div><Label>Descrição</Label><Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Detalhes da tarefa..." /></div>
-            </>
-          ) : (
-            <>
-              <div>
-                <Label>Produto *</Label>
-                <Select value={produtoId} onValueChange={setProdutoId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione um produto" /></SelectTrigger>
-                  <SelectContent>
-                    {produtos.filter(p => p.ativo).map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {produtoSelecionado && (
-                <div className="rounded-md border p-3 space-y-1 bg-muted/30">
-                  <p className="text-xs font-medium text-muted-foreground">Tarefas que serão criadas:</p>
-                  {produtoTarefas.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">Nenhuma tarefa configurada</p>
-                  ) : (
-                    produtoTarefas.map((t, i) => (
-                      <div key={t.id} className="flex items-center gap-2 text-sm">
-                        <Badge variant="secondary" className="text-xs font-mono shrink-0">{i + 1}</Badge>
-                        <span className="truncate">{t.titulo}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </>
-          )}
+          <div><Label>Título *</Label><Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Criar landing page" /></div>
+          <div><Label>Descrição</Label><Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Detalhes da tarefa..." /></div>
           
           <div>
             <Label>Coluna *</Label>
@@ -215,17 +141,12 @@ function NovaTarefaDialog({ colunas, onSubmit, onSubmitBatch }: { colunas: Taref
             </div>
             <div><Label>Data limite</Label><Input type="date" value={dataLimite} onChange={e => setDataLimite(e.target.value)} /></div>
           </div>
-
-          {modo === "manual" && (
-            <div>
-              <Label>Subtarefas (total)</Label>
-              <Input type="number" min={0} value={subtarefasTotal} onChange={e => setSubtarefasTotal(Number(e.target.value))} />
-            </div>
-          )}
+          <div>
+            <Label>Subtarefas (total)</Label>
+            <Input type="number" min={0} value={subtarefasTotal} onChange={e => setSubtarefasTotal(Number(e.target.value))} />
+          </div>
         </div>
-        <Button onClick={modo === "manual" ? handleSubmitManual : handleSubmitProduto} className="w-full mt-4">
-          {modo === "produto" ? `Criar ${produtoTarefas.length} tarefa(s)` : "Criar Tarefa"}
-        </Button>
+        <Button onClick={handleSubmit} className="w-full mt-4">Criar Tarefa</Button>
       </DialogContent>
     </Dialog>
   );
