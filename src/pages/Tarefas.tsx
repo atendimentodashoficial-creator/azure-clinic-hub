@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTarefas, Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTarefasClientes } from "@/hooks/useTarefasClientes";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
-import { useProdutoTemplates, useProdutoTemplateTarefas } from "@/hooks/useProdutoTemplates";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable, closestCenter } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
