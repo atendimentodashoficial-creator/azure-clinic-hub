@@ -8,8 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
 import { extractCountryCode, formatPhoneByCountry, getPhonePlaceholder, normalizePhone, stripCountryCode } from "@/utils/phoneFormat";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Mail, Phone, Briefcase } from "lucide-react";
+import { Plus, Trash2, Edit, Mail, Phone, Briefcase, CalendarIcon, DollarSign } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
@@ -30,10 +36,17 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
   const [telefone, setTelefone] = useState(initialPhoneData.phoneWithoutCountry);
   const [cargo, setCargo] = useState(membroEditando?.cargo || "");
   const [observacoes, setObservacoes] = useState(membroEditando?.observacoes || "");
+  const [senha, setSenha] = useState(membroEditando?.senha || "");
+  const [salario, setSalario] = useState(membroEditando?.salario?.toString() || "");
+  const [dataContratacao, setDataContratacao] = useState<Date | undefined>(
+    membroEditando?.data_contratacao ? parseISO(membroEditando.data_contratacao) : undefined
+  );
+  const [diaPagamento, setDiaPagamento] = useState(membroEditando?.dia_pagamento?.toString() || "");
 
   const resetForm = () => {
     setNome(""); setEmail(""); setTelefone(""); setCountryCode("55");
-    setCargo(""); setObservacoes("");
+    setCargo(""); setObservacoes(""); setSenha(""); setSalario("");
+    setDataContratacao(undefined); setDiaPagamento("");
   };
 
   const handleSubmit = () => {
@@ -47,6 +60,10 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
       telefone: normalizedPhone ? `${countryCode}${normalizedPhone}` : null,
       cargo: cargo.trim() || null,
       observacoes: observacoes.trim() || null,
+      senha: senha.trim() || null,
+      salario: salario ? parseFloat(salario) : null,
+      data_contratacao: dataContratacao ? format(dataContratacao, "yyyy-MM-dd") : null,
+      dia_pagamento: diaPagamento ? parseInt(diaPagamento) : null,
     });
     resetForm();
     setOpen(false);
@@ -57,6 +74,22 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
     setOpen(v);
     if (!v) { resetForm(); onClose?.(); }
   };
+
+  const formatCurrency = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) return "";
+    const num = parseInt(digits) / 100;
+    return num.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const handleSalarioChange = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) { setSalario(""); return; }
+    const num = parseInt(digits) / 100;
+    setSalario(num.toString());
+  };
+
+  const diasDoMes = Array.from({ length: 31 }, (_, i) => i + 1);
 
   return (
     <Dialog open={isEditing ? true : open} onOpenChange={isEditing ? () => onClose?.() : handleOpenChange}>
@@ -82,7 +115,57 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
             />
           </div>
           <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></div>
+          <div className="space-y-2"><Label>Senha</Label><Input type="password" value={senha} onChange={e => setSenha(e.target.value)} placeholder="••••••" /></div>
           <div className="space-y-2"><Label>Cargo / Função</Label><Input value={cargo} onChange={e => setCargo(e.target.value)} placeholder="Ex: Designer, Gestor de Tráfego..." /></div>
+          <div className="space-y-2">
+            <Label>Salário</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+              <Input
+                className="pl-10"
+                value={salario ? formatCurrency((parseFloat(salario) * 100).toFixed(0)) : ""}
+                onChange={e => handleSalarioChange(e.target.value)}
+                placeholder="0,00"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Data de Contratação</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn("w-full justify-start text-left font-normal", !dataContratacao && "text-muted-foreground")}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dataContratacao ? format(dataContratacao, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dataContratacao}
+                  onSelect={setDataContratacao}
+                  initialFocus
+                  locale={ptBR}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="space-y-2">
+            <Label>Dia do Pagamento</Label>
+            <Select value={diaPagamento} onValueChange={setDiaPagamento}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecionar dia" />
+              </SelectTrigger>
+              <SelectContent>
+                {diasDoMes.map(d => (
+                  <SelectItem key={d} value={d.toString()}>Dia {d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2"><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
         </div>
         <div className="flex justify-end gap-2 pt-2 shrink-0">
@@ -199,6 +282,16 @@ export default function TarefasMembrosTab() {
                 {membro.telefone && (
                   <p className="flex items-center gap-2 truncate">
                     <Phone className="h-3.5 w-3.5 shrink-0" /> {getFormattedPhone(membro.telefone)}
+                  </p>
+                )}
+                {membro.salario != null && (
+                  <p className="flex items-center gap-2 truncate">
+                    <DollarSign className="h-3.5 w-3.5 shrink-0" /> R$ {membro.salario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </p>
+                )}
+                {membro.data_contratacao && (
+                  <p className="flex items-center gap-2 truncate">
+                    <CalendarIcon className="h-3.5 w-3.5 shrink-0" /> Contratado em {format(parseISO(membro.data_contratacao), "dd/MM/yyyy")}
                   </p>
                 )}
               </div>
