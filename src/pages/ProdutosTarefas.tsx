@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AtribuirProdutoDialog } from "@/components/produtos/AtribuirProdutoDialog";
 import {
   useProdutoTemplates,
   useProdutoTemplateTarefas,
