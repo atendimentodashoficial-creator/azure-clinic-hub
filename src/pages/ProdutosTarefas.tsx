@@ -257,6 +257,24 @@ function ProdutoDialog({
   const [tarefas, setTarefas] = useState<TarefaLocal[]>(
     existingTarefas ? existingTarefas.map(tarefaDbToLocal) : []
   );
+  // After loading, resolve dependencias from ordem indexes to local IDs
+  useState(() => {
+    if (existingTarefas && existingTarefas.length > 0) {
+      setTarefas(prev => {
+        const resolved = prev.map(t => {
+          const meta = parseTarefaMeta(existingTarefas.find(et => et.id === t.id)?.descricao || null);
+          if (meta.dependencias && Array.isArray(meta.dependencias)) {
+            const depIds = (meta.dependencias as number[])
+              .map(ordem => prev[ordem]?.id)
+              .filter(Boolean);
+            return { ...t, dependencias: depIds };
+          }
+          return t;
+        });
+        return resolved;
+      });
+    }
+  });
   const [removedIds, setRemovedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
