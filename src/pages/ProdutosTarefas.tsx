@@ -601,33 +601,60 @@ function ProdutoCard({
   onAtribuir?: () => void;
   onDuplicar?: () => void;
 }) {
+  const { data: tarefas = [] } = useProdutoTemplateTarefas(template.id);
+  const MAX_VISIBLE = 3;
+  const visibleTarefas = tarefas.slice(0, MAX_VISIBLE);
+  const remaining = tarefas.length - MAX_VISIBLE;
+
   return (
-    <Card className="p-4 group hover:bg-accent/30 transition-colors">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm truncate">{template.nome}</p>
-          {template.descricao && <p className="text-xs text-muted-foreground truncate mt-0.5">{template.descricao}</p>}
+    <Card className="p-4 flex flex-col gap-3 hover:bg-accent/30 transition-colors">
+      <div>
+        <p className="font-semibold text-sm">{template.nome}</p>
+        {template.descricao && (
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.descricao}</p>
+        )}
+      </div>
+
+      {tarefas.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted-foreground italic">
+            {tarefas.length} tarefa{tarefas.length !== 1 ? "s" : ""} incluída{tarefas.length !== 1 ? "s" : ""}:
+          </p>
+          <ul className="space-y-0.5">
+            {visibleTarefas.map(t => (
+              <li key={t.id} className="text-xs text-foreground flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-foreground/50 shrink-0" />
+                <span className="truncate">{t.titulo}</span>
+              </li>
+            ))}
+          </ul>
+          {remaining > 0 && (
+            <p className="text-xs text-muted-foreground pl-3">+{remaining} mais...</p>
+          )}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            className="h-7 gap-1.5 px-2.5 text-xs font-medium"
-            onClick={onAtribuir}
-          >
-            <Play className="h-3.5 w-3.5 fill-current" />
-            Atribuir
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
-            <Edit className="h-3.5 w-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDuplicar}>
-            <Copy className="h-3.5 w-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={onDelete}>
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+      )}
+
+      <div className="flex items-center gap-1 pt-1 border-t border-border mt-auto">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-7 gap-1.5 px-2.5 text-xs font-medium"
+          onClick={onAtribuir}
+        >
+          <Play className="h-3.5 w-3.5 fill-current" />
+          Atribuir
+        </Button>
+        <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2.5 text-xs" onClick={onEdit}>
+          <Edit className="h-3.5 w-3.5" />
+          Editar
+        </Button>
+        <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2.5 text-xs" onClick={onDuplicar}>
+          <Copy className="h-3.5 w-3.5" />
+          Duplicar
+        </Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive ml-auto" onClick={onDelete}>
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
       </div>
     </Card>
   );
