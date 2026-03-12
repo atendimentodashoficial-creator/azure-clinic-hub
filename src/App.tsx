@@ -38,6 +38,7 @@ import GerenciarUsuarios from "./pages/GerenciarUsuarios";
 import ConfigurarPaineis from "./pages/ConfigurarPaineis";
 import Tarefas from "./pages/Tarefas";
 import TarefasClientes from "./pages/TarefasClientes";
+import Equipe from "./pages/Equipe";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 
@@ -98,6 +99,7 @@ const App = () => (
             <Route path="paineis" element={<ConfigurarPaineis />} />
             <Route path="tarefas" element={<Tarefas />} />
             <Route path="tarefas-clientes" element={<TarefasClientes />} />
+            <Route path="equipe" element={<Equipe />} />
             <Route path="configuracoes" element={<Configuracoes />} />
           </Route>
 
