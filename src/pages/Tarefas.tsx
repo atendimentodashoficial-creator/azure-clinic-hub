@@ -65,9 +65,9 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
           <Plus className="h-4 w-4" /> Nova tarefa
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader><DialogTitle>Nova Tarefa</DialogTitle></DialogHeader>
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           <div><Label>Título *</Label><Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Criar landing page" /></div>
           <div><Label>Descrição</Label><Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Detalhes da tarefa..." /></div>
           
@@ -129,8 +129,8 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
             <Label>Subtarefas (total)</Label>
             <Input type="number" min={0} value={subtarefasTotal} onChange={e => setSubtarefasTotal(Number(e.target.value))} />
           </div>
-          <Button onClick={handleSubmit} className="w-full">Criar Tarefa</Button>
         </div>
+        <Button onClick={handleSubmit} className="w-full mt-4">Criar Tarefa</Button>
       </DialogContent>
     </Dialog>
   );
