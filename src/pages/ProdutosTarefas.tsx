@@ -186,6 +186,9 @@ function TarefaInlineEditor({
               <Calendar className="h-3 w-3" />{tarefa.dataLimite}
             </span>
           )}
+          {depNames.length > 0 && (
+            <span className="text-xs text-muted-foreground">🔗 Depende de: {depNames.map(d => d!.titulo || "Sem título").join(", ")}</span>
+          )}
         </div>
       )}
 
