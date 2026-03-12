@@ -97,6 +97,7 @@ const App = () => (
             <Route path="usuarios" element={<GerenciarUsuarios />} />
             <Route path="paineis" element={<ConfigurarPaineis />} />
             <Route path="tarefas" element={<Tarefas />} />
+            <Route path="tarefas-clientes" element={<TarefasClientes />} />
             <Route path="configuracoes" element={<Configuracoes />} />
           </Route>
 
