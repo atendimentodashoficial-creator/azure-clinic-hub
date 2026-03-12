@@ -329,7 +329,7 @@ export default function TarefasMembrosTab() {
                     {getInitials(membro.nome)}
                   </AvatarFallback>
                 </Avatar>
-                <p className="font-semibold text-base">{membro.nome}</p>
+                <p className="font-semibold text-lg">{membro.nome}</p>
                 {membro.cargo && (
                   <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2.5 py-0.5">
                     <Briefcase className="h-3 w-3" /> {membro.cargo}
