@@ -89,7 +89,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
     onSubmit({
       ...(clienteEditando && { id: clienteEditando.id }),
       nome: nome.trim(),
-      email: email.trim(),
+      email: email.trim() || null,
       senha_acesso: senhaAcesso.trim() || undefined,
       telefone: normalizedPhone ? `${countryCode}${normalizedPhone}` : null,
       empresa: empresa.trim() || null,
