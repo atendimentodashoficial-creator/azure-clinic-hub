@@ -27,7 +27,7 @@ const PRIORIDADES = [
   { value: "urgente", label: "Urgente", color: "bg-red-700/20 text-red-300" },
 ];
 
-function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; colunas: TarefaColuna[]; onSubmit: (data: any) => void }) {
+function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSubmit: (data: any) => void }) {
   const [open, setOpen] = useState(false);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
