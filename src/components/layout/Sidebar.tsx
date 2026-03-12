@@ -60,6 +60,7 @@ export const navigation = [
   { name: "Tarefas", href: "/admin/tarefas", icon: ListChecks },
   { name: "Clientes *", href: "/admin/tarefas-clientes", icon: Building2 },
   { name: "Equipe", href: "/admin/equipe", icon: UsersRound },
+  { name: "Produtos & Tarefas", href: "/admin/produtos-tarefas", icon: Package },
   { name: "Usuários", href: "/admin/usuarios", icon: Shield, separator: true },
   { name: "Painéis", href: "/admin/paineis", icon: Settings2 },
   { name: "Configurações", href: "/admin/configuracoes", icon: Settings },
