@@ -8,13 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
 import { formatPhoneByCountry, getPhonePlaceholder, stripCountryCode } from "@/utils/phoneFormat";
 import { toast } from "sonner";
-import { Plus, MoreVertical, Trash2, Edit, Building2, Instagram, Link, Globe, MessageSquare } from "lucide-react";
+import { Plus, Trash2, Edit, Instagram, Link, Globe, MessageSquare, Mail, Phone, Building2 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   onSubmit: (data: any) => void;
