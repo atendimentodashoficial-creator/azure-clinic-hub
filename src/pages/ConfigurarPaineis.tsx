@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Settings2, User, UserCog } from "lucide-react";
+import { Settings2, User, UserCog, Shield } from "lucide-react";
 import { navigation } from "@/components/layout/Sidebar";
 
 // Available tabs that admin can toggle for each panel
@@ -17,7 +17,7 @@ const availableTabs = navigation.map((item) => ({
 
 export default function ConfigurarPaineis() {
   const queryClient = useQueryClient();
-  const [activePanel, setActivePanel] = useState<string>("cliente");
+  const [activePanel, setActivePanel] = useState<string>("admin");
 
   const { data: configs = [], isLoading } = useQuery({
     queryKey: ["panel-tabs-config"],
@@ -73,7 +73,8 @@ export default function ConfigurarPaineis() {
     const config = configs.find(
       (c) => c.panel_type === panelType && c.tab_key === tabKey
     );
-    return config ? config.is_visible : false;
+    // Admin tabs default to visible, client/employee default to hidden
+    return config ? config.is_visible : panelType === "admin";
   };
 
   return (
@@ -90,6 +91,10 @@ export default function ConfigurarPaineis() {
 
       <Tabs value={activePanel} onValueChange={setActivePanel}>
         <TabsList>
+          <TabsTrigger value="admin" className="gap-2">
+            <Shield className="h-4 w-4" />
+            Painel Admin
+          </TabsTrigger>
           <TabsTrigger value="cliente" className="gap-2">
             <User className="h-4 w-4" />
             Painel do Cliente
@@ -100,7 +105,7 @@ export default function ConfigurarPaineis() {
           </TabsTrigger>
         </TabsList>
 
-        {["cliente", "funcionario"].map((panelType) => (
+        {["admin", "cliente", "funcionario"].map((panelType) => (
           <TabsContent key={panelType} value={panelType}>
             <Card className="p-6">
               <div className="space-y-4">
