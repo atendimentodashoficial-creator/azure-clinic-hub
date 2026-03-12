@@ -468,7 +468,14 @@ function ProdutoDialog({
             <Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Descreva o produto..." />
           </div>
 
-          <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium">Requer Reunião</Label>
+              <p className="text-xs text-muted-foreground">Ao atribuir, agendar uma reunião com o cliente</p>
+            </div>
+            <Switch checked={requerReuniao} onCheckedChange={setRequerReuniao} />
+          </div>
+
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold">Tarefas do Produto</Label>
               <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={addTarefa}>
