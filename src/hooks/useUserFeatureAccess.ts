@@ -22,6 +22,7 @@ export const ALL_FEATURES = [
   { key: "meta-ads", label: "Meta Ads", href: "/metricas-campanhas", defaultEnabled: true },
   { key: "google-ads", label: "Google Ads", href: "/google-ads", defaultEnabled: true },
   { key: "tarefas", label: "Tarefas", href: "/tarefas", defaultEnabled: true },
+  { key: "tarefas-clientes", label: "Clientes *", href: "/tarefas-clientes", defaultEnabled: true },
   { key: "configuracoes", label: "Configurações", href: "/configuracoes", defaultEnabled: true },
 ] as const;
 
