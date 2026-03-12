@@ -80,7 +80,6 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     prioridade: meta.prioridade || "media",
     prazo: meta.prazo || 0,
     colunaId: meta.coluna_id || "",
-    subtarefasTotal: meta.subtarefas_total || 0,
     dependencias: meta.dependencias || [],
   };
 }
