@@ -570,6 +570,14 @@ export default function ProdutosTarefas() {
           />
         )
       )}
+
+      {atribuirTemplate && (
+        <AtribuirProdutoDialog
+          template={atribuirTemplate}
+          open={!!atribuirTemplate}
+          onClose={() => setAtribuirTemplate(null)}
+        />
+      )}
     </div>
   );
 }
