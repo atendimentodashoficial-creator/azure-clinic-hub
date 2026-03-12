@@ -297,10 +297,13 @@ function TarefaInlineEditor({
           </div>
 
           {otherTarefas.length > 0 && (
-            <div>
-              <Label className="text-xs">Depende de (só será criada após conclusão)</Label>
-              <div className="mt-1 space-y-1.5 max-h-32 overflow-y-auto rounded-md border p-2">
-                {otherTarefas.map((ot, idx) => {
+            <details className="group">
+              <summary className="text-xs font-medium cursor-pointer select-none flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronRight className="h-3 w-3 transition-transform group-open:rotate-90" />
+                Depende de {tarefa.dependencias.length > 0 && `(${tarefa.dependencias.length})`}
+              </summary>
+              <div className="mt-1.5 space-y-1.5 max-h-32 overflow-y-auto rounded-md border p-2">
+                {otherTarefas.map((ot) => {
                   const otIndex = allTarefas.findIndex(at => at.id === ot.id);
                   return (
                     <div key={ot.id} className="flex items-center gap-2">
@@ -317,7 +320,7 @@ function TarefaInlineEditor({
                   );
                 })}
               </div>
-            </div>
+            </details>
           )}
         </div>
       )}
