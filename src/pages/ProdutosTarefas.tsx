@@ -53,7 +53,6 @@ interface TarefaLocal {
   prioridade: string;
   prazo: number;
   colunaId: string;
-  subtarefasTotal: number;
   dependencias: string[];
 }
 
@@ -81,7 +80,6 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     prioridade: meta.prioridade || "media",
     prazo: meta.prazo || 0,
     colunaId: meta.coluna_id || "",
-    subtarefasTotal: meta.subtarefas_total || 0,
     dependencias: meta.dependencias || [],
   };
 }
@@ -97,7 +95,6 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
     prioridade: t.prioridade,
     prazo: t.prazo > 0 ? t.prazo : undefined,
     coluna_id: t.colunaId || undefined,
-    subtarefas_total: t.subtarefasTotal > 0 ? t.subtarefasTotal : undefined,
     dependencias: depOrdens.length > 0 ? depOrdens : undefined,
   };
   return JSON.stringify(meta);
@@ -243,9 +240,9 @@ function TarefaInlineEditor({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label className="text-xs">Prazo (dias)</Label><Input type="number" min={0} value={tarefa.prazo} onChange={e => onChange({ ...tarefa, prazo: Number(e.target.value) })} className="h-8 text-sm" placeholder="Ex: 7" /></div>
-            <div><Label className="text-xs">Subtarefas (total)</Label><Input type="number" min={0} value={tarefa.subtarefasTotal} onChange={e => onChange({ ...tarefa, subtarefasTotal: Number(e.target.value) })} className="h-8 text-sm" /></div>
+          <div>
+            <Label className="text-xs">Prazo (dias)</Label>
+            <Input type="number" min={0} value={tarefa.prazo} onChange={e => onChange({ ...tarefa, prazo: Number(e.target.value) })} className="h-8 text-sm" placeholder="Ex: 7" />
           </div>
 
           {otherTarefas.length > 0 && (
@@ -329,7 +326,6 @@ function ProdutoDialog({
       prioridade: "media",
       prazo: 0,
       colunaId: colunas[0]?.id || "",
-      subtarefasTotal: 0,
       dependencias: [],
     }]);
   };
