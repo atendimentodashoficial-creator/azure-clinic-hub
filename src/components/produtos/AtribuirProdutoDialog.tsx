@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTarefasClientes, TarefaCliente } from "@/hooks/useTarefasClientes";
 import {
@@ -16,9 +15,11 @@ import {
   ProdutoTemplate,
 } from "@/hooks/useProdutoTemplates";
 import { useTarefas } from "@/hooks/useTarefas";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, Plus, User, ArrowLeft } from "lucide-react";
+import { Search, Plus, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
 
 interface AtribuirProdutoDialogProps {
   template: ProdutoTemplate;
@@ -41,13 +42,8 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
   const { criarTarefa, colunas } = useTarefas();
 
   const [busca, setBusca] = useState("");
-  const [view, setView] = useState<"select" | "create">("select");
+  const [showNovoCliente, setShowNovoCliente] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  // New client form
-  const [novoNome, setNovoNome] = useState("");
-  const [novoEmail, setNovoEmail] = useState("");
-  const [novoTelefone, setNovoTelefone] = useState("");
 
   const filtrados = clientes.filter(c =>
     c.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -96,40 +92,16 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
     }
   };
 
-  const handleCriarEAtribuir = async () => {
-    if (!novoNome.trim()) {
-      toast.error("Nome do cliente é obrigatório");
-      return;
-    }
-
-    setSaving(true);
+  const handleNovoClienteCriado = async (data: any) => {
     try {
-      // Create client first
-      await criarCliente.mutateAsync({
-        nome: novoNome.trim(),
-        email: novoEmail.trim() || null,
-        telefone: novoTelefone.trim() || null,
-        empresa: null,
-        cnpj: null,
-        site: null,
-        instagram: null,
-        linktree: null,
-        google_meu_negocio: null,
-        observacoes: null,
-        grupo_whatsapp: null,
-        tipo: "preview",
-        senha_acesso: null,
-      });
+      await criarCliente.mutateAsync(data);
 
-      // Refetch to get the new client's ID
-      // Small delay to let invalidation work
+      // Fetch the newly created client
       await new Promise(r => setTimeout(r, 500));
-
-      // Get the latest client list
-      const { data: updatedClientes } = await (await import("@/integrations/supabase/client")).supabase
+      const { data: updatedClientes } = await supabase
         .from("tarefas_clientes")
         .select("*")
-        .ilike("nome", novoNome.trim())
+        .ilike("nome", data.nome)
         .order("created_at", { ascending: false })
         .limit(1);
 
@@ -139,28 +111,24 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
       }
 
       const newClient = updatedClientes[0] as TarefaCliente;
+      setShowNovoCliente(false);
       await handleAtribuir(newClient.id, newClient.nome);
     } catch (e: any) {
       toast.error(e.message || "Erro ao criar cliente");
-      setSaving(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>
-            {view === "create" ? "Novo Cliente" : "Atribuir Produto"}
-          </DialogTitle>
-          <DialogDescription>
-            {view === "create"
-              ? "Cadastre um novo cliente para atribuir o produto"
-              : `Selecione um cliente para atribuir "${template.nome}"`}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={() => onClose()}>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Atribuir Produto</DialogTitle>
+            <DialogDescription>
+              Selecione um cliente para atribuir "{template.nome}"
+            </DialogDescription>
+          </DialogHeader>
 
-        {view === "select" ? (
           <div className="flex-1 overflow-hidden flex flex-col gap-3">
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -176,7 +144,7 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
                 variant="outline"
                 size="sm"
                 className="gap-1.5 shrink-0"
-                onClick={() => setView("create")}
+                onClick={() => setShowNovoCliente(true)}
               >
                 <Plus className="h-4 w-4" />
                 Novo
@@ -189,7 +157,7 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
                   <p className="text-sm text-muted-foreground">
                     {busca ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
                   </p>
-                  <Button variant="link" size="sm" onClick={() => setView("create")}>
+                  <Button variant="link" size="sm" onClick={() => setShowNovoCliente(true)}>
                     Cadastrar novo cliente
                   </Button>
                 </div>
@@ -221,57 +189,15 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
               )}
             </ScrollArea>
           </div>
-        ) : (
-          <div className="flex-1 overflow-y-auto space-y-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 -ml-2"
-              onClick={() => setView("select")}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Button>
+        </DialogContent>
+      </Dialog>
 
-            <div className="space-y-3">
-              <div>
-                <Label className="text-sm">Nome *</Label>
-                <Input
-                  value={novoNome}
-                  onChange={e => setNovoNome(e.target.value)}
-                  placeholder="Nome do cliente"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Email</Label>
-                <Input
-                  type="email"
-                  value={novoEmail}
-                  onChange={e => setNovoEmail(e.target.value)}
-                  placeholder="email@exemplo.com"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Telefone</Label>
-                <Input
-                  value={novoTelefone}
-                  onChange={e => setNovoTelefone(e.target.value)}
-                  placeholder="(00) 00000-0000"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button variant="outline" onClick={() => setView("select")} disabled={saving}>
-                Cancelar
-              </Button>
-              <Button onClick={handleCriarEAtribuir} disabled={saving}>
-                {saving ? "Salvando..." : "Criar e Atribuir"}
-              </Button>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+      <NovoClienteDialog
+        externalOpen={showNovoCliente}
+        hideTrigger
+        onSubmit={handleNovoClienteCriado}
+        onClose={() => setShowNovoCliente(false)}
+      />
+    </>
   );
 }
