@@ -82,14 +82,14 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
 
   const handleSubmit = () => {
     if (!nome.trim()) { toast.error("Nome é obrigatório"); return; }
-    if (!email.trim()) { toast.error("Email é obrigatório"); return; }
+    if (tipo === "interno" && !email.trim()) { toast.error("Email é obrigatório para clientes internos"); return; }
     if (!isEditing && tipo === "interno" && !senhaAcesso.trim()) { toast.error("Senha de acesso é obrigatória"); return; }
     const normalizedPhone = normalizePhone(telefone);
 
     onSubmit({
       ...(clienteEditando && { id: clienteEditando.id }),
       nome: nome.trim(),
-      email: email.trim(),
+      email: email.trim() || null,
       senha_acesso: senhaAcesso.trim() || undefined,
       telefone: normalizedPhone ? `${countryCode}${normalizedPhone}` : null,
       empresa: empresa.trim() || null,
@@ -157,7 +157,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
                   placeholder={getPhonePlaceholder(countryCode)}
                 />
               </div>
-              <div className="space-y-2"><Label>Email *</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
+              <div className="space-y-2"><Label>Email {tipo === "interno" ? "*" : ""}</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
               {tipo === "interno" && (
                 <div className="space-y-2">
                   <Label>Senha de Acesso {!isEditing && "*"}</Label>
