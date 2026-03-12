@@ -73,7 +73,8 @@ export default function ConfigurarPaineis() {
     const config = configs.find(
       (c) => c.panel_type === panelType && c.tab_key === tabKey
     );
-    return config ? config.is_visible : false;
+    // Admin tabs default to visible, client/employee default to hidden
+    return config ? config.is_visible : panelType === "admin";
   };
 
   return (
