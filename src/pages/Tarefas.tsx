@@ -27,7 +27,7 @@ const PRIORIDADES = [
   { value: "urgente", label: "Urgente", color: "bg-red-700/20 text-red-300" },
 ];
 
-function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; colunas: TarefaColuna[]; onSubmit: (data: any) => void }) {
+function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSubmit: (data: any) => void }) {
   const [open, setOpen] = useState(false);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -36,6 +36,7 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
   const [prioridade, setPrioridade] = useState("media");
   const [dataLimite, setDataLimite] = useState("");
   const [subtarefasTotal, setSubtarefasTotal] = useState(0);
+  const [colunaId, setColunaId] = useState(colunas[0]?.id || "");
   const { membros: profissionais } = useTarefasMembros();
   const { clientes } = useTarefasClientes();
 
@@ -57,15 +58,15 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
       coluna_id: colunaId,
       subtarefas_total: subtarefasTotal,
     });
-    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setSubtarefasTotal(0);
+    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setSubtarefasTotal(0); setColunaId(colunas[0]?.id || "");
     setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground">
-          <Plus className="h-4 w-4" /> Nova tarefa
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" /> Nova Tarefa
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
@@ -73,6 +74,18 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           <div><Label>Título *</Label><Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Criar landing page" /></div>
           <div><Label>Descrição</Label><Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Detalhes da tarefa..." /></div>
+          
+          <div>
+            <Label>Coluna *</Label>
+            <Select value={colunaId} onValueChange={setColunaId}>
+              <SelectTrigger><SelectValue placeholder="Selecione a coluna" /></SelectTrigger>
+              <SelectContent>
+                {colunas.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           
           <div>
             <Label>Cliente</Label>
@@ -312,12 +325,15 @@ export default function Tarefas() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <ListChecks className="h-6 w-6" />
-          Tarefas
-        </h1>
-        <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <ListChecks className="h-6 w-6" />
+            Tarefas
+          </h1>
+          <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
+        </div>
+        <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -358,7 +374,7 @@ export default function Tarefas() {
                     ))}
                   </DroppableColumn>
 
-                  <NovaTarefaDialog colunaId={coluna.id} colunas={colunas} onSubmit={handleCriar} />
+                  
                 </div>
               </div>
             );
