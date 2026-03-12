@@ -4450,6 +4450,95 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefas: {
+        Row: {
+          coluna_id: string
+          created_at: string
+          data_limite: string | null
+          descricao: string | null
+          id: string
+          ordem: number
+          prioridade: string
+          responsavel_nome: string | null
+          subtarefas_concluidas: number
+          subtarefas_total: number
+          tempo_registrado: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coluna_id: string
+          created_at?: string
+          data_limite?: string | null
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          prioridade?: string
+          responsavel_nome?: string | null
+          subtarefas_concluidas?: number
+          subtarefas_total?: number
+          tempo_registrado?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coluna_id?: string
+          created_at?: string
+          data_limite?: string | null
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          prioridade?: string
+          responsavel_nome?: string | null
+          subtarefas_concluidas?: number
+          subtarefas_total?: number
+          tempo_registrado?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_coluna_id_fkey"
+            columns: ["coluna_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_colunas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefas_colunas: {
+        Row: {
+          cor: string
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cor?: string
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cor?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tipo_agendamento_custom: {
         Row: {
           ativo: boolean | null
