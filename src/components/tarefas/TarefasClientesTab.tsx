@@ -109,13 +109,6 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                 </RadioGroup>
               </div>
               <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Email *</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
-              {tipo === "interno" && (
-                <div className="space-y-2">
-                  <Label>Senha de Acesso {!isEditing && "*"}</Label>
-                  <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
-                </div>
-              )}
               <div className="space-y-2">
                 <Label>Telefone</Label>
                 <CountryCodeSelect
@@ -126,6 +119,13 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                   placeholder={getPhonePlaceholder(countryCode)}
                 />
               </div>
+              <div className="space-y-2"><Label>Email *</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
+              {tipo === "interno" && (
+                <div className="space-y-2">
+                  <Label>Senha de Acesso {!isEditing && "*"}</Label>
+                  <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
+                </div>
+              )}
               <div className="space-y-2"><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
               <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></div>
               <div className="space-y-2"><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
