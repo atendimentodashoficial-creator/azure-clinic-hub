@@ -4616,6 +4616,7 @@ export type Database = {
           data_contratacao: string | null
           dia_pagamento: number | null
           email: string | null
+          foto_url: string | null
           id: string
           nome: string
           observacoes: string | null
@@ -4631,6 +4632,7 @@ export type Database = {
           data_contratacao?: string | null
           dia_pagamento?: number | null
           email?: string | null
+          foto_url?: string | null
           id?: string
           nome: string
           observacoes?: string | null
@@ -4646,6 +4648,7 @@ export type Database = {
           data_contratacao?: string | null
           dia_pagamento?: number | null
           email?: string | null
+          foto_url?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
