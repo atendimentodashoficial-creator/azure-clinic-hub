@@ -81,7 +81,7 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
           <Button className="gap-2"><Plus className="h-4 w-4" /> Novo Cliente</Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-lg max-h-[90vh]">
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
           <p className="text-sm text-muted-foreground">Preencha as informações do cliente. O email é obrigatório para que o cliente possa acessar o sistema.</p>
