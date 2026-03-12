@@ -201,6 +201,15 @@ export default function TarefasClientesTab() {
     return nome.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
+  const getFormattedPhone = (phone: string | null) => {
+    if (!phone) return "—";
+
+    const { countryCode, phoneWithoutCountry } = extractCountryCode(phone);
+    const formattedPhone = formatPhoneByCountry(phoneWithoutCountry, countryCode);
+
+    return formattedPhone ? `+${countryCode} ${formattedPhone}` : `+${countryCode} ${phoneWithoutCountry}`;
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
   }
