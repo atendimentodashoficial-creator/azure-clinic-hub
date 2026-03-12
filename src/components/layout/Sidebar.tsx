@@ -1,4 +1,4 @@
-import { Calendar, DollarSign, TrendingUp, Settings, UserCog, FileText, LogOut, MessageSquare, UserX, Handshake, UserPlus, Users, ChevronLeft, ChevronRight, Send, Database, Instagram, Wallet, ClipboardList, Video } from "lucide-react";
+import { Calendar, DollarSign, TrendingUp, Settings, UserCog, FileText, LogOut, MessageSquare, UserX, Handshake, UserPlus, Users, ChevronLeft, ChevronRight, Send, Database, Instagram, Wallet, ClipboardList, Video, Shield, Settings2 } from "lucide-react";
 import { MetaIcon } from "@/components/icons/MetaIcon";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -13,43 +13,47 @@ import { useUserFeatureAccess } from "@/hooks/useUserFeatureAccess";
 
 // Mapeamento de href para feature_key
 const hrefToFeatureKey: Record<string, string> = {
-  "/": "calendario",
-  "/nao-compareceu": "nao-compareceu",
-  "/leads": "leads",
-  "/clientes": "clientes",
-  "/em-negociacao": "negociacao",
-  "/faturas": "faturas",
-  "/despesas": "despesas",
-  "/relatorios": "relatorios",
-  "/whatsapp": "whatsapp",
-  "/disparos": "disparos",
-  "/extrator": "extrator",
-  "/instagram": "instagram",
-  "/formularios": "formularios",
-  "/reunioes": "reunioes",
-  "/metricas-campanhas": "meta-ads",
-  "/google-ads": "google-ads",
-  "/configuracoes": "configuracoes",
+  "/admin": "calendario",
+  "/admin/nao-compareceu": "nao-compareceu",
+  "/admin/leads": "leads",
+  "/admin/clientes": "clientes",
+  "/admin/em-negociacao": "negociacao",
+  "/admin/faturas": "faturas",
+  "/admin/despesas": "despesas",
+  "/admin/relatorios": "relatorios",
+  "/admin/whatsapp": "whatsapp",
+  "/admin/disparos": "disparos",
+  "/admin/extrator": "extrator",
+  "/admin/instagram": "instagram",
+  "/admin/formularios": "formularios",
+  "/admin/reunioes": "reunioes",
+  "/admin/metricas-campanhas": "meta-ads",
+  "/admin/google-ads": "google-ads",
+  "/admin/configuracoes": "configuracoes",
+  "/admin/usuarios": "usuarios",
+  "/admin/paineis": "paineis",
 };
 
 export const navigation = [
-  { name: "Calendário", href: "/", icon: Calendar },
-  { name: "Não Compareceu", href: "/nao-compareceu", icon: UserX },
-  { name: "Leads", href: "/leads", icon: UserPlus, separator: true },
-  { name: "Clientes", href: "/clientes", icon: Users },
-  { name: "Negociação", href: "/em-negociacao", icon: Handshake },
-  { name: "Faturas", href: "/faturas", icon: FileText },
-  { name: "Despesas", href: "/despesas", icon: Wallet },
-  { name: "Relatórios", href: "/relatorios", icon: TrendingUp },
-  { name: "WhatsApp", href: "/whatsapp", icon: MessageSquare, separator: true },
-  { name: "Disparos", href: "/disparos", icon: Send },
-  { name: "Extrator", href: "/extrator", icon: Database },
-  { name: "Instagram", href: "/instagram", icon: Instagram },
-  { name: "Formulários", href: "/formularios", icon: ClipboardList },
-  { name: "Reuniões", href: "/reunioes", icon: Video },
-  { name: "Meta Ads", href: "/metricas-campanhas", icon: MetaIcon },
-  { name: "Google Ads", href: "/google-ads", icon: ({ className }: { className?: string }) => <img src={googleAdsIcon} alt="Google Ads" className={cn("h-5 w-5 shrink-0 brightness-0 invert", className)} /> },
-  { name: "Configurações", href: "/configuracoes", icon: Settings },
+  { name: "Calendário", href: "/admin", icon: Calendar },
+  { name: "Não Compareceu", href: "/admin/nao-compareceu", icon: UserX },
+  { name: "Leads", href: "/admin/leads", icon: UserPlus, separator: true },
+  { name: "Clientes", href: "/admin/clientes", icon: Users },
+  { name: "Negociação", href: "/admin/em-negociacao", icon: Handshake },
+  { name: "Faturas", href: "/admin/faturas", icon: FileText },
+  { name: "Despesas", href: "/admin/despesas", icon: Wallet },
+  { name: "Relatórios", href: "/admin/relatorios", icon: TrendingUp },
+  { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare, separator: true },
+  { name: "Disparos", href: "/admin/disparos", icon: Send },
+  { name: "Extrator", href: "/admin/extrator", icon: Database },
+  { name: "Instagram", href: "/admin/instagram", icon: Instagram },
+  { name: "Formulários", href: "/admin/formularios", icon: ClipboardList },
+  { name: "Reuniões", href: "/admin/reunioes", icon: Video },
+  { name: "Meta Ads", href: "/admin/metricas-campanhas", icon: MetaIcon },
+  { name: "Google Ads", href: "/admin/google-ads", icon: ({ className }: { className?: string }) => <img src={googleAdsIcon} alt="Google Ads" className={cn("h-5 w-5 shrink-0 brightness-0 invert", className)} /> },
+  { name: "Usuários", href: "/admin/usuarios", icon: Shield, separator: true },
+  { name: "Painéis", href: "/admin/paineis", icon: Settings2 },
+  { name: "Configurações", href: "/admin/configuracoes", icon: Settings },
 ];
 
 // Context para compartilhar o estado do sidebar
@@ -134,7 +138,7 @@ export const SidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse
                   <TooltipTrigger asChild>
                     <NavLink
                       to={item.href}
-                      end={item.href === "/"}
+                      end={item.href === "/admin"}
                       onClick={onNavigate}
                       className={({ isActive }) =>
                         cn(
@@ -157,7 +161,7 @@ export const SidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse
               ) : (
                 <NavLink
                   to={item.href}
-                  end={item.href === "/"}
+                  end={item.href === "/admin"}
                   onClick={onNavigate}
                   className={({ isActive }) =>
                     cn(

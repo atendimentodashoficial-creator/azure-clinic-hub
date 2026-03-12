@@ -427,7 +427,7 @@ export function ContaAnunciosTab() {
                 <p className="text-muted-foreground text-center mb-4">
                   Nenhuma conta de anúncios vinculada.
                 </p>
-                <Button variant="outline" onClick={() => navigate("/configuracoes")}>
+                <Button variant="outline" onClick={() => navigate("/admin/configuracoes")}>
                   Ir para Conexões
                 </Button>
               </CardContent>
