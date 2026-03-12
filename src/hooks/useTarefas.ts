@@ -29,7 +29,8 @@ export interface Tarefa {
 const DEFAULT_COLUMNS = [
   { nome: "A Fazer", cor: "#f59e0b", ordem: 0 },
   { nome: "Em Progresso", cor: "#3b82f6", ordem: 1 },
-  { nome: "Concluído", cor: "#22c55e", ordem: 2 },
+  { nome: "Aguardando Aprovação", cor: "#8b5cf6", ordem: 2 },
+  { nome: "Concluído", cor: "#22c55e", ordem: 3 },
 ];
 
 export function useTarefas() {
