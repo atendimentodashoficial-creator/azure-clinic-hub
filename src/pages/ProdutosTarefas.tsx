@@ -326,7 +326,6 @@ function ProdutoDialog({
       prioridade: "media",
       prazo: 0,
       colunaId: colunas[0]?.id || "",
-      subtarefasTotal: 0,
       dependencias: [],
     }]);
   };
