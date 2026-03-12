@@ -374,7 +374,7 @@ export default function Tarefas() {
                     ))}
                   </DroppableColumn>
 
-                  <NovaTarefaDialog colunaId={coluna.id} colunas={colunas} onSubmit={handleCriar} />
+                  
                 </div>
               </div>
             );
