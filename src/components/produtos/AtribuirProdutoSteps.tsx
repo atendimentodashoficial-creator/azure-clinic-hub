@@ -172,8 +172,8 @@ export function ScheduleMeetingStep({
 
   const [reuniaoTitulo, setReuniaoTitulo] = useState(`Reunião - ${clienteNome} - ${templateNome}`);
   const [reuniaoDuracao, setReuniaDuracao] = useState("60");
-  const [selectedDate, setSelectedDate] = useState<string>("");
-  const [selectedTime, setSelectedTime] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [selectedTime, setSelectedTime] = useState<string>("08:00");
 
   // Existing meetings for this profissional to check conflicts
   const [existingMeetings, setExistingMeetings] = useState<Array<{ data_reuniao: string; duracao_minutos: number }>>([]);
