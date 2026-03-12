@@ -115,7 +115,15 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                   <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
                 </div>
               )}
-              <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(11) 99999-9999" /></div>
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <CountryCodeSelect
+                  value={countryCode}
+                  onChange={setCountryCode}
+                  phoneValue={telefone}
+                  onPhoneChange={setTelefone}
+                />
+              </div>
               <div className="space-y-2"><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
               <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></div>
               <div className="space-y-2"><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
