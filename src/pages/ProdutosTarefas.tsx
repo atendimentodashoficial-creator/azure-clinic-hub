@@ -180,9 +180,9 @@ function TarefaInlineEditor({
           )}
           {prio && <Badge className={cn("text-xs border-0", prio.color)}>{prio.label}</Badge>}
           {tarefa.responsaveis.length > 0 && <span className="text-xs text-muted-foreground">👤 {tarefa.responsaveis.join(", ")}</span>}
-          {tarefa.dataLimite && (
+          {tarefa.prazo > 0 && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Calendar className="h-3 w-3" />{tarefa.dataLimite}
+              <Calendar className="h-3 w-3" />{tarefa.prazo} {tarefa.prazo === 1 ? "dia" : "dias"}
             </span>
           )}
           {depNames.length > 0 && (
