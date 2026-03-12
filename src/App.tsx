@@ -39,6 +39,7 @@ import ConfigurarPaineis from "./pages/ConfigurarPaineis";
 import Tarefas from "./pages/Tarefas";
 import TarefasClientes from "./pages/TarefasClientes";
 import Equipe from "./pages/Equipe";
+import ProdutosTarefas from "./pages/ProdutosTarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 
