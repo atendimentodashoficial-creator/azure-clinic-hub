@@ -419,21 +419,14 @@ function ProdutoDialog({
                 Nenhuma tarefa adicionada. Clique em "Adicionar Tarefa" para começar.
               </p>
             ) : (
-              <div className="space-y-2">
-                {tarefas.map((t, i) => (
-                  <TarefaInlineEditor
-                    key={t.id}
-                    tarefa={t}
-                    tarefaIndex={i}
-                    allTarefas={tarefas}
-                    onChange={updated => updateTarefa(i, updated)}
-                    onRemove={() => removeTarefa(i)}
-                    membros={membros}
-                    colunas={colunas}
-                    isNew={t.titulo === "" && t.descricao === ""}
-                  />
-                ))}
-              </div>
+              <SortableTaskList
+                tarefas={tarefas}
+                setTarefas={setTarefas}
+                updateTarefa={updateTarefa}
+                removeTarefa={removeTarefa}
+                membros={membros}
+                colunas={colunas}
+              />
             )}
           </div>
         </div>
