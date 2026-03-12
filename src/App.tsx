@@ -5,7 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
+import { RoleRedirector } from "@/components/RoleRedirector";
 import Layout from "./pages/Layout";
+import ClienteLayout from "./pages/ClienteLayout";
+import FuncionarioLayout from "./pages/FuncionarioLayout";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Clientes from "./pages/Clientes";
@@ -30,6 +34,10 @@ import FormularioCliente from "./pages/FormularioCliente";
 import FormularioPublico from "./pages/FormularioPublico";
 import Reunioes from "./pages/Reunioes";
 import GoogleCalendarCallback from "./pages/GoogleCalendarCallback";
+import GerenciarUsuarios from "./pages/GerenciarUsuarios";
+import ConfigurarPaineis from "./pages/ConfigurarPaineis";
+import ClienteDashboard from "./pages/ClienteDashboard";
+import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 
 const queryClient = new QueryClient();
 
@@ -40,17 +48,30 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <Routes>
+          {/* Public routes */}
           <Route path="/auth" element={<Auth />} />
           <Route path="/auth/google-calendar/callback" element={<GoogleCalendarCallback />} />
           <Route path="/formulario/:templateId" element={<FormularioPublico />} />
           <Route path="/formularioig/:formSlug" element={<FormularioCaptura />} />
           <Route path="/cliente-form/:clienteId" element={<FormularioCliente />} />
+
+          {/* Root: redirect based on role */}
           <Route
             path="/"
             element={
               <ProtectedRoute>
-                <Layout />
+                <RoleRedirector />
               </ProtectedRoute>
+            }
+          />
+
+          {/* Admin Panel */}
+          <Route
+            path="/admin"
+            element={
+              <RoleProtectedRoute allowedRoles={["admin"]}>
+                <Layout />
+              </RoleProtectedRoute>
             }
           >
             <Route index element={<Agenda />} />
@@ -71,8 +92,37 @@ const App = () => (
             <Route path="financeiro" element={<Dashboard />} />
             <Route path="metricas-campanhas" element={<MetricasCampanhas />} />
             <Route path="google-ads" element={<GoogleAdsMetrics />} />
+            <Route path="usuarios" element={<GerenciarUsuarios />} />
+            <Route path="paineis" element={<ConfigurarPaineis />} />
             <Route path="configuracoes" element={<Configuracoes />} />
           </Route>
+
+          {/* Cliente Panel */}
+          <Route
+            path="/cliente"
+            element={
+              <RoleProtectedRoute allowedRoles={["cliente"]}>
+                <ClienteLayout />
+              </RoleProtectedRoute>
+            }
+          >
+            <Route index element={<ClienteDashboard />} />
+            <Route path="agendamentos" element={<ClienteDashboard />} />
+          </Route>
+
+          {/* Funcionario Panel */}
+          <Route
+            path="/funcionario"
+            element={
+              <RoleProtectedRoute allowedRoles={["funcionario"]}>
+                <FuncionarioLayout />
+              </RoleProtectedRoute>
+            }
+          >
+            <Route index element={<FuncionarioDashboard />} />
+            <Route path="agenda" element={<FuncionarioDashboard />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
