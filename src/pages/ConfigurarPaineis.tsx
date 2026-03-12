@@ -17,7 +17,7 @@ const availableTabs = navigation.map((item) => ({
 
 export default function ConfigurarPaineis() {
   const queryClient = useQueryClient();
-  const [activePanel, setActivePanel] = useState<string>("cliente");
+  const [activePanel, setActivePanel] = useState<string>("admin");
 
   const { data: configs = [], isLoading } = useQuery({
     queryKey: ["panel-tabs-config"],
