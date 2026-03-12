@@ -52,15 +52,15 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
     if (!nome.trim()) { toast.error("Nome é obrigatório"); return; }
     if (!email.trim()) { toast.error("Email é obrigatório"); return; }
     if (!isEditing && tipo === "interno" && !senhaAcesso.trim()) { toast.error("Senha de acesso é obrigatória"); return; }
+    const normalizedPhone = normalizePhone(telefone);
+
     onSubmit({
       ...(clienteEditando && { id: clienteEditando.id }),
       nome: nome.trim(),
       email: email.trim(),
       senha_acesso: senhaAcesso.trim() || undefined,
-      telefone: telefone.trim() || null,
+      telefone: normalizedPhone ? `${countryCode}${normalizedPhone}` : null,
       empresa: empresa.trim() || null,
-      cnpj: cnpj.trim() || null,
-      site: site.trim() || null,
       instagram: instagramUrl.trim() || null,
       linktree: linktree.trim() || null,
       google_meu_negocio: googleMeuNegocio.trim() || null,
