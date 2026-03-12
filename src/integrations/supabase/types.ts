@@ -4024,6 +4024,71 @@ export type Database = {
         }
         Relationships: []
       }
+      produto_template_tarefas: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          ordem: number
+          produto_template_id: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          produto_template_id: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          produto_template_id?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produto_template_tarefas_produto_template_id_fkey"
+            columns: ["produto_template_id"]
+            isOneToOne: false
+            referencedRelation: "produto_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produto_templates: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       produtos: {
         Row: {
           ativo: boolean | null

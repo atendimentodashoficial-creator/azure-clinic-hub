@@ -1,4 +1,4 @@
-import { Calendar, DollarSign, TrendingUp, Settings, UserCog, FileText, LogOut, MessageSquare, UserX, Handshake, UserPlus, Users, ChevronLeft, ChevronRight, Send, Database, Instagram, Wallet, ClipboardList, Video, Shield, Settings2, ListChecks, Building2, UsersRound } from "lucide-react";
+import { Calendar, DollarSign, TrendingUp, Settings, UserCog, FileText, LogOut, MessageSquare, UserX, Handshake, UserPlus, Users, ChevronLeft, ChevronRight, Send, Database, Instagram, Wallet, ClipboardList, Video, Shield, Settings2, ListChecks, Building2, UsersRound, Package } from "lucide-react";
 import { MetaIcon } from "@/components/icons/MetaIcon";
 import { NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -37,6 +37,7 @@ const hrefToFeatureKey: Record<string, string> = {
   "/admin/tarefas": "tarefas",
   "/admin/tarefas-clientes": "tarefas-clientes",
   "/admin/equipe": "equipe",
+  "/admin/produtos-tarefas": "produtos-tarefas",
 };
 
 export const navigation = [
@@ -59,6 +60,7 @@ export const navigation = [
   { name: "Tarefas", href: "/admin/tarefas", icon: ListChecks },
   { name: "Clientes *", href: "/admin/tarefas-clientes", icon: Building2 },
   { name: "Equipe", href: "/admin/equipe", icon: UsersRound },
+  { name: "Produtos & Tarefas", href: "/admin/produtos-tarefas", icon: Package },
   { name: "Usuários", href: "/admin/usuarios", icon: Shield, separator: true },
   { name: "Painéis", href: "/admin/paineis", icon: Settings2 },
   { name: "Configurações", href: "/admin/configuracoes", icon: Settings },
