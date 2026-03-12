@@ -35,6 +35,9 @@ import {
   Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const PRIORIDADES = [
   { value: "baixa", label: "Baixa", color: "bg-emerald-500/20 text-emerald-400" },
@@ -96,6 +99,60 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
   return JSON.stringify(meta);
 }
 
+// ─── Sortable task list wrapper ───
+function SortableTaskList({
+  tarefas,
+  setTarefas,
+  updateTarefa,
+  removeTarefa,
+  membros,
+  colunas,
+}: {
+  tarefas: TarefaLocal[];
+  setTarefas: React.Dispatch<React.SetStateAction<TarefaLocal[]>>;
+  updateTarefa: (index: number, t: TarefaLocal) => void;
+  removeTarefa: (index: number) => void;
+  membros: any[];
+  colunas: any[];
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setTarefas(prev => {
+        const oldIndex = prev.findIndex(t => t.id === active.id);
+        const newIndex = prev.findIndex(t => t.id === over.id);
+        return arrayMove(prev, oldIndex, newIndex);
+      });
+    }
+  };
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={tarefas.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <div className="space-y-2">
+          {tarefas.map((t, i) => (
+            <TarefaInlineEditor
+              key={t.id}
+              tarefa={t}
+              tarefaIndex={i}
+              allTarefas={tarefas}
+              onChange={updated => updateTarefa(i, updated)}
+              onRemove={() => removeTarefa(i)}
+              membros={membros}
+              colunas={colunas}
+              isNew={t.titulo === "" && t.descricao === ""}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
 // ─── Inline task editor row ───
 function TarefaInlineEditor({
   tarefa,
@@ -138,10 +195,19 @@ function TarefaInlineEditor({
     .map(depId => allTarefas.find(t => t.id === depId))
     .filter(Boolean);
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: tarefa.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <Card className="p-3 space-y-2">
+    <Card ref={setNodeRef} style={style} className="p-3 space-y-2">
       <div className="flex items-center gap-2">
-        <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+        <button type="button" {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none">
+          <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+        </button>
         <Input
           value={tarefa.titulo}
           onChange={e => onChange({ ...tarefa, titulo: e.target.value })}
@@ -407,21 +473,14 @@ function ProdutoDialog({
                 Nenhuma tarefa adicionada. Clique em "Adicionar Tarefa" para começar.
               </p>
             ) : (
-              <div className="space-y-2">
-                {tarefas.map((t, i) => (
-                  <TarefaInlineEditor
-                    key={t.id}
-                    tarefa={t}
-                    tarefaIndex={i}
-                    allTarefas={tarefas}
-                    onChange={updated => updateTarefa(i, updated)}
-                    onRemove={() => removeTarefa(i)}
-                    membros={membros}
-                    colunas={colunas}
-                    isNew={t.titulo === "" && t.descricao === ""}
-                  />
-                ))}
-              </div>
+              <SortableTaskList
+                tarefas={tarefas}
+                setTarefas={setTarefas}
+                updateTarefa={updateTarefa}
+                removeTarefa={removeTarefa}
+                membros={membros}
+                colunas={colunas}
+              />
             )}
           </div>
         </div>
