@@ -330,7 +330,7 @@ function ProdutoDialog({
       // Upsert tasks
       for (let i = 0; i < tarefas.length; i++) {
         const t = tarefas[i];
-        const desc = tarefaLocalToDesc(t);
+        const desc = tarefaLocalToDesc(t, tarefas);
         const isExisting = existingTarefas?.some(et => et.id === t.id);
 
         if (isExisting) {
