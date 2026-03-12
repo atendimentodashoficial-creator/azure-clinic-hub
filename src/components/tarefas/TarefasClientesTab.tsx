@@ -147,9 +147,9 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                 <p className="text-xs text-muted-foreground mt-1">Este link será exibido na aba Google do painel do cliente</p>
               </div>
             </TabsContent>
-          </ScrollArea>
+          </div>
         </Tabs>
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex justify-end gap-2 pt-2 shrink-0">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancelar</Button>
           <Button onClick={handleSubmit}>{isEditing ? "Salvar" : "Criar"}</Button>
         </div>
