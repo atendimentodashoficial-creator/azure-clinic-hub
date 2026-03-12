@@ -320,7 +320,7 @@ export default function TarefasMembrosTab() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{membro.nome}</p>
+                    <p className="font-semibold text-base truncate">{membro.nome}</p>
                     {membro.cargo && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
                         <Briefcase className="h-3 w-3 shrink-0" /> {membro.cargo}
