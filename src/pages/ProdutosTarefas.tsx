@@ -49,7 +49,6 @@ interface TarefaLocal {
   titulo: string;
   descricao: string;
   responsaveis: string[];
-  clienteId: string;
   prioridade: string;
   prazo: number;
   colunaId: string;
