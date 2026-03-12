@@ -415,9 +415,9 @@ function ProdutoDialog({
       let templateId = editando?.id;
 
       if (isEditing && templateId) {
-        await atualizarTemplate.mutateAsync({ id: templateId, nome: nome.trim(), descricao: descricao.trim() || null });
+        await atualizarTemplate.mutateAsync({ id: templateId, nome: nome.trim(), descricao: descricao.trim() || null, requer_reuniao: requerReuniao });
       } else {
-        const created = await criarTemplate.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined });
+        const created = await criarTemplate.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined, requer_reuniao: requerReuniao });
         templateId = (created as any).id;
       }
 
