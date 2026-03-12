@@ -36,6 +36,7 @@ import Reunioes from "./pages/Reunioes";
 import GoogleCalendarCallback from "./pages/GoogleCalendarCallback";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios";
 import ConfigurarPaineis from "./pages/ConfigurarPaineis";
+import Tarefas from "./pages/Tarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 
