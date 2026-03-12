@@ -53,7 +53,6 @@ interface TarefaLocal {
   prioridade: string;
   prazo: number;
   colunaId: string;
-  subtarefasTotal: number;
   dependencias: string[];
 }
 
