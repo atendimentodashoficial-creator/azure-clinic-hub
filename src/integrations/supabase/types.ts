@@ -4613,10 +4613,14 @@ export type Database = {
         Row: {
           cargo: string | null
           created_at: string
+          data_contratacao: string | null
+          dia_pagamento: number | null
           email: string | null
           id: string
           nome: string
           observacoes: string | null
+          salario: number | null
+          senha: string | null
           telefone: string | null
           updated_at: string
           user_id: string
@@ -4624,10 +4628,14 @@ export type Database = {
         Insert: {
           cargo?: string | null
           created_at?: string
+          data_contratacao?: string | null
+          dia_pagamento?: number | null
           email?: string | null
           id?: string
           nome: string
           observacoes?: string | null
+          salario?: number | null
+          senha?: string | null
           telefone?: string | null
           updated_at?: string
           user_id: string
@@ -4635,10 +4643,14 @@ export type Database = {
         Update: {
           cargo?: string | null
           created_at?: string
+          data_contratacao?: string | null
+          dia_pagamento?: number | null
           email?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
+          salario?: number | null
+          senha?: string | null
           telefone?: string | null
           updated_at?: string
           user_id?: string
