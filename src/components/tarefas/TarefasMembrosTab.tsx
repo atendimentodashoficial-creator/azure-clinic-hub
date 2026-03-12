@@ -311,7 +311,7 @@ export default function TarefasMembrosTab() {
             <Card key={membro.id} className="p-4 flex flex-col gap-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
+                  <Avatar className="h-14 w-14">
                     {membro.foto_url ? (
                       <AvatarImage src={membro.foto_url} alt={membro.nome} className="object-cover" />
                     ) : null}
