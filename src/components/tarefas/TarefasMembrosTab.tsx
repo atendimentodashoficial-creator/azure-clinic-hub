@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useTarefasMembros, TarefaMembro } from "@/hooks/useTarefasMembros";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,9 @@ import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Mail, Phone, Briefcase, CalendarIcon, DollarSign } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Plus, Trash2, Edit, Mail, Phone, Briefcase, CalendarIcon, DollarSign, Camera } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
 
 function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
   onSubmit: (data: any) => void;
@@ -25,6 +26,7 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
 }) {
   const [open, setOpen] = useState(false);
   const isEditing = !!membroEditando;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialPhoneData = membroEditando?.telefone
     ? extractCountryCode(membroEditando.telefone)
@@ -42,11 +44,50 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
     membroEditando?.data_contratacao ? parseISO(membroEditando.data_contratacao) : undefined
   );
   const [diaPagamento, setDiaPagamento] = useState(membroEditando?.dia_pagamento?.toString() || "");
+  const [fotoUrl, setFotoUrl] = useState(membroEditando?.foto_url || "");
+  const [fotoPreview, setFotoPreview] = useState(membroEditando?.foto_url || "");
+  const [uploading, setUploading] = useState(false);
 
   const resetForm = () => {
     setNome(""); setEmail(""); setTelefone(""); setCountryCode("55");
     setCargo(""); setObservacoes(""); setSenha(""); setSalario("");
     setDataContratacao(undefined); setDiaPagamento("");
+    setFotoUrl(""); setFotoPreview("");
+  };
+
+  const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    setFotoPreview(URL.createObjectURL(file));
+    setUploading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/${Date.now()}.${ext}`;
+
+      const { error } = await supabase.storage.from("membros-fotos").upload(path, file, { upsert: true });
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage.from("membros-fotos").getPublicUrl(path);
+      setFotoUrl(urlData.publicUrl);
+    } catch (err: any) {
+      toast.error("Erro ao enviar foto: " + err.message);
+      setFotoPreview(membroEditando?.foto_url || "");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -64,6 +105,7 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
       salario: salario ? parseFloat(salario) : null,
       data_contratacao: dataContratacao ? format(dataContratacao, "yyyy-MM-dd") : null,
       dia_pagamento: diaPagamento ? parseInt(diaPagamento) : null,
+      foto_url: fotoUrl || null,
     });
     resetForm();
     setOpen(false);
@@ -91,6 +133,8 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
 
   const diasDoMes = Array.from({ length: 31 }, (_, i) => i + 1);
 
+  const getInitials = (n: string) => n.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2);
+
   return (
     <Dialog open={isEditing ? true : open} onOpenChange={isEditing ? () => onClose?.() : handleOpenChange}>
       {!isEditing && (
@@ -103,6 +147,25 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
           <DialogTitle>{isEditing ? "Editar Membro" : "Novo Membro"}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+          {/* Foto */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+              <Avatar className="h-20 w-20">
+                {fotoPreview ? (
+                  <AvatarImage src={fotoPreview} alt="Foto" className="object-cover" />
+                ) : null}
+                <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
+                  {nome ? getInitials(nome) : <Camera className="h-6 w-6" />}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFotoUpload} />
+            <span className="text-xs text-muted-foreground">{uploading ? "Enviando..." : "Clique para adicionar foto"}</span>
+          </div>
+
           <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} /></div>
           <div className="space-y-2">
             <Label>Telefone</Label>
@@ -170,7 +233,7 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
         </div>
         <div className="flex justify-end gap-2 pt-2 shrink-0">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit}>{isEditing ? "Salvar" : "Criar"}</Button>
+          <Button onClick={handleSubmit} disabled={uploading}>{isEditing ? "Salvar" : "Criar"}</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -210,9 +273,7 @@ export default function TarefasMembrosTab() {
     });
   };
 
-  const getInitials = (nome: string) => {
-    return nome.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  };
+  const getInitials = (nome: string) => nome.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
   const getFormattedPhone = (phone: string | null) => {
     if (!phone) return null;
@@ -251,6 +312,9 @@ export default function TarefasMembrosTab() {
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
+                    {membro.foto_url ? (
+                      <AvatarImage src={membro.foto_url} alt={membro.nome} className="object-cover" />
+                    ) : null}
                     <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                       {getInitials(membro.nome)}
                     </AvatarFallback>

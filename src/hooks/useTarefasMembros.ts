@@ -14,6 +14,7 @@ export interface TarefaMembro {
   salario: number | null;
   data_contratacao: string | null;
   dia_pagamento: number | null;
+  foto_url: string | null;
   created_at: string;
 }
 
