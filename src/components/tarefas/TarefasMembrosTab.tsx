@@ -348,17 +348,17 @@ export default function TarefasMembrosTab() {
                     <Phone className="h-3.5 w-3.5 shrink-0" /> {getFormattedPhone(membro.telefone)}
                   </p>
                 )}
-                {membro.salario != null && (
-                  <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-md px-2.5 py-1.5 font-medium text-sm w-fit">
-                    R$ {membro.salario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </div>
-                )}
                 {membro.data_contratacao && (
                   <p className="flex items-center gap-2 truncate">
                     <CalendarIcon className="h-3.5 w-3.5 shrink-0" /> Contratado em {format(parseISO(membro.data_contratacao), "dd/MM/yyyy")}
                   </p>
                 )}
               </div>
+              {membro.salario != null && (
+                <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-md px-2.5 py-1.5 font-medium text-sm w-fit mt-auto">
+                  R$ {membro.salario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </div>
+              )}
             </Card>
           ))}
         </div>
