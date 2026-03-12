@@ -82,7 +82,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
 
   const handleSubmit = () => {
     if (!nome.trim()) { toast.error("Nome é obrigatório"); return; }
-    if (!email.trim()) { toast.error("Email é obrigatório"); return; }
+    if (tipo === "interno" && !email.trim()) { toast.error("Email é obrigatório para clientes internos"); return; }
     if (!isEditing && tipo === "interno" && !senhaAcesso.trim()) { toast.error("Senha de acesso é obrigatória"); return; }
     const normalizedPhone = normalizePhone(telefone);
 
