@@ -23,11 +23,15 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   const isEditing = !!clienteEditando;
   const [formTab, setFormTab] = useState("info");
 
+  const initialPhoneData = clienteEditando?.telefone
+    ? extractCountryCode(clienteEditando.telefone)
+    : { countryCode: "55", phoneWithoutCountry: "" };
+
   const [nome, setNome] = useState(clienteEditando?.nome || "");
   const [email, setEmail] = useState(clienteEditando?.email || "");
   const [senhaAcesso, setSenhaAcesso] = useState(clienteEditando?.senha_acesso || "");
-  const [countryCode, setCountryCode] = useState("55");
-  const [telefone, setTelefone] = useState(clienteEditando?.telefone || "");
+  const [countryCode, setCountryCode] = useState(initialPhoneData.countryCode);
+  const [telefone, setTelefone] = useState(initialPhoneData.phoneWithoutCountry);
   const [empresa, setEmpresa] = useState(clienteEditando?.empresa || "");
   const [cnpj, setCnpj] = useState(clienteEditando?.cnpj || "");
   const [site, setSite] = useState(clienteEditando?.site || "");
