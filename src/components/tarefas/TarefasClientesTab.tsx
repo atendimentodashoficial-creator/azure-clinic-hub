@@ -34,6 +34,12 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   const [telefone, setTelefone] = useState(initialPhoneData.phoneWithoutCountry);
   const [empresa, setEmpresa] = useState(clienteEditando?.empresa || "");
   const [cnpj, setCnpj] = useState(clienteEditando?.cnpj || "");
+  const detectDocTipo = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (digits.length <= 11) return "cpf";
+    return "cnpj";
+  };
+  const [docTipo, setDocTipo] = useState<"cpf" | "cnpj">(clienteEditando?.cnpj ? detectDocTipo(clienteEditando.cnpj) : "cnpj");
   const [site, setSite] = useState(clienteEditando?.site || "");
   const [instagramUrl, setInstagramUrl] = useState(clienteEditando?.instagram || "");
   const [linktree, setLinktree] = useState(clienteEditando?.linktree || "");
@@ -44,8 +50,30 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
 
   const resetForm = () => {
     setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("55"); setEmpresa("");
-    setCnpj(""); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
+    setCnpj(""); setDocTipo("cnpj"); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
     setObservacoes(""); setGrupoWhatsapp(""); setTipo("interno"); setFormTab("info");
+  };
+
+  const formatCnpj = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 14);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+    if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+    if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+  };
+
+  const formatCpf = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+  };
+
+  const handleDocChange = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    setCnpj(docTipo === "cnpj" ? formatCnpj(digits) : formatCpf(digits));
   };
 
   const handleSubmit = () => {
@@ -129,7 +157,23 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                 </div>
               )}
               <div className="space-y-2"><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
-              <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>{docTipo === "cnpj" ? "CNPJ" : "CPF"}</Label>
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline"
+                    onClick={() => { setDocTipo(docTipo === "cnpj" ? "cpf" : "cnpj"); setCnpj(""); }}
+                  >
+                    Usar {docTipo === "cnpj" ? "CPF" : "CNPJ"}
+                  </button>
+                </div>
+                <Input
+                  value={cnpj}
+                  onChange={e => handleDocChange(e.target.value)}
+                  placeholder={docTipo === "cnpj" ? "00.000.000/0000-00" : "000.000.000-00"}
+                />
+              </div>
               <div className="space-y-2"><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-1"><MessageSquare className="h-4 w-4" /> Grupo WhatsApp</Label>
