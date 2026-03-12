@@ -551,6 +551,8 @@ export default function ProdutosTarefas() {
               template={template}
               onEdit={() => setDialogState({ mode: "edit", template })}
               onDelete={() => handleExcluir(template.id)}
+              onAtribuir={() => {}}
+              onDuplicar={() => {}}
             />
           ))}
         </div>
