@@ -325,12 +325,15 @@ export default function Tarefas() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <ListChecks className="h-6 w-6" />
-          Tarefas
-        </h1>
-        <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <ListChecks className="h-6 w-6" />
+            Tarefas
+          </h1>
+          <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
+        </div>
+        <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
