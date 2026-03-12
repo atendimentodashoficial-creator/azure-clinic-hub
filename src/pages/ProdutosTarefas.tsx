@@ -306,7 +306,6 @@ function ProdutoDialog({
       titulo: "",
       descricao: "",
       responsaveis: [],
-      clienteId: "",
       prioridade: "media",
       prazo: 0,
       colunaId: colunas[0]?.id || "",
