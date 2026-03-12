@@ -98,7 +98,8 @@ export const SidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse
     // Check panel_tabs_config for admin - "usuarios" and "paineis" always visible
     if (featureKey === "usuarios" || featureKey === "paineis") return true;
     if (panelConfigs && panelConfigs.length > 0) {
-      const tabKey = item.href.replace("/admin/", "") || "inicio";
+      const stripped = item.href.replace(/^\/admin\/?/, "");
+      const tabKey = stripped || "calendario";
       const config = panelConfigs.find((c: any) => c.tab_key === tabKey);
       if (config && !config.is_visible) return false;
     }

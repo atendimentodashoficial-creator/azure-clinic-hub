@@ -9,9 +9,16 @@ import { toast } from "sonner";
 import { Settings2, User, UserCog, Shield } from "lucide-react";
 import { navigation } from "@/components/layout/Sidebar";
 
+// Derive a stable tab key from href
+const getTabKey = (href: string) => {
+  // "/admin" -> "calendario", "/admin/leads" -> "leads"
+  const stripped = href.replace(/^\/admin\/?/, "");
+  return stripped || "calendario";
+};
+
 // Available tabs that admin can toggle for each panel
 const availableTabs = navigation.map((item) => ({
-  key: item.href.replace("/", "") || "inicio",
+  key: getTabKey(item.href),
   label: item.name,
 }));
 
