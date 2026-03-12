@@ -308,36 +308,37 @@ export default function TarefasMembrosTab() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtrados.map(membro => (
-            <Card key={membro.id} className="p-4 flex flex-col gap-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-14 w-14">
-                    {membro.foto_url ? (
-                      <AvatarImage src={membro.foto_url} alt={membro.nome} className="object-cover" />
-                    ) : null}
-                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                      {getInitials(membro.nome)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-base truncate">{membro.nome}</p>
-                    {membro.cargo && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
-                        <Briefcase className="h-3 w-3 shrink-0" /> {membro.cargo}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditando(membro)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleExcluir(membro.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+            <Card key={membro.id} className="p-5 flex flex-col gap-4 relative">
+              {/* Actions top-right */}
+              <div className="absolute top-2 right-2 flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditando(membro)}>
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleExcluir(membro.id)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
-              <div className="space-y-1.5 text-sm text-muted-foreground">
+
+              {/* Avatar + Name centered */}
+              <div className="flex flex-col items-center gap-2 pt-2">
+                <Avatar className="h-16 w-16 ring-2 ring-primary/20">
+                  {membro.foto_url ? (
+                    <AvatarImage src={membro.foto_url} alt={membro.nome} className="object-cover" />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
+                    {getInitials(membro.nome)}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="font-semibold text-base">{membro.nome}</p>
+                {membro.cargo && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2.5 py-0.5">
+                    <Briefcase className="h-3 w-3" /> {membro.cargo}
+                  </span>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="space-y-2 text-sm text-muted-foreground border-t border-border pt-3">
                 {membro.email && (
                   <p className="flex items-center gap-2 truncate">
                     <Mail className="h-3.5 w-3.5 shrink-0" /> {membro.email}
@@ -350,13 +351,15 @@ export default function TarefasMembrosTab() {
                 )}
                 {membro.data_contratacao && (
                   <p className="flex items-center gap-2 truncate">
-                    <CalendarIcon className="h-3.5 w-3.5 shrink-0" /> Contratado em {format(parseISO(membro.data_contratacao), "dd/MM/yyyy")}
+                    <CalendarIcon className="h-3.5 w-3.5 shrink-0" /> Na empresa desde {format(parseISO(membro.data_contratacao), "dd/MM/yyyy")}
                   </p>
                 )}
               </div>
+
+              {/* Salary */}
               {membro.salario != null && (
-                <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-md px-2.5 py-1.5 font-medium text-sm w-fit mt-auto">
-                  R$ {membro.salario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                <div className="flex items-center gap-2 bg-primary/10 text-primary rounded-md px-2.5 py-1.5 font-medium text-sm w-fit mt-auto">
+                  Salário: R$ {membro.salario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
               )}
             </Card>
