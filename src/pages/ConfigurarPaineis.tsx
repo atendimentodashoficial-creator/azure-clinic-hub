@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Settings2, User, UserCog } from "lucide-react";
+import { Settings2, User, UserCog, Shield } from "lucide-react";
 import { navigation } from "@/components/layout/Sidebar";
 
 // Available tabs that admin can toggle for each panel
