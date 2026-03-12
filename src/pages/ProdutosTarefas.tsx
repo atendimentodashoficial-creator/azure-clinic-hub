@@ -105,6 +105,7 @@ function TarefaInlineEditor({
   onRemove,
   membros,
   colunas,
+  isNew = false,
 }: {
   tarefa: TarefaLocal;
   tarefaIndex: number;
@@ -113,8 +114,9 @@ function TarefaInlineEditor({
   onRemove: () => void;
   membros: any[];
   colunas: any[];
+  isNew?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(isNew);
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade);
   const coluna = tarefa.colunaId ? colunas.find((c: any) => c.id === tarefa.colunaId) : null;
 
