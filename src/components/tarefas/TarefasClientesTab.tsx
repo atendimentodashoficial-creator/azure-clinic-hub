@@ -47,7 +47,7 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   const handleSubmit = () => {
     if (!nome.trim()) { toast.error("Nome é obrigatório"); return; }
     if (!email.trim()) { toast.error("Email é obrigatório"); return; }
-    if (!isEditing && !senhaAcesso.trim()) { toast.error("Senha de acesso é obrigatória"); return; }
+    if (!isEditing && tipo === "interno" && !senhaAcesso.trim()) { toast.error("Senha de acesso é obrigatória"); return; }
     onSubmit({
       ...(clienteEditando && { id: clienteEditando.id }),
       nome: nome.trim(),
