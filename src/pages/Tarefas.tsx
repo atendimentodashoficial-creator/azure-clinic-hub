@@ -76,6 +76,18 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
           <div><Label>Descrição</Label><Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Detalhes da tarefa..." /></div>
           
           <div>
+            <Label>Coluna *</Label>
+            <Select value={colunaId} onValueChange={setColunaId}>
+              <SelectTrigger><SelectValue placeholder="Selecione a coluna" /></SelectTrigger>
+              <SelectContent>
+                {colunas.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
             <Label>Cliente</Label>
             <Select value={clienteId} onValueChange={setClienteId}>
               <SelectTrigger><SelectValue placeholder="Selecione um cliente (opcional)" /></SelectTrigger>
