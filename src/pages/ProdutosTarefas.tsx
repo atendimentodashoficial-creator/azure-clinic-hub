@@ -507,6 +507,7 @@ export default function ProdutosTarefas() {
   const { data: templates = [], isLoading } = useProdutoTemplates();
   const { excluirTemplate } = useProdutoTemplateMutations();
   const [dialogState, setDialogState] = useState<{ mode: "create" | "edit"; template?: ProdutoTemplate } | null>(null);
+  const [atribuirTemplate, setAtribuirTemplate] = useState<ProdutoTemplate | null>(null);
   const [busca, setBusca] = useState("");
 
   const filtrados = templates.filter(t =>
