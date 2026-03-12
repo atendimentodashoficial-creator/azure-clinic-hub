@@ -95,7 +95,6 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
     prioridade: t.prioridade,
     prazo: t.prazo > 0 ? t.prazo : undefined,
     coluna_id: t.colunaId || undefined,
-    subtarefas_total: t.subtarefasTotal > 0 ? t.subtarefasTotal : undefined,
     dependencias: depOrdens.length > 0 ? depOrdens : undefined,
   };
   return JSON.stringify(meta);
