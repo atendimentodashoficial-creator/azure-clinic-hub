@@ -417,7 +417,6 @@ function ProdutoDialog({
                     onChange={updated => updateTarefa(i, updated)}
                     onRemove={() => removeTarefa(i)}
                     membros={membros}
-                    clientes={clientes}
                     colunas={colunas}
                   />
                 ))}
