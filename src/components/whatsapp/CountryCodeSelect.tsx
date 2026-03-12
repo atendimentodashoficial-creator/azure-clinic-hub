@@ -166,7 +166,7 @@ export function CountryCodeSelect({
 
   // Integrated mode with phone input
   return (
-    <div className="flex items-center h-10 border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 bg-background overflow-hidden">
+    <div className="flex items-center h-10 rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 bg-background border overflow-hidden ring-offset-background">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
