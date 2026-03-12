@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AtribuirProdutoDialog } from "@/components/produtos/AtribuirProdutoDialog";
 import {
   useProdutoTemplates,
   useProdutoTemplateTarefas,
@@ -506,6 +507,7 @@ export default function ProdutosTarefas() {
   const { data: templates = [], isLoading } = useProdutoTemplates();
   const { excluirTemplate } = useProdutoTemplateMutations();
   const [dialogState, setDialogState] = useState<{ mode: "create" | "edit"; template?: ProdutoTemplate } | null>(null);
+  const [atribuirTemplate, setAtribuirTemplate] = useState<ProdutoTemplate | null>(null);
   const [busca, setBusca] = useState("");
 
   const filtrados = templates.filter(t =>
@@ -551,7 +553,7 @@ export default function ProdutosTarefas() {
               template={template}
               onEdit={() => setDialogState({ mode: "edit", template })}
               onDelete={() => handleExcluir(template.id)}
-              onAtribuir={() => {}}
+              onAtribuir={() => setAtribuirTemplate(template)}
               onDuplicar={() => {}}
             />
           ))}
@@ -567,6 +569,14 @@ export default function ProdutosTarefas() {
             onClose={() => setDialogState(null)}
           />
         )
+      )}
+
+      {atribuirTemplate && (
+        <AtribuirProdutoDialog
+          template={atribuirTemplate}
+          open={!!atribuirTemplate}
+          onClose={() => setAtribuirTemplate(null)}
+        />
       )}
     </div>
   );
