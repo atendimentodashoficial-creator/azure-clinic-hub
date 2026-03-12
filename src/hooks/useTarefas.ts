@@ -14,6 +14,7 @@ export interface Tarefa {
   id: string;
   user_id: string;
   coluna_id: string;
+  cliente_id: string | null;
   titulo: string;
   descricao: string | null;
   responsavel_nome: string | null;
