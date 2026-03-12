@@ -121,8 +121,9 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                 <CountryCodeSelect
                   value={countryCode}
                   onChange={setCountryCode}
-                  phoneValue={telefone}
-                  onPhoneChange={setTelefone}
+                  phoneValue={formatPhoneByCountry(telefone, countryCode)}
+                  onPhoneChange={(val) => setTelefone(stripCountryCode(val, countryCode))}
+                  placeholder={getPhonePlaceholder(countryCode)}
                 />
               </div>
               <div className="space-y-2"><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
