@@ -289,6 +289,7 @@ function ProdutoDialog({
       dataLimite: "",
       colunaId: colunas[0]?.id || "",
       subtarefasTotal: 0,
+      dependencias: [],
     }]);
   };
 
