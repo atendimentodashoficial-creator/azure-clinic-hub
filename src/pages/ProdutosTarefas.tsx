@@ -89,7 +89,6 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
   const meta: any = {
     texto: t.descricao || null,
     responsavel: t.responsaveis.length > 0 ? t.responsaveis.join(", ") : undefined,
-    cliente_id: t.clienteId && t.clienteId !== "none" ? t.clienteId : undefined,
     prioridade: t.prioridade,
     prazo: t.prazo > 0 ? t.prazo : undefined,
     coluna_id: t.colunaId || undefined,
