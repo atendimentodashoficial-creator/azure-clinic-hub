@@ -82,6 +82,7 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     dataLimite: meta.data_limite || "",
     colunaId: meta.coluna_id || "",
     subtarefasTotal: meta.subtarefas_total || 0,
+    dependencias: meta.dependencias || [],
   };
 }
 
