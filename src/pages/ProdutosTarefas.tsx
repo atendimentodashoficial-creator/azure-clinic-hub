@@ -107,6 +107,8 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
 // ─── Inline task editor row ───
 function TarefaInlineEditor({
   tarefa,
+  tarefaIndex,
+  allTarefas,
   onChange,
   onRemove,
   membros,
@@ -114,6 +116,8 @@ function TarefaInlineEditor({
   colunas,
 }: {
   tarefa: TarefaLocal;
+  tarefaIndex: number;
+  allTarefas: TarefaLocal[];
   onChange: (t: TarefaLocal) => void;
   onRemove: () => void;
   membros: any[];
