@@ -274,12 +274,6 @@ export default function Tarefas() {
     });
   };
 
-  const handleCriarBatch = async (tasks: any[]) => {
-    for (const task of tasks) {
-      criarTarefa.mutate(task);
-    }
-    toast.success(`${tasks.length} tarefa(s) criada(s)!`);
-  };
 
   const handleExcluir = (id: string) => {
     excluirTarefa.mutate(id, {
