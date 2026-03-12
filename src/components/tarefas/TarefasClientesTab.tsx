@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
-import { formatPhoneByCountry, getPhonePlaceholder, stripCountryCode } from "@/utils/phoneFormat";
+import { extractCountryCode, formatPhoneByCountry, getPhonePlaceholder, normalizePhone, stripCountryCode } from "@/utils/phoneFormat";
 import { toast } from "sonner";
 import { Plus, Trash2, Edit, Instagram, Link, Globe, MessageSquare, Mail, Phone, Building2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -24,11 +23,15 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   const isEditing = !!clienteEditando;
   const [formTab, setFormTab] = useState("info");
 
+  const initialPhoneData = clienteEditando?.telefone
+    ? extractCountryCode(clienteEditando.telefone)
+    : { countryCode: "55", phoneWithoutCountry: "" };
+
   const [nome, setNome] = useState(clienteEditando?.nome || "");
   const [email, setEmail] = useState(clienteEditando?.email || "");
   const [senhaAcesso, setSenhaAcesso] = useState(clienteEditando?.senha_acesso || "");
-  const [countryCode, setCountryCode] = useState("55");
-  const [telefone, setTelefone] = useState(clienteEditando?.telefone || "");
+  const [countryCode, setCountryCode] = useState(initialPhoneData.countryCode);
+  const [telefone, setTelefone] = useState(initialPhoneData.phoneWithoutCountry);
   const [empresa, setEmpresa] = useState(clienteEditando?.empresa || "");
   const [cnpj, setCnpj] = useState(clienteEditando?.cnpj || "");
   const [site, setSite] = useState(clienteEditando?.site || "");
@@ -40,7 +43,7 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   const [tipo, setTipo] = useState(clienteEditando?.tipo || "interno");
 
   const resetForm = () => {
-    setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("+55"); setEmpresa("");
+    setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("55"); setEmpresa("");
     setCnpj(""); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
     setObservacoes(""); setGrupoWhatsapp(""); setTipo("interno"); setFormTab("info");
   };
@@ -49,15 +52,15 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
     if (!nome.trim()) { toast.error("Nome é obrigatório"); return; }
     if (!email.trim()) { toast.error("Email é obrigatório"); return; }
     if (!isEditing && tipo === "interno" && !senhaAcesso.trim()) { toast.error("Senha de acesso é obrigatória"); return; }
+    const normalizedPhone = normalizePhone(telefone);
+
     onSubmit({
       ...(clienteEditando && { id: clienteEditando.id }),
       nome: nome.trim(),
       email: email.trim(),
       senha_acesso: senhaAcesso.trim() || undefined,
-      telefone: telefone.trim() || null,
+      telefone: normalizedPhone ? `${countryCode}${normalizedPhone}` : null,
       empresa: empresa.trim() || null,
-      cnpj: cnpj.trim() || null,
-      site: site.trim() || null,
       instagram: instagramUrl.trim() || null,
       linktree: linktree.trim() || null,
       google_meu_negocio: googleMeuNegocio.trim() || null,
@@ -198,6 +201,15 @@ export default function TarefasClientesTab() {
     return nome.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
+  const getFormattedPhone = (phone: string | null) => {
+    if (!phone) return "—";
+
+    const { countryCode, phoneWithoutCountry } = extractCountryCode(phone);
+    const formattedPhone = formatPhoneByCountry(phoneWithoutCountry, countryCode);
+
+    return formattedPhone ? `+${countryCode} ${formattedPhone}` : `+${countryCode} ${phoneWithoutCountry}`;
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
   }
@@ -265,7 +277,7 @@ export default function TarefasClientesTab() {
                     )}
                     {cliente.telefone && (
                       <p className="flex items-center gap-2 truncate">
-                        <Phone className="h-3.5 w-3.5 shrink-0" /> {cliente.telefone}
+                        <Phone className="h-3.5 w-3.5 shrink-0" /> {getFormattedPhone(cliente.telefone)}
                       </p>
                     )}
                   </div>
