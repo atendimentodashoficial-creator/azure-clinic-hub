@@ -79,7 +79,7 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     responsaveis: meta.responsavel ? meta.responsavel.split(", ") : [],
     clienteId: meta.cliente_id || "",
     prioridade: meta.prioridade || "media",
-    dataLimite: meta.data_limite || "",
+    prazo: meta.prazo || 0,
     colunaId: meta.coluna_id || "",
     subtarefasTotal: meta.subtarefas_total || 0,
     dependencias: meta.dependencias || [],
