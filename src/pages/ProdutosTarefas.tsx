@@ -135,6 +135,17 @@ function TarefaInlineEditor({
     onChange({ ...tarefa, responsaveis: next });
   };
 
+  const otherTarefas = allTarefas.filter((_, i) => i !== tarefaIndex);
+  const toggleDependencia = (depId: string) => {
+    const next = tarefa.dependencias.includes(depId)
+      ? tarefa.dependencias.filter(d => d !== depId)
+      : [...tarefa.dependencias, depId];
+    onChange({ ...tarefa, dependencias: next });
+  };
+  const depNames = tarefa.dependencias
+    .map(depId => allTarefas.find(t => t.id === depId))
+    .filter(Boolean);
+
   return (
     <Card className="p-3 space-y-2">
       <div className="flex items-center gap-2">
