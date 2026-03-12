@@ -27,6 +27,7 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   const [nome, setNome] = useState(clienteEditando?.nome || "");
   const [email, setEmail] = useState(clienteEditando?.email || "");
   const [senhaAcesso, setSenhaAcesso] = useState(clienteEditando?.senha_acesso || "");
+  const [countryCode, setCountryCode] = useState("+55");
   const [telefone, setTelefone] = useState(clienteEditando?.telefone || "");
   const [empresa, setEmpresa] = useState(clienteEditando?.empresa || "");
   const [cnpj, setCnpj] = useState(clienteEditando?.cnpj || "");
