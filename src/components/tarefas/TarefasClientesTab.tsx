@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
+import { formatPhoneByCountry, getPhonePlaceholder, stripCountryCode } from "@/utils/phoneFormat";
 import { toast } from "sonner";
 import { Plus, MoreVertical, Trash2, Edit, Building2, Instagram, Link, Globe, MessageSquare } from "lucide-react";
 
@@ -120,8 +121,9 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                 <CountryCodeSelect
                   value={countryCode}
                   onChange={setCountryCode}
-                  phoneValue={telefone}
-                  onPhoneChange={setTelefone}
+                  phoneValue={formatPhoneByCountry(telefone, countryCode)}
+                  onPhoneChange={(val) => setTelefone(stripCountryCode(val, countryCode))}
+                  placeholder={getPhonePlaceholder(countryCode)}
                 />
               </div>
               <div className="space-y-2"><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
