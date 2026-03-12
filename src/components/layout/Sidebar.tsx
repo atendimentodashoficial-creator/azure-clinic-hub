@@ -76,11 +76,31 @@ interface SidebarContentProps {
 export const SidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse }: SidebarContentProps) => {
   const { user, signOut } = useAuth();
   const { isFeatureEnabled } = useUserFeatureAccess();
+  const { data: panelConfigs } = useQuery({
+    queryKey: ["panel-tabs-config-admin"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("panel_tabs_config")
+        .select("*")
+        .eq("panel_type", "admin");
+      if (error) return [];
+      return data;
+    },
+  });
 
-  // Filtrar navegação baseado nas permissões do usuário
+  // Filtrar navegação baseado nas permissões do usuário e config do painel admin
   const filteredNavigation = navigation.filter(item => {
     const featureKey = hrefToFeatureKey[item.href];
-    return featureKey ? isFeatureEnabled(featureKey) : true;
+    if (featureKey && !isFeatureEnabled(featureKey)) return false;
+    
+    // Check panel_tabs_config for admin - "usuarios" and "paineis" always visible
+    if (featureKey === "usuarios" || featureKey === "paineis") return true;
+    if (panelConfigs && panelConfigs.length > 0) {
+      const tabKey = item.href.replace("/admin/", "") || "inicio";
+      const config = panelConfigs.find((c: any) => c.tab_key === tabKey);
+      if (config && !config.is_visible) return false;
+    }
+    return true;
   });
 
   const handleLogout = async () => {
