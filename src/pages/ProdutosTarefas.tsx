@@ -54,6 +54,7 @@ interface TarefaLocal {
   dataLimite: string;
   colunaId: string;
   subtarefasTotal: number;
+  dependencias: string[]; // IDs of other tasks in the same product
 }
 
 function gerarId() {
@@ -81,10 +82,15 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     dataLimite: meta.data_limite || "",
     colunaId: meta.coluna_id || "",
     subtarefasTotal: meta.subtarefas_total || 0,
+    dependencias: meta.dependencias || [],
   };
 }
 
-function tarefaLocalToDesc(t: TarefaLocal): string {
+function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
+  // Store dependencias as ordem indexes (position-based) for DB persistence
+  const depOrdens = t.dependencias
+    .map(depId => allTarefas.findIndex(at => at.id === depId))
+    .filter(i => i >= 0);
   const meta: any = {
     texto: t.descricao || null,
     responsavel: t.responsaveis.length > 0 ? t.responsaveis.join(", ") : undefined,
@@ -93,6 +99,7 @@ function tarefaLocalToDesc(t: TarefaLocal): string {
     data_limite: t.dataLimite || undefined,
     coluna_id: t.colunaId || undefined,
     subtarefas_total: t.subtarefasTotal > 0 ? t.subtarefasTotal : undefined,
+    dependencias: depOrdens.length > 0 ? depOrdens : undefined,
   };
   return JSON.stringify(meta);
 }
@@ -100,6 +107,8 @@ function tarefaLocalToDesc(t: TarefaLocal): string {
 // ─── Inline task editor row ───
 function TarefaInlineEditor({
   tarefa,
+  tarefaIndex,
+  allTarefas,
   onChange,
   onRemove,
   membros,
@@ -107,6 +116,8 @@ function TarefaInlineEditor({
   colunas,
 }: {
   tarefa: TarefaLocal;
+  tarefaIndex: number;
+  allTarefas: TarefaLocal[];
   onChange: (t: TarefaLocal) => void;
   onRemove: () => void;
   membros: any[];
@@ -123,6 +134,17 @@ function TarefaInlineEditor({
       : [...tarefa.responsaveis, nome];
     onChange({ ...tarefa, responsaveis: next });
   };
+
+  const otherTarefas = allTarefas.filter((_, i) => i !== tarefaIndex);
+  const toggleDependencia = (depId: string) => {
+    const next = tarefa.dependencias.includes(depId)
+      ? tarefa.dependencias.filter(d => d !== depId)
+      : [...tarefa.dependencias, depId];
+    onChange({ ...tarefa, dependencias: next });
+  };
+  const depNames = tarefa.dependencias
+    .map(depId => allTarefas.find(t => t.id === depId))
+    .filter(Boolean);
 
   return (
     <Card className="p-3 space-y-2">
@@ -163,6 +185,9 @@ function TarefaInlineEditor({
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Calendar className="h-3 w-3" />{tarefa.dataLimite}
             </span>
+          )}
+          {depNames.length > 0 && (
+            <span className="text-xs text-muted-foreground">🔗 Depende de: {depNames.map(d => d!.titulo || "Sem título").join(", ")}</span>
           )}
         </div>
       )}
@@ -223,6 +248,30 @@ function TarefaInlineEditor({
             <div><Label className="text-xs">Data limite</Label><Input type="date" value={tarefa.dataLimite} onChange={e => onChange({ ...tarefa, dataLimite: e.target.value })} className="h-8 text-sm" /></div>
             <div><Label className="text-xs">Subtarefas (total)</Label><Input type="number" min={0} value={tarefa.subtarefasTotal} onChange={e => onChange({ ...tarefa, subtarefasTotal: Number(e.target.value) })} className="h-8 text-sm" /></div>
           </div>
+
+          {otherTarefas.length > 0 && (
+            <div>
+              <Label className="text-xs">Depende de (só será criada após conclusão)</Label>
+              <div className="mt-1 space-y-1.5 max-h-32 overflow-y-auto rounded-md border p-2">
+                {otherTarefas.map((ot, idx) => {
+                  const otIndex = allTarefas.findIndex(at => at.id === ot.id);
+                  return (
+                    <div key={ot.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`dep-${tarefa.id}-${ot.id}`}
+                        checked={tarefa.dependencias.includes(ot.id)}
+                        onCheckedChange={() => toggleDependencia(ot.id)}
+                      />
+                      <label htmlFor={`dep-${tarefa.id}-${ot.id}`} className="text-xs cursor-pointer">
+                        <span className="font-mono text-muted-foreground mr-1">#{otIndex + 1}</span>
+                        {ot.titulo || "Sem título"}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </Card>
@@ -250,6 +299,24 @@ function ProdutoDialog({
   const [tarefas, setTarefas] = useState<TarefaLocal[]>(
     existingTarefas ? existingTarefas.map(tarefaDbToLocal) : []
   );
+  // After loading, resolve dependencias from ordem indexes to local IDs
+  useState(() => {
+    if (existingTarefas && existingTarefas.length > 0) {
+      setTarefas(prev => {
+        const resolved = prev.map(t => {
+          const meta = parseTarefaMeta(existingTarefas.find(et => et.id === t.id)?.descricao || null);
+          if (meta.dependencias && Array.isArray(meta.dependencias)) {
+            const depIds = (meta.dependencias as number[])
+              .map(ordem => prev[ordem]?.id)
+              .filter(Boolean);
+            return { ...t, dependencias: depIds };
+          }
+          return t;
+        });
+        return resolved;
+      });
+    }
+  });
   const [removedIds, setRemovedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -264,6 +331,7 @@ function ProdutoDialog({
       dataLimite: "",
       colunaId: colunas[0]?.id || "",
       subtarefasTotal: 0,
+      dependencias: [],
     }]);
   };
 
@@ -273,11 +341,17 @@ function ProdutoDialog({
 
   const removeTarefa = (index: number) => {
     const t = tarefas[index];
-    // Track DB tasks that need deletion
     if (existingTarefas?.some(et => et.id === t.id)) {
       setRemovedIds(prev => [...prev, t.id]);
     }
-    setTarefas(prev => prev.filter((_, i) => i !== index));
+    // Remove task and clean up dependencias referencing it
+    setTarefas(prev => prev
+      .filter((_, i) => i !== index)
+      .map(item => ({
+        ...item,
+        dependencias: item.dependencias.filter(d => d !== t.id),
+      }))
+    );
   };
 
   const handleSubmit = async () => {
@@ -304,7 +378,7 @@ function ProdutoDialog({
       // Upsert tasks
       for (let i = 0; i < tarefas.length; i++) {
         const t = tarefas[i];
-        const desc = tarefaLocalToDesc(t);
+        const desc = tarefaLocalToDesc(t, tarefas);
         const isExisting = existingTarefas?.some(et => et.id === t.id);
 
         if (isExisting) {
@@ -360,6 +434,8 @@ function ProdutoDialog({
                   <TarefaInlineEditor
                     key={t.id}
                     tarefa={t}
+                    tarefaIndex={i}
+                    allTarefas={tarefas}
                     onChange={updated => updateTarefa(i, updated)}
                     onRemove={() => removeTarefa(i)}
                     membros={membros}
