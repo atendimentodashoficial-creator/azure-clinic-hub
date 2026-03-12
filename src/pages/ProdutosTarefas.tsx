@@ -205,17 +205,6 @@ function TarefaInlineEditor({
           </div>
 
           <div>
-            <Label className="text-xs">Cliente</Label>
-            <Select value={tarefa.clienteId} onValueChange={v => onChange({ ...tarefa, clienteId: v })}>
-              <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Nenhum" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum</SelectItem>
-                {clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
             <Label className="text-xs">Responsável(is)</Label>
             {membros.length > 0 ? (
               <div className="mt-1 space-y-1.5 max-h-32 overflow-y-auto rounded-md border p-2">
