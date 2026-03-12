@@ -476,6 +476,7 @@ function ProdutoDialog({
             <Switch checked={requerReuniao} onCheckedChange={setRequerReuniao} />
           </div>
 
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold">Tarefas do Produto</Label>
               <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={addTarefa}>
