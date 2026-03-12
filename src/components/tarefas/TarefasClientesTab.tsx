@@ -163,11 +163,13 @@ export default function TarefasClientesTab() {
   const { clientes, isLoading, criarCliente, atualizarCliente, excluirCliente } = useTarefasClientes();
   const [editando, setEditando] = useState<TarefaCliente | null>(null);
   const [busca, setBusca] = useState("");
+  const [subTab, setSubTab] = useState("interno");
 
   const filtrados = clientes.filter(c =>
-    c.nome.toLowerCase().includes(busca.toLowerCase()) ||
+    (c.nome.toLowerCase().includes(busca.toLowerCase()) ||
     c.empresa?.toLowerCase().includes(busca.toLowerCase()) ||
-    c.email?.toLowerCase().includes(busca.toLowerCase())
+    c.email?.toLowerCase().includes(busca.toLowerCase())) &&
+    c.tipo === subTab
   );
 
   const handleCriar = (data: any) => {
@@ -192,6 +194,10 @@ export default function TarefasClientesTab() {
     });
   };
 
+  const getInitials = (nome: string) => {
+    return nome.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
   }
@@ -211,60 +217,64 @@ export default function TarefasClientesTab() {
         />
       )}
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Empresa</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead className="w-10"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtrados.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  Nenhum cliente cadastrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtrados.map(cliente => (
-                <TableRow key={cliente.id}>
-                  <TableCell className="font-medium">{cliente.nome}</TableCell>
-                  <TableCell>{cliente.email}</TableCell>
-                  <TableCell>{cliente.empresa || "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant={cliente.tipo === "interno" ? "secondary" : "outline"} className={cliente.tipo === "preview" ? "bg-amber-500/20 text-amber-400 border-0" : ""}>
-                      {cliente.tipo === "interno" ? "Interno" : "Preview"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{cliente.telefone || "—"}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setEditando(cliente)}>
-                          <Edit className="h-4 w-4 mr-2" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleExcluir(cliente.id)} className="text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+      <Tabs value={subTab} onValueChange={setSubTab}>
+        <TabsList>
+          <TabsTrigger value="interno">Internos</TabsTrigger>
+          <TabsTrigger value="preview">Preview</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={subTab} className="mt-4">
+          {filtrados.length === 0 ? (
+            <div className="text-center text-muted-foreground py-12">
+              Nenhum cliente {subTab === "interno" ? "interno" : "preview"} cadastrado
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtrados.map(cliente => (
+                <Card key={cliente.id} className="p-4 flex flex-col gap-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                          {getInitials(cliente.nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{cliente.nome}</p>
+                        {cliente.empresa && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                            <Building2 className="h-3 w-3 shrink-0" /> {cliente.empresa}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditando(cliente)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleExcluir(cliente.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 text-sm text-muted-foreground">
+                    {cliente.email && (
+                      <p className="flex items-center gap-2 truncate">
+                        <Mail className="h-3.5 w-3.5 shrink-0" /> {cliente.email}
+                      </p>
+                    )}
+                    {cliente.telefone && (
+                      <p className="flex items-center gap-2 truncate">
+                        <Phone className="h-3.5 w-3.5 shrink-0" /> {cliente.telefone}
+                      </p>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
