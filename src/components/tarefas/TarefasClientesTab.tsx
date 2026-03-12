@@ -43,7 +43,7 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   const [tipo, setTipo] = useState(clienteEditando?.tipo || "interno");
 
   const resetForm = () => {
-    setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("+55"); setEmpresa("");
+    setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("55"); setEmpresa("");
     setCnpj(""); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
     setObservacoes(""); setGrupoWhatsapp(""); setTipo("interno"); setFormTab("info");
   };
