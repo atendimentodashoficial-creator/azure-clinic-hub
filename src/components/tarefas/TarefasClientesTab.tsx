@@ -86,12 +86,12 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
           <DialogTitle>{isEditing ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
           <p className="text-sm text-muted-foreground">Preencha as informações do cliente. O email é obrigatório para que o cliente possa acessar o sistema.</p>
         </DialogHeader>
-        <Tabs value={formTab} onValueChange={setFormTab}>
-          <TabsList className="w-full">
+        <Tabs value={formTab} onValueChange={setFormTab} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="w-full shrink-0">
             <TabsTrigger value="info" className="flex-1">Informações Gerais</TabsTrigger>
             <TabsTrigger value="redes" className="flex-1">Redes Sociais</TabsTrigger>
           </TabsList>
-          <ScrollArea className="max-h-[60vh] pr-2">
+          <div className="flex-1 overflow-y-auto pr-1">
             <TabsContent value="info" className="space-y-4 mt-4">
               <div>
                 <Label>Tipo de Cliente *</Label>
