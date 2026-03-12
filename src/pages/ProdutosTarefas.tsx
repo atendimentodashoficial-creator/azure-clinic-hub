@@ -7,7 +7,6 @@ import {
   ProdutoTemplateTarefa,
 } from "@/hooks/useProdutoTemplates";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
-import { useTarefasClientes } from "@/hooks/useTarefasClientes";
 import { useTarefas } from "@/hooks/useTarefas";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
