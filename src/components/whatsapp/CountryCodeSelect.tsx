@@ -173,7 +173,7 @@ export function CountryCodeSelect({
             type="button"
             role="combobox"
             aria-expanded={open}
-            className="flex items-center gap-1 h-full px-2.5 bg-muted/40 hover:bg-muted/60 transition-colors shrink-0 border-r"
+            className="flex items-center gap-1 h-full px-2.5 bg-muted/40 hover:bg-muted/60 transition-colors shrink-0 border-r rounded-l-md"
             disabled={disabled}
           >
             <span className="text-base leading-none">{selectedCountry.flag}</span>
