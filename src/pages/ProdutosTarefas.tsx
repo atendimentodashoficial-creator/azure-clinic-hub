@@ -105,7 +105,6 @@ function TarefaInlineEditor({
   onChange,
   onRemove,
   membros,
-  clientes,
   colunas,
 }: {
   tarefa: TarefaLocal;
@@ -114,7 +113,6 @@ function TarefaInlineEditor({
   onChange: (t: TarefaLocal) => void;
   onRemove: () => void;
   membros: any[];
-  clientes: any[];
   colunas: any[];
 }) {
   const [expanded, setExpanded] = useState(false);
