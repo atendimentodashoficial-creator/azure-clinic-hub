@@ -401,6 +401,8 @@ function ProdutoDialog({
                   <TarefaInlineEditor
                     key={t.id}
                     tarefa={t}
+                    tarefaIndex={i}
+                    allTarefas={tarefas}
                     onChange={updated => updateTarefa(i, updated)}
                     onRemove={() => removeTarefa(i)}
                     membros={membros}
