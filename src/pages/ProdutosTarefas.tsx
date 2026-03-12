@@ -54,6 +54,7 @@ interface TarefaLocal {
   dataLimite: string;
   colunaId: string;
   subtarefasTotal: number;
+  dependencias: string[]; // IDs of other tasks in the same product
 }
 
 function gerarId() {
