@@ -51,10 +51,10 @@ interface TarefaLocal {
   responsaveis: string[];
   clienteId: string;
   prioridade: string;
-  dataLimite: string;
+  prazo: number;
   colunaId: string;
   subtarefasTotal: number;
-  dependencias: string[]; // IDs of other tasks in the same product
+  dependencias: string[];
 }
 
 function gerarId() {
