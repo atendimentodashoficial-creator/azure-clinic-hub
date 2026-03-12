@@ -99,23 +99,23 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                   <div className="flex items-center gap-2">
                     <RadioGroupItem value="interno" id="tipo-interno" />
                     <label htmlFor="tipo-interno" className="text-sm cursor-pointer">Cliente Interno</label>
-                    <Badge variant="secondary" className="text-xs">Contrato fechado</Badge>
                   </div>
                   <div className="flex items-center gap-2">
                     <RadioGroupItem value="preview" id="tipo-preview" />
                     <label htmlFor="tipo-preview" className="text-sm cursor-pointer">Cliente Preview</label>
-                    <Badge className="text-xs bg-amber-500/20 text-amber-400 border-0">Prospect</Badge>
                   </div>
                 </RadioGroup>
                 {tipo === "preview" && <p className="text-xs text-muted-foreground mt-1">Clientes Preview têm acesso apenas à landing page para apresentação</p>}
               </div>
               <div><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} /></div>
               <div><Label>Email *</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
-              <div>
-                <Label>Senha de Acesso {!isEditing && "*"}</Label>
-                <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
-                <p className="text-xs text-muted-foreground mt-1">Esta senha será usada pelo cliente para acessar a área de clientes</p>
-              </div>
+              {tipo === "interno" && (
+                <div>
+                  <Label>Senha de Acesso {!isEditing && "*"}</Label>
+                  <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
+                  <p className="text-xs text-muted-foreground mt-1">Esta senha será usada pelo cliente para acessar a área de clientes</p>
+                </div>
+              )}
               <div><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(11) 99999-9999 ou +351964044402" /></div>
               <div><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
               <div><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></div>
