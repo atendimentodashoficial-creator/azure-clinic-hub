@@ -270,7 +270,6 @@ function ProdutoDialog({
 }) {
   const { criarTemplate, atualizarTemplate, adicionarTarefa, atualizarTarefa, excluirTarefa } = useProdutoTemplateMutations();
   const { membros } = useTarefasMembros();
-  const { clientes } = useTarefasClientes();
   const { colunas } = useTarefas();
 
   const isEditing = !!editando;
