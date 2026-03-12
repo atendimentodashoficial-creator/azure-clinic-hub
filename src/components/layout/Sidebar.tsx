@@ -138,7 +138,7 @@ export const SidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse
                   <TooltipTrigger asChild>
                     <NavLink
                       to={item.href}
-                      end={item.href === "/"}
+                      end={item.href === "/admin"}
                       onClick={onNavigate}
                       className={({ isActive }) =>
                         cn(
