@@ -305,13 +305,13 @@ function NovaColunaButton({ onSubmit }: { onSubmit: (data: { nome: string; cor: 
           <Plus className="h-5 w-5" /> Nova Coluna
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader><DialogTitle>Nova Coluna</DialogTitle></DialogHeader>
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           <div><Label>Nome</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Em Revisão" /></div>
           <div><Label>Cor</Label><Input type="color" value={cor} onChange={e => setCor(e.target.value)} /></div>
-          <Button onClick={() => { if (!nome.trim()) { toast.error("Nome obrigatório"); return; } onSubmit({ nome, cor }); setNome(""); setOpen(false); }} className="w-full">Criar</Button>
         </div>
+        <Button onClick={() => { if (!nome.trim()) { toast.error("Nome obrigatório"); return; } onSubmit({ nome, cor }); setNome(""); setOpen(false); }} className="w-full mt-4">Criar</Button>
       </DialogContent>
     </Dialog>
   );
