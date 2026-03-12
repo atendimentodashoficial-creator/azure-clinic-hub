@@ -86,7 +86,7 @@ export function useTarefas() {
 
   // Create task
   const criarTarefa = useMutation({
-    mutationFn: async (tarefa: { titulo: string; descricao?: string; responsavel_nome?: string; prioridade?: string; data_limite?: string; coluna_id: string }) => {
+    mutationFn: async (tarefa: { titulo: string; descricao?: string; responsavel_nome?: string; prioridade?: string; data_limite?: string; coluna_id: string; cliente_id?: string; subtarefas_total?: number }) => {
       if (!user?.id) throw new Error("Não autenticado");
       const maxOrdem = tarefas.filter((t) => t.coluna_id === tarefa.coluna_id).length;
       const { error } = await supabase.from("tarefas").insert({
