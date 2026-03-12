@@ -334,7 +334,7 @@ export default function Tarefas() {
           </h1>
           <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
         </div>
-        <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} onSubmitBatch={handleCriarBatch} />
+        <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
