@@ -277,7 +277,7 @@ export default function TarefasClientesTab() {
                     )}
                     {cliente.telefone && (
                       <p className="flex items-center gap-2 truncate">
-                        <Phone className="h-3.5 w-3.5 shrink-0" /> {cliente.telefone}
+                        <Phone className="h-3.5 w-3.5 shrink-0" /> {getFormattedPhone(cliente.telefone)}
                       </p>
                     )}
                   </div>
