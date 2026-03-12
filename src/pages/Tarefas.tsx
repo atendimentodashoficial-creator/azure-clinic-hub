@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useTarefas, Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTarefasClientes } from "@/hooks/useTarefasClientes";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable, closestCenter } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ArrowRight, ListChecks, Building2 } from "lucide-react";
+import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -136,21 +139,52 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
   );
 }
 
-function TarefaCard({ tarefa, colunas, clientes, onDelete, onMove }: {
+function DraggableTarefaCard({ tarefa, colunas, clientes, onDelete }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
   onDelete: (id: string) => void;
-  onMove: (data: { id: string; coluna_id: string; ordem: number }) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: tarefa.id,
+    data: { type: "tarefa", tarefa },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <TarefaCardContent
+        tarefa={tarefa}
+        colunas={colunas}
+        clientes={clientes}
+        onDelete={onDelete}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
+    </div>
+  );
+}
+
+function TarefaCardContent({ tarefa, colunas, clientes, onDelete, dragHandleProps }: {
+  tarefa: Tarefa;
+  colunas: TarefaColuna[];
+  clientes: { id: string; nome: string; empresa: string | null }[];
+  onDelete?: (id: string) => void;
+  dragHandleProps?: Record<string, any>;
 }) {
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
-  const outrasColunas = colunas.filter(c => c.id !== tarefa.coluna_id);
   const cliente = tarefa.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
 
   return (
     <Card className="p-3 bg-card border-l-4 hover:bg-accent/30 transition-colors group" style={{ borderLeftColor: colunas.find(c => c.id === tarefa.coluna_id)?.cor || '#f59e0b' }}>
       <div className="flex items-start gap-2">
-        <GripVertical className="h-4 w-4 mt-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 cursor-grab" />
+        <div {...dragHandleProps} className="mt-1 shrink-0 cursor-grab active:cursor-grabbing touch-none">
+          <GripVertical className="h-4 w-4 text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity" />
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
@@ -161,23 +195,16 @@ function TarefaCard({ tarefa, colunas, clientes, onDelete, onMove }: {
                 </Badge>
               )}
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                  <MoreVertical className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {outrasColunas.map(col => (
-                  <DropdownMenuItem key={col.id} onClick={() => onMove({ id: tarefa.id, coluna_id: col.id, ordem: 0 })}>
-                    <ArrowRight className="h-4 w-4 mr-2" /> Mover para {col.nome}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuItem onClick={() => onDelete(tarefa.id)} className="text-destructive">
-                  <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-destructive hover:text-destructive"
+                onClick={() => onDelete(tarefa.id)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
           </div>
           {tarefa.responsavel_nome && (
             <p className="text-xs text-muted-foreground mt-1">{tarefa.responsavel_nome}</p>
@@ -202,9 +229,30 @@ function TarefaCard({ tarefa, colunas, clientes, onDelete, onMove }: {
   );
 }
 
+function DroppableColumn({ coluna, children }: { coluna: TarefaColuna; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `column-${coluna.id}`,
+    data: { type: "column", colunaId: coluna.id },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn("space-y-2 min-h-[60px] rounded-lg transition-colors p-1", isOver && "bg-primary/5")}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function Tarefas() {
-  const { colunas, tarefas, isLoading, criarTarefa, atualizarTarefa, excluirTarefa, moverTarefa, criarColuna, excluirColuna } = useTarefas();
+  const { colunas, tarefas, isLoading, criarTarefa, excluirTarefa, moverTarefa, criarColuna, excluirColuna } = useTarefas();
   const { clientes } = useTarefasClientes();
+  const [activeTarefa, setActiveTarefa] = useState<Tarefa | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
   const handleCriar = (data: any) => {
     criarTarefa.mutate(data, {
@@ -220,11 +268,42 @@ export default function Tarefas() {
     });
   };
 
-  const handleMover = (data: { id: string; coluna_id: string; ordem: number }) => {
-    moverTarefa.mutate(data, {
-      onSuccess: () => toast.success("Tarefa movida!"),
-      onError: (e: any) => toast.error(e.message),
-    });
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const tarefa = tarefas.find(t => t.id === active.id);
+    if (tarefa) setActiveTarefa(tarefa);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveTarefa(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const tarefaId = active.id as string;
+    let targetColunaId: string | null = null;
+
+    // Dropped over a column
+    if (over.data.current?.type === "column") {
+      targetColunaId = over.data.current.colunaId;
+    }
+    // Dropped over another task — get its column
+    else if (over.data.current?.type === "tarefa") {
+      targetColunaId = over.data.current.tarefa.coluna_id;
+    }
+
+    if (!targetColunaId) return;
+
+    const tarefa = tarefas.find(t => t.id === tarefaId);
+    if (!tarefa || tarefa.coluna_id === targetColunaId) return;
+
+    const targetTarefas = tarefas.filter(t => t.coluna_id === targetColunaId);
+    moverTarefa.mutate(
+      { id: tarefaId, coluna_id: targetColunaId, ordem: targetTarefas.length },
+      {
+        onSuccess: () => toast.success("Tarefa movida!"),
+        onError: (e: any) => toast.error(e.message),
+      }
+    );
   };
 
   if (isLoading) {
@@ -241,54 +320,67 @@ export default function Tarefas() {
         <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: "calc(100vh - 220px)" }}>
-        {colunas.map(coluna => {
-          const tarefasColuna = tarefas.filter(t => t.coluna_id === coluna.id);
-          return (
-            <div key={coluna.id} className="flex-shrink-0 w-80">
-              <div className="rounded-xl border-2 p-4 space-y-3 h-full" style={{ borderColor: coluna.cor }}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-foreground">{coluna.nome}</h3>
-                    <p className="text-xs text-muted-foreground">{tarefasColuna.length} tarefa(s)</p>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: "calc(100vh - 220px)" }}>
+          {colunas.map(coluna => {
+            const tarefasColuna = tarefas.filter(t => t.coluna_id === coluna.id);
+            return (
+              <div key={coluna.id} className="flex-shrink-0 w-80">
+                <div className="rounded-xl border-2 p-4 space-y-3 h-full" style={{ borderColor: coluna.cor }}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-foreground">{coluna.nome}</h3>
+                      <p className="text-xs text-muted-foreground">{tarefasColuna.length} tarefa(s)</p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => excluirColuna.mutate(coluna.id)} className="text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir coluna
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => excluirColuna.mutate(coluna.id)} className="text-destructive">
-                        <Trash2 className="h-4 w-4 mr-2" /> Excluir coluna
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
 
-                <div className="space-y-2">
-                  {tarefasColuna.map(tarefa => (
-                    <TarefaCard
-                      key={tarefa.id}
-                      tarefa={tarefa}
-                      colunas={colunas}
-                      clientes={clientes}
-                      onDelete={handleExcluir}
-                      onMove={handleMover}
-                    />
-                  ))}
-                </div>
+                  <DroppableColumn coluna={coluna}>
+                    {tarefasColuna.map(tarefa => (
+                      <DraggableTarefaCard
+                        key={tarefa.id}
+                        tarefa={tarefa}
+                        colunas={colunas}
+                        clientes={clientes}
+                        onDelete={handleExcluir}
+                      />
+                    ))}
+                  </DroppableColumn>
 
-                <NovaTarefaDialog colunaId={coluna.id} colunas={colunas} onSubmit={handleCriar} />
+                  <NovaTarefaDialog colunaId={coluna.id} colunas={colunas} onSubmit={handleCriar} />
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
 
-        <div className="flex-shrink-0 w-80">
-          <NovaColunaButton onSubmit={(data) => criarColuna.mutate(data, { onSuccess: () => toast.success("Coluna criada!") })} />
+          <div className="flex-shrink-0 w-80">
+            <NovaColunaButton onSubmit={(data) => criarColuna.mutate(data, { onSuccess: () => toast.success("Coluna criada!") })} />
+          </div>
         </div>
-      </div>
+
+        <DragOverlay>
+          {activeTarefa && (
+            <div className="w-80 rotate-2">
+              <TarefaCardContent
+                tarefa={activeTarefa}
+                colunas={colunas}
+                clientes={clientes}
+              />
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }
