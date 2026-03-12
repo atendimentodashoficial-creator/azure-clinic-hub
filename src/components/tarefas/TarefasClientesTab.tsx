@@ -81,17 +81,17 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
           <Button className="gap-2"><Plus className="h-4 w-4" /> Novo Cliente</Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-lg max-h-[90vh]">
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
           <p className="text-sm text-muted-foreground">Preencha as informações do cliente. O email é obrigatório para que o cliente possa acessar o sistema.</p>
         </DialogHeader>
-        <Tabs value={formTab} onValueChange={setFormTab}>
-          <TabsList className="w-full">
+        <Tabs value={formTab} onValueChange={setFormTab} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="w-full shrink-0">
             <TabsTrigger value="info" className="flex-1">Informações Gerais</TabsTrigger>
             <TabsTrigger value="redes" className="flex-1">Redes Sociais</TabsTrigger>
           </TabsList>
-          <ScrollArea className="max-h-[60vh] pr-2">
+          <div className="flex-1 overflow-y-auto pr-1">
             <TabsContent value="info" className="space-y-4 mt-4">
               <div>
                 <Label>Tipo de Cliente *</Label>
@@ -147,9 +147,9 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                 <p className="text-xs text-muted-foreground mt-1">Este link será exibido na aba Google do painel do cliente</p>
               </div>
             </TabsContent>
-          </ScrollArea>
+          </div>
         </Tabs>
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex justify-end gap-2 pt-2 shrink-0">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancelar</Button>
           <Button onClick={handleSubmit}>{isEditing ? "Salvar" : "Criar"}</Button>
         </div>
