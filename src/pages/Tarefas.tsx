@@ -28,23 +28,30 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
   const [open, setOpen] = useState(false);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [responsavel, setResponsavel] = useState("");
+  const [responsaveisSelecionados, setResponsaveisSelecionados] = useState<string[]>([]);
   const [prioridade, setPrioridade] = useState("media");
   const [dataLimite, setDataLimite] = useState("");
   const [subtarefasTotal, setSubtarefasTotal] = useState(0);
+  const { data: profissionais = [] } = useProfissionais(true);
+
+  const toggleResponsavel = (nome: string) => {
+    setResponsaveisSelecionados(prev =>
+      prev.includes(nome) ? prev.filter(n => n !== nome) : [...prev, nome]
+    );
+  };
 
   const handleSubmit = () => {
     if (!titulo.trim()) { toast.error("Título obrigatório"); return; }
     onSubmit({
       titulo: titulo.trim(),
       descricao: descricao.trim() || undefined,
-      responsavel_nome: responsavel.trim() || undefined,
+      responsavel_nome: responsaveisSelecionados.length > 0 ? responsaveisSelecionados.join(", ") : undefined,
       prioridade,
       data_limite: dataLimite || undefined,
       coluna_id: colunaId,
       subtarefas_total: subtarefasTotal,
     });
-    setTitulo(""); setDescricao(""); setResponsavel(""); setPrioridade("media"); setDataLimite(""); setSubtarefasTotal(0);
+    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setPrioridade("media"); setDataLimite(""); setSubtarefasTotal(0);
     setOpen(false);
   };
 
@@ -60,7 +67,32 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
         <div className="space-y-4">
           <div><Label>Título *</Label><Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Criar landing page" /></div>
           <div><Label>Descrição</Label><Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Detalhes da tarefa..." /></div>
-          <div><Label>Responsável</Label><Input value={responsavel} onChange={e => setResponsavel(e.target.value)} placeholder="Nome do funcionário" /></div>
+          <div>
+            <Label>Responsável(is)</Label>
+            {profissionais.length > 0 ? (
+              <div className="mt-2 space-y-2 max-h-40 overflow-y-auto rounded-md border p-3">
+                {profissionais.map(prof => (
+                  <div key={prof.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`prof-${prof.id}`}
+                      checked={responsaveisSelecionados.includes(prof.nome)}
+                      onCheckedChange={() => toggleResponsavel(prof.nome)}
+                    />
+                    <label htmlFor={`prof-${prof.id}`} className="text-sm cursor-pointer">{prof.nome}</label>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">Nenhum funcionário cadastrado. Cadastre em Profissionais.</p>
+            )}
+            {responsaveisSelecionados.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {responsaveisSelecionados.map(nome => (
+                  <Badge key={nome} variant="secondary" className="text-xs">{nome}</Badge>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Prioridade</Label>
