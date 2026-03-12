@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTarefas, Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTarefasClientes } from "@/hooks/useTarefasClientes";
 import { useProfissionais } from "@/hooks/useProfissionais";
-import TarefasClientesTab from "@/components/tarefas/TarefasClientesTab";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,9 +12,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ArrowRight, ListChecks, Users, Building2 } from "lucide-react";
+import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ArrowRight, ListChecks, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +48,7 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
       titulo: titulo.trim(),
       descricao: descricao.trim() || undefined,
       responsavel_nome: responsaveisSelecionados.length > 0 ? responsaveisSelecionados.join(", ") : undefined,
-      cliente_id: clienteId || undefined,
+      cliente_id: clienteId && clienteId !== "none" ? clienteId : undefined,
       prioridade,
       data_limite: dataLimite || undefined,
       coluna_id: colunaId,
@@ -73,7 +71,6 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
           <div><Label>Título *</Label><Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Criar landing page" /></div>
           <div><Label>Descrição</Label><Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Detalhes da tarefa..." /></div>
           
-          {/* Cliente */}
           <div>
             <Label>Cliente</Label>
             <Select value={clienteId} onValueChange={setClienteId}>
@@ -89,7 +86,6 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
             </Select>
           </div>
 
-          {/* Responsáveis */}
           <div>
             <Label>Responsável(is)</Label>
             {profissionais.length > 0 ? (
@@ -140,11 +136,10 @@ function NovaTarefaDialog({ colunaId, colunas, onSubmit }: { colunaId: string; c
   );
 }
 
-function TarefaCard({ tarefa, colunas, clientes, onUpdate, onDelete, onMove }: {
+function TarefaCard({ tarefa, colunas, clientes, onDelete, onMove }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
-  onUpdate: (data: Partial<Tarefa> & { id: string }) => void;
   onDelete: (id: string) => void;
   onMove: (data: { id: string; coluna_id: string; ordem: number }) => void;
 }) {
@@ -210,11 +205,8 @@ function TarefaCard({ tarefa, colunas, clientes, onUpdate, onDelete, onMove }: {
 export default function Tarefas() {
   const { colunas, tarefas, isLoading, criarTarefa, atualizarTarefa, excluirTarefa, moverTarefa, criarColuna, excluirColuna } = useTarefas();
   const { clientes } = useTarefasClientes();
-  const [activeTab, setActiveTab] = useState("kanban");
 
   const handleCriar = (data: any) => {
-    // Fix "none" to null
-    if (data.cliente_id === "none") data.cliente_id = undefined;
     criarTarefa.mutate(data, {
       onSuccess: () => toast.success("Tarefa criada!"),
       onError: (e: any) => toast.error(e.message),
@@ -235,84 +227,68 @@ export default function Tarefas() {
     });
   };
 
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <ListChecks className="h-6 w-6" />
-            Tarefas
-          </h1>
-          <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <ListChecks className="h-6 w-6" />
+          Tarefas
+        </h1>
+        <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="kanban" className="gap-2"><ListChecks className="h-4 w-4" /> Kanban</TabsTrigger>
-          <TabsTrigger value="clientes" className="gap-2"><Building2 className="h-4 w-4" /> Clientes</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="kanban">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>
-          ) : (
-            <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: "calc(100vh - 280px)" }}>
-              {colunas.map(coluna => {
-                const tarefasColuna = tarefas.filter(t => t.coluna_id === coluna.id);
-                return (
-                  <div key={coluna.id} className="flex-shrink-0 w-80">
-                    <div className="rounded-xl border-2 p-4 space-y-3 h-full" style={{ borderColor: coluna.cor }}>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold text-foreground">{coluna.nome}</h3>
-                          <p className="text-xs text-muted-foreground">{tarefasColuna.length} tarefa(s)</p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => excluirColuna.mutate(coluna.id)} className="text-destructive">
-                              <Trash2 className="h-4 w-4 mr-2" /> Excluir coluna
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      <div className="space-y-2">
-                        {tarefasColuna.map(tarefa => (
-                          <TarefaCard
-                            key={tarefa.id}
-                            tarefa={tarefa}
-                            colunas={colunas}
-                            clientes={clientes}
-                            onUpdate={(d) => atualizarTarefa.mutate(d)}
-                            onDelete={handleExcluir}
-                            onMove={handleMover}
-                          />
-                        ))}
-                      </div>
-
-                      <NovaTarefaDialog colunaId={coluna.id} colunas={colunas} onSubmit={handleCriar} />
-                    </div>
+      <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: "calc(100vh - 220px)" }}>
+        {colunas.map(coluna => {
+          const tarefasColuna = tarefas.filter(t => t.coluna_id === coluna.id);
+          return (
+            <div key={coluna.id} className="flex-shrink-0 w-80">
+              <div className="rounded-xl border-2 p-4 space-y-3 h-full" style={{ borderColor: coluna.cor }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-foreground">{coluna.nome}</h3>
+                    <p className="text-xs text-muted-foreground">{tarefasColuna.length} tarefa(s)</p>
                   </div>
-                );
-              })}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => excluirColuna.mutate(coluna.id)} className="text-destructive">
+                        <Trash2 className="h-4 w-4 mr-2" /> Excluir coluna
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
-              <div className="flex-shrink-0 w-80">
-                <NovaColunaButton onSubmit={(data) => criarColuna.mutate(data, { onSuccess: () => toast.success("Coluna criada!") })} />
+                <div className="space-y-2">
+                  {tarefasColuna.map(tarefa => (
+                    <TarefaCard
+                      key={tarefa.id}
+                      tarefa={tarefa}
+                      colunas={colunas}
+                      clientes={clientes}
+                      onDelete={handleExcluir}
+                      onMove={handleMover}
+                    />
+                  ))}
+                </div>
+
+                <NovaTarefaDialog colunaId={coluna.id} colunas={colunas} onSubmit={handleCriar} />
               </div>
             </div>
-          )}
-        </TabsContent>
+          );
+        })}
 
-        <TabsContent value="clientes">
-          <TarefasClientesTab />
-        </TabsContent>
-      </Tabs>
+        <div className="flex-shrink-0 w-80">
+          <NovaColunaButton onSubmit={(data) => criarColuna.mutate(data, { onSuccess: () => toast.success("Coluna criada!") })} />
+        </div>
+      </div>
     </div>
   );
 }
