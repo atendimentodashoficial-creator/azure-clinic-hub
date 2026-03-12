@@ -174,14 +174,8 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
 
       const newClient = updatedClientes[0] as TarefaCliente;
       setShowNovoCliente(false);
-
-      if (template.requer_reuniao) {
-        setSelectedClient({ id: newClient.id, nome: newClient.nome, telefone: newClient.telefone });
-        setReuniaoTitulo(`Reunião - ${newClient.nome} - ${template.nome}`);
-        setStep("schedule-meeting");
-      } else {
-        await handleAtribuirSemReuniao(newClient.id, newClient.nome);
-      }
+      toast.success("Cliente criado! Selecione-o na lista para atribuir o produto.");
+      // Return to client list so user can confirm by selecting
     } catch (e: any) {
       toast.error(e.message || "Erro ao criar cliente");
     }
