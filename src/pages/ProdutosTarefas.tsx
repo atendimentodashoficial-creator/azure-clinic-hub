@@ -87,7 +87,6 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
 }
 
 function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
-  // Store dependencias as ordem indexes (position-based) for DB persistence
   const depOrdens = t.dependencias
     .map(depId => allTarefas.findIndex(at => at.id === depId))
     .filter(i => i >= 0);
@@ -96,7 +95,7 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
     responsavel: t.responsaveis.length > 0 ? t.responsaveis.join(", ") : undefined,
     cliente_id: t.clienteId && t.clienteId !== "none" ? t.clienteId : undefined,
     prioridade: t.prioridade,
-    data_limite: t.dataLimite || undefined,
+    prazo: t.prazo > 0 ? t.prazo : undefined,
     coluna_id: t.colunaId || undefined,
     subtarefas_total: t.subtarefasTotal > 0 ? t.subtarefasTotal : undefined,
     dependencias: depOrdens.length > 0 ? depOrdens : undefined,
