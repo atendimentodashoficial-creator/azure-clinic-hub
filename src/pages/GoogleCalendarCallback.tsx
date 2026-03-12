@@ -104,7 +104,7 @@ export default function GoogleCalendarCallback() {
             <>
               <XCircle className="h-12 w-12 mx-auto text-red-600" />
               <p className="text-red-600 font-medium">{message}</p>
-              <Button onClick={() => navigate("/configuracoes")} className="mt-4">
+              <Button onClick={() => navigate("/admin/configuracoes")} className="mt-4">
                 Voltar para Configurações
               </Button>
             </>
