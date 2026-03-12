@@ -51,10 +51,10 @@ interface TarefaLocal {
   responsaveis: string[];
   clienteId: string;
   prioridade: string;
-  dataLimite: string;
+  prazo: number;
   colunaId: string;
   subtarefasTotal: number;
-  dependencias: string[]; // IDs of other tasks in the same product
+  dependencias: string[];
 }
 
 function gerarId() {
@@ -79,7 +79,7 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     responsaveis: meta.responsavel ? meta.responsavel.split(", ") : [],
     clienteId: meta.cliente_id || "",
     prioridade: meta.prioridade || "media",
-    dataLimite: meta.data_limite || "",
+    prazo: meta.prazo || 0,
     colunaId: meta.coluna_id || "",
     subtarefasTotal: meta.subtarefas_total || 0,
     dependencias: meta.dependencias || [],
@@ -87,7 +87,6 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
 }
 
 function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
-  // Store dependencias as ordem indexes (position-based) for DB persistence
   const depOrdens = t.dependencias
     .map(depId => allTarefas.findIndex(at => at.id === depId))
     .filter(i => i >= 0);
@@ -96,7 +95,7 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
     responsavel: t.responsaveis.length > 0 ? t.responsaveis.join(", ") : undefined,
     cliente_id: t.clienteId && t.clienteId !== "none" ? t.clienteId : undefined,
     prioridade: t.prioridade,
-    data_limite: t.dataLimite || undefined,
+    prazo: t.prazo > 0 ? t.prazo : undefined,
     coluna_id: t.colunaId || undefined,
     subtarefas_total: t.subtarefasTotal > 0 ? t.subtarefasTotal : undefined,
     dependencias: depOrdens.length > 0 ? depOrdens : undefined,
@@ -181,9 +180,9 @@ function TarefaInlineEditor({
           )}
           {prio && <Badge className={cn("text-xs border-0", prio.color)}>{prio.label}</Badge>}
           {tarefa.responsaveis.length > 0 && <span className="text-xs text-muted-foreground">👤 {tarefa.responsaveis.join(", ")}</span>}
-          {tarefa.dataLimite && (
+          {tarefa.prazo > 0 && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Calendar className="h-3 w-3" />{tarefa.dataLimite}
+              <Calendar className="h-3 w-3" />{tarefa.prazo} {tarefa.prazo === 1 ? "dia" : "dias"}
             </span>
           )}
           {depNames.length > 0 && (
@@ -245,7 +244,7 @@ function TarefaInlineEditor({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div><Label className="text-xs">Data limite</Label><Input type="date" value={tarefa.dataLimite} onChange={e => onChange({ ...tarefa, dataLimite: e.target.value })} className="h-8 text-sm" /></div>
+            <div><Label className="text-xs">Prazo (dias)</Label><Input type="number" min={0} value={tarefa.prazo} onChange={e => onChange({ ...tarefa, prazo: Number(e.target.value) })} className="h-8 text-sm" placeholder="Ex: 7" /></div>
             <div><Label className="text-xs">Subtarefas (total)</Label><Input type="number" min={0} value={tarefa.subtarefasTotal} onChange={e => onChange({ ...tarefa, subtarefasTotal: Number(e.target.value) })} className="h-8 text-sm" /></div>
           </div>
 
@@ -328,7 +327,7 @@ function ProdutoDialog({
       responsaveis: [],
       clienteId: "",
       prioridade: "media",
-      dataLimite: "",
+      prazo: 0,
       colunaId: colunas[0]?.id || "",
       subtarefasTotal: 0,
       dependencias: [],
