@@ -34,6 +34,12 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   const [telefone, setTelefone] = useState(initialPhoneData.phoneWithoutCountry);
   const [empresa, setEmpresa] = useState(clienteEditando?.empresa || "");
   const [cnpj, setCnpj] = useState(clienteEditando?.cnpj || "");
+  const detectDocTipo = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (digits.length <= 11) return "cpf";
+    return "cnpj";
+  };
+  const [docTipo, setDocTipo] = useState<"cpf" | "cnpj">(clienteEditando?.cnpj ? detectDocTipo(clienteEditando.cnpj) : "cnpj");
   const [site, setSite] = useState(clienteEditando?.site || "");
   const [instagramUrl, setInstagramUrl] = useState(clienteEditando?.instagram || "");
   const [linktree, setLinktree] = useState(clienteEditando?.linktree || "");
