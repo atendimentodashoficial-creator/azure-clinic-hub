@@ -141,10 +141,19 @@ function TarefaInlineEditor({
     .map(depId => allTarefas.find(t => t.id === depId))
     .filter(Boolean);
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: tarefa.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <Card className="p-3 space-y-2">
+    <Card ref={setNodeRef} style={style} className="p-3 space-y-2">
       <div className="flex items-center gap-2">
-        <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+        <button type="button" {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none">
+          <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+        </button>
         <Input
           value={tarefa.titulo}
           onChange={e => onChange({ ...tarefa, titulo: e.target.value })}
