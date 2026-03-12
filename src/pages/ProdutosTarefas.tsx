@@ -7,7 +7,6 @@ import {
   ProdutoTemplateTarefa,
 } from "@/hooks/useProdutoTemplates";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
-import { useTarefasClientes } from "@/hooks/useTarefasClientes";
 import { useTarefas } from "@/hooks/useTarefas";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,7 +48,6 @@ interface TarefaLocal {
   titulo: string;
   descricao: string;
   responsaveis: string[];
-  clienteId: string;
   prioridade: string;
   prazo: number;
   colunaId: string;
@@ -76,7 +74,6 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     titulo: t.titulo,
     descricao: meta.texto || "",
     responsaveis: meta.responsavel ? meta.responsavel.split(", ") : [],
-    clienteId: meta.cliente_id || "",
     prioridade: meta.prioridade || "media",
     prazo: meta.prazo || 0,
     colunaId: meta.coluna_id || "",
@@ -91,7 +88,6 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
   const meta: any = {
     texto: t.descricao || null,
     responsavel: t.responsaveis.length > 0 ? t.responsaveis.join(", ") : undefined,
-    cliente_id: t.clienteId && t.clienteId !== "none" ? t.clienteId : undefined,
     prioridade: t.prioridade,
     prazo: t.prazo > 0 ? t.prazo : undefined,
     coluna_id: t.colunaId || undefined,
@@ -108,7 +104,6 @@ function TarefaInlineEditor({
   onChange,
   onRemove,
   membros,
-  clientes,
   colunas,
 }: {
   tarefa: TarefaLocal;
@@ -117,7 +112,6 @@ function TarefaInlineEditor({
   onChange: (t: TarefaLocal) => void;
   onRemove: () => void;
   membros: any[];
-  clientes: any[];
   colunas: any[];
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -210,17 +204,6 @@ function TarefaInlineEditor({
           </div>
 
           <div>
-            <Label className="text-xs">Cliente</Label>
-            <Select value={tarefa.clienteId} onValueChange={v => onChange({ ...tarefa, clienteId: v })}>
-              <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Nenhum" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum</SelectItem>
-                {clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
             <Label className="text-xs">Responsável(is)</Label>
             {membros.length > 0 ? (
               <div className="mt-1 space-y-1.5 max-h-32 overflow-y-auto rounded-md border p-2">
@@ -286,7 +269,6 @@ function ProdutoDialog({
 }) {
   const { criarTemplate, atualizarTemplate, adicionarTarefa, atualizarTarefa, excluirTarefa } = useProdutoTemplateMutations();
   const { membros } = useTarefasMembros();
-  const { clientes } = useTarefasClientes();
   const { colunas } = useTarefas();
 
   const isEditing = !!editando;
@@ -322,7 +304,6 @@ function ProdutoDialog({
       titulo: "",
       descricao: "",
       responsaveis: [],
-      clienteId: "",
       prioridade: "media",
       prazo: 0,
       colunaId: colunas[0]?.id || "",
@@ -434,7 +415,6 @@ function ProdutoDialog({
                     onChange={updated => updateTarefa(i, updated)}
                     onRemove={() => removeTarefa(i)}
                     membros={membros}
-                    clientes={clientes}
                     colunas={colunas}
                   />
                 ))}
