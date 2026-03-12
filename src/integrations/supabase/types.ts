@@ -4452,6 +4452,7 @@ export type Database = {
       }
       tarefas: {
         Row: {
+          cliente_id: string | null
           coluna_id: string
           created_at: string
           data_limite: string | null
@@ -4468,6 +4469,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cliente_id?: string | null
           coluna_id: string
           created_at?: string
           data_limite?: string | null
@@ -4484,6 +4486,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cliente_id?: string | null
           coluna_id?: string
           created_at?: string
           data_limite?: string | null
@@ -4501,6 +4504,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "tarefas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_clientes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tarefas_coluna_id_fkey"
             columns: ["coluna_id"]
             isOneToOne: false
@@ -4508,6 +4518,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tarefas_clientes: {
+        Row: {
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          empresa: string | null
+          google_meu_negocio: string | null
+          grupo_whatsapp: string | null
+          id: string
+          instagram: string | null
+          linktree: string | null
+          nome: string
+          observacoes: string | null
+          senha_acesso: string | null
+          site: string | null
+          telefone: string | null
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          empresa?: string | null
+          google_meu_negocio?: string | null
+          grupo_whatsapp?: string | null
+          id?: string
+          instagram?: string | null
+          linktree?: string | null
+          nome: string
+          observacoes?: string | null
+          senha_acesso?: string | null
+          site?: string | null
+          telefone?: string | null
+          tipo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          empresa?: string | null
+          google_meu_negocio?: string | null
+          grupo_whatsapp?: string | null
+          id?: string
+          instagram?: string | null
+          linktree?: string | null
+          nome?: string
+          observacoes?: string | null
+          senha_acesso?: string | null
+          site?: string | null
+          telefone?: string | null
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       tarefas_colunas: {
         Row: {
