@@ -10,8 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
 import { toast } from "sonner";
 import { Plus, MoreVertical, Trash2, Edit, Building2, Instagram, Link, Globe, MessageSquare } from "lucide-react";
 
@@ -27,6 +27,7 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   const [nome, setNome] = useState(clienteEditando?.nome || "");
   const [email, setEmail] = useState(clienteEditando?.email || "");
   const [senhaAcesso, setSenhaAcesso] = useState(clienteEditando?.senha_acesso || "");
+  const [countryCode, setCountryCode] = useState("+55");
   const [telefone, setTelefone] = useState(clienteEditando?.telefone || "");
   const [empresa, setEmpresa] = useState(clienteEditando?.empresa || "");
   const [cnpj, setCnpj] = useState(clienteEditando?.cnpj || "");
@@ -39,7 +40,7 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
   const [tipo, setTipo] = useState(clienteEditando?.tipo || "interno");
 
   const resetForm = () => {
-    setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setEmpresa("");
+    setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("+55"); setEmpresa("");
     setCnpj(""); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
     setObservacoes(""); setGrupoWhatsapp(""); setTipo("interno"); setFormTab("info");
   };
@@ -114,7 +115,15 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                   <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
                 </div>
               )}
-              <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(11) 99999-9999" /></div>
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <CountryCodeSelect
+                  value={countryCode}
+                  onChange={setCountryCode}
+                  phoneValue={telefone}
+                  onPhoneChange={setTelefone}
+                />
+              </div>
               <div className="space-y-2"><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
               <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></div>
               <div className="space-y-2"><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
