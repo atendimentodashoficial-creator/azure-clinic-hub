@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTarefas, Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTarefasClientes } from "@/hooks/useTarefasClientes";
-import { useProfissionais } from "@/hooks/useProfissionais";
+import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
