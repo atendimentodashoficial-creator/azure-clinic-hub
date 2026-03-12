@@ -341,11 +341,17 @@ function ProdutoDialog({
 
   const removeTarefa = (index: number) => {
     const t = tarefas[index];
-    // Track DB tasks that need deletion
     if (existingTarefas?.some(et => et.id === t.id)) {
       setRemovedIds(prev => [...prev, t.id]);
     }
-    setTarefas(prev => prev.filter((_, i) => i !== index));
+    // Remove task and clean up dependencias referencing it
+    setTarefas(prev => prev
+      .filter((_, i) => i !== index)
+      .map(item => ({
+        ...item,
+        dependencias: item.dependencias.filter(d => d !== t.id),
+      }))
+    );
   };
 
   const handleSubmit = async () => {
