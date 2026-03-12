@@ -34,6 +34,7 @@ const hrefToFeatureKey: Record<string, string> = {
   "/admin/configuracoes": "configuracoes",
   "/admin/usuarios": "usuarios",
   "/admin/paineis": "paineis",
+  "/admin/tarefas": "tarefas",
 };
 
 export const navigation = [
