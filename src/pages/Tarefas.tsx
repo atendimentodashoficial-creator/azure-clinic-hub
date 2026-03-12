@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTarefas, Tarefa, TarefaColuna } from "@/hooks/useTarefas";
+import { useProfissionais } from "@/hooks/useProfissionais";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Plus, MoreVertical, GripVertical, Calendar, Trash2, Edit, ArrowRight, ListChecks } from "lucide-react";
 import { format } from "date-fns";
