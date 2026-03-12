@@ -10,6 +10,10 @@ export interface TarefaMembro {
   telefone: string | null;
   cargo: string | null;
   observacoes: string | null;
+  senha: string | null;
+  salario: number | null;
+  data_contratacao: string | null;
+  dia_pagamento: number | null;
   created_at: string;
 }
 
