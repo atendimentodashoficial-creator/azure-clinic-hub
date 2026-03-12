@@ -90,6 +90,10 @@ export default function ConfigurarPaineis() {
 
       <Tabs value={activePanel} onValueChange={setActivePanel}>
         <TabsList>
+          <TabsTrigger value="admin" className="gap-2">
+            <Shield className="h-4 w-4" />
+            Painel Admin
+          </TabsTrigger>
           <TabsTrigger value="cliente" className="gap-2">
             <User className="h-4 w-4" />
             Painel do Cliente
@@ -100,7 +104,7 @@ export default function ConfigurarPaineis() {
           </TabsTrigger>
         </TabsList>
 
-        {["cliente", "funcionario"].map((panelType) => (
+        {["admin", "cliente", "funcionario"].map((panelType) => (
           <TabsContent key={panelType} value={panelType}>
             <Card className="p-6">
               <div className="space-y-4">
