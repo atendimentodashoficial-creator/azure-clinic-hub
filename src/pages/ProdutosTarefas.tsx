@@ -418,6 +418,7 @@ function ProdutoDialog({
                     onRemove={() => removeTarefa(i)}
                     membros={membros}
                     colunas={colunas}
+                    isNew={t.titulo === "" && t.descricao === ""}
                   />
                 ))}
               </div>
