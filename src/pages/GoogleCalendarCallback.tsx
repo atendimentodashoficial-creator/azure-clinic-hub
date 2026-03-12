@@ -68,7 +68,7 @@ export default function GoogleCalendarCallback() {
         
         // Redirect after a short delay
         setTimeout(() => {
-          navigate("/configuracoes", { replace: true });
+          navigate("/admin/configuracoes", { replace: true });
         }, 2000);
         
       } catch (err) {
