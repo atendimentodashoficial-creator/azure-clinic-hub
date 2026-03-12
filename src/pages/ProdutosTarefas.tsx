@@ -99,6 +99,60 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
   return JSON.stringify(meta);
 }
 
+// ─── Sortable task list wrapper ───
+function SortableTaskList({
+  tarefas,
+  setTarefas,
+  updateTarefa,
+  removeTarefa,
+  membros,
+  colunas,
+}: {
+  tarefas: TarefaLocal[];
+  setTarefas: React.Dispatch<React.SetStateAction<TarefaLocal[]>>;
+  updateTarefa: (index: number, t: TarefaLocal) => void;
+  removeTarefa: (index: number) => void;
+  membros: any[];
+  colunas: any[];
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setTarefas(prev => {
+        const oldIndex = prev.findIndex(t => t.id === active.id);
+        const newIndex = prev.findIndex(t => t.id === over.id);
+        return arrayMove(prev, oldIndex, newIndex);
+      });
+    }
+  };
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={tarefas.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <div className="space-y-2">
+          {tarefas.map((t, i) => (
+            <TarefaInlineEditor
+              key={t.id}
+              tarefa={t}
+              tarefaIndex={i}
+              allTarefas={tarefas}
+              onChange={updated => updateTarefa(i, updated)}
+              onRemove={() => removeTarefa(i)}
+              membros={membros}
+              colunas={colunas}
+              isNew={t.titulo === "" && t.descricao === ""}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
 // ─── Inline task editor row ───
 function TarefaInlineEditor({
   tarefa,
