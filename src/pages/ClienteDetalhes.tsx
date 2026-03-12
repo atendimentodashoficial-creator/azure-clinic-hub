@@ -177,7 +177,7 @@ export default function ClienteDetalhes() {
 
   if (!cliente) {
     return <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate("/clientes")} className="gap-2">
+        <Button variant="ghost" onClick={() => navigate("/admin/clientes")} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </Button>
