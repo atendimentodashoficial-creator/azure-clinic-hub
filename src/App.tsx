@@ -37,6 +37,7 @@ import GoogleCalendarCallback from "./pages/GoogleCalendarCallback";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios";
 import ConfigurarPaineis from "./pages/ConfigurarPaineis";
 import Tarefas from "./pages/Tarefas";
+import TarefasClientes from "./pages/TarefasClientes";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 
