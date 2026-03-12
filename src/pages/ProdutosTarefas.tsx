@@ -525,7 +525,7 @@ export default function ProdutosTarefas() {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Package className="h-6 w-6" />
-            Produtos & Tarefas
+            Produtos
           </h1>
           <p className="text-muted-foreground">Configure produtos com templates de tarefas automáticas</p>
         </div>
