@@ -1,0 +1,1 @@
+ALTER TABLE public.produto_templates ADD COLUMN requer_reuniao boolean NOT NULL DEFAULT false;

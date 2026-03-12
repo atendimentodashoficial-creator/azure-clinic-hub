@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
@@ -348,6 +349,7 @@ function ProdutoDialog({
   const isEditing = !!editando;
   const [nome, setNome] = useState(editando?.nome || "");
   const [descricao, setDescricao] = useState(editando?.descricao || "");
+  const [requerReuniao, setRequerReuniao] = useState(editando?.requer_reuniao || false);
   const [tarefas, setTarefas] = useState<TarefaLocal[]>(
     existingTarefas ? existingTarefas.map(tarefaDbToLocal) : []
   );
@@ -414,9 +416,9 @@ function ProdutoDialog({
       let templateId = editando?.id;
 
       if (isEditing && templateId) {
-        await atualizarTemplate.mutateAsync({ id: templateId, nome: nome.trim(), descricao: descricao.trim() || null });
+        await atualizarTemplate.mutateAsync({ id: templateId, nome: nome.trim(), descricao: descricao.trim() || null, requer_reuniao: requerReuniao });
       } else {
-        const created = await criarTemplate.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined });
+        const created = await criarTemplate.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined, requer_reuniao: requerReuniao });
         templateId = (created as any).id;
       }
 
@@ -464,6 +466,14 @@ function ProdutoDialog({
           <div className="space-y-2">
             <Label>Descrição</Label>
             <Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Descreva o produto..." />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium">Requer Reunião</Label>
+              <p className="text-xs text-muted-foreground">Ao atribuir, agendar uma reunião com o cliente</p>
+            </div>
+            <Switch checked={requerReuniao} onCheckedChange={setRequerReuniao} />
           </div>
 
           <div className="space-y-3">
