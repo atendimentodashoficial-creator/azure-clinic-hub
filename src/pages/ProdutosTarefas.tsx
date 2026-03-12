@@ -553,7 +553,7 @@ export default function ProdutosTarefas() {
               template={template}
               onEdit={() => setDialogState({ mode: "edit", template })}
               onDelete={() => handleExcluir(template.id)}
-              onAtribuir={() => {}}
+              onAtribuir={() => setAtribuirTemplate(template)}
               onDuplicar={() => {}}
             />
           ))}
