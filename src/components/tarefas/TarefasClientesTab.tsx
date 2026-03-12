@@ -157,7 +157,23 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                 </div>
               )}
               <div className="space-y-2"><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
-              <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>{docTipo === "cnpj" ? "CNPJ" : "CPF"}</Label>
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline"
+                    onClick={() => { setDocTipo(docTipo === "cnpj" ? "cpf" : "cnpj"); setCnpj(""); }}
+                  >
+                    Usar {docTipo === "cnpj" ? "CPF" : "CNPJ"}
+                  </button>
+                </div>
+                <Input
+                  value={cnpj}
+                  onChange={e => handleDocChange(e.target.value)}
+                  placeholder={docTipo === "cnpj" ? "00.000.000/0000-00" : "000.000.000-00"}
+                />
+              </div>
               <div className="space-y-2"><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-1"><MessageSquare className="h-4 w-4" /> Grupo WhatsApp</Label>
