@@ -89,6 +89,7 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
       senha_acesso: senhaAcesso.trim() || undefined,
       telefone: normalizedPhone ? `${countryCode}${normalizedPhone}` : null,
       empresa: empresa.trim() || null,
+      cnpj: cnpj.trim() || null,
       instagram: instagramUrl.trim() || null,
       linktree: linktree.trim() || null,
       google_meu_negocio: googleMeuNegocio.trim() || null,
