@@ -94,7 +94,7 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
           <div className="flex-1 overflow-y-auto pr-1">
             <TabsContent value="info" className="space-y-4 mt-4">
               <div>
-                <Label>Tipo de Cliente *</Label>
+                <Label className="mb-2">Tipo de Cliente *</Label>
                 <RadioGroup value={tipo} onValueChange={setTipo} className="flex gap-4 mt-2">
                   <div className="flex items-center gap-2">
                     <RadioGroupItem value="interno" id="tipo-interno" />
@@ -105,46 +105,37 @@ function NovoClienteDialog({ onSubmit, clienteEditando, onClose }: {
                     <label htmlFor="tipo-preview" className="text-sm cursor-pointer">Cliente Preview</label>
                   </div>
                 </RadioGroup>
-                {tipo === "preview" && <p className="text-xs text-muted-foreground mt-1">Clientes Preview têm acesso apenas à landing page para apresentação</p>}
               </div>
-              <div><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} /></div>
-              <div><Label>Email *</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
+              <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} /></div>
+              <div className="space-y-2"><Label>Email *</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
               {tipo === "interno" && (
-                <div>
+                <div className="space-y-2">
                   <Label>Senha de Acesso {!isEditing && "*"}</Label>
                   <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
-                  <p className="text-xs text-muted-foreground mt-1">Esta senha será usada pelo cliente para acessar a área de clientes</p>
                 </div>
               )}
-              <div><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(11) 99999-9999 ou +351964044402" /></div>
-              <div><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
-              <div><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></div>
-              <div><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
-              <div>
-                <Label className="flex items-center gap-1"><MessageSquare className="h-4 w-4" /> Grupo WhatsApp do Cliente</Label>
+              <div className="space-y-2"><Label>Telefone</Label><Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(11) 99999-9999" /></div>
+              <div className="space-y-2"><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
+              <div className="space-y-2"><Label>CNPJ</Label><Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></div>
+              <div className="space-y-2"><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1"><MessageSquare className="h-4 w-4" /> Grupo WhatsApp</Label>
                 <Input value={grupoWhatsapp} onChange={e => setGrupoWhatsapp(e.target.value)} placeholder="XXXXXXXXXXXX@g.us" />
-                <p className="text-xs text-muted-foreground mt-1">ID do grupo onde serão enviados os avisos deste cliente. Use o formato: XXXXX@g.us</p>
               </div>
             </TabsContent>
             <TabsContent value="redes" className="space-y-4 mt-4">
-              <div>
-                <Label>Site</Label>
-                <Input value={site} onChange={e => setSite(e.target.value)} placeholder="https://www.exemplo.com.br" />
-              </div>
-              <div>
+              <div className="space-y-2"><Label>Site</Label><Input value={site} onChange={e => setSite(e.target.value)} placeholder="https://www.exemplo.com.br" /></div>
+              <div className="space-y-2">
                 <Label className="flex items-center gap-1"><Instagram className="h-4 w-4" /> Instagram</Label>
                 <Input value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/seu-usuario" />
-                <p className="text-xs text-muted-foreground mt-1">Este link será exibido na aba Instagram do painel do cliente</p>
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label className="flex items-center gap-1"><Link className="h-4 w-4" /> Linktree</Label>
                 <Input value={linktree} onChange={e => setLinktree(e.target.value)} placeholder="https://linktr.ee/seu-usuario" />
-                <p className="text-xs text-muted-foreground mt-1">Este link será exibido na aba Linktree do painel do cliente</p>
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label className="flex items-center gap-1"><Globe className="h-4 w-4" /> Google Meu Negócio</Label>
                 <Input value={googleMeuNegocio} onChange={e => setGoogleMeuNegocio(e.target.value)} placeholder="https://g.page/seu-negocio" />
-                <p className="text-xs text-muted-foreground mt-1">Este link será exibido na aba Google do painel do cliente</p>
               </div>
             </TabsContent>
           </div>
