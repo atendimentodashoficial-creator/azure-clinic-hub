@@ -157,7 +157,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
                   placeholder={getPhonePlaceholder(countryCode)}
                 />
               </div>
-              <div className="space-y-2"><Label>Email *</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
+              <div className="space-y-2"><Label>Email {tipo === "interno" ? "*" : ""}</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
               {tipo === "interno" && (
                 <div className="space-y-2">
                   <Label>Senha de Acesso {!isEditing && "*"}</Label>
