@@ -245,6 +245,30 @@ function TarefaInlineEditor({
             <div><Label className="text-xs">Data limite</Label><Input type="date" value={tarefa.dataLimite} onChange={e => onChange({ ...tarefa, dataLimite: e.target.value })} className="h-8 text-sm" /></div>
             <div><Label className="text-xs">Subtarefas (total)</Label><Input type="number" min={0} value={tarefa.subtarefasTotal} onChange={e => onChange({ ...tarefa, subtarefasTotal: Number(e.target.value) })} className="h-8 text-sm" /></div>
           </div>
+
+          {otherTarefas.length > 0 && (
+            <div>
+              <Label className="text-xs">Depende de (só será criada após conclusão)</Label>
+              <div className="mt-1 space-y-1.5 max-h-32 overflow-y-auto rounded-md border p-2">
+                {otherTarefas.map((ot, idx) => {
+                  const otIndex = allTarefas.findIndex(at => at.id === ot.id);
+                  return (
+                    <div key={ot.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`dep-${tarefa.id}-${ot.id}`}
+                        checked={tarefa.dependencias.includes(ot.id)}
+                        onCheckedChange={() => toggleDependencia(ot.id)}
+                      />
+                      <label htmlFor={`dep-${tarefa.id}-${ot.id}`} className="text-xs cursor-pointer">
+                        <span className="font-mono text-muted-foreground mr-1">#{otIndex + 1}</span>
+                        {ot.titulo || "Sem título"}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </Card>
