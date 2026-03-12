@@ -95,6 +95,7 @@ const App = () => (
             <Route path="google-ads" element={<GoogleAdsMetrics />} />
             <Route path="usuarios" element={<GerenciarUsuarios />} />
             <Route path="paineis" element={<ConfigurarPaineis />} />
+            <Route path="tarefas" element={<Tarefas />} />
             <Route path="configuracoes" element={<Configuracoes />} />
           </Route>
 

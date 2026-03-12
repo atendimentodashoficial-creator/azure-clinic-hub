@@ -54,6 +54,7 @@ export const navigation = [
   { name: "Reuniões", href: "/admin/reunioes", icon: Video },
   { name: "Meta Ads", href: "/admin/metricas-campanhas", icon: MetaIcon },
   { name: "Google Ads", href: "/admin/google-ads", icon: ({ className }: { className?: string }) => <img src={googleAdsIcon} alt="Google Ads" className={cn("h-5 w-5 shrink-0 brightness-0 invert", className)} /> },
+  { name: "Tarefas", href: "/admin/tarefas", icon: ListChecks },
   { name: "Usuários", href: "/admin/usuarios", icon: Shield, separator: true },
   { name: "Painéis", href: "/admin/paineis", icon: Settings2 },
   { name: "Configurações", href: "/admin/configuracoes", icon: Settings },
