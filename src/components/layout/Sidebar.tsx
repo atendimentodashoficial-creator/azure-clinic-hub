@@ -1,4 +1,4 @@
-import { Calendar, DollarSign, TrendingUp, Settings, UserCog, FileText, LogOut, MessageSquare, UserX, Handshake, UserPlus, Users, ChevronLeft, ChevronRight, Send, Database, Instagram, Wallet, ClipboardList, Video, Shield, Settings2 } from "lucide-react";
+import { Calendar, DollarSign, TrendingUp, Settings, UserCog, FileText, LogOut, MessageSquare, UserX, Handshake, UserPlus, Users, ChevronLeft, ChevronRight, Send, Database, Instagram, Wallet, ClipboardList, Video, Shield, Settings2, ListChecks } from "lucide-react";
 import { MetaIcon } from "@/components/icons/MetaIcon";
 import { NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -34,6 +34,7 @@ const hrefToFeatureKey: Record<string, string> = {
   "/admin/configuracoes": "configuracoes",
   "/admin/usuarios": "usuarios",
   "/admin/paineis": "paineis",
+  "/admin/tarefas": "tarefas",
 };
 
 export const navigation = [
@@ -53,6 +54,7 @@ export const navigation = [
   { name: "Reuniões", href: "/admin/reunioes", icon: Video },
   { name: "Meta Ads", href: "/admin/metricas-campanhas", icon: MetaIcon },
   { name: "Google Ads", href: "/admin/google-ads", icon: ({ className }: { className?: string }) => <img src={googleAdsIcon} alt="Google Ads" className={cn("h-5 w-5 shrink-0 brightness-0 invert", className)} /> },
+  { name: "Tarefas", href: "/admin/tarefas", icon: ListChecks },
   { name: "Usuários", href: "/admin/usuarios", icon: Shield, separator: true },
   { name: "Painéis", href: "/admin/paineis", icon: Settings2 },
   { name: "Configurações", href: "/admin/configuracoes", icon: Settings },

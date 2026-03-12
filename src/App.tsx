@@ -36,6 +36,7 @@ import Reunioes from "./pages/Reunioes";
 import GoogleCalendarCallback from "./pages/GoogleCalendarCallback";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios";
 import ConfigurarPaineis from "./pages/ConfigurarPaineis";
+import Tarefas from "./pages/Tarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 
@@ -94,6 +95,7 @@ const App = () => (
             <Route path="google-ads" element={<GoogleAdsMetrics />} />
             <Route path="usuarios" element={<GerenciarUsuarios />} />
             <Route path="paineis" element={<ConfigurarPaineis />} />
+            <Route path="tarefas" element={<Tarefas />} />
             <Route path="configuracoes" element={<Configuracoes />} />
           </Route>
 
