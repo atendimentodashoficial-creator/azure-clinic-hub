@@ -4773,6 +4773,7 @@ export type Database = {
       }
       tarefas_membros: {
         Row: {
+          auth_user_id: string | null
           cargo: string | null
           created_at: string
           data_contratacao: string | null
@@ -4789,6 +4790,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auth_user_id?: string | null
           cargo?: string | null
           created_at?: string
           data_contratacao?: string | null
@@ -4805,6 +4807,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auth_user_id?: string | null
           cargo?: string | null
           created_at?: string
           data_contratacao?: string | null
