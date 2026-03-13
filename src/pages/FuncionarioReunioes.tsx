@@ -518,7 +518,7 @@ export default function FuncionarioReunioes() {
           reuniaoId={reuniaoParaVincular.id}
           reuniaoTitulo={reuniaoParaVincular.titulo}
           transcricaoAtual={reuniaoParaVincular.transcricao ? {
-            fireflies_id: reuniaoParaVincular.fireflies_id,
+            transcript_id: reuniaoParaVincular.fireflies_id,
             transcricao: reuniaoParaVincular.transcricao,
             resumo_ia: reuniaoParaVincular.resumo_ia,
           } : null}
