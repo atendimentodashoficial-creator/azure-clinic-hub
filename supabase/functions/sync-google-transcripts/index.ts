@@ -97,9 +97,9 @@ Deno.serve(async (req) => {
     const accessToken = await getValidAccessToken(supabase, userId);
 
     // Search for Google Meet transcript files in Google Drive
-    // Meet transcripts are stored as Google Docs with a specific naming pattern
+    // Meet transcripts are stored as Google Docs - search for both English and Portuguese names
     const searchQuery = encodeURIComponent(
-      "mimeType='application/vnd.google-apps.document' and fullText contains 'Transcript' and trashed=false"
+      "mimeType='application/vnd.google-apps.document' and (name contains 'Transcript' or name contains 'Transcrição' or name contains 'Transcricao') and trashed=false"
     );
     
     const driveResponse = await fetch(
