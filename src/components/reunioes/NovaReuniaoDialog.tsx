@@ -91,10 +91,15 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
   const [clienteNome, setClienteNome] = useState("");
   const [clienteTelefone, setClienteTelefone] = useState("");
   const [clienteSearch, setClienteSearch] = useState("");
+  const [selectedTipoId, setSelectedTipoId] = useState<string>("");
   const [meetingsByUser, setMeetingsByUser] = useState<Record<string, Array<{ id: string; data_reuniao: string; duracao_minutos: number }>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [leads, setLeads] = useState<Array<{ id: string; nome: string; telefone: string }>>([]);
   const [showLeadsList, setShowLeadsList] = useState(false);
+
+  const { data: tiposReuniao = [] } = useTiposReuniao();
+  const { data: tipoMembros = [] } = useTipoReuniaoMembros(selectedTipoId || null);
+  const tipoMembrosIds = useMemo(() => new Set(tipoMembros.map(tm => tm.membro_id)), [tipoMembros]);
 
   const stepInterval = use15min ? 15 : 30;
 
