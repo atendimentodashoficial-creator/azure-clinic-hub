@@ -263,7 +263,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, reuniaoId: reuniao.id, targetUserId, notificationSent, meetLinkGenerated: !!meetLink }),
+      JSON.stringify({ success: true, reuniaoId: reuniao.id, targetUserId, notificationSent, meetLinkGenerated: !!finalMeetLink, meetLink: finalMeetLink }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
