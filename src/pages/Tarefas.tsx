@@ -91,9 +91,10 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   const [prioridade, setPrioridade] = useState("media");
   const [dataLimite, setDataLimite] = useState("");
   const [comissao, setComissao] = useState("");
+  const [tipoTarefaId, setTipoTarefaId] = useState<string>("");
   const { membros: profissionais } = useTarefasMembros();
   const { clientes } = useTarefasClientes();
-
+  const { tipos: tiposTarefas } = useTiposTarefas();
   const toggleResponsavel = (nome: string) => {
     setResponsaveisSelecionados(prev =>
       prev.includes(nome) ? prev.filter(n => n !== nome) : [...prev, nome]
