@@ -118,9 +118,9 @@ function computeSlots(
       });
       if (absConflict) continue;
       const meetConflict = memberMeetings.some(m => {
-        const mDate = m.data_reuniao.substring(0, 10);
+        const mDate = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "yyyy-MM-dd");
         if (mDate !== date) return false;
-        const mTime = m.data_reuniao.substring(11, 16);
+        const mTime = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "HH:mm");
         const mS = timeToMinutes(mTime);
         const mE = mS + (m.duracao_minutos || 60);
         return rangesOverlap(slotRange, { startMin: mS, endMin: mE });
