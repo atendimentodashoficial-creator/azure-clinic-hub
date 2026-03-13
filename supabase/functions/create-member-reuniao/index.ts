@@ -122,17 +122,35 @@ serve(async (req) => {
     let calendarOwnerUserId: string | null = null;
     let gcalConfig: any = null;
 
+    // 1) Try specific candidates first
     for (const candidateUserId of calendarCandidateIds) {
       const { data: candidateConfig } = await supabaseAdmin
         .from("google_calendar_config")
-        .select("access_token, refresh_token, client_id, client_secret, token_expires_at, calendar_id")
+        .select("access_token, refresh_token, client_id, client_secret, token_expires_at, calendar_id, user_id")
         .eq("user_id", candidateUserId)
         .maybeSingle();
 
       if (candidateConfig?.access_token) {
         gcalConfig = candidateConfig;
-        calendarOwnerUserId = candidateUserId;
+        calendarOwnerUserId = candidateConfig.user_id;
         break;
+      }
+    }
+
+    // 2) Fallback: pick ANY valid Google Calendar config
+    if (!gcalConfig) {
+      console.log("No specific GCal config found, searching globally...");
+      const { data: anyConfig } = await supabaseAdmin
+        .from("google_calendar_config")
+        .select("access_token, refresh_token, client_id, client_secret, token_expires_at, calendar_id, user_id")
+        .not("access_token", "is", null)
+        .limit(1)
+        .maybeSingle();
+
+      if (anyConfig?.access_token) {
+        gcalConfig = anyConfig;
+        calendarOwnerUserId = anyConfig.user_id;
+        console.log("Using global GCal config from user:", calendarOwnerUserId);
       }
     }
 
