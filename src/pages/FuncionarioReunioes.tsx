@@ -221,11 +221,11 @@ export default function FuncionarioReunioes() {
                 </Card>
               ))}
             </div>
-          ) : profissional ? (
+          ) : (
             <Card className="p-8 text-center">
               <p className="text-muted-foreground">Nenhuma reunião encontrada</p>
             </Card>
-          ) : null}
+          )}
         </TabsContent>
 
         <TabsContent value="escala" className="mt-6">
