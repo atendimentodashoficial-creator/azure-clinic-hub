@@ -175,8 +175,27 @@ export function GoogleCalendarConfig({ defaultOpen = false }: GoogleCalendarConf
       });
 
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-      
-      // Redirect in same window (avoids popup blockers and Google's security restrictions)
+
+      // In embedded preview environments, open OAuth in a new tab (Google blocks iframe contexts)
+      const isEmbeddedContext = window.self !== window.top;
+      if (isEmbeddedContext) {
+        const newTab = window.open(authUrl, "_blank", "noopener,noreferrer");
+
+        if (!newTab) {
+          // Fallback if popup is blocked
+          window.location.href = authUrl;
+          return;
+        }
+
+        setConnecting(false);
+        toast({
+          title: "Continue em nova aba",
+          description: "A autenticação do Google foi aberta em uma nova aba para evitar bloqueio do navegador."
+        });
+        return;
+      }
+
+      // Regular flow for non-embedded environments
       window.location.href = authUrl;
     } catch (error) {
       console.error("Error initiating OAuth:", error);
