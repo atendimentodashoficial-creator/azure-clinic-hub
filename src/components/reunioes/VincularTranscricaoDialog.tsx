@@ -34,7 +34,7 @@ interface VincularTranscricaoDialogProps {
 
 interface ReuniaoTranscricao {
   id: string;
-  fireflies_id: string;
+  fireflies_id: string; // reused column for gdrive_ IDs
   titulo: string;
   data_reuniao: string;
   duracao_minutos: number | null;

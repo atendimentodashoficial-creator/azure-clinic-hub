@@ -37,7 +37,7 @@ import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 interface Reuniao {
   id: string;
   user_id: string;
-  fireflies_id: string | null;
+  drive_transcript_id: string | null;
   google_event_id: string | null;
   titulo: string;
   data_reuniao: string;
@@ -636,7 +636,7 @@ export default function Reunioes() {
           reuniaoId={reuniaoParaVincular.id}
           reuniaoTitulo={reuniaoParaVincular.titulo}
           transcricaoAtual={reuniaoParaVincular.transcricao ? {
-            transcript_id: reuniaoParaVincular.fireflies_id,
+            transcript_id: reuniaoParaVincular.drive_transcript_id,
             transcricao: reuniaoParaVincular.transcricao,
             resumo_ia: reuniaoParaVincular.resumo_ia,
           } : null}
