@@ -132,15 +132,28 @@ export default function FuncionarioReunioes() {
     return "Cliente não informado";
   };
 
-  // Fetch reuniões - filtered to this user's meetings
-  const { data: reunioes, isLoading } = useQuery({
+  // Fetch all team members (via owner's workspace)
+  const { data: membros = [] } = useQuery({
+    queryKey: ["tarefas-membros-func", ownerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tarefas_membros" as any)
+        .select("id, nome, auth_user_id")
+        .order("nome");
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!ownerId,
+  });
+
+  // Fetch ALL reuniões (RLS returns owner's workspace data)
+  const { data: allReunioes, isLoading } = useQuery({
     queryKey: ["funcionario-reunioes", user?.id],
     refetchOnMount: "always",
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reunioes" as any)
         .select("*, profissionais(nome), leads:cliente_id(nome, telefone)")
-        .eq("user_id", user!.id)
         .or("google_event_id.not.is.null,status.eq.agendado")
         .order("data_reuniao", { ascending: false });
       if (error) throw error;
@@ -148,6 +161,19 @@ export default function FuncionarioReunioes() {
     },
     enabled: !!user?.id,
   });
+
+  // Filter by member then by period
+  const reunioes = useMemo(() => {
+    if (!allReunioes) return [];
+    let filtered = allReunioes;
+    if (selectedMemberId === "meus") filtered = filtered.filter(r => r.user_id === user?.id);
+    else if (selectedMemberId !== "todos") {
+      const m = membros.find((mb: any) => mb.id === selectedMemberId);
+      if (!m?.auth_user_id) return [];
+      filtered = filtered.filter(r => r.user_id === m.auth_user_id);
+    }
+    return periodFilter.filterReunioes(filtered);
+  }, [allReunioes, selectedMemberId, membros, user?.id, periodFilter]);
 
   const formatDuration = (minutes: number | null) => {
     if (!minutes) return "—";
