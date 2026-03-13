@@ -287,6 +287,8 @@ function DroppableColumn({ coluna, children }: { coluna: TarefaColuna; children:
 export default function Tarefas() {
   const { colunas, tarefas, isLoading, criarTarefa, excluirTarefa, moverTarefa, criarColuna, excluirColuna } = useTarefas();
   const { clientes } = useTarefasClientes();
+  const { membros } = useTarefasMembros();
+  const membrosNomes = membros.map(m => m.nome);
   const { membro } = useMembroAtual();
   const { role } = useUserRole();
   const { ownerId } = useOwnerId();
