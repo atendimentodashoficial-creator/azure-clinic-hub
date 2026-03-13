@@ -38,7 +38,7 @@ function parseTarefaMeta(descricao: string | null): any {
   }
 }
 
-type Step = "select-client" | "schedule-meeting";
+type Step = "select-client" | "schedule-meeting" | "auto-matched";
 
 export function AtribuirProdutoDialog({ template, open, onClose, initialContactData }: AtribuirProdutoDialogProps) {
   const { user } = useAuth();
