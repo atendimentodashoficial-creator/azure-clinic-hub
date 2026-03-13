@@ -98,7 +98,7 @@ const App = () => (
             <Route path="instagram" element={<Instagram />} />
             <Route path="formularios" element={<Formularios />} />
             <Route path="reunioes" element={<Reunioes />} />
-            <Route path="financeiro" element={<Dashboard />} />
+            <Route path="financeiro" element={<AdminFinanceiro />} />
             <Route path="metricas-campanhas" element={<MetricasCampanhas />} />
             <Route path="google-ads" element={<GoogleAdsMetrics />} />
             <Route path="usuarios" element={<GerenciarUsuarios />} />
