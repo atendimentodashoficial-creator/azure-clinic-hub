@@ -88,46 +88,54 @@ export function ReunioesPeriodFilter({
         </Badge>
       )}
 
-      {/* Custom date pickers */}
+      {/* Custom date pickers + count badge for period */}
       {value === "periodo" && (
-        <div className="flex items-center gap-2 basis-full sm:basis-auto mt-1 sm:mt-0">
-          <Popover open={startOpen} onOpenChange={setStartOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="min-w-[90px] h-8 text-xs">
-                {format(dateStart, "dd/MM/yy", { locale: ptBR })}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                mode="single"
-                selected={dateStart}
-                onSelect={(date) => {
-                  if (date) { onDateStartChange(date); setStartOpen(false); }
-                }}
-                locale={ptBR}
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-          <span className="text-muted-foreground text-xs">até</span>
-          <Popover open={endOpen} onOpenChange={setEndOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="min-w-[90px] h-8 text-xs">
-                {format(dateEnd, "dd/MM/yy", { locale: ptBR })}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                mode="single"
-                selected={dateEnd}
-                onSelect={(date) => {
-                  if (date) { onDateEndChange(date); setEndOpen(false); }
-                }}
-                locale={ptBR}
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Popover open={startOpen} onOpenChange={setStartOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="min-w-[90px] h-8 text-xs">
+                  {format(dateStart, "dd/MM/yy", { locale: ptBR })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={dateStart}
+                  onSelect={(date) => {
+                    if (date) { onDateStartChange(date); setStartOpen(false); }
+                  }}
+                  locale={ptBR}
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            <span className="text-muted-foreground text-xs">até</span>
+            <Popover open={endOpen} onOpenChange={setEndOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="min-w-[90px] h-8 text-xs">
+                  {format(dateEnd, "dd/MM/yy", { locale: ptBR })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={dateEnd}
+                  onSelect={(date) => {
+                    if (date) { onDateEndChange(date); setEndOpen(false); }
+                  }}
+                  locale={ptBR}
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          {/* Count badge for periodo */}
+          {count !== undefined && (
+            <Badge className="h-6 px-2 text-xs rounded-md bg-primary text-primary-foreground">
+              {count} reunião(ões)
+            </Badge>
+          )}
         </div>
       )}
     </div>
