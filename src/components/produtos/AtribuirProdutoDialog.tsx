@@ -43,7 +43,7 @@ function parseTarefaMeta(descricao: string | null): any {
 type Step = "select-client" | "schedule-meeting" | "auto-matched";
 
 export function AtribuirProdutoDialog({ template, open, onClose, initialContactData }: AtribuirProdutoDialogProps) {
-  const { user } = useAuth();
+  
   const { clientes, criarCliente } = useTarefasClientes();
   const { data: templateTarefas = [] } = useProdutoTemplateTarefas(template.id);
   const { criarTarefa, colunas } = useTarefas();
