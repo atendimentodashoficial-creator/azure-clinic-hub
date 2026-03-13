@@ -57,7 +57,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const prio = PRIORIDADES.find(p => p.value === tarefa?.prioridade) || PRIORIDADES[1];
   const coluna = tarefa ? colunas.find(c => c.id === tarefa.coluna_id) : null;
 
-  // Load existing mockups
+  // Load existing mockups or initialize with required count
   useEffect(() => {
     if (mockups.length > 0) {
       setMockupSlides(mockups.map(m => ({
@@ -69,9 +69,12 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         cta: m.cta || "",
       })));
     } else {
-      setMockupSlides([{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }]);
+      const count = mockupLimit > 0 ? mockupLimit : 1;
+      setMockupSlides(
+        Array.from({ length: count }, (_, i) => ({ ordem: i, subtitulo: "", titulo: "", legenda: "", cta: "" }))
+      );
     }
-  }, [mockups]);
+  }, [mockups, mockupLimit]);
 
   const handleSaveMockups = async () => {
     try {
