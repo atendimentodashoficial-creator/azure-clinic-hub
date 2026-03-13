@@ -35,7 +35,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { reuniaoId, novaDataHora, duracaoMinutos } = body;
+    const { reuniaoId, novaDataHora, duracaoMinutos, profissionalId } = body;
 
     if (!reuniaoId || !novaDataHora) {
       return new Response(
