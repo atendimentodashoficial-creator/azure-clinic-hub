@@ -4,14 +4,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTiposTarefas, TipoTarefa } from "@/hooks/useTiposTarefas";
 import { useTarefaMockups } from "@/hooks/useTarefaMockups";
+import { useTarefaLinks } from "@/hooks/useTarefaLinks";
 import { MockupPostsManager, PostGroup } from "./MockupPostsManager";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
-import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History } from "lucide-react";
+import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History, Plus, Trash2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -30,6 +32,7 @@ const FILE_TYPE_LABELS: Record<string, string> = {
   pdf: "PDF",
   zip: "ZIP",
   texto: "Texto",
+  links: "Links",
   mockup: "Mockup de Post",
   qualquer: "Qualquer arquivo",
 };
@@ -46,10 +49,12 @@ interface TarefaDetalhesDialogProps {
 export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, open, onOpenChange }: TarefaDetalhesDialogProps) {
   const { tipos } = useTiposTarefas();
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
+  const { links: savedLinks, saveLinks } = useTarefaLinks(tarefa?.id || null);
   const [resubmitting, setResubmitting] = useState(false);
   const [posts, setPosts] = useState<PostGroup[]>([
     { postIndex: 0, slides: [{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }] },
   ]);
+  const [taskLinks, setTaskLinks] = useState<{ url: string; titulo: string }[]>([]);
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -70,7 +75,9 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
   const tipoTarefa = tarefa?.tipo_tarefa_id ? tipos.find(t => t.id === tarefa.tipo_tarefa_id) : null;
   const hasMockup = tipoTarefa?.tipos_arquivo_permitidos?.includes("mockup");
+  const hasLinks = tipoTarefa?.tipos_arquivo_permitidos?.includes("links");
   const mockupLimit = tipoTarefa?.limite_arquivos?.mockup || 0; // 0 = unlimited
+  const linksLimit = tipoTarefa?.limite_arquivos?.links || 0; // 0 = unlimited
   const cliente = tarefa?.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
   const reuniao = tarefa?.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
   const prio = PRIORIDADES.find(p => p.value === tarefa?.prioridade) || PRIORIDADES[1];
@@ -109,6 +116,18 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mockupsKey, mockupLimit, hasMockup]);
+
+  // Load saved links
+  const savedLinksKey = savedLinks.map(l => l.id).join(",");
+  useEffect(() => {
+    if (savedLinks.length > 0) {
+      setTaskLinks(savedLinks.map(l => ({ url: l.url, titulo: l.titulo || "" })));
+    } else if (hasLinks) {
+      const count = linksLimit > 0 ? linksLimit : 1;
+      setTaskLinks(Array.from({ length: count }, () => ({ url: "", titulo: "" })));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedLinksKey, hasLinks, linksLimit]);
 
   const handleSaveMockups = async () => {
     try {
@@ -206,7 +225,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   if (!tarefa) return null;
 
   // Determine which file types this task type requires (excluding mockup)
-  const requiredFileTypes = tipoTarefa?.tipos_arquivo_permitidos?.filter(t => t !== "mockup" && t !== "qualquer") || [];
+  const requiredFileTypes = tipoTarefa?.tipos_arquivo_permitidos?.filter(t => t !== "mockup" && t !== "qualquer" && t !== "links") || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -307,7 +326,95 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
             </>
           )}
 
-          {/* Mockup editor */}
+          {/* Links editor */}
+          {hasLinks && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold flex items-center gap-1.5">
+                  <Link2 className="h-4 w-4" /> Links
+                  {linksLimit > 0 && <span className="text-xs text-muted-foreground font-normal">({taskLinks.length}/{linksLimit})</span>}
+                </Label>
+                <div className="space-y-2">
+                  {taskLinks.map((link, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="flex-1 space-y-1">
+                        <Input
+                          placeholder="https://..."
+                          value={link.url}
+                          onChange={e => {
+                            const updated = [...taskLinks];
+                            updated[i] = { ...updated[i], url: e.target.value };
+                            setTaskLinks(updated);
+                          }}
+                        />
+                        <Input
+                          placeholder="Título do link (opcional)"
+                          value={link.titulo}
+                          className="text-xs h-8"
+                          onChange={e => {
+                            const updated = [...taskLinks];
+                            updated[i] = { ...updated[i], titulo: e.target.value };
+                            setTaskLinks(updated);
+                          }}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {link.url && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => window.open(link.url, "_blank")}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        {taskLinks.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive"
+                            onClick={() => setTaskLinks(taskLinks.filter((_, j) => j !== i))}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {(linksLimit === 0 || taskLinks.length < linksLimit) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTaskLinks([...taskLinks, { url: "", titulo: "" }])}
+                    className="gap-1.5"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Adicionar link
+                  </Button>
+                )}
+                <Button
+                  onClick={async () => {
+                    try {
+                      const filtered = taskLinks.filter(l => l.url.trim());
+                      await saveLinks.mutateAsync(filtered.map(l => ({ url: l.url.trim(), titulo: l.titulo.trim() || null })));
+                      toast.success("Links salvos com sucesso!");
+                    } catch {
+                      toast.error("Erro ao salvar links");
+                    }
+                  }}
+                  disabled={saveLinks.isPending}
+                  className="w-full gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {saveLinks.isPending ? "Salvando..." : "Salvar Links"}
+                </Button>
+              </div>
+            </>
+          )}
+
+
           {hasMockup && (
             <>
               <Separator />
