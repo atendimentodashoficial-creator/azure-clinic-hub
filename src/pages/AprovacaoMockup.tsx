@@ -57,13 +57,15 @@ export default function AprovacaoMockup() {
   const loadMockups = async () => {
     try {
       setLoading(true);
-      const { data, error: err } = await supabase.rpc("get_mockups_by_approval_token", { p_token: token! });
-      if (err) throw err;
-      const raw = (data || []) as MockupData[];
-      // Add default post_index for legacy data
+      const [mockupRes, linksRes] = await Promise.all([
+        supabase.rpc("get_mockups_by_approval_token", { p_token: token! }),
+        supabase.rpc("get_links_by_approval_token", { p_token: token! }),
+      ]);
+      if (mockupRes.error) throw mockupRes.error;
+      const raw = (mockupRes.data || []) as MockupData[];
       const withPostIndex = raw.map(m => ({ ...m, post_index: (m as any).post_index ?? 0 }));
       setMockups(withPostIndex);
-      // Load feedbacks per post
+      setTaskLinks((linksRes.data || []) as { url: string; titulo: string | null; ordem: number }[]);
       const fb: Record<number, string> = {};
       const grouped = groupByPost(withPostIndex);
       grouped.forEach(post => {
