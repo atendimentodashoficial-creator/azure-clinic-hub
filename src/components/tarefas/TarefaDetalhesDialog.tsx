@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTiposTarefas, TipoTarefa } from "@/hooks/useTiposTarefas";
 import { useTarefaMockups } from "@/hooks/useTarefaMockups";
-import { MockupEditor } from "./MockupEditor";
+import { MockupPostsManager, PostGroup } from "./MockupPostsManager";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
 import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History } from "lucide-react";
