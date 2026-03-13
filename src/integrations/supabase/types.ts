@@ -5628,6 +5628,10 @@ export type Database = {
         }
         Returns: number
       }
+      is_own_membro: {
+        Args: { _membro_id: string; _user_id: string }
+        Returns: boolean
+      }
       normalize_br_phone: { Args: { phone: string }; Returns: string }
       soft_delete_lead: { Args: { lead_id: string }; Returns: undefined }
     }
