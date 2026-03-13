@@ -88,12 +88,11 @@ export const useCreateAgendamento = () => {
   
   return useMutation({
     mutationFn: async (agendamento: Omit<Agendamento, "id" | "created_at" | "updated_at" | "user_id" | "meta_event_sent_at">) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
+      const ownerId = await resolveOwnerId();
 
       const { data, error } = await supabase
         .from("agendamentos")
-        .insert({ ...agendamento, user_id: user.id })
+        .insert({ ...agendamento, user_id: ownerId })
         .select()
         .single();
 
