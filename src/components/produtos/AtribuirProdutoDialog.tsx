@@ -169,7 +169,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
         clienteId = leadData?.id || null;
       }
 
-      const { data: reuniaoData, error } = await supabase
+      const { data: reuniaoData, error }: any = await supabase
         .from("reunioes" as any)
         .insert({
           user_id: user!.id,
