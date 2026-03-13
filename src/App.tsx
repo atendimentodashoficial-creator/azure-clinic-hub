@@ -43,6 +43,8 @@ import ProdutosTarefas from "./pages/ProdutosTarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 import FuncionarioEscala from "./pages/FuncionarioEscala";
+import FuncionarioWhatsApp from "./pages/FuncionarioWhatsApp";
+import FuncionarioReunioes from "./pages/FuncionarioReunioes";
 
 const queryClient = new QueryClient();
 
@@ -130,6 +132,8 @@ const App = () => (
           >
             <Route index element={<FuncionarioDashboard />} />
             <Route path="agenda" element={<FuncionarioDashboard />} />
+            <Route path="whatsapp" element={<FuncionarioWhatsApp />} />
+            <Route path="reunioes" element={<FuncionarioReunioes />} />
             <Route path="escala" element={<FuncionarioEscala />} />
           </Route>
 
