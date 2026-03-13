@@ -293,9 +293,13 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
               {cliente && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Cliente</Label>
-                  <p className="text-sm mt-0.5 flex items-center gap-1">
+                  <button
+                    onClick={() => setShowClienteSheet(true)}
+                    className="text-sm mt-0.5 flex items-center gap-1 text-primary hover:underline cursor-pointer"
+                  >
                     <Building2 className="h-3 w-3" /> {cliente.nome}
-                  </p>
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
                 </div>
               )}
             </div>
