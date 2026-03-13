@@ -560,6 +560,8 @@ Deno.serve(async (req) => {
           meetLink: reuniao.meet_link || null,
           tipoGatilho: aviso.tipo_gatilho || 'dias_antes',
           numeroReagendamentos: reuniao.numero_reagendamentos || 0,
+          audioUrl: (aviso as any).audio_url || null,
+          audioPosicao: (aviso as any).audio_posicao || null,
         });
       }
 
