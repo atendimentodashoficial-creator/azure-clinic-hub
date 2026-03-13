@@ -52,8 +52,33 @@ export default function GoogleCalendarCallback() {
 
         if (fnError) {
           console.error("OAuth error:", fnError);
+
+          let detailedMessage = fnError.message || "Erro ao processar autenticação";
+          const errorContext = (fnError as { context?: Response }).context;
+
+          if (errorContext) {
+            try {
+              const payload = await errorContext.clone().json() as {
+                error?: string;
+                hint?: string;
+              };
+              detailedMessage = payload.hint || payload.error || detailedMessage;
+            } catch {
+              try {
+                const rawBody = await errorContext.text();
+                if (rawBody) detailedMessage = rawBody;
+              } catch {
+                // keep default message
+              }
+            }
+          }
+
+          if (detailedMessage === "Edge Function returned a non-2xx status code") {
+            detailedMessage = "Falha no OAuth. Revise Client ID/Client Secret e tente novamente.";
+          }
+
           setStatus("error");
-          setMessage(fnError.message || "Erro ao processar autenticação");
+          setMessage(detailedMessage);
           return;
         }
 

@@ -72,28 +72,53 @@ serve(async (req) => {
 
     // Exchange code for tokens
     console.log("Exchanging code for tokens...");
+    const normalizedClientId = config.client_id.trim();
+    const normalizedClientSecret = config.client_secret.trim();
+    const basicAuth = btoa(`${normalizedClientId}:${normalizedClientSecret}`);
+
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${basicAuth}`,
       },
       body: new URLSearchParams({
         code,
-        client_id: config.client_id,
-        client_secret: config.client_secret,
+        client_id: normalizedClientId,
+        client_secret: normalizedClientSecret,
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
     });
 
-    const tokenData = await tokenResponse.json();
+    const rawTokenBody = await tokenResponse.text();
+    let tokenData: any = {};
+
+    try {
+      tokenData = rawTokenBody ? JSON.parse(rawTokenBody) : {};
+    } catch {
+      tokenData = { raw: rawTokenBody };
+    }
 
     if (!tokenResponse.ok) {
       console.error("Token exchange error:", tokenData);
+
+      const googleError = typeof tokenData?.error === "string"
+        ? tokenData.error
+        : "token_exchange_failed";
+      const googleDescription = typeof tokenData?.error_description === "string"
+        ? tokenData.error_description
+        : "Erro ao obter tokens";
+      const hint = googleError === "invalid_client"
+        ? "Client ID/Client Secret inválidos ou incompatíveis. Gere um novo Client Secret (valor) no Google Cloud e salve novamente."
+        : null;
+
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: tokenData.error_description || tokenData.error || "Erro ao obter tokens" 
+        JSON.stringify({
+          success: false,
+          error: googleDescription,
+          google_error: googleError,
+          hint,
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
