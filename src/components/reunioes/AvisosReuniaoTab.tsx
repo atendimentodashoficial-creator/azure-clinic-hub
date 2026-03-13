@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { Bell, Plus, Trash2, Edit, Loader2, Send, Clock, Zap, FileText, RefreshCw, Save, Eye, ChevronDown, TrendingUp, Video, User, Phone, MessageCircle } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Bell, Plus, Trash2, Edit, Loader2, Send, Clock, Zap, FileText, RefreshCw, Save, Eye, ChevronDown, TrendingUp, Video, User, Phone, MessageCircle, Volume2, Upload, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -79,6 +79,8 @@ interface AvisoReuniao {
   procedimento_id: string | null;
   instancia_id: string | null;
   tipo_gatilho: string;
+  audio_url: string | null;
+  audio_posicao: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -115,6 +117,10 @@ export function AvisosReuniaoTab() {
   const [formProcedimentoId, setFormProcedimentoId] = useState<string | null>(null);
   const [formInstanciaId, setFormInstanciaId] = useState<string | null>(null);
   const [formTipoGatilho, setFormTipoGatilho] = useState<"dias_antes" | "imediato" | "reagendamento">("dias_antes");
+  const [formAudioUrl, setFormAudioUrl] = useState<string | null>(null);
+  const [formAudioPosicao, setFormAudioPosicao] = useState<"antes" | "depois">("antes");
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+  const audioInputRef = useRef<HTMLInputElement>(null);
 
   const { data: procedimentos } = useProcedimentos();
 
@@ -207,6 +213,8 @@ export function AvisosReuniaoTab() {
     setFormProcedimentoId(null);
     setFormInstanciaId(null);
     setFormTipoGatilho("dias_antes");
+    setFormAudioUrl(null);
+    setFormAudioPosicao("antes");
     setEditingAviso(null);
   };
 
@@ -246,6 +254,8 @@ export function AvisosReuniaoTab() {
     setFormAtivo(aviso.ativo);
     setFormProcedimentoId(aviso.procedimento_id || null);
     setFormInstanciaId(aviso.instancia_id || null);
+    setFormAudioUrl(aviso.audio_url || null);
+    setFormAudioPosicao((aviso.audio_posicao as "antes" | "depois") || "antes");
     // Map envio_imediato to tipo_gatilho for backwards compatibility
     if (aviso.envio_imediato) {
       setFormTipoGatilho("imediato");
@@ -314,7 +324,9 @@ export function AvisosReuniaoTab() {
             procedimento_id: formProcedimentoId,
             instancia_id: formInstanciaId,
             tipo_gatilho: tipoGatilhoToSave,
-          })
+            audio_url: formAudioUrl,
+            audio_posicao: formAudioPosicao,
+          } as any)
           .eq('id', editingAviso.id);
 
         if (error) throw error;
@@ -336,7 +348,9 @@ export function AvisosReuniaoTab() {
             procedimento_id: formProcedimentoId,
             instancia_id: formInstanciaId,
             tipo_gatilho: tipoGatilhoToSave,
-          });
+            audio_url: formAudioUrl,
+            audio_posicao: formAudioPosicao,
+          } as any);
 
         if (error) throw error;
         toast.success('Aviso criado com sucesso!');
@@ -503,6 +517,14 @@ export function AvisosReuniaoTab() {
                       </div>
                     )}
 
+                    {/* Audio indicator */}
+                    {aviso.audio_url && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Volume2 className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
+                        <span>Áudio {aviso.audio_posicao === 'depois' ? 'após' : 'antes da'} mensagem</span>
+                      </div>
+                    )}
+
                     {/* Preview da mensagem */}
                     <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">
                       {aviso.mensagem}
@@ -590,6 +612,13 @@ export function AvisosReuniaoTab() {
                         <span className="truncate">
                           {instancias.find(i => i.id === aviso.instancia_id)?.nome || "Instância específica"}
                         </span>
+                      </div>
+                    )}
+
+                    {aviso.audio_url && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Volume2 className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
+                        <span>Áudio {aviso.audio_posicao === 'depois' ? 'após' : 'antes da'} mensagem</span>
                       </div>
                     )}
 
@@ -702,6 +731,13 @@ export function AvisosReuniaoTab() {
                         <span className="truncate">
                           {instancias.find(i => i.id === aviso.instancia_id)?.nome || "Instância específica"}
                         </span>
+                      </div>
+                    )}
+
+                    {aviso.audio_url && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Volume2 className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
+                        <span>Áudio {aviso.audio_posicao === 'depois' ? 'após' : 'antes da'} mensagem</span>
                       </div>
                     )}
 
@@ -1004,6 +1040,94 @@ export function AvisosReuniaoTab() {
               />
               <p className="text-xs text-muted-foreground">
                 Variáveis: {'{nome}'}, {'{data}'}, {'{horario}'}, {'{link_call}'}, {'{titulo}'}
+              </p>
+            </div>
+
+            {/* Áudio */}
+            <div className="space-y-3">
+              <Label>Áudio (opcional)</Label>
+              <input
+                ref={audioInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 10 * 1024 * 1024) {
+                    toast.error("Áudio deve ter no máximo 10MB");
+                    return;
+                  }
+                  setUploadingAudio(true);
+                  try {
+                    const ext = file.name.split('.').pop() || 'mp3';
+                    const filePath = `avisos-audio/${Date.now()}.${ext}`;
+                    const { error: uploadErr } = await supabase.storage
+                      .from('audios-predefinidos')
+                      .upload(filePath, file);
+                    if (uploadErr) throw uploadErr;
+                    const { data: urlData } = supabase.storage
+                      .from('audios-predefinidos')
+                      .getPublicUrl(filePath);
+                    setFormAudioUrl(urlData.publicUrl);
+                    toast.success("Áudio enviado!");
+                  } catch (err: any) {
+                    toast.error("Erro ao enviar áudio: " + err.message);
+                  } finally {
+                    setUploadingAudio(false);
+                    if (audioInputRef.current) audioInputRef.current.value = '';
+                  }
+                }}
+              />
+              {formAudioUrl ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30">
+                    <Volume2 className="h-4 w-4 text-primary flex-shrink-0" />
+                    <audio src={formAudioUrl} controls className="flex-1 h-8" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setFormAudioUrl(null)}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Enviar áudio</Label>
+                    <Select
+                      value={formAudioPosicao}
+                      onValueChange={(v) => setFormAudioPosicao(v as "antes" | "depois")}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border shadow-lg z-50">
+                        <SelectItem value="antes">Antes da mensagem</SelectItem>
+                        <SelectItem value="depois">Depois da mensagem</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={uploadingAudio}
+                  onClick={() => audioInputRef.current?.click()}
+                >
+                  {uploadingAudio ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {uploadingAudio ? "Enviando..." : "Enviar áudio"}
+                </Button>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Envie um áudio para acompanhar a mensagem de texto
               </p>
             </div>
 

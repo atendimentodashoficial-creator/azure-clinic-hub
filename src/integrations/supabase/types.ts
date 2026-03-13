@@ -755,6 +755,8 @@ export type Database = {
       avisos_reuniao: {
         Row: {
           ativo: boolean
+          audio_posicao: string | null
+          audio_url: string | null
           created_at: string
           dias_antes: number
           envio_imediato: boolean
@@ -774,6 +776,8 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          audio_posicao?: string | null
+          audio_url?: string | null
           created_at?: string
           dias_antes?: number
           envio_imediato?: boolean
@@ -793,6 +797,8 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          audio_posicao?: string | null
+          audio_url?: string | null
           created_at?: string
           dias_antes?: number
           envio_imediato?: boolean
