@@ -73,6 +73,7 @@ export function useTarefaMockups(tarefaId: string | null) {
           legenda: slide.legenda,
           cta: slide.cta,
           ordem: slide.ordem,
+          post_index: slide.post_index,
           updated_at: new Date().toISOString(),
         };
         // If content changed on an approved mockup, keep approved status
