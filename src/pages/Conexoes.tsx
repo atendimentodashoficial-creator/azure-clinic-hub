@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
-import { Link2, CheckCircle2, XCircle, Eye, EyeOff, Loader2, RefreshCw, Plus, Trash2, Bot, Database, ChevronDown, ChevronRight, Crosshair, Instagram, Mic } from "lucide-react";
+import { Link2, CheckCircle2, XCircle, Eye, EyeOff, Loader2, RefreshCw, Plus, Trash2, Bot, Database, ChevronDown, ChevronRight, Crosshair, Instagram } from "lucide-react";
 import { MetaIcon } from "@/components/icons/MetaIcon";
 import GoogleAdsIcon from "@/components/icons/GoogleAdsIcon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
