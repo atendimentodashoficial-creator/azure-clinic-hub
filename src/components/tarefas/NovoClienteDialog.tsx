@@ -56,12 +56,12 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
   const [googleMeuNegocio, setGoogleMeuNegocio] = useState(clienteEditando?.google_meu_negocio || "");
   const [observacoes, setObservacoes] = useState(clienteEditando?.observacoes || "");
   const [grupoWhatsapp, setGrupoWhatsapp] = useState(clienteEditando?.grupo_whatsapp || "");
-  const [tipo, setTipo] = useState(clienteEditando?.tipo || "interno");
+  const [tipo, setTipo] = useState(clienteEditando?.tipo || defaultTipo || "interno");
 
   const resetForm = () => {
     setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("55"); setEmpresa("");
     setCnpj(""); setDocTipo("cnpj"); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
-    setObservacoes(""); setGrupoWhatsapp(""); setTipo("interno"); setFormTab("info");
+    setObservacoes(""); setGrupoWhatsapp(""); setTipo(defaultTipo || "interno"); setFormTab("info");
   };
 
   // Pre-fill when opened externally with initialData
