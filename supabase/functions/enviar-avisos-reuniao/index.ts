@@ -165,6 +165,24 @@ function replaceVariables(message: string, aviso: PendingAviso): string {
   return processSpintax(result);
 }
 
+// Build Google Calendar "Add to Calendar" URL
+function buildGoogleCalendarUrl(aviso: PendingAviso): string {
+  const start = new Date(aviso.dataReuniao);
+  const end = new Date(start.getTime() + ((aviso.duracaoMinutos || 60) * 60 * 1000));
+  
+  const formatGCalDate = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: aviso.titulo,
+    dates: `${formatGCalDate(start)}/${formatGCalDate(end)}`,
+    details: aviso.meetLink ? `Link da reunião: ${aviso.meetLink}` : "Reunião agendada via CRM",
+    ctz: "America/Sao_Paulo",
+  });
+  
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 // Process a single aviso message
 async function processAviso(
   supabase: any,
