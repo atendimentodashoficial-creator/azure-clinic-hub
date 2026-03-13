@@ -45,6 +45,8 @@ import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 import FuncionarioEscala from "./pages/FuncionarioEscala";
 import FuncionarioWhatsApp from "./pages/FuncionarioWhatsApp";
 import FuncionarioReunioes from "./pages/FuncionarioReunioes";
+import AdminFinanceiro from "./pages/AdminFinanceiro";
+import FuncionarioFinanceiro from "./pages/FuncionarioFinanceiro";
 
 const queryClient = new QueryClient();
 
