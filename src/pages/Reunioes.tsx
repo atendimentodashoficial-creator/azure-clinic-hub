@@ -337,16 +337,34 @@ export default function Reunioes() {
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
           {/* Header controls for reunioes tab */}
-          <div className="flex items-center justify-start gap-2 flex-wrap">
-            <TemplateCamposDialog />
-            <Button 
-              onClick={handleSync} 
-              disabled={syncing || !firefliesConfig?.api_key}
-              className="gap-2"
-            >
-              <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-              Sincronizar Fireflies
-            </Button>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <TemplateCamposDialog />
+              <Button 
+                onClick={handleSync} 
+                disabled={syncing || !firefliesConfig?.api_key}
+                className="gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+                Sincronizar Fireflies
+              </Button>
+            </div>
+
+            {membros.length > 0 && (
+              <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+                <SelectTrigger className="w-[220px] h-8 text-xs">
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  <SelectValue placeholder="Filtrar por colaborador" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="meus">Minhas reuniões</SelectItem>
+                  {membros.map(m => (
+                    <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
 
