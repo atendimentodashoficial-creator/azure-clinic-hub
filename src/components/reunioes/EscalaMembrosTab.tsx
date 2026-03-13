@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { useTarefasMembros } from "@/hooks/useTarefasMembros";
+import { useTarefasMembros, type TarefaMembro } from "@/hooks/useTarefasMembros";
+import { useMembroAtual } from "@/hooks/useMembroAtual";
 import {
   useEscalasMembros,
   useCreateEscalaMembro,
