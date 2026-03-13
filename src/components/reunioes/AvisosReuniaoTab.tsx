@@ -79,6 +79,8 @@ interface AvisoReuniao {
   procedimento_id: string | null;
   instancia_id: string | null;
   tipo_gatilho: string;
+  audio_url: string | null;
+  audio_posicao: string | null;
   created_at: string;
   updated_at: string;
 }
