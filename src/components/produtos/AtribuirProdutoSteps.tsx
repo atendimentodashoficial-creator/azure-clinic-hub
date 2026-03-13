@@ -277,7 +277,7 @@ export function SelectMemberAndTimeStep({
           Selecione Profissional e Horário
         </Label>
 
-        <ScrollArea className="max-h-[300px]">
+        <ScrollArea className="h-[300px]">
           <div className="space-y-3">
             {allMembers.map(member => {
               const slots = memberSlots[member.id] || [];
