@@ -137,7 +137,7 @@ interface SelectMemberAndTimeStepProps {
   templateNome: string;
   saving: boolean;
   onBack: () => void;
-  onConfirm: (data: { titulo: string; dataHora: string; duracao: number; memberNome: string }) => void;
+  onConfirm: (data: { titulo: string; dataHora: string; duracao: number; memberNome: string; memberId: string }) => void;
 }
 
 export function SelectMemberAndTimeStep({
@@ -211,6 +211,7 @@ export function SelectMemberAndTimeStep({
       dataHora,
       duracao: duration,
       memberNome: selectedMemberObj.nome,
+      memberId: selectedMemberObj.id,
     });
   };
 

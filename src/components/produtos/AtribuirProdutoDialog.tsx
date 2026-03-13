@@ -130,12 +130,43 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
     dataHora: string;
     duracao: number;
     memberNome: string;
+    memberId: string;
   }) => {
     if (!selectedClient) return;
     setSaving(true);
     try {
       if (templateTarefas.length > 0) {
         await criarTarefasDoProduto(selectedClient.id);
+      }
+
+      // Look up the membro to find their email, then find profissional by email
+      const { data: membroData } = await supabase
+        .from("tarefas_membros" as any)
+        .select("email")
+        .eq("id", data.memberId)
+        .maybeSingle() as any;
+
+      let profissionalId: string | null = null;
+      if (membroData?.email) {
+        const { data: profData } = await supabase
+          .from("profissionais")
+          .select("id")
+          .eq("email", membroData.email)
+          .maybeSingle();
+        profissionalId = profData?.id || null;
+      }
+
+      // Try to find the client in leads table to set cliente_id
+      let clienteId: string | null = null;
+      if (selectedClient.telefone) {
+        const { data: leadData } = await supabase
+          .from("leads")
+          .select("id")
+          .eq("user_id", user!.id)
+          .is("deleted_at", null)
+          .eq("telefone", selectedClient.telefone)
+          .maybeSingle();
+        clienteId = leadData?.id || null;
       }
 
       const { error } = await supabase
@@ -146,6 +177,8 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
           data_reuniao: data.dataHora,
           duracao_minutos: data.duracao,
           cliente_telefone: selectedClient.telefone || null,
+          cliente_id: clienteId,
+          profissional_id: profissionalId,
           status: "agendado",
           participantes: [selectedClient.nome, data.memberNome],
         } as any);
