@@ -422,6 +422,7 @@ export default function Tarefas() {
   const { role } = useUserRole();
   const { ownerId } = useOwnerId();
   const [activeTarefa, setActiveTarefa] = useState<Tarefa | null>(null);
+  const [detalheTarefa, setDetalheTarefa] = useState<Tarefa | null>(null);
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
 
