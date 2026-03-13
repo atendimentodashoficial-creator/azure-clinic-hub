@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, getDay } from "date-fns";
+import { getDay } from "date-fns";
 import { User, Video, Plus, Search } from "lucide-react";
 import {
   Dialog,
