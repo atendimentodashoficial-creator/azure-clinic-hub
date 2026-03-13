@@ -359,6 +359,7 @@ function ProdutoDialog({
   const { criarTemplate, atualizarTemplate, adicionarTarefa, atualizarTarefa, excluirTarefa } = useProdutoTemplateMutations();
   const { membros } = useTarefasMembros();
   const { colunas } = useTarefas();
+  const { data: tiposReuniao = [] } = useTiposReuniao();
 
   const isEditing = !!editando;
   const [nome, setNome] = useState(editando?.nome || "");
