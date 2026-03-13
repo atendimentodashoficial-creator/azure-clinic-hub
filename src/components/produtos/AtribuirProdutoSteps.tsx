@@ -160,20 +160,22 @@ export function SelectMemberAndTimeStep({
   const duration = parseInt(reuniaoDuracao) || 60;
   const stepInterval = use15min ? 15 : 30;
 
+  const fetchMeetings = async () => {
+    const { data } = await supabase
+      .from("reunioes")
+      .select("data_reuniao, duracao_minutos, user_id")
+      .in("status", ["agendado", "confirmado"]);
+    const grouped: Record<string, Array<{ data_reuniao: string; duracao_minutos: number }>> = {};
+    for (const r of (data as any[]) || []) {
+      if (!grouped[r.user_id]) grouped[r.user_id] = [];
+      grouped[r.user_id].push({ data_reuniao: r.data_reuniao, duracao_minutos: r.duracao_minutos });
+    }
+    setMeetingsByUser(grouped);
+  };
+
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("reunioes")
-        .select("data_reuniao, duracao_minutos, user_id")
-        .in("status", ["agendado", "confirmado"]);
-      const grouped: Record<string, Array<{ data_reuniao: string; duracao_minutos: number }>> = {};
-      for (const r of (data as any[]) || []) {
-        if (!grouped[r.user_id]) grouped[r.user_id] = [];
-        grouped[r.user_id].push({ data_reuniao: r.data_reuniao, duracao_minutos: r.duracao_minutos });
-      }
-      setMeetingsByUser(grouped);
-    })();
-  }, []);
+    fetchMeetings();
+  }, [selectedDate]);
 
   // Build member list: team members only (admin excluded)
   const allMembers: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[]; authUserId?: string | null })[] = useMemo(() => {
