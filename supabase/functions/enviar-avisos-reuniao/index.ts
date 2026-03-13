@@ -529,7 +529,12 @@ Deno.serve(async (req) => {
 
         const diffDays = Math.round((dataReuniaoSP.getTime() - hojeDateSP.getTime()) / (1000 * 60 * 60 * 24));
 
-        return diffDays === aviso.dias_antes;
+        if (diffDays !== aviso.dias_antes) return false;
+
+        // Filter by tipo_reuniao_id if specified
+        if (aviso.tipo_reuniao_id && reuniao.tipo_reuniao_id !== aviso.tipo_reuniao_id) return false;
+
+        return true;
       });
 
       if (matchingReunioes.length === 0) {
