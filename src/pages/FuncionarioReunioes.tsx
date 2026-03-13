@@ -142,7 +142,21 @@ export default function FuncionarioReunioes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tarefas_membros" as any)
-        .select("id, nome, auth_user_id")
+        .select("id, nome, auth_user_id, email")
+        .order("nome");
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!ownerId,
+  });
+
+  // Build a map: auth_user_id → profissional_ids for filtering "meus"
+  const { data: profissionais = [] } = useQuery({
+    queryKey: ["profissionais-map", ownerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profissionais" as any)
+        .select("id, email")
         .order("nome");
       if (error) throw error;
       return data as any[];
@@ -231,18 +245,34 @@ export default function FuncionarioReunioes() {
     return map;
   }, [membros, ownerId, ownerProfile]);
 
+  // Helper: get profissional IDs linked to a member (by email match)
+  const getProfissionalIdsForMember = (m: any): string[] => {
+    if (!m?.email) return [];
+    return profissionais.filter((p: any) => p.email === m.email).map((p: any) => p.id);
+  };
+
   // Filter by member then by period
   const reunioes = useMemo(() => {
     if (!allReunioes) return [];
     let filtered = allReunioes;
-    if (selectedMemberId === "meus") filtered = filtered.filter(r => r.user_id === user?.id);
-    else if (selectedMemberId !== "todos") {
+    if (selectedMemberId === "meus") {
+      // Match by user_id OR by profissional_id linked to current membro
+      const myProfIds = membro ? getProfissionalIdsForMember(membro) : [];
+      filtered = filtered.filter(r => 
+        r.user_id === user?.id || 
+        (myProfIds.length > 0 && r.profissional_id && myProfIds.includes(r.profissional_id))
+      );
+    } else if (selectedMemberId !== "todos") {
       const m = membros.find((mb: any) => mb.id === selectedMemberId);
-      if (!m?.auth_user_id) return [];
-      filtered = filtered.filter(r => r.user_id === m.auth_user_id);
+      if (!m) return [];
+      const memberProfIds = getProfissionalIdsForMember(m);
+      filtered = filtered.filter(r => 
+        (m.auth_user_id && r.user_id === m.auth_user_id) ||
+        (memberProfIds.length > 0 && r.profissional_id && memberProfIds.includes(r.profissional_id))
+      );
     }
     return periodFilter.filterReunioes(filtered);
-  }, [allReunioes, selectedMemberId, membros, user?.id, periodFilter]);
+  }, [allReunioes, selectedMemberId, membros, user?.id, periodFilter, membro, profissionais]);
 
   const formatDuration = (minutes: number | null) => {
     if (!minutes) return "—";
@@ -508,12 +538,14 @@ export default function FuncionarioReunioes() {
                             {/* Responsável da equipe */}
                             {(() => {
                               const membroNome = memberNameByUserId.get(reuniao.user_id);
-                              const isOwn = reuniao.user_id === user?.id;
-                              const displayName = membroNome || (isOwn ? "Você" : reuniao.profissionais?.nome);
+                              const profNome = reuniao.profissionais?.nome;
+                              const isOwn = reuniao.user_id === user?.id || 
+                                (membro && profNome && profNome === membro.nome);
+                              const displayName = membroNome || profNome || (isOwn ? "Você" : null);
                               return displayName ? (
                                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                   <Users className="h-3.5 w-3.5 flex-shrink-0" />
-                                  <span className="truncate">{displayName}{isOwn && membroNome ? " (você)" : ""}</span>
+                                  <span className="truncate">{displayName}{isOwn && displayName && displayName !== "Você" ? " (você)" : ""}</span>
                                 </div>
                               ) : null;
                             })()}
