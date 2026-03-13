@@ -348,7 +348,9 @@ export function AvisosReuniaoTab() {
             procedimento_id: formProcedimentoId,
             instancia_id: formInstanciaId,
             tipo_gatilho: tipoGatilhoToSave,
-          });
+            audio_url: formAudioUrl,
+            audio_posicao: formAudioPosicao,
+          } as any);
 
         if (error) throw error;
         toast.success('Aviso criado com sucesso!');
