@@ -77,15 +77,15 @@ export function VincularTranscricaoDialog({
   });
 
   const vincularMutation = useMutation({
-    mutationFn: async (reuniaoFireflies: ReuniaoFireflies) => {
-      // 1. Primeiro, deletar o registro Fireflies-only para evitar conflito de unique constraint
+    mutationFn: async (reuniaoTranscricao: ReuniaoTranscricao) => {
+      // 1. Deletar o registro importado para evitar conflito de unique constraint
       const { error: deleteError } = await supabase
         .from("reunioes" as any)
         .delete()
-        .eq("id", reuniaoFireflies.id);
+        .eq("id", reuniaoTranscricao.id);
 
       if (deleteError) {
-        console.error("Erro ao deletar registro Fireflies:", deleteError);
+        console.error("Erro ao deletar registro importado:", deleteError);
         throw deleteError;
       }
 
@@ -97,17 +97,15 @@ export function VincularTranscricaoDialog({
 
       if (deleteCamposError) {
         console.error("Erro ao deletar campos anteriores:", deleteCamposError);
-        // Não bloqueia, apenas loga
       }
 
-      // 3. Agora podemos atualizar a reunião agendada com os dados da transcrição
-      // Sempre limpa o resumo_ia para permitir gerar um novo resumo com a nova transcrição
+      // 3. Atualizar a reunião agendada com os dados da transcrição
       const { error: updateError } = await supabase
         .from("reunioes" as any)
         .update({
-          fireflies_id: reuniaoFireflies.fireflies_id,
-          transcricao: reuniaoFireflies.transcricao,
-          resumo_ia: null, // Limpa resumo para permitir gerar novamente
+          fireflies_id: reuniaoTranscricao.fireflies_id,
+          transcricao: reuniaoTranscricao.transcricao,
+          resumo_ia: null,
           status: "transcrito",
         })
         .eq("id", reuniaoId);
@@ -126,8 +124,8 @@ export function VincularTranscricaoDialog({
     },
   });
 
-  const handleVincular = (reuniaoFireflies: ReuniaoFireflies) => {
-    vincularMutation.mutate(reuniaoFireflies);
+  const handleVincular = (reuniaoTranscricao: ReuniaoTranscricao) => {
+    vincularMutation.mutate(reuniaoTranscricao);
   };
 
   const formatDuration = (minutes: number | null) => {
