@@ -1095,9 +1095,6 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
     return phoneNumber;
   };
 
-  const handleCreateAgendamento = async () => {
-    try {
-  // Removed handleCreateAgendamento - replaced by product assignment
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
