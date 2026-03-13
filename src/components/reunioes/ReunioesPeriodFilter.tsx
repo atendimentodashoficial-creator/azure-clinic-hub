@@ -83,7 +83,7 @@ export function ReunioesPeriodFilter({
 
       {/* Count badge for non-hoje active filters */}
       {value !== "todas" && value !== "hoje" && count !== undefined && (
-        <Badge className="h-6 px-2 text-xs rounded-full bg-primary text-primary-foreground">
+        <Badge className="h-6 px-2 text-xs rounded-md bg-primary text-primary-foreground">
           {count} reunião(ões)
         </Badge>
       )}
