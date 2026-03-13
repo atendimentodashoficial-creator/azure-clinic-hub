@@ -120,6 +120,7 @@ export function AvisosReuniaoTab() {
   const [formAtivo, setFormAtivo] = useState(true);
   const [formProcedimentoId, setFormProcedimentoId] = useState<string | null>(null);
   const [formInstanciaId, setFormInstanciaId] = useState<string | null>(null);
+  const [formTipoReuniaoId, setFormTipoReuniaoId] = useState<string | null>(null);
   const [formTipoGatilho, setFormTipoGatilho] = useState<"dias_antes" | "imediato" | "reagendamento">("dias_antes");
   const [formAudioUrl, setFormAudioUrl] = useState<string | null>(null);
   const [formAudioPosicao, setFormAudioPosicao] = useState<"antes" | "depois">("antes");
