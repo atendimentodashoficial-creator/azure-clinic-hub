@@ -13,13 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 import { useEscalasMembros, useAusenciasMembros, EscalaMembro, AusenciaMembro } from "@/hooks/useEscalasMembros";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatInTimeZone } from "date-fns-tz";
 import { timeToMinutes, minutesToTime, rangesOverlap } from "@/utils/timeSlots";
+import { useTiposReuniao, useTipoReuniaoMembros } from "@/hooks/useTiposReuniao";
 
 function computeSlots(
   escalas: EscalaMembro[],
