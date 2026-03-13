@@ -148,6 +148,21 @@ export default function FuncionarioReunioes() {
     enabled: !!ownerId,
   });
 
+  // Fetch owner profile name
+  const { data: ownerProfile } = useQuery({
+    queryKey: ["owner-profile", ownerId],
+    queryFn: async () => {
+      if (!ownerId) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .eq("id", ownerId)
+        .single();
+      return data as any;
+    },
+    enabled: !!ownerId,
+  });
+
   // Fetch ALL reuniões (RLS returns owner's workspace data)
   const { data: allReunioes, isLoading } = useQuery({
     queryKey: ["funcionario-reunioes", user?.id],
@@ -207,8 +222,12 @@ export default function FuncionarioReunioes() {
     for (const m of membros) {
       if (m.auth_user_id) map.set(m.auth_user_id, m.nome);
     }
+    // Add admin/owner to the map
+    if (ownerId && ownerProfile) {
+      map.set(ownerId, ownerProfile.full_name || ownerProfile.email || "Admin");
+    }
     return map;
-  }, [membros]);
+  }, [membros, ownerId, ownerProfile]);
 
   // Filter by member then by period
   const reunioes = useMemo(() => {
