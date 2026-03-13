@@ -50,23 +50,27 @@ export function EscalaMembrosTab({ membroIdFixo }: EscalaMembrosTabProps) {
   const { membro: membroAtual } = useMembroAtual();
 
   // Auto-create admin member record if not exists
+  const [adminAutoCreated, setAdminAutoCreated] = useState(false);
   useEffect(() => {
-    if (membroIdFixo || !user || loadingMembros) return;
+    if (membroIdFixo || !user || loadingMembros || adminAutoCreated) return;
     const adminEmail = user.email;
     if (!adminEmail) return;
     const exists = membrosAdmin.some(m => m.email === adminEmail);
-    if (!exists) {
-      const adminName = user.user_metadata?.full_name || adminEmail;
-      supabase
-        .from("tarefas_membros" as any)
-        .insert({ nome: adminName, email: adminEmail, cargo: "Administrador", user_id: user.id } as any)
-        .then(({ error }) => {
-          if (!error) {
-            queryClient.invalidateQueries({ queryKey: ["tarefas-membros"] });
-          }
-        });
+    if (exists) {
+      setAdminAutoCreated(true);
+      return;
     }
-  }, [membroIdFixo, user, membrosAdmin, loadingMembros, queryClient]);
+    setAdminAutoCreated(true);
+    const adminName = user.user_metadata?.full_name || adminEmail;
+    supabase
+      .from("tarefas_membros" as any)
+      .insert({ nome: adminName, email: adminEmail, cargo: "Administrador", user_id: user.id } as any)
+      .then(({ error }) => {
+        if (!error) {
+          queryClient.invalidateQueries({ queryKey: ["tarefas-membros"] });
+        }
+      });
+  }, [membroIdFixo, user, membrosAdmin, loadingMembros, queryClient, adminAutoCreated]);
 
   // When locked (funcionario), use their own membro record; otherwise use admin's list
   const membros: TarefaMembro[] = useMemo(() => {
