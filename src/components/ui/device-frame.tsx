@@ -45,7 +45,7 @@ function MonitorFrame({ children, className }: DeviceFrameProps) {
 function IPhoneFrame({ children, className }: DeviceFrameProps) {
   return (
     <div className={cn("flex justify-center py-4 w-full overflow-x-hidden", className)}>
-      <div className="relative flex-shrink-0 w-full max-w-[340px] aspect-[9/16] overflow-hidden">
+      <div className="relative flex-shrink-0 w-full max-w-[380px] aspect-[9/16] overflow-hidden">
         {/* Phone shell - fixed frame */}
         <div className="absolute inset-0 rounded-[2.5rem] border-[4px] border-foreground/25 bg-foreground/5 shadow-xl pointer-events-none z-10" />
         {/* Notch / Dynamic Island */}
