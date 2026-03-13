@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTarefas, Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTarefasClientes } from "@/hooks/useTarefasClientes";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
@@ -6,6 +6,7 @@ import { useMembroAtual } from "@/hooks/useMembroAtual";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useOwnerId } from "@/hooks/useOwnerId";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable, closestCenter } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -21,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign } from "lucide-react";
+import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -165,11 +166,12 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   );
 }
 
-function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, onDelete }: {
+function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, onDelete }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
   membrosNomes: string[];
+  reunioesMap?: Record<string, { data_reuniao: string; status: string }>;
   onDelete: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -190,6 +192,7 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, onDelete
         colunas={colunas}
         clientes={clientes}
         membrosNomes={membrosNomes}
+        reunioesMap={reunioesMap}
         onDelete={onDelete}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
@@ -197,16 +200,18 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, onDelete
   );
 }
 
-function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, onDelete, dragHandleProps }: {
+function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, onDelete, dragHandleProps }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
   membrosNomes?: string[];
+  reunioesMap?: Record<string, { data_reuniao: string; status: string }>;
   onDelete?: (id: string) => void;
   dragHandleProps?: Record<string, any>;
 }) {
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
   const cliente = tarefa.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
+  const reuniao = tarefa.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
 
   const renderResponsaveis = () => {
     if (!tarefa.responsavel_nome) return null;
@@ -253,6 +258,12 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, onDelete, 
               <Building2 className="h-3 w-3" /> {cliente.nome}
             </p>
           )}
+          {reuniao && (
+            <p className="text-xs mt-1 flex items-center gap-1 text-primary">
+              <Video className="h-3 w-3" />
+              {format(new Date(reuniao.data_reuniao), "dd/MM/yyyy 'às' HH:mm")}
+            </p>
+          )}
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <Badge className={cn("text-xs border-0", prio.color)}>{prio.label}</Badge>
             {tarefa.data_limite && (
@@ -295,6 +306,25 @@ export default function Tarefas() {
   const [activeTarefa, setActiveTarefa] = useState<Tarefa | null>(null);
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
+
+  // Fetch reunioes for tasks that have reuniao_id
+  const reuniaoIds = tarefas.filter(t => t.reuniao_id).map(t => t.reuniao_id!);
+  const { data: reunioesData } = useQuery({
+    queryKey: ["tarefas-reunioes", reuniaoIds.sort().join(",")],
+    queryFn: async () => {
+      if (reuniaoIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("reunioes")
+        .select("id, data_reuniao, status")
+        .in("id", reuniaoIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: reuniaoIds.length > 0,
+  });
+
+  const reunioesMap: Record<string, { data_reuniao: string; status: string }> = {};
+  (reunioesData || []).forEach((r: any) => { reunioesMap[r.id] = r; });
 
   // Filter tasks for employee "minhas" view
   const tarefasFiltradas = filtro === "minhas" && membro
@@ -446,6 +476,7 @@ export default function Tarefas() {
                         colunas={colunas}
                         clientes={clientes}
                         membrosNomes={membrosNomes}
+                        reunioesMap={reunioesMap}
                         onDelete={handleExcluir}
                       />
                     ))}
@@ -470,6 +501,7 @@ export default function Tarefas() {
                 colunas={colunas}
                 clientes={clientes}
                 membrosNomes={membrosNomes}
+                reunioesMap={reunioesMap}
               />
             </div>
           )}

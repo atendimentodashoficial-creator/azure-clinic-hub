@@ -136,10 +136,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
     if (!selectedClient) return;
     setSaving(true);
     try {
-      if (templateTarefas.length > 0) {
-        await criarTarefasDoProduto(selectedClient.id);
-      }
-
+      // First create the meeting to get reuniao_id
       const { data: reuniaoResponse, error: reuniaoError } = await supabase.functions.invoke(
         "create-member-reuniao",
         {
@@ -157,6 +154,33 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
       if (reuniaoError) throw reuniaoError;
       if (reuniaoResponse?.success === false) {
         throw new Error(reuniaoResponse.error || "Erro ao criar reunião");
+      }
+
+      const reuniaoId = reuniaoResponse?.reuniaoId || null;
+
+      // Then create tasks with the reuniao_id
+      if (templateTarefas.length > 0) {
+        for (const tt of templateTarefas) {
+          const meta = parseTarefaMeta(tt.descricao);
+          const colunaId = meta.coluna_id || colunas[0]?.id;
+          if (!colunaId) {
+            toast.error("Nenhuma coluna de tarefas encontrada");
+            return;
+          }
+          const prazo = meta.prazo ? meta.prazo : null;
+          const dataLimite = prazo ? new Date(Date.now() + prazo * 86400000).toISOString() : null;
+          await criarTarefa.mutateAsync({
+            titulo: tt.titulo,
+            descricao: meta.texto || undefined,
+            responsavel_nome: meta.responsavel || undefined,
+            prioridade: meta.prioridade || "media",
+            data_limite: dataLimite || undefined,
+            coluna_id: colunaId,
+            cliente_id: selectedClient.id,
+            comissao: meta.comissao || undefined,
+            reuniao_id: reuniaoId,
+          });
+        }
       }
 
       toast.success(`Produto atribuído e reunião agendada com ${selectedClient.nome}`);
