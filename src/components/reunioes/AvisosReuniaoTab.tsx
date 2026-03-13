@@ -1021,6 +1021,93 @@ export function AvisosReuniaoTab() {
               </p>
             </div>
 
+            {/* Áudio */}
+            <div className="space-y-3">
+              <Label>Áudio (opcional)</Label>
+              <input
+                ref={audioInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 10 * 1024 * 1024) {
+                    toast.error("Áudio deve ter no máximo 10MB");
+                    return;
+                  }
+                  setUploadingAudio(true);
+                  try {
+                    const ext = file.name.split('.').pop() || 'mp3';
+                    const filePath = `avisos-audio/${Date.now()}.${ext}`;
+                    const { error: uploadErr } = await supabase.storage
+                      .from('audios-predefinidos')
+                      .upload(filePath, file);
+                    if (uploadErr) throw uploadErr;
+                    const { data: urlData } = supabase.storage
+                      .from('audios-predefinidos')
+                      .getPublicUrl(filePath);
+                    setFormAudioUrl(urlData.publicUrl);
+                    toast.success("Áudio enviado!");
+                  } catch (err: any) {
+                    toast.error("Erro ao enviar áudio: " + err.message);
+                  } finally {
+                    setUploadingAudio(false);
+                    if (audioInputRef.current) audioInputRef.current.value = '';
+                  }
+                }}
+              />
+              {formAudioUrl ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30">
+                    <Volume2 className="h-4 w-4 text-primary flex-shrink-0" />
+                    <audio src={formAudioUrl} controls className="flex-1 h-8" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setFormAudioUrl(null)}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Enviar áudio</Label>
+                    <Select
+                      value={formAudioPosicao}
+                      onValueChange={(v) => setFormAudioPosicao(v as "antes" | "depois")}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border shadow-lg z-50">
+                        <SelectItem value="antes">Antes da mensagem</SelectItem>
+                        <SelectItem value="depois">Depois da mensagem</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={uploadingAudio}
+                  onClick={() => audioInputRef.current?.click()}
+                >
+                  {uploadingAudio ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {uploadingAudio ? "Enviando..." : "Enviar áudio"}
+                </Button>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Envie um áudio para acompanhar a mensagem de texto
+              </p>
+
             {/* Preview colapsável */}
             <Collapsible>
               <CollapsibleTrigger asChild>
