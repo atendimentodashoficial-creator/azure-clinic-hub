@@ -1,0 +1,1 @@
+ALTER TABLE public.produto_templates ADD COLUMN duracao_reuniao integer NOT NULL DEFAULT 60;
