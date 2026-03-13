@@ -19,9 +19,7 @@ import { Video } from "lucide-react";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
 import {
   SelectClientStep,
-  SelectMemberStep,
-  ScheduleMeetingStep,
-  MeetingMember,
+  SelectMemberAndTimeStep,
 } from "./AtribuirProdutoSteps";
 
 interface AtribuirProdutoDialogProps {
@@ -39,7 +37,7 @@ function parseTarefaMeta(descricao: string | null): any {
   }
 }
 
-type Step = "select-client" | "select-member" | "schedule-meeting";
+type Step = "select-client" | "schedule-meeting";
 
 export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdutoDialogProps) {
   const { user } = useAuth();
@@ -53,7 +51,6 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
 
   const [step, setStep] = useState<Step>("select-client");
   const [selectedClient, setSelectedClient] = useState<TarefaCliente | null>(null);
-  const [selectedMember, setSelectedMember] = useState<MeetingMember | null>(null);
 
   const filtrados = clientes.filter(c =>
     c.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -86,15 +83,10 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
   const handleSelectClient = (cliente: TarefaCliente) => {
     setSelectedClient(cliente);
     if (template.requer_reuniao) {
-      setStep("select-member");
+      setStep("schedule-meeting");
     } else {
       handleAtribuirSemReuniao(cliente.id, cliente.nome);
     }
-  };
-
-  const handleSelectMember = (member: MeetingMember) => {
-    setSelectedMember(member);
-    setStep("schedule-meeting");
   };
 
   const handleAtribuirSemReuniao = async (clienteId: string, clienteNome: string) => {
@@ -164,38 +156,8 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
   const handleClose = () => {
     setStep("select-client");
     setSelectedClient(null);
-    setSelectedMember(null);
     setBusca("");
     onClose();
-  };
-
-  const getTitle = () => {
-    switch (step) {
-      case "select-client": return "Atribuir Produto";
-      case "select-member": return "Selecionar Responsável";
-      case "schedule-meeting": return "Agendar Reunião";
-    }
-  };
-
-  const getDescription = () => {
-    switch (step) {
-      case "select-client":
-        return (
-          <>
-            Selecione um cliente para atribuir "{template.nome}"
-            {template.requer_reuniao && (
-              <span className="flex items-center gap-1 mt-1 text-primary">
-                <Video className="h-3.5 w-3.5" />
-                Este produto inclui agendamento de reunião
-              </span>
-            )}
-          </>
-        );
-      case "select-member":
-        return "Escolha quem será o responsável pela reunião";
-      case "schedule-meeting":
-        return `Agende a reunião para o produto "${template.nome}"`;
-    }
   };
 
   return (
@@ -203,8 +165,22 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
       <Dialog open={open} onOpenChange={() => handleClose()}>
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{getTitle()}</DialogTitle>
-            <DialogDescription>{getDescription()}</DialogDescription>
+            <DialogTitle>{step === "select-client" ? "Atribuir Produto" : "Agendar Reunião"}</DialogTitle>
+            <DialogDescription>
+              {step === "select-client" ? (
+                <>
+                  Selecione um cliente para atribuir "{template.nome}"
+                  {template.requer_reuniao && (
+                    <span className="flex items-center gap-1 mt-1 text-primary">
+                      <Video className="h-3.5 w-3.5" />
+                      Este produto inclui agendamento de reunião
+                    </span>
+                  )}
+                </>
+              ) : (
+                `Selecione o profissional e horário para "${template.nome}"`
+              )}
+            </DialogDescription>
           </DialogHeader>
 
           {step === "select-client" && (
@@ -219,21 +195,12 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
             />
           )}
 
-          {step === "select-member" && selectedClient && (
-            <SelectMemberStep
+          {step === "schedule-meeting" && selectedClient && (
+            <SelectMemberAndTimeStep
               clienteNome={selectedClient.nome}
-              onSelect={handleSelectMember}
-              onBack={() => setStep("select-client")}
-            />
-          )}
-
-          {step === "schedule-meeting" && selectedMember && (
-            <ScheduleMeetingStep
-              member={selectedMember}
-              clienteNome={selectedClient?.nome || ""}
               templateNome={template.nome}
               saving={saving}
-              onBack={() => setStep("select-member")}
+              onBack={() => setStep("select-client")}
               onConfirm={handleAtribuirComReuniao}
             />
           )}
