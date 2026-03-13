@@ -179,6 +179,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
             coluna_id: colunaId,
             cliente_id: selectedClient.id,
             comissao: meta.comissao || undefined,
+            tipo_tarefa_id: meta.tipo_tarefa_id || undefined,
             reuniao_id: reuniaoId,
           });
         }
