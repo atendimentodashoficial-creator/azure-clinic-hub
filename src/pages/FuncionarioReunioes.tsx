@@ -1,13 +1,14 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Video, Calendar, Clock, FileText, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, RefreshCw } from "lucide-react";
+import { Video, Calendar, Clock, FileText, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, RefreshCw, Users } from "lucide-react";
 import { formatPhoneDisplay, getLast8Digits } from "@/utils/phoneFormat";
 import { navigateToChat } from "@/utils/chatRouting";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMembroAtual } from "@/hooks/useMembroAtual";
-import { Card, CardContent } from "@/components/ui/card";
+import { useOwnerId } from "@/hooks/useOwnerId";
+import { ReunioesPeriodFilter, useReunioesPeriodFilter } from "@/components/reunioes/ReunioesPeriodFilter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
