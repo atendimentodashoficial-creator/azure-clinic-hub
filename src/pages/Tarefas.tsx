@@ -198,16 +198,18 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, onDelete
   );
 }
 
-function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, onDelete, dragHandleProps }: {
+function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, onDelete, dragHandleProps }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
   membrosNomes?: string[];
+  reunioesMap?: Record<string, { data_reuniao: string; status: string }>;
   onDelete?: (id: string) => void;
   dragHandleProps?: Record<string, any>;
 }) {
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
   const cliente = tarefa.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
+  const reuniao = tarefa.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
 
   const renderResponsaveis = () => {
     if (!tarefa.responsavel_nome) return null;
@@ -252,6 +254,12 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, onDelete, 
           {cliente && (
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <Building2 className="h-3 w-3" /> {cliente.nome}
+            </p>
+          )}
+          {reuniao && (
+            <p className="text-xs mt-1 flex items-center gap-1 text-primary">
+              <Video className="h-3 w-3" />
+              {format(new Date(reuniao.data_reuniao), "dd/MM/yyyy 'às' HH:mm")}
             </p>
           )}
           <div className="flex items-center gap-3 mt-2 flex-wrap">
