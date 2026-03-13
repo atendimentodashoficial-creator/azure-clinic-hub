@@ -520,7 +520,7 @@ function LinkOnlyApproval({
                     {link.titulo || link.url}
                   </a>
                 </div>
-                <div className="w-full aspect-[16/10] bg-muted">
+                <div className="w-full bg-muted" style={{ height: "80vh" }}>
                   <iframe
                     src={href}
                     className="w-full h-full border-0"
