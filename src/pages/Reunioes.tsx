@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, Users } from "lucide-react";
+import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, Users, Plus } from "lucide-react";
 import { ReunioesPeriodFilter, useReunioesPeriodFilter } from "@/components/reunioes/ReunioesPeriodFilter";
 import { formatPhoneDisplay, getLast8Digits } from "@/utils/phoneFormat";
 import { navigateToChat } from "@/utils/chatRouting";
@@ -22,6 +22,7 @@ import { VincularTranscricaoDialog } from "@/components/reunioes/VincularTranscr
 import { ReagendarReuniaoDialog } from "@/components/reunioes/ReagendarReuniaoDialog";
 import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog";
 import { EscalaMembrosTab } from "@/components/reunioes/EscalaMembrosTab";
+import { NovaReuniaoDialog } from "@/components/reunioes/NovaReuniaoDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,6 +74,7 @@ export default function Reunioes() {
   const [reuniaoParaExcluir, setReuniaoParaExcluir] = useState<Reuniao | null>(null);
   const [comparecimentoReuniao, setComparecimentoReuniao] = useState<Reuniao | null>(null);
   const [comparecimentoTipo, setComparecimentoTipo] = useState<"compareceu" | "nao_compareceu" | null>(null);
+  const [novaReuniaoOpen, setNovaReuniaoOpen] = useState(false);
 
   // Ouve evento de atualização de nome de contato para recarregar os dados
   useEffect(() => {
@@ -366,10 +368,15 @@ export default function Reunioes() {
           {/* Header controls for reunioes tab */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
+              <Button onClick={() => setNovaReuniaoOpen(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Nova Reunião
+              </Button>
               <TemplateCamposDialog />
               <Button 
                 onClick={handleSync} 
                 disabled={syncing || !hasGoogleCalendar}
+                variant="outline"
                 className="gap-2"
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
@@ -740,6 +747,11 @@ export default function Reunioes() {
             setComparecimentoTipo(null);
           }
         }}
+      />
+      {/* Dialog de nova reunião */}
+      <NovaReuniaoDialog
+        open={novaReuniaoOpen}
+        onOpenChange={setNovaReuniaoOpen}
       />
     </div>
   );
