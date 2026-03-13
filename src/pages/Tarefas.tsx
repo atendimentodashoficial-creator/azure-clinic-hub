@@ -629,6 +629,7 @@ export default function Tarefas() {
                         isFuncionario={isFuncionario}
                         onDelete={handleExcluir}
                         onStartTimer={handleStartTimer}
+                        onClick={setDetalheTarefa}
                       />
                     ))}
                   </DroppableColumn>
