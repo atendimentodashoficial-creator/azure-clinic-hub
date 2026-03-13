@@ -254,11 +254,10 @@ export function SelectMemberAndTimeStep({
           <Label>Duração (min)</Label>
           <Input
             type="number"
-            value={use15min ? "15" : reuniaoDuracao}
-            onChange={e => { setReuniaDuracao(e.target.value); setUse15min(false); setSelectedTime(""); }}
+            value={reuniaoDuracao}
+            onChange={e => { setReuniaDuracao(e.target.value); setSelectedTime(""); }}
             min={15}
             step={15}
-            disabled={use15min}
           />
         </div>
       </div>
@@ -269,7 +268,7 @@ export function SelectMemberAndTimeStep({
           checked={use15min}
           onCheckedChange={(c) => { setUse15min(!!c); setSelectedTime(""); }}
         />
-        <label htmlFor="use15" className="text-xs text-muted-foreground cursor-pointer">15 min</label>
+        <label htmlFor="use15" className="text-xs text-muted-foreground cursor-pointer">Intervalos de 15 min</label>
       </div>
 
       {/* Members with time slots */}
