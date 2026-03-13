@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, getDay } from "date-fns";
+import { getDay } from "date-fns";
 import { User, Video, Plus, Search } from "lucide-react";
 import {
   Dialog,
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { toast } from "sonner";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 import { useEscalasMembros, useAusenciasMembros, EscalaMembro, AusenciaMembro } from "@/hooks/useEscalasMembros";
@@ -246,7 +246,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden">
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col min-h-0 overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
@@ -254,7 +254,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
           </DialogTitle>
         </DialogHeader>
 
-        <div className="min-h-0 overflow-y-auto space-y-5 pr-1">
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col space-y-5 pr-1">
           {/* Título */}
           <div className="space-y-2">
             <Label>Título da Reunião *</Label>
@@ -343,7 +343,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
                 Selecione Profissional e Horário *
               </Label>
 
-              <ScrollArea className="max-h-[300px]">
+              <div className="h-[300px] overflow-y-auto pr-1">
                 <div className="space-y-3">
                   {allMembers.map(member => {
                     const slots = memberSlots[member.id] || [];
@@ -397,7 +397,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
                     </p>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           )}
         </div>
