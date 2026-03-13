@@ -72,12 +72,12 @@ export function MockupEditor({ slides, onChange, perfilNome, perfilCategoria, ma
           {slides.map((slide, i) => (
             <TabsContent key={i} value={String(i)} className="space-y-3 mt-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Subtítulo</Label>
-                <Input value={slide.subtitulo} onChange={e => updateSlide(i, "subtitulo", e.target.value)} placeholder="Texto menor acima do título..." />
-              </div>
-              <div className="space-y-1.5">
                 <Label className="text-xs">Título</Label>
                 <Input value={slide.titulo} onChange={e => updateSlide(i, "titulo", e.target.value)} placeholder="Título principal do post..." />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Subtítulo</Label>
+                <Input value={slide.subtitulo} onChange={e => updateSlide(i, "subtitulo", e.target.value)} placeholder="Texto menor acima do título..." />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Legenda</Label>
