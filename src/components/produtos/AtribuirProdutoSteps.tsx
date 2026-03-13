@@ -49,9 +49,7 @@ export function SelectClientStep({
       </div>
       <ScrollArea className="flex-1 max-h-[50vh]">
         {!busca.trim() ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground">Digite o nome do cliente para buscar</p>
-          </div>
+          <div className="py-8" />
         ) : filtrados.length === 0 ? (
           <div className="text-center py-8 space-y-2">
             <p className="text-sm text-muted-foreground">Nenhum cliente encontrado</p>
