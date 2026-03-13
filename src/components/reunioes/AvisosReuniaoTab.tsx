@@ -1061,7 +1061,7 @@ export function AvisosReuniaoTab() {
                   setUploadingAudio(true);
                   try {
                     const ext = file.name.split('.').pop() || 'mp3';
-                    const filePath = `avisos-audio/${Date.now()}.${ext}`;
+                    const filePath = `${user?.id}/avisos-audio-${Date.now()}.${ext}`;
                     const { error: uploadErr } = await supabase.storage
                       .from('audios-predefinidos')
                       .upload(filePath, file);
