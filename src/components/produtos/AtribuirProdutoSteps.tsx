@@ -3,19 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Plus, User, Video, ArrowLeft, Calendar, Clock, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TarefaCliente } from "@/hooks/useTarefasClientes";
-import { useTarefasMembros } from "@/hooks/useTarefasMembros";
-import { useEscalasMembros, useAusenciasMembros } from "@/hooks/useEscalasMembros";
+import { useTarefasMembros, TarefaMembro } from "@/hooks/useTarefasMembros";
+import { useEscalasMembros, useAusenciasMembros, EscalaMembro, AusenciaMembro } from "@/hooks/useEscalasMembros";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addDays, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { timeToMinutes, minutesToTime, rangesOverlap } from "@/utils/timeSlots";
 
-// Shared type for meeting member (can be admin or team member)
 export interface MeetingMember {
   id: string;
   nome: string;
@@ -42,24 +41,16 @@ export function SelectClientStep({
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar cliente..."
-            value={busca}
-            onChange={e => onBuscaChange(e.target.value)}
-            className="pl-9"
-          />
+          <Input placeholder="Buscar cliente..." value={busca} onChange={e => onBuscaChange(e.target.value)} className="pl-9" />
         </div>
         <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={onNovoCliente}>
           <Plus className="h-4 w-4" /> Novo
         </Button>
       </div>
-
       <ScrollArea className="flex-1 max-h-[50vh]">
         {filtrados.length === 0 ? (
           <div className="text-center py-8 space-y-2">
-            <p className="text-sm text-muted-foreground">
-              {busca ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
-            </p>
+            <p className="text-sm text-muted-foreground">{busca ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}</p>
             <Button variant="link" size="sm" onClick={onNovoCliente}>Cadastrar novo cliente</Button>
           </div>
         ) : (
@@ -68,11 +59,7 @@ export function SelectClientStep({
               <button
                 key={cliente.id}
                 disabled={saving}
-                className={cn(
-                  "w-full flex items-center gap-3 p-3 rounded-lg text-left",
-                  "hover:bg-accent/50 transition-colors",
-                  "disabled:opacity-50"
-                )}
+                className={cn("w-full flex items-center gap-3 p-3 rounded-lg text-left hover:bg-accent/50 transition-colors disabled:opacity-50")}
                 onClick={() => onSelectClient(cliente)}
               >
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -93,93 +80,58 @@ export function SelectClientStep({
   );
 }
 
-// --- Step: Select Member (team members + admin) ---
-interface SelectMemberStepProps {
-  onSelect: (m: MeetingMember) => void;
-  onBack: () => void;
-  clienteNome: string;
-}
+// --- Helper: compute slots for a member on a given date ---
+function computeSlots(
+  escalas: EscalaMembro[],
+  ausencias: AusenciaMembro[],
+  existingMeetings: Array<{ data_reuniao: string; duracao_minutos: number }>,
+  date: string,
+  durationMin: number,
+): string[] {
+  const d = new Date(date + "T00:00:00");
+  const dow = getDay(d);
+  const dayEscalas = escalas.filter(e => e.dia_semana === dow);
+  if (dayEscalas.length === 0) return [];
 
-export function SelectMemberStep({ onSelect, onBack, clienteNome }: SelectMemberStepProps) {
-  const { user } = useAuth();
-  const { membros, isLoading } = useTarefasMembros();
-  const [busca, setBusca] = useState("");
+  const partialAbsences = ausencias.filter(a =>
+    date >= a.data_inicio && date <= a.data_fim && a.hora_inicio && a.hora_fim
+  );
+  const fullAbsent = ausencias.some(a =>
+    date >= a.data_inicio && date <= a.data_fim && !a.hora_inicio
+  );
+  if (fullAbsent) return [];
 
-  const allMembers: MeetingMember[] = useMemo(() => {
-    const list: MeetingMember[] = [];
-    if (user) {
-      list.push({
-        id: user.id,
-        nome: user.user_metadata?.full_name || user.email || "Administrador",
-        cargo: "Administrador",
-        isAdmin: true,
+  const slots: string[] = [];
+  const step = 30;
+
+  for (const escala of dayEscalas) {
+    const startMin = timeToMinutes(escala.hora_inicio);
+    const endMin = timeToMinutes(escala.hora_fim);
+    for (let t = startMin; t + durationMin <= endMin; t += step) {
+      const slotRange = { startMin: t, endMin: t + durationMin };
+      const absConflict = partialAbsences.some(a => {
+        const aS = timeToMinutes(a.hora_inicio!);
+        const aE = timeToMinutes(a.hora_fim!);
+        return rangesOverlap(slotRange, { startMin: aS, endMin: aE });
       });
+      if (absConflict) continue;
+      const meetConflict = existingMeetings.some(m => {
+        const mDate = m.data_reuniao.substring(0, 10);
+        if (mDate !== date) return false;
+        const mTime = m.data_reuniao.substring(11, 16);
+        const mS = timeToMinutes(mTime);
+        const mE = mS + (m.duracao_minutos || 60);
+        return rangesOverlap(slotRange, { startMin: mS, endMin: mE });
+      });
+      if (meetConflict) continue;
+      slots.push(minutesToTime(t));
     }
-    for (const m of membros) {
-      list.push({ id: m.id, nome: m.nome, cargo: m.cargo, isAdmin: false });
-    }
-    return list;
-  }, [user, membros]);
-
-  const filtrados = allMembers.filter(m =>
-    m.nome.toLowerCase().includes(busca.toLowerCase()) ||
-    m.cargo?.toLowerCase().includes(busca.toLowerCase())
-  );
-
-  return (
-    <div className="flex-1 overflow-hidden flex flex-col gap-3">
-      <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 self-start" onClick={onBack}>
-        <ArrowLeft className="h-4 w-4" /> Voltar
-      </Button>
-      <p className="text-sm text-muted-foreground">
-        Selecione quem será o responsável pela reunião com <strong className="text-foreground">{clienteNome}</strong>
-      </p>
-      {allMembers.length > 3 && (
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar membro..." value={busca} onChange={e => setBusca(e.target.value)} className="pl-9" />
-        </div>
-      )}
-      <ScrollArea className="flex-1 max-h-[50vh]">
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
-        ) : filtrados.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground">Nenhum membro encontrado</p>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            {filtrados.map(member => (
-              <button
-                key={member.id}
-                className={cn(
-                  "w-full flex items-center gap-3 p-3 rounded-lg text-left",
-                  "hover:bg-accent/50 transition-colors"
-                )}
-                onClick={() => onSelect(member)}
-              >
-                <div className={cn(
-                  "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
-                  member.isAdmin ? "bg-primary/20" : "bg-primary/10"
-                )}>
-                  {member.isAdmin ? <Shield className="h-4 w-4 text-primary" /> : <User className="h-4 w-4 text-primary" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{member.nome}</p>
-                  {member.cargo && <p className="text-xs text-muted-foreground truncate">{member.cargo}</p>}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </ScrollArea>
-    </div>
-  );
+  }
+  return slots;
 }
 
-// --- Step: Schedule Meeting with availability ---
-interface ScheduleMeetingStepProps {
-  member: MeetingMember;
+// --- Combined Step: Select Member + Time Slot ---
+interface SelectMemberAndTimeStepProps {
   clienteNome: string;
   templateNome: string;
   saving: boolean;
@@ -187,27 +139,26 @@ interface ScheduleMeetingStepProps {
   onConfirm: (data: { titulo: string; dataHora: string; duracao: number; memberNome: string }) => void;
 }
 
-export function ScheduleMeetingStep({
-  member, clienteNome, templateNome, saving, onBack, onConfirm,
-}: ScheduleMeetingStepProps) {
-  // Only fetch escalas for non-admin members
-  const membroId = member.isAdmin ? undefined : member.id;
-  const { data: escalas = [] } = useEscalasMembros(membroId);
-  const { data: ausencias = [] } = useAusenciasMembros(membroId);
-
-  const hasEscala = !member.isAdmin && escalas.length > 0;
+export function SelectMemberAndTimeStep({
+  clienteNome, templateNome, saving, onBack, onConfirm,
+}: SelectMemberAndTimeStepProps) {
+  const { user } = useAuth();
+  const { membros } = useTarefasMembros();
+  const { data: allEscalas = [] } = useEscalasMembros();
+  const { data: allAusencias = [] } = useAusenciasMembros();
 
   const [reuniaoTitulo, setReuniaoTitulo] = useState(`Reunião - ${clienteNome} - ${templateNome}`);
   const [reuniaoDuracao, setReuniaDuracao] = useState("60");
+  const [use15min, setUse15min] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
-  const [selectedTime, setSelectedTime] = useState<string>("08:00");
-
-  // Existing meetings for conflict check
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("");
+  const [selectedTime, setSelectedTime] = useState<string>("");
   const [existingMeetings, setExistingMeetings] = useState<Array<{ data_reuniao: string; duracao_minutos: number }>>([]);
+
+  const duration = use15min ? 15 : (parseInt(reuniaoDuracao) || 60);
 
   useEffect(() => {
     (async () => {
-      // For now, fetch all meetings for the user to check conflicts
       const { data } = await supabase
         .from("reunioes")
         .select("data_reuniao, duracao_minutos")
@@ -216,91 +167,64 @@ export function ScheduleMeetingStep({
     })();
   }, []);
 
-  // Generate available dates (next 30 days) based on escala
-  const availableDates = useMemo(() => {
-    const dates: { date: string; label: string }[] = [];
-    const today = new Date();
-
-    for (let i = 0; i < 30; i++) {
-      const d = addDays(today, i);
-      const dow = getDay(d);
-      const dateStr = format(d, "yyyy-MM-dd");
-
-      if (hasEscala) {
-        const hasDay = escalas.some(e => e.dia_semana === dow);
-        if (!hasDay) continue;
-
-        const isAbsent = ausencias.some(a =>
-          dateStr >= a.data_inicio && dateStr <= a.data_fim && !a.hora_inicio
-        );
-        if (isAbsent) continue;
-      }
-
-      dates.push({
-        date: dateStr,
-        label: format(d, "EEE, dd/MM", { locale: ptBR }),
+  // Build member list: admin + team members
+  const allMembers: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[] })[] = useMemo(() => {
+    const list: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[] })[] = [];
+    if (user) {
+      list.push({
+        id: user.id,
+        nome: user.user_metadata?.full_name || user.email || "Administrador",
+        cargo: "Administrador",
+        isAdmin: true,
+        escalas: [],
+        ausencias: [],
       });
     }
-    return dates;
-  }, [escalas, ausencias, hasEscala]);
+    for (const m of membros) {
+      list.push({
+        id: m.id,
+        nome: m.nome,
+        cargo: m.cargo,
+        isAdmin: false,
+        escalas: allEscalas.filter(e => e.membro_id === m.id),
+        ausencias: allAusencias.filter(a => a.membro_id === m.id),
+      });
+    }
+    return list;
+  }, [user, membros, allEscalas, allAusencias]);
 
-  // Generate available time slots for selected date
-  const availableSlots = useMemo(() => {
-    if (!selectedDate || !hasEscala) return [];
-
-    const d = new Date(selectedDate + "T00:00:00");
-    const dow = getDay(d);
-    const duration = parseInt(reuniaoDuracao) || 60;
-
-    const dayEscalas = escalas.filter(e => e.dia_semana === dow);
-    if (dayEscalas.length === 0) return [];
-
-    const partialAbsences = ausencias.filter(a =>
-      selectedDate >= a.data_inicio && selectedDate <= a.data_fim && a.hora_inicio && a.hora_fim
-    );
-
-    const slots: string[] = [];
-    const step = 30;
-
-    for (const escala of dayEscalas) {
-      const startMin = timeToMinutes(escala.hora_inicio);
-      const endMin = timeToMinutes(escala.hora_fim);
-
-      for (let t = startMin; t + duration <= endMin; t += step) {
-        const slotRange = { startMin: t, endMin: t + duration };
-
-        const absenceConflict = partialAbsences.some(a => {
-          const aStart = timeToMinutes(a.hora_inicio!);
-          const aEnd = timeToMinutes(a.hora_fim!);
-          return rangesOverlap(slotRange, { startMin: aStart, endMin: aEnd });
-        });
-        if (absenceConflict) continue;
-
-        const meetingConflict = existingMeetings.some(m => {
-          const mDate = m.data_reuniao.substring(0, 10);
-          if (mDate !== selectedDate) return false;
-          const mTime = m.data_reuniao.substring(11, 16);
-          const mStart = timeToMinutes(mTime);
-          const mEnd = mStart + (m.duracao_minutos || 60);
-          return rangesOverlap(slotRange, { startMin: mStart, endMin: mEnd });
-        });
-        if (meetingConflict) continue;
-
-        slots.push(minutesToTime(t));
+  // Compute slots per member for the selected date
+  const memberSlots = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const m of allMembers) {
+      if (m.isAdmin) {
+        // Admin has no escala restrictions — no slots shown, free pick
+        map[m.id] = [];
+      } else if (m.escalas.length > 0) {
+        map[m.id] = computeSlots(m.escalas, m.ausencias, existingMeetings, selectedDate, duration);
+      } else {
+        map[m.id] = [];
       }
     }
-    return slots;
-  }, [selectedDate, escalas, ausencias, existingMeetings, reuniaoDuracao, hasEscala]);
+    return map;
+  }, [allMembers, selectedDate, existingMeetings, duration]);
+
+  const selectedMemberObj = allMembers.find(m => m.id === selectedMemberId);
 
   const handleConfirm = () => {
-    if (!selectedDate || !selectedTime) return;
+    if (!selectedDate || !selectedTime || !selectedMemberObj) return;
     const dataHora = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
     onConfirm({
       titulo: reuniaoTitulo.trim() || `Reunião - ${clienteNome}`,
       dataHora,
-      duracao: parseInt(reuniaoDuracao) || 60,
-      memberNome: member.nome,
+      duracao: duration,
+      memberNome: selectedMemberObj.nome,
     });
+  };
+
+  const handleSelectSlot = (memberId: string, time: string) => {
+    setSelectedMemberId(memberId);
+    setSelectedTime(time);
   };
 
   return (
@@ -309,118 +233,116 @@ export function ScheduleMeetingStep({
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Button>
 
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        {member.isAdmin ? <Shield className="h-4 w-4" /> : <User className="h-4 w-4" />}
-        <span>Responsável: <strong className="text-foreground">{member.nome}</strong></span>
-      </div>
-
       <div className="space-y-2">
         <Label>Título da Reunião</Label>
         <Input value={reuniaoTitulo} onChange={e => setReuniaoTitulo(e.target.value)} />
       </div>
 
-      <div className="space-y-2">
-        <Label>Duração (minutos)</Label>
-        <Input
-          type="number"
-          value={reuniaoDuracao}
-          onChange={e => { setReuniaDuracao(e.target.value); setSelectedTime(""); }}
-          min={15}
-          step={15}
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>Data</Label>
+          <Input
+            type="date"
+            value={selectedDate}
+            onChange={e => { setSelectedDate(e.target.value); setSelectedTime(""); setSelectedMemberId(""); }}
+            min={new Date().toISOString().split("T")[0]}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Duração (min)</Label>
+          <Input
+            type="number"
+            value={use15min ? "15" : reuniaoDuracao}
+            onChange={e => { setReuniaDuracao(e.target.value); setUse15min(false); setSelectedTime(""); }}
+            min={15}
+            step={15}
+            disabled={use15min}
+          />
+        </div>
       </div>
 
-      {hasEscala ? (
-        <>
-          {/* Date selection based on escala */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" /> Selecione a data
-            </Label>
-            {availableDates.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhuma data disponível nos próximos 30 dias.</p>
-            ) : (
-              <ScrollArea className="max-h-[120px]">
-                <div className="flex flex-wrap gap-1.5">
-                  {availableDates.map(d => (
-                    <Button
-                      key={d.date}
-                      variant={selectedDate === d.date ? "default" : "outline"}
-                      size="sm"
-                      className="text-xs capitalize"
-                      onClick={() => { setSelectedDate(d.date); setSelectedTime(""); }}
-                    >
-                      {d.label}
-                    </Button>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-          </div>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="use15"
+          checked={use15min}
+          onCheckedChange={(c) => { setUse15min(!!c); setSelectedTime(""); }}
+        />
+        <label htmlFor="use15" className="text-xs text-muted-foreground cursor-pointer">15 min</label>
+      </div>
 
-          {/* Time slots based on escala */}
-          {selectedDate && (
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4" /> Horários disponíveis
-              </Label>
-              {availableSlots.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhum horário disponível nesta data.</p>
-              ) : (
-                <ScrollArea className="max-h-[120px]">
-                  <div className="flex flex-wrap gap-1.5">
-                    {availableSlots.map(t => (
-                      <Button
-                        key={t}
-                        variant={selectedTime === t ? "default" : "outline"}
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => setSelectedTime(t)}
-                      >
-                        {t}
-                      </Button>
-                    ))}
+      {/* Members with time slots */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-1.5">
+          Selecione Profissional e Horário
+        </Label>
+
+        <ScrollArea className="max-h-[300px]">
+          <div className="space-y-3">
+            {allMembers.map(member => {
+              const slots = memberSlots[member.id] || [];
+              const hasEscala = !member.isAdmin && member.escalas.length > 0;
+
+              return (
+                <div key={member.id} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    {member.isAdmin ? (
+                      <Shield className="h-4 w-4 text-primary shrink-0" />
+                    ) : (
+                      <User className="h-4 w-4 text-primary shrink-0" />
+                    )}
+                    <span className="text-sm font-medium">{member.nome}</span>
+                    {member.cargo && <span className="text-xs text-muted-foreground">({member.cargo})</span>}
                   </div>
-                </ScrollArea>
-              )}
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          {/* Free-form date/time for admin or members without escala */}
-          {!member.isAdmin && (
-            <p className="text-xs text-muted-foreground bg-accent/50 rounded p-2">
-              Este membro não possui escala configurada. Configure na aba Escalas em Reuniões para ver horários disponíveis.
-            </p>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>Data *</Label>
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={e => setSelectedDate(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Hora *</Label>
-              <Input
-                type="time"
-                value={selectedTime}
-                onChange={e => setSelectedTime(e.target.value)}
-              />
-            </div>
+
+                  {hasEscala && slots.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {slots.map(t => (
+                        <Button
+                          key={t}
+                          variant={selectedMemberId === member.id && selectedTime === t ? "default" : "outline"}
+                          size="sm"
+                          className="text-xs h-7 px-2.5"
+                          onClick={() => handleSelectSlot(member.id, t)}
+                        >
+                          {t}
+                        </Button>
+                      ))}
+                    </div>
+                  ) : hasEscala && slots.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic">Sem horários disponíveis nesta data</p>
+                  ) : member.isAdmin ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        className="w-28 h-7 text-xs"
+                        value={selectedMemberId === member.id ? selectedTime : "08:00"}
+                        onChange={e => handleSelectSlot(member.id, e.target.value)}
+                      />
+                      <span className="text-xs text-muted-foreground">Horário livre</span>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-xs text-muted-foreground italic mb-1.5">Sem escala configurada — horário livre</p>
+                      <Input
+                        type="time"
+                        className="w-28 h-7 text-xs"
+                        value={selectedMemberId === member.id ? selectedTime : "08:00"}
+                        onChange={e => handleSelectSlot(member.id, e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </>
-      )}
+        </ScrollArea>
+      </div>
 
       <div className="flex justify-end gap-2 pt-3 border-t mt-auto">
         <Button variant="outline" onClick={onBack} disabled={saving}>Voltar</Button>
         <Button
           onClick={handleConfirm}
-          disabled={saving || !selectedDate || !selectedTime}
+          disabled={saving || !selectedDate || !selectedTime || !selectedMemberId}
           className="gap-1.5"
         >
           <Video className="h-4 w-4" />
