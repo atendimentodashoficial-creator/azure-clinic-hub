@@ -99,21 +99,50 @@ serve(async (req) => {
 
     const participantes = [clienteNome || "Cliente", member.nome].filter(Boolean);
 
-    // Check if the target user has Google Calendar connected
+    // Resolve qual conta Google Calendar usar para gerar Meet
+    const calendarCandidateIds = new Set<string>();
+    calendarCandidateIds.add(targetUserId);
+    calendarCandidateIds.add(caller.id);
+    if (member.auth_user_id) {
+      calendarCandidateIds.add(member.auth_user_id);
+    }
+
+    if (member.email) {
+      const { data: memberProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("email", member.email)
+        .maybeSingle();
+
+      if (memberProfile?.id) {
+        calendarCandidateIds.add(memberProfile.id);
+      }
+    }
+
+    let calendarOwnerUserId: string | null = null;
+    let gcalConfig: any = null;
+
+    for (const candidateUserId of calendarCandidateIds) {
+      const { data: candidateConfig } = await supabaseAdmin
+        .from("google_calendar_config")
+        .select("access_token, refresh_token, client_id, client_secret, token_expires_at, calendar_id")
+        .eq("user_id", candidateUserId)
+        .maybeSingle();
+
+      if (candidateConfig?.access_token) {
+        gcalConfig = candidateConfig;
+        calendarOwnerUserId = candidateUserId;
+        break;
+      }
+    }
+
     let meetLink: string | null = null;
     let googleEventId: string | null = null;
 
-    const { data: gcalConfig } = await supabaseAdmin
-      .from("google_calendar_config")
-      .select("access_token, refresh_token, client_id, client_secret, token_expires_at, calendar_id")
-      .eq("user_id", targetUserId)
-      .maybeSingle();
-
-    if (gcalConfig?.access_token) {
+    if (gcalConfig?.access_token && calendarOwnerUserId) {
       try {
         let accessToken = gcalConfig.access_token;
 
-        // Refresh token if expired
         if (gcalConfig.token_expires_at && new Date(gcalConfig.token_expires_at) <= new Date()) {
           console.log("Google token expired, refreshing...");
           const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
@@ -134,13 +163,12 @@ serve(async (req) => {
             await supabaseAdmin
               .from("google_calendar_config")
               .update({ access_token: accessToken, token_expires_at: expiresAt, updated_at: new Date().toISOString() })
-              .eq("user_id", targetUserId);
+              .eq("user_id", calendarOwnerUserId);
           } else {
             console.error("Token refresh failed:", refreshData);
           }
         }
 
-        // Create Google Calendar event with Meet
         const startDate = new Date(dataHora);
         const endDate = new Date(startDate.getTime() + (duracao || 60) * 60 * 1000);
 
@@ -159,7 +187,7 @@ serve(async (req) => {
 
         const calendarId = gcalConfig.calendar_id || "primary";
         const eventResponse = await fetch(
-          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1`,
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=none`,
           {
             method: "POST",
             headers: {
@@ -232,7 +260,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, reuniaoId: reuniao.id, targetUserId, notificationSent }),
+      JSON.stringify({ success: true, reuniaoId: reuniao.id, targetUserId, notificationSent, meetLinkGenerated: !!meetLink }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

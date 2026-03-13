@@ -151,7 +151,7 @@ function replaceVariables(
   result = result.replace(/\{titulo\}/gi, reuniao.titulo);
   result = result.replace(/\{data\}/gi, formatDate(reuniao.data_reuniao));
   result = result.replace(/\{horario\}/gi, formatTime(reuniao.data_reuniao));
-  result = result.replace(/\{link_call\}/gi, reuniao.meet_link || "[Link não disponível]");
+  result = result.replace(/\{link_call\}/gi, reuniao.meet_link || "https://meet.google.com/new");
   
   return processSpintax(result);
 }
