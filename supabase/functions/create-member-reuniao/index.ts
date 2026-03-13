@@ -103,11 +103,41 @@ serve(async (req) => {
     let meetLink: string | null = null;
     let googleEventId: string | null = null;
 
-    const { data: gcalConfig } = await supabaseAdmin
-      .from("google_calendar_config")
-      .select("access_token, refresh_token, client_id, client_secret, token_expires_at, calendar_id")
-      .eq("user_id", targetUserId)
-      .maybeSingle();
+    const calendarCandidateIds = new Set<string>();
+    calendarCandidateIds.add(targetUserId);
+    calendarCandidateIds.add(caller.id);
+    if (member.auth_user_id) {
+      calendarCandidateIds.add(member.auth_user_id);
+    }
+
+    if (member.email) {
+      const { data: memberProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("email", member.email)
+        .maybeSingle();
+
+      if (memberProfile?.id) {
+        calendarCandidateIds.add(memberProfile.id);
+      }
+    }
+
+    let calendarOwnerUserId: string | null = null;
+    let gcalConfig: any = null;
+
+    for (const candidateUserId of calendarCandidateIds) {
+      const { data: candidateConfig } = await supabaseAdmin
+        .from("google_calendar_config")
+        .select("access_token, refresh_token, client_id, client_secret, token_expires_at, calendar_id")
+        .eq("user_id", candidateUserId)
+        .maybeSingle();
+
+      if (candidateConfig?.access_token) {
+        gcalConfig = candidateConfig;
+        calendarOwnerUserId = candidateUserId;
+        break;
+      }
+    }
 
     if (gcalConfig?.access_token) {
       try {
