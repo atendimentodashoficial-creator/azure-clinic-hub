@@ -502,12 +502,12 @@ function LinkOnlyApproval({
 
 
         {/* Embedded link previews */}
-        <div className="space-y-4">
+        <div className="space-y-8">
           {taskLinks.map((link, i) => {
             const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
             return (
-              <Card key={i} className="overflow-hidden">
-                <div className="flex items-center justify-between gap-2 p-3 border-b bg-muted/50">
+              <div key={i} className="space-y-3">
+                <div className="flex items-center justify-between gap-2 px-1">
                   <div className="flex items-center gap-2 min-w-0">
                     <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <a
@@ -523,15 +523,15 @@ function LinkOnlyApproval({
                     {statusLabel(linkApprovalStatus)}
                   </Badge>
                 </div>
-                <div className="w-full bg-muted" style={{ height: "80vh" }}>
+                <DeviceFrame>
                   <iframe
                     src={href}
                     className="w-full h-full border-0"
                     sandbox="allow-scripts allow-same-origin allow-popups"
                     title={link.titulo || `Link ${i + 1}`}
                   />
-                </div>
-              </Card>
+                </DeviceFrame>
+              </div>
             );
           })}
         </div>
