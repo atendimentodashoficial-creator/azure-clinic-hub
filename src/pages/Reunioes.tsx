@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2 } from "lucide-react";
+import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock } from "lucide-react";
 import { formatPhoneDisplay, getLast8Digits } from "@/utils/phoneFormat";
 import { navigateToChat } from "@/utils/chatRouting";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ import { AvisosReuniaoTab } from "@/components/reunioes/AvisosReuniaoTab";
 import { VincularTranscricaoDialog } from "@/components/reunioes/VincularTranscricaoDialog";
 import { ReagendarReuniaoDialog } from "@/components/reunioes/ReagendarReuniaoDialog";
 import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog";
+import { EscalaMembrosTab } from "@/components/reunioes/EscalaMembrosTab";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -315,6 +316,10 @@ export default function Reunioes() {
             <Bell className="h-3.5 w-3.5" />
             Avisos
           </TabsTrigger>
+          <TabsTrigger value="escalas" className="gap-1.5 text-xs px-3 h-7">
+            <CalendarClock className="h-3.5 w-3.5" />
+            Escalas
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
@@ -589,6 +594,10 @@ export default function Reunioes() {
 
         <TabsContent value="avisos">
           <AvisosReuniaoTab />
+        </TabsContent>
+
+        <TabsContent value="escalas">
+          <EscalaMembrosTab />
         </TabsContent>
       </Tabs>
 
