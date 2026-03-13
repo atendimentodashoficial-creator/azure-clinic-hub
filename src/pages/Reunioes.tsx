@@ -36,6 +36,7 @@ import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 
 interface Reuniao {
   id: string;
+  user_id: string;
   fireflies_id: string | null;
   google_event_id: string | null;
   titulo: string;
@@ -51,7 +52,6 @@ interface Reuniao {
   cliente_telefone: string | null;
   profissional_id: string | null;
   profissionais?: { nome: string } | null;
-  // Join opcional para puxar o nome atualizado do cliente
   leads?: { nome: string; telefone: string } | null;
 }
 
