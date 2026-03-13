@@ -4717,7 +4717,10 @@ export type Database = {
           reuniao_id: string | null
           subtarefas_concluidas: number
           subtarefas_total: number
+          tempo_acumulado_segundos: number
           tempo_registrado: string
+          timer_inicio: string | null
+          timer_status: string
           titulo: string
           updated_at: string
           user_id: string
@@ -4736,7 +4739,10 @@ export type Database = {
           reuniao_id?: string | null
           subtarefas_concluidas?: number
           subtarefas_total?: number
+          tempo_acumulado_segundos?: number
           tempo_registrado?: string
+          timer_inicio?: string | null
+          timer_status?: string
           titulo: string
           updated_at?: string
           user_id: string
@@ -4755,7 +4761,10 @@ export type Database = {
           reuniao_id?: string | null
           subtarefas_concluidas?: number
           subtarefas_total?: number
+          tempo_acumulado_segundos?: number
           tempo_registrado?: string
+          timer_inicio?: string | null
+          timer_status?: string
           titulo?: string
           updated_at?: string
           user_id?: string

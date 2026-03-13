@@ -22,9 +22,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video } from "lucide-react";
+import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { TarefaTimer } from "@/components/tarefas/TarefaTimer";
 
 const PRIORIDADES = [
   { value: "baixa", label: "Baixa", color: "bg-emerald-500/20 text-emerald-400" },
@@ -32,6 +33,54 @@ const PRIORIDADES = [
   { value: "alta", label: "Alta", color: "bg-red-500/20 text-red-400" },
   { value: "urgente", label: "Urgente", color: "bg-red-700/20 text-red-300" },
 ];
+
+// Helper to get column index (ordem) for a given coluna_id
+function getColOrdem(colunas: TarefaColuna[], colunaId: string): number {
+  const col = colunas.find(c => c.id === colunaId);
+  return col?.ordem ?? -1;
+}
+
+// Compute timer updates when moving between columns
+function computeTimerUpdates(
+  tarefa: Tarefa,
+  fromOrdem: number,
+  toOrdem: number,
+  lastColOrdem: number
+): Partial<Tarefa> {
+  const now = new Date().toISOString();
+  const acumulado = calcAccumulated(tarefa);
+
+  // Moving to column 1 (Em Progresso) — auto-start
+  if (toOrdem === 1) {
+    return { timer_inicio: now, timer_status: "rodando", tempo_acumulado_segundos: acumulado };
+  }
+  // Moving to column 2 (Aguardando Aprovação) — auto-pause
+  if (toOrdem === 2) {
+    return { timer_inicio: null, timer_status: "pausado", tempo_acumulado_segundos: acumulado };
+  }
+  // Moving to column 3 (Em Revisão) — pause, needs manual start
+  if (toOrdem === 3) {
+    return { timer_inicio: null, timer_status: "pausado_revisao", tempo_acumulado_segundos: acumulado };
+  }
+  // Moving to last column (Concluído) — finalize
+  if (toOrdem === lastColOrdem) {
+    return { timer_inicio: null, timer_status: "concluido", tempo_acumulado_segundos: acumulado };
+  }
+  // Moving back to A Fazer (ordem 0) — reset
+  if (toOrdem === 0) {
+    return { timer_inicio: null, timer_status: "parado", tempo_acumulado_segundos: acumulado };
+  }
+
+  return {};
+}
+
+function calcAccumulated(tarefa: Tarefa): number {
+  if (tarefa.timer_status === "rodando" && tarefa.timer_inicio) {
+    const diff = Math.floor((Date.now() - new Date(tarefa.timer_inicio).getTime()) / 1000);
+    return tarefa.tempo_acumulado_segundos + Math.max(0, diff);
+  }
+  return tarefa.tempo_acumulado_segundos;
+}
 
 function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSubmit: (data: any) => void }) {
   const [open, setOpen] = useState(false);
@@ -166,13 +215,15 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   );
 }
 
-function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, onDelete }: {
+function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
   membrosNomes: string[];
   reunioesMap?: Record<string, { data_reuniao: string; status: string }>;
+  isFuncionario: boolean;
   onDelete: (id: string) => void;
+  onStartTimer: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tarefa.id,
@@ -193,25 +244,35 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioes
         clientes={clientes}
         membrosNomes={membrosNomes}
         reunioesMap={reunioesMap}
+        isFuncionario={isFuncionario}
         onDelete={onDelete}
+        onStartTimer={onStartTimer}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
   );
 }
 
-function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, onDelete, dragHandleProps }: {
+function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer, dragHandleProps }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
   membrosNomes?: string[];
   reunioesMap?: Record<string, { data_reuniao: string; status: string }>;
+  isFuncionario?: boolean;
   onDelete?: (id: string) => void;
+  onStartTimer?: (id: string) => void;
   dragHandleProps?: Record<string, any>;
 }) {
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
   const cliente = tarefa.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
   const reuniao = tarefa.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
+  const colOrdem = getColOrdem(colunas, tarefa.coluna_id);
+
+  // Employees can't see details when task is in "A Fazer" (ordem 0)
+  const hideDetails = isFuncionario && colOrdem === 0;
+  // In "Em Revisão" (ordem 3) with pausado_revisao, employee needs to start timer to see details
+  const needsManualStart = isFuncionario && colOrdem === 3 && tarefa.timer_status === "pausado_revisao";
 
   const renderResponsaveis = () => {
     if (!tarefa.responsavel_nome) return null;
@@ -241,29 +302,52 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-medium text-sm truncate">{tarefa.titulo}</span>
             </div>
-            {onDelete && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-destructive hover:text-destructive"
-                onClick={() => onDelete(tarefa.id)}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
+            <div className="flex items-center gap-1 shrink-0">
+              {needsManualStart && onStartTimer && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-primary hover:text-primary"
+                  onClick={() => onStartTimer(tarefa.id)}
+                  title="Iniciar revisão"
+                >
+                  <Play className="h-3 w-3" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-destructive hover:text-destructive"
+                  onClick={() => onDelete(tarefa.id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
           </div>
-          {renderResponsaveis()}
-          {cliente && (
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              <Building2 className="h-3 w-3" /> {cliente.nome}
-            </p>
+
+          {hideDetails ? (
+            <p className="text-xs text-muted-foreground mt-1 italic">Detalhes disponíveis ao iniciar</p>
+          ) : needsManualStart ? (
+            <p className="text-xs text-muted-foreground mt-1 italic">Clique ▶ para ver as revisões</p>
+          ) : (
+            <>
+              {renderResponsaveis()}
+              {cliente && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Building2 className="h-3 w-3" /> {cliente.nome}
+                </p>
+              )}
+              {reuniao && (
+                <p className="text-xs mt-1 flex items-center gap-1 text-primary">
+                  <Video className="h-3 w-3" />
+                  {format(new Date(reuniao.data_reuniao), "dd/MM/yyyy 'às' HH:mm")}
+                </p>
+              )}
+            </>
           )}
-          {reuniao && (
-            <p className="text-xs mt-1 flex items-center gap-1 text-primary">
-              <Video className="h-3 w-3" />
-              {format(new Date(reuniao.data_reuniao), "dd/MM/yyyy 'às' HH:mm")}
-            </p>
-          )}
+
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <Badge className={cn("text-xs border-0", prio.color)}>{prio.label}</Badge>
             {tarefa.data_limite && (
@@ -272,6 +356,11 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
                 {format(new Date(tarefa.data_limite + "T00:00:00"), "dd/MM/yyyy")}
               </span>
             )}
+            <TarefaTimer
+              timerStatus={tarefa.timer_status}
+              timerInicio={tarefa.timer_inicio}
+              tempoAcumulado={tarefa.tempo_acumulado_segundos}
+            />
           </div>
         </div>
       </div>
@@ -296,7 +385,7 @@ function DroppableColumn({ coluna, children }: { coluna: TarefaColuna; children:
 }
 
 export default function Tarefas() {
-  const { colunas, tarefas, isLoading, criarTarefa, excluirTarefa, moverTarefa, criarColuna, excluirColuna } = useTarefas();
+  const { colunas, tarefas, isLoading, criarTarefa, atualizarTarefa, excluirTarefa, moverTarefa, criarColuna, excluirColuna } = useTarefas();
   const { clientes } = useTarefasClientes();
   const { membros } = useTarefasMembros();
   const membrosNomes = membros.map(m => m.nome);
@@ -306,6 +395,8 @@ export default function Tarefas() {
   const [activeTarefa, setActiveTarefa] = useState<Tarefa | null>(null);
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
+
+  const lastColOrdem = colunas.length > 0 ? colunas[colunas.length - 1].ordem : 4;
 
   // Fetch reunioes for tasks that have reuniao_id
   const reuniaoIds = tarefas.filter(t => t.reuniao_id).map(t => t.reuniao_id!);
@@ -353,6 +444,17 @@ export default function Tarefas() {
     });
   };
 
+  const handleStartTimer = (id: string) => {
+    atualizarTarefa.mutate({
+      id,
+      timer_inicio: new Date().toISOString(),
+      timer_status: "rodando",
+    } as any, {
+      onSuccess: () => toast.success("Timer iniciado!"),
+      onError: (e: any) => toast.error(e.message),
+    });
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const tarefa = tarefas.find(t => t.id === active.id);
@@ -378,12 +480,29 @@ export default function Tarefas() {
     const tarefa = tarefas.find(t => t.id === tarefaId);
     if (!tarefa || tarefa.coluna_id === targetColunaId) return;
 
+    const fromOrdem = getColOrdem(colunas, tarefa.coluna_id);
+    const toOrdem = getColOrdem(colunas, targetColunaId);
+
+    // Compute timer updates
+    const timerUpdates = computeTimerUpdates(tarefa, fromOrdem, toOrdem, lastColOrdem);
+
     const targetTarefas = tarefas.filter(t => t.coluna_id === targetColunaId);
+
+    // First move the task
     moverTarefa.mutate(
       { id: tarefaId, coluna_id: targetColunaId, ordem: targetTarefas.length },
       {
         onSuccess: async () => {
           toast.success("Tarefa movida!");
+
+          // Apply timer updates
+          if (Object.keys(timerUpdates).length > 0) {
+            await supabase.from("tarefas").update({
+              ...timerUpdates,
+              updated_at: new Date().toISOString(),
+            } as any).eq("id", tarefaId);
+          }
+
           // Auto-create commission when moved to last column (Concluído) and has commission
           const targetColuna = colunas.find(c => c.id === targetColunaId);
           const lastColuna = colunas[colunas.length - 1];
@@ -477,7 +596,9 @@ export default function Tarefas() {
                         clientes={clientes}
                         membrosNomes={membrosNomes}
                         reunioesMap={reunioesMap}
+                        isFuncionario={isFuncionario}
                         onDelete={handleExcluir}
+                        onStartTimer={handleStartTimer}
                       />
                     ))}
                   </DroppableColumn>
@@ -502,6 +623,7 @@ export default function Tarefas() {
                 clientes={clientes}
                 membrosNomes={membrosNomes}
                 reunioesMap={reunioesMap}
+                isFuncionario={isFuncionario}
               />
             </div>
           )}
