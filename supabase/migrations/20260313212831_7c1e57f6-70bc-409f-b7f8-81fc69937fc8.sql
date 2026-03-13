@@ -1,0 +1,1 @@
+ALTER TABLE public.tipos_tarefas ADD COLUMN exige_aprovacao BOOLEAN NOT NULL DEFAULT false;
