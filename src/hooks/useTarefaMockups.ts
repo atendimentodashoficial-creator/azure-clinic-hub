@@ -45,22 +45,47 @@ export function useTarefaMockups(tarefaId: string | null) {
     mutationFn: async (slides: { id?: string; subtitulo: string; titulo: string; legenda: string; cta: string; ordem: number }[]) => {
       if (!tarefaId || !effectiveUserId) throw new Error("Não autenticado");
       
-      // Delete existing - check for errors
-      const { error: deleteError } = await supabase
-        .from("tarefa_mockups")
-        .delete()
-        .eq("tarefa_id", tarefaId)
-        .eq("user_id", effectiveUserId);
+      // Separate slides that have existing IDs (update) vs new ones (insert)
+      const existingIds = mockups.map(m => m.id);
+      const toUpdate = slides.filter(s => s.id && existingIds.includes(s.id));
+      const toInsert = slides.filter(s => !s.id || !existingIds.includes(s.id));
       
-      if (deleteError) {
-        console.error("Erro ao deletar mockups existentes:", deleteError);
-        throw deleteError;
+      // Delete mockups that are no longer in the slides list
+      const keepIds = toUpdate.map(s => s.id!);
+      const toDeleteIds = existingIds.filter(id => !keepIds.includes(id));
+      
+      if (toDeleteIds.length > 0) {
+        const { error } = await supabase
+          .from("tarefa_mockups")
+          .delete()
+          .in("id", toDeleteIds);
+        if (error) throw error;
       }
       
-      // Insert new
-      if (slides.length > 0) {
+      // Update existing mockups (preserve status for approved ones)
+      for (const slide of toUpdate) {
+        const existing = mockups.find(m => m.id === slide.id);
+        const updateData: Record<string, any> = {
+          subtitulo: slide.subtitulo,
+          titulo: slide.titulo,
+          legenda: slide.legenda,
+          cta: slide.cta,
+          ordem: slide.ordem,
+          updated_at: new Date().toISOString(),
+        };
+        // If content changed on an approved mockup, keep approved status
+        // If content changed on a rejected mockup, it stays rejected until resubmit
+        const { error } = await supabase
+          .from("tarefa_mockups")
+          .update(updateData)
+          .eq("id", slide.id!);
+        if (error) throw error;
+      }
+      
+      // Insert new mockups
+      if (toInsert.length > 0) {
         const { error } = await supabase.from("tarefa_mockups").insert(
-          slides.map(({ id: _id, ...s }) => ({
+          toInsert.map(({ id: _id, ...s }) => ({
             tarefa_id: tarefaId,
             user_id: effectiveUserId,
             subtitulo: s.subtitulo,
@@ -76,6 +101,20 @@ export function useTarefaMockups(tarefaId: string | null) {
     onSuccess: invalidate,
   });
 
+  const resubmitRejected = useMutation({
+    mutationFn: async () => {
+      if (!tarefaId) throw new Error("Sem tarefa");
+      // Reset only rejected mockups to pendente
+      const { error } = await supabase
+        .from("tarefa_mockups")
+        .update({ status: "pendente", feedback: null, updated_at: new Date().toISOString() })
+        .eq("tarefa_id", tarefaId)
+        .eq("status", "reprovado");
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const updateStatus = useMutation({
     mutationFn: async ({ mockupId, status, feedback }: { mockupId: string; status: string; feedback?: string }) => {
       const { error } = await supabase.from("tarefa_mockups").update({ status, feedback, updated_at: new Date().toISOString() }).eq("id", mockupId);
@@ -84,5 +123,5 @@ export function useTarefaMockups(tarefaId: string | null) {
     onSuccess: invalidate,
   });
 
-  return { mockups, isLoading, saveMockups, updateStatus };
+  return { mockups, isLoading, saveMockups, updateStatus, resubmitRejected };
 }

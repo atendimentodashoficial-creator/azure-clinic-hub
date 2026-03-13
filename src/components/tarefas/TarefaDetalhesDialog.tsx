@@ -45,8 +45,8 @@ interface TarefaDetalhesDialogProps {
 
 export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, open, onOpenChange }: TarefaDetalhesDialogProps) {
   const { tipos } = useTiposTarefas();
-  const { mockups, saveMockups } = useTarefaMockups(tarefa?.id || null);
-  
+  const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
+  const [resubmitting, setResubmitting] = useState(false);
   const [mockupSlides, setMockupSlides] = useState<MockupSlide[]>([
     { ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" },
   ]);
@@ -122,6 +122,32 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       window.location.reload();
     } catch {
       toast.error("Erro ao gerar link de aprovação");
+    }
+  };
+
+  const handleResubmitRejected = async () => {
+    if (!tarefa) return;
+    setResubmitting(true);
+    try {
+      // Reset only rejected mockups to pendente
+      await resubmitRejected.mutateAsync();
+      
+      // Move task to "Aguardando Aprovação" column
+      const aguardandoColuna = colunas.find(c => c.nome === "Aguardando Aprovação");
+      if (aguardandoColuna) {
+        const { error } = await supabase
+          .from("tarefas")
+          .update({ coluna_id: aguardandoColuna.id, updated_at: new Date().toISOString() })
+          .eq("id", tarefa.id);
+        if (error) throw error;
+      }
+      
+      toast.success("Itens revisados reenviados para aprovação!");
+      window.location.reload();
+    } catch {
+      toast.error("Erro ao reenviar para aprovação");
+    } finally {
+      setResubmitting(false);
     }
   };
 
@@ -291,6 +317,19 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                             </div>
                           ))}
                         </div>
+
+                        {/* Resubmit rejected items button */}
+                        {mockups.some(m => m.status === "reprovado") && (
+                          <Button
+                            variant="outline"
+                            className="w-full gap-2 mt-2"
+                            onClick={handleResubmitRejected}
+                            disabled={resubmitting}
+                          >
+                            <Send className="h-4 w-4" />
+                            {resubmitting ? "Reenviando..." : `Reenviar ${mockups.filter(m => m.status === "reprovado").length} item(ns) para Aprovação`}
+                          </Button>
+                        )}
 
                         {/* Revision history */}
                         {revisoes.length > 0 && (
