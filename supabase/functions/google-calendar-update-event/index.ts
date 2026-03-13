@@ -44,12 +44,11 @@ serve(async (req) => {
       );
     }
 
-    // Get the reuniao to get google_event_id, duration, and tracking info
+    // Get the reuniao without filtering by user_id
     const { data: reuniao, error: reuniaoError } = await supabase
       .from("reunioes")
-      .select("google_event_id, duracao_minutos, titulo, numero_reagendamentos, cliente_telefone, participantes")
+      .select("google_event_id, duracao_minutos, titulo, numero_reagendamentos, cliente_telefone, participantes, user_id")
       .eq("id", reuniaoId)
-      .eq("user_id", user.id)
       .single();
 
     if (reuniaoError || !reuniao) {
@@ -57,6 +56,25 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ success: false, error: "Reunião não encontrada" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify permission: own meeting or admin of the member
+    const meetingOwnerId = reuniao.user_id;
+    let authorized = meetingOwnerId === user.id;
+    if (!authorized) {
+      const { data: memberLink } = await supabase
+        .from("tarefas_membros")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("auth_user_id", meetingOwnerId)
+        .maybeSingle();
+      authorized = !!memberLink;
+    }
+    if (!authorized) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Sem permissão" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -72,8 +90,6 @@ serve(async (req) => {
       const notificationPromise = (async () => {
         try {
           console.log("Triggering rescheduling notifications in background...");
-          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-          const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
           const notifyResponse = await fetch(
             `${supabaseUrl}/functions/v1/enviar-aviso-reuniao-imediato`,
             {
@@ -84,7 +100,7 @@ serve(async (req) => {
               },
               body: JSON.stringify({
                 reuniaoId,
-                userId: user.id,
+                userId: meetingOwnerId,
                 clienteTelefone: reuniao.cliente_telefone,
                 clienteNome: reuniao.participantes?.[0] || "Cliente",
                 tipo: "reagendamento",
@@ -98,18 +114,15 @@ serve(async (req) => {
         }
       })();
 
-      // Use EdgeRuntime.waitUntil to run in background without blocking response
       const runtime = (globalThis as Record<string, unknown>).EdgeRuntime as { waitUntil?: (p: Promise<unknown>) => void } | undefined;
       if (runtime?.waitUntil) {
         runtime.waitUntil(notificationPromise);
       } else {
-        // Fallback: don't await, let it run in background
         notificationPromise.catch(console.error);
       }
     };
 
     if (!reuniao.google_event_id) {
-      // No Google event, just update local
       const { error: updateError } = await supabase
         .from("reunioes")
         .update({ 
@@ -121,7 +134,6 @@ serve(async (req) => {
 
       if (updateError) throw updateError;
 
-      // Trigger rescheduling notifications in background (non-blocking)
       triggerReschedulingNotificationsInBackground();
 
       return new Response(
@@ -130,23 +142,21 @@ serve(async (req) => {
       );
     }
 
-    // Get Google Calendar config
+    // Get Google Calendar config using the MEETING OWNER's config
     const { data: config, error: configError } = await supabase
       .from("google_calendar_config")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", meetingOwnerId)
       .single();
 
     if (configError || !config || !config.access_token) {
       console.error("Config error:", configError);
-      // Still update local with numero_reagendamentos
       await supabase.from("reunioes").update({ 
         data_reuniao: startDate.toISOString(),
         status: "agendado",
         numero_reagendamentos: newNumeroReagendamentos
       }).eq("id", reuniaoId);
       
-      // Trigger rescheduling notifications in background (non-blocking)
       triggerReschedulingNotificationsInBackground();
       
       return new Response(
@@ -176,14 +186,12 @@ serve(async (req) => {
 
       if (!refreshResponse.ok) {
         console.error("Token refresh error:", refreshData);
-        // Still update local with numero_reagendamentos
         await supabase.from("reunioes").update({ 
           data_reuniao: startDate.toISOString(),
           status: "agendado",
           numero_reagendamentos: newNumeroReagendamentos
         }).eq("id", reuniaoId);
         
-        // Trigger rescheduling notifications in background (non-blocking)
         triggerReschedulingNotificationsInBackground();
         
         return new Response(
@@ -202,7 +210,7 @@ serve(async (req) => {
           token_expires_at: expiresAt,
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", user.id);
+        .eq("user_id", meetingOwnerId);
     }
 
     // Update event in Google Calendar
@@ -235,14 +243,12 @@ serve(async (req) => {
     if (!updateResponse.ok) {
       const errorData = await updateResponse.json().catch(() => ({}));
       console.error("Google Calendar update error:", errorData);
-      // Still update local with numero_reagendamentos
       await supabase.from("reunioes").update({ 
         data_reuniao: startDate.toISOString(),
         status: "agendado",
         numero_reagendamentos: newNumeroReagendamentos
       }).eq("id", reuniaoId);
       
-      // Trigger rescheduling notifications in background (non-blocking)
       triggerReschedulingNotificationsInBackground();
       
       return new Response(
@@ -257,7 +263,7 @@ serve(async (req) => {
     const eventData = await updateResponse.json();
     console.log("Google Calendar event updated successfully");
 
-    // Update local record with numero_reagendamentos
+    // Update local record
     const { error: updateError } = await supabase
       .from("reunioes")
       .update({ 
@@ -271,7 +277,6 @@ serve(async (req) => {
       console.error("Error updating local record:", updateError);
     }
 
-    // Trigger rescheduling notifications in background (non-blocking)
     triggerReschedulingNotificationsInBackground();
 
     return new Response(

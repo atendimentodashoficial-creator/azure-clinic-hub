@@ -44,12 +44,11 @@ serve(async (req) => {
       );
     }
 
-    // Get the reuniao to get google_event_id
+    // Get the reuniao without filtering by user_id
     const { data: reuniao, error: reuniaoError } = await supabase
       .from("reunioes")
-      .select("google_event_id")
+      .select("google_event_id, user_id")
       .eq("id", reuniaoId)
-      .eq("user_id", user.id)
       .single();
 
     if (reuniaoError || !reuniao) {
@@ -57,6 +56,25 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ success: false, error: "Reunião não encontrada" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify permission: own meeting or admin of the member
+    const meetingOwnerId = reuniao.user_id;
+    let authorized = meetingOwnerId === user.id;
+    if (!authorized) {
+      const { data: memberLink } = await supabase
+        .from("tarefas_membros")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("auth_user_id", meetingOwnerId)
+        .maybeSingle();
+      authorized = !!memberLink;
+    }
+    if (!authorized) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Sem permissão" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -75,16 +93,15 @@ serve(async (req) => {
       );
     }
 
-    // Get Google Calendar config
+    // Get Google Calendar config using the MEETING OWNER's config
     const { data: config, error: configError } = await supabase
       .from("google_calendar_config")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", meetingOwnerId)
       .single();
 
     if (configError || !config || !config.access_token) {
       console.error("Config error:", configError);
-      // Still update local status even if Google is not connected
       await supabase.from("reunioes").update({ status: "cancelado" }).eq("id", reuniaoId);
       return new Response(
         JSON.stringify({ success: true, message: "Reunião cancelada localmente (Google Calendar não conectado)" }),
@@ -113,7 +130,6 @@ serve(async (req) => {
 
       if (!refreshResponse.ok) {
         console.error("Token refresh error:", refreshData);
-        // Still update local status
         await supabase.from("reunioes").update({ status: "cancelado" }).eq("id", reuniaoId);
         return new Response(
           JSON.stringify({ success: true, error: "Reunião cancelada localmente. Erro ao renovar token do Google." }),
@@ -131,7 +147,7 @@ serve(async (req) => {
           token_expires_at: expiresAt,
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", user.id);
+        .eq("user_id", meetingOwnerId);
     }
 
     // Delete event from Google Calendar
@@ -151,7 +167,6 @@ serve(async (req) => {
     if (!deleteResponse.ok && deleteResponse.status !== 404) {
       const errorData = await deleteResponse.json().catch(() => ({}));
       console.error("Google Calendar delete error:", errorData);
-      // Still update local status
       await supabase.from("reunioes").update({ status: "cancelado" }).eq("id", reuniaoId);
       return new Response(
         JSON.stringify({ 
