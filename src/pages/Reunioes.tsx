@@ -59,6 +59,8 @@ export default function Reunioes() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { membros } = useTarefasMembros();
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("todos");
   const [syncing, setSyncing] = useState(false);
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
   const [activeTab, setActiveTab] = useState("reunioes");
