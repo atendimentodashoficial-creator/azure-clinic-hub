@@ -32,6 +32,7 @@ const FILE_TYPE_LABELS: Record<string, string> = {
   pdf: "PDF",
   zip: "ZIP",
   texto: "Texto",
+  links: "Links",
   mockup: "Mockup de Post",
   qualquer: "Qualquer arquivo",
 };
