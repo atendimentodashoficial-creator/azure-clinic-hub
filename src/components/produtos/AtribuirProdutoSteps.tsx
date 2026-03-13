@@ -212,8 +212,29 @@ export function SelectMemberAndTimeStep({
 
   const selectedMemberObj = allMembers.find(m => m.id === selectedMemberId);
 
+  // Check if a given time conflicts with existing meetings for a member
+  const hasTimeConflict = (memberId: string, time: string): boolean => {
+    const member = allMembers.find(m => m.id === memberId);
+    if (!member || !time || !selectedDate) return false;
+    const memberUserId = member.authUserId || user?.id;
+    const meetings = memberUserId ? (meetingsByUser[memberUserId] || []) : [];
+    const slotStart = timeToMinutes(time);
+    const slotEnd = slotStart + duration;
+    return meetings.some(m => {
+      const mDate = m.data_reuniao.substring(0, 10);
+      if (mDate !== selectedDate) return false;
+      const mTime = m.data_reuniao.substring(11, 16);
+      const mS = timeToMinutes(mTime);
+      const mE = mS + (m.duracao_minutos || 60);
+      return rangesOverlap({ startMin: slotStart, endMin: slotEnd }, { startMin: mS, endMin: mE });
+    });
+  };
+
   const handleConfirm = () => {
     if (!selectedDate || !selectedTime || !selectedMemberObj) return;
+    if (hasTimeConflict(selectedMemberId, selectedTime)) {
+      return;
+    }
     const dataHora = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
     onConfirm({
       titulo: reuniaoTitulo.trim() || `Reunião - ${clienteNome}`,
