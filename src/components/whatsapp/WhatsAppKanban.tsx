@@ -1303,6 +1303,7 @@ export function WhatsAppKanban({
                             </div>
                             {renderAgendamentoBadge(chat.id, chat)}
                             {renderFaturaBadge(chat)}
+                            {renderReuniaoBadge(chat.id)}
                           </div>
                           {chat.unread_count > 0 && <Badge variant="default" className="absolute bottom-3 right-3 text-xs h-5 min-w-5 rounded-full">
                               {chat.unread_count}
