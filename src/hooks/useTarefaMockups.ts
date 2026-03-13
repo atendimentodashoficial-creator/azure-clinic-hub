@@ -45,13 +45,22 @@ export function useTarefaMockups(tarefaId: string | null) {
     mutationFn: async (slides: { id?: string; subtitulo: string; titulo: string; legenda: string; cta: string; ordem: number }[]) => {
       if (!tarefaId || !effectiveUserId) throw new Error("Não autenticado");
       
-      // Delete existing
-      await supabase.from("tarefa_mockups").delete().eq("tarefa_id", tarefaId);
+      // Delete existing - check for errors
+      const { error: deleteError } = await supabase
+        .from("tarefa_mockups")
+        .delete()
+        .eq("tarefa_id", tarefaId)
+        .eq("user_id", effectiveUserId);
       
-      // Insert new (strip client-side id)
+      if (deleteError) {
+        console.error("Erro ao deletar mockups existentes:", deleteError);
+        throw deleteError;
+      }
+      
+      // Insert new
       if (slides.length > 0) {
         const { error } = await supabase.from("tarefa_mockups").insert(
-          slides.map(({ id, ...s }) => ({
+          slides.map(({ id: _id, ...s }) => ({
             tarefa_id: tarefaId,
             user_id: effectiveUserId,
             subtitulo: s.subtitulo,
