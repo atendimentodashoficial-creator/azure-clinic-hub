@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Check, X, ChevronLeft, ChevronRight, Send } from "lucide-react";
+import { Check, X, ChevronLeft, ChevronRight, Send, ExternalLink, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +41,7 @@ function derivePostStatus(mockups: MockupData[]): string {
 export default function AprovacaoMockup() {
   const { token } = useParams<{ token: string }>();
   const [mockups, setMockups] = useState<MockupData[]>([]);
+  const [taskLinks, setTaskLinks] = useState<{ url: string; titulo: string | null; ordem: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPostIdx, setCurrentPostIdx] = useState(0);
@@ -57,13 +58,15 @@ export default function AprovacaoMockup() {
   const loadMockups = async () => {
     try {
       setLoading(true);
-      const { data, error: err } = await supabase.rpc("get_mockups_by_approval_token", { p_token: token! });
-      if (err) throw err;
-      const raw = (data || []) as MockupData[];
-      // Add default post_index for legacy data
+      const [mockupRes, linksRes] = await Promise.all([
+        supabase.rpc("get_mockups_by_approval_token", { p_token: token! }),
+        supabase.rpc("get_links_by_approval_token", { p_token: token! }),
+      ]);
+      if (mockupRes.error) throw mockupRes.error;
+      const raw = (mockupRes.data || []) as MockupData[];
       const withPostIndex = raw.map(m => ({ ...m, post_index: (m as any).post_index ?? 0 }));
       setMockups(withPostIndex);
-      // Load feedbacks per post
+      setTaskLinks((linksRes.data || []) as { url: string; titulo: string | null; ordem: number }[]);
       const fb: Record<number, string> = {};
       const grouped = groupByPost(withPostIndex);
       grouped.forEach(post => {
@@ -251,7 +254,30 @@ export default function AprovacaoMockup() {
           <p className="text-sm text-muted-foreground">Aprovação de Posts • {clienteNome}</p>
         </div>
 
-        {/* Status overview - one circle per post */}
+        {/* Task links */}
+        {taskLinks.length > 0 && (
+          <Card className="p-4 space-y-2">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+              <Link2 className="h-4 w-4" />
+              Links da Tarefa
+            </div>
+            <div className="space-y-1.5">
+              {taskLinks.map((link, i) => (
+                <a
+                  key={i}
+                  href={link.url.startsWith("http") ? link.url : `https://${link.url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                  {link.titulo || link.url}
+                </a>
+              ))}
+            </div>
+          </Card>
+        )}
+
         <div className="flex items-center justify-center gap-2 flex-wrap">
           {posts.map((p, i) => (
             <button

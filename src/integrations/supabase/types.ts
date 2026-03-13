@@ -6005,6 +6005,14 @@ export type Database = {
         Returns: boolean
       }
       generate_slug: { Args: { input_text: string }; Returns: string }
+      get_links_by_approval_token: {
+        Args: { p_token: string }
+        Returns: {
+          ordem: number
+          titulo: string
+          url: string
+        }[]
+      }
       get_mockups_by_approval_token: {
         Args: { p_token: string }
         Returns: {
