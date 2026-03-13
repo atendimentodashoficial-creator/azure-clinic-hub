@@ -176,21 +176,39 @@ export function GoogleCalendarConfig({ defaultOpen = false }: GoogleCalendarConf
 
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
-      // In embedded preview environments, open OAuth in a new tab (Google blocks iframe contexts)
+      // In embedded preview environments, force OAuth outside iframe
       const isEmbeddedContext = window.self !== window.top;
       if (isEmbeddedContext) {
-        const newTab = window.open(authUrl, "_blank", "noopener,noreferrer");
+        let redirectedTopWindow = false;
 
-        if (!newTab) {
-          // Fallback if popup is blocked
-          window.location.href = authUrl;
+        try {
+          if (window.top && window.top !== window.self) {
+            window.top.location.href = authUrl;
+            redirectedTopWindow = true;
+          }
+        } catch {
+          redirectedTopWindow = false;
+        }
+
+        if (redirectedTopWindow) {
+          return;
+        }
+
+        const newTab = window.open(authUrl, "_blank", "noopener,noreferrer");
+        if (newTab) {
+          setConnecting(false);
+          toast({
+            title: "Continue em nova aba",
+            description: "A autenticação do Google foi aberta fora do preview."
+          });
           return;
         }
 
         setConnecting(false);
         toast({
-          title: "Continue em nova aba",
-          description: "A autenticação do Google foi aberta em uma nova aba para evitar bloqueio do navegador."
+          title: "Pop-up bloqueado",
+          description: "Permita pop-ups no navegador para continuar a autenticação do Google.",
+          variant: "destructive"
         });
         return;
       }
