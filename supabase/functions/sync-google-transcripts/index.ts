@@ -97,17 +97,77 @@ Deno.serve(async (req) => {
     const accessToken = await getValidAccessToken(supabase, userId);
 
     // Search for Google Meet transcript files in Google Drive
-    // Meet transcripts are stored as Google Docs - search for both English and Portuguese names
-    const searchQuery = encodeURIComponent(
-      "mimeType='application/vnd.google-apps.document' and (name contains 'Transcript' or name contains 'Transcrição' or name contains 'Transcricao') and trashed=false"
-    );
+    // Meet transcripts are Google Docs stored in "Meet Recordings" folder
+    // Try multiple search strategies
+    const searches = [
+      // Strategy 1: Search by name patterns (EN + PT)
+      "mimeType='application/vnd.google-apps.document' and (name contains 'Transcript' or name contains 'Transcrição' or name contains 'Transcricao') and trashed=false",
+      // Strategy 2: Search inside Meet Recordings folder by parent folder name
+      "mimeType='application/vnd.google-apps.document' and parents in (select id from files where name='Meet Recordings') and trashed=false",
+    ];
+
+    let files: DriveFile[] = [];
+
+    // Use strategy 1 first
+    const searchQuery = encodeURIComponent(searches[0]);
     
     const driveResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${searchQuery}&fields=files(id,name,createdTime,modifiedTime,mimeType)&pageSize=50`,
+      `https://www.googleapis.com/drive/v3/files?q=${searchQuery}&fields=files(id,name,createdTime,modifiedTime,mimeType)&pageSize=50&orderBy=createdTime desc`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
+
+    if (!driveResponse.ok) {
+      const errText = await driveResponse.text();
+      console.error("Drive API error:", driveResponse.status, errText);
+      
+      if (driveResponse.status === 403) {
+        // Token may not have Drive scope - user needs to reconnect
+        throw new Error("Permissão negada ao acessar o Google Drive. Reconecte sua conta Google em Configurações com o escopo de Drive habilitado.");
+      }
+      throw new Error(`Erro ao buscar arquivos do Drive: ${driveResponse.status}`);
+    }
+
+    const driveData = await driveResponse.json();
+    files = driveData.files || [];
+
+    console.log(`Strategy 1 found ${files.length} files`);
+
+    // If strategy 1 found nothing, try broader search for any recent Google Docs
+    if (files.length === 0) {
+      const broadQuery = encodeURIComponent(
+        "mimeType='application/vnd.google-apps.document' and trashed=false"
+      );
+      const broadResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=${broadQuery}&fields=files(id,name,createdTime,modifiedTime,mimeType)&pageSize=10&orderBy=modifiedTime desc`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (broadResponse.ok) {
+        const broadData = await broadResponse.json();
+        const allDocs = broadData.files || [];
+        console.log(`Broad search found ${allDocs.length} Google Docs total. Names:`, allDocs.map((f: any) => f.name));
+        
+        // Filter for anything that looks like a meeting transcript
+        files = allDocs.filter((f: any) => {
+          const name = (f.name || "").toLowerCase();
+          return name.includes("transcript") || 
+                 name.includes("transcrição") || 
+                 name.includes("transcricao") ||
+                 name.includes("meeting") ||
+                 name.includes("reunião") ||
+                 name.includes("reuniao") ||
+                 name.includes("meet");
+        });
+        console.log(`After filtering: ${files.length} potential transcripts`);
+      } else {
+        const errText = await broadResponse.text();
+        console.error("Broad search error:", broadResponse.status, errText);
+      }
+    }
 
     if (!driveResponse.ok) {
       const errText = await driveResponse.text();
