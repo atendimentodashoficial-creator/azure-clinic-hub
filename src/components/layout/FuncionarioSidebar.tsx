@@ -1,4 +1,4 @@
-import { Calendar, Clock, LogOut, ChevronLeft, ChevronRight, Home, MessageSquare, Video } from "lucide-react";
+import { Calendar, Clock, LogOut, ChevronLeft, ChevronRight, Home, MessageSquare, Video, ListChecks } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
