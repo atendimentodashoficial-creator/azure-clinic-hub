@@ -4,14 +4,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTiposTarefas, TipoTarefa } from "@/hooks/useTiposTarefas";
 import { useTarefaMockups } from "@/hooks/useTarefaMockups";
+import { useTarefaLinks } from "@/hooks/useTarefaLinks";
 import { MockupPostsManager, PostGroup } from "./MockupPostsManager";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
-import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History } from "lucide-react";
+import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History, Plus, Trash2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
