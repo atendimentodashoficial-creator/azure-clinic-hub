@@ -44,7 +44,7 @@ export function useTarefaMockups(tarefaId: string | null) {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["tarefa-mockups", tarefaId] });
 
   const saveMockups = useMutation({
-    mutationFn: async (slides: { id?: string; subtitulo: string; titulo: string; legenda: string; cta: string; ordem: number }[]) => {
+    mutationFn: async (slides: { id?: string; subtitulo: string; titulo: string; legenda: string; cta: string; ordem: number; post_index: number }[]) => {
       if (!tarefaId || !effectiveUserId) throw new Error("Não autenticado");
       
       // Separate slides that have existing IDs (update) vs new ones (insert)
