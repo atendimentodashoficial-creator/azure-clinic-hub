@@ -139,32 +139,14 @@ serve(async (req) => {
       }
     }
 
-    if (gcalConfig?.access_token) {
+    if (gcalConfig?.access_token && calendarOwnerUserId) {
       try {
         let accessToken = gcalConfig.access_token;
-
-        // Refresh token if expired
-        if (gcalConfig.token_expires_at && new Date(gcalConfig.token_expires_at) <= new Date()) {
-          console.log("Google token expired, refreshing...");
-          const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-              client_id: gcalConfig.client_id,
-              client_secret: gcalConfig.client_secret,
-              refresh_token: gcalConfig.refresh_token,
-              grant_type: "refresh_token",
-            }),
-          });
-
-          const refreshData = await refreshResponse.json();
-          if (refreshResponse.ok) {
-            accessToken = refreshData.access_token;
-            const expiresAt = new Date(Date.now() + refreshData.expires_in * 1000).toISOString();
+...
             await supabaseAdmin
               .from("google_calendar_config")
               .update({ access_token: accessToken, token_expires_at: expiresAt, updated_at: new Date().toISOString() })
-              .eq("user_id", targetUserId);
+              .eq("user_id", calendarOwnerUserId);
           } else {
             console.error("Token refresh failed:", refreshData);
           }
