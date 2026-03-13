@@ -1,0 +1,1 @@
+ALTER TABLE public.tarefa_mockups ADD COLUMN post_index integer NOT NULL DEFAULT 0;

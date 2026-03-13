@@ -4710,6 +4710,7 @@ export type Database = {
           id: string
           legenda: string | null
           ordem: number
+          post_index: number
           status: string
           subtitulo: string | null
           tarefa_id: string
@@ -4724,6 +4725,7 @@ export type Database = {
           id?: string
           legenda?: string | null
           ordem?: number
+          post_index?: number
           status?: string
           subtitulo?: string | null
           tarefa_id: string
@@ -4738,6 +4740,7 @@ export type Database = {
           id?: string
           legenda?: string | null
           ordem?: number
+          post_index?: number
           status?: string
           subtitulo?: string | null
           tarefa_id?: string
