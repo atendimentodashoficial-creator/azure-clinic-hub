@@ -45,12 +45,40 @@ serve(async (req) => {
     }
 
     // Get the reuniao to get google_event_id
+    // Check ownership: either the meeting belongs to this user, or the user is the admin (owner) of the member
     const { data: reuniao, error: reuniaoError } = await supabase
       .from("reunioes")
-      .select("google_event_id")
+      .select("google_event_id, user_id")
       .eq("id", reuniaoId)
-      .eq("user_id", user.id)
       .single();
+
+    if (reuniaoError || !reuniao) {
+      console.error("Reuniao not found:", reuniaoError);
+      return new Response(
+        JSON.stringify({ success: false, error: "Reunião não encontrada" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify permission: own meeting or admin of the member
+    const meetingOwnerId = reuniao.user_id;
+    let authorized = meetingOwnerId === user.id;
+    if (!authorized) {
+      const { data: memberLink } = await supabase
+        .from("tarefas_membros")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("auth_user_id", meetingOwnerId)
+        .maybeSingle();
+      authorized = !!memberLink;
+    }
+
+    if (!authorized) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Sem permissão para excluir esta reunião" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (reuniaoError || !reuniao) {
       console.error("Reuniao not found:", reuniaoError);
@@ -132,8 +160,7 @@ serve(async (req) => {
     const { error: deleteError } = await supabase
       .from("reunioes")
       .delete()
-      .eq("id", reuniaoId)
-      .eq("user_id", user.id);
+      .eq("id", reuniaoId);
 
     if (deleteError) {
       console.error("Error deleting local record:", deleteError);
