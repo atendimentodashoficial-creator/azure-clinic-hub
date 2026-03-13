@@ -251,6 +251,11 @@ function TarefaInlineEditor({
               <Calendar className="h-3 w-3" />{tarefa.prazo} {tarefa.prazo === 1 ? "dia" : "dias"}
             </span>
           )}
+          {tarefa.comissao > 0 && (
+            <span className="text-xs text-primary flex items-center gap-1">
+              💰 R$ {tarefa.comissao.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </span>
+          )}
           {depNames.length > 0 && (
             <span className="text-xs text-muted-foreground">🔗 Depende de: {depNames.map(d => d!.titulo || "Sem título").join(", ")}</span>
           )}
