@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTarefas, Tarefa, TarefaColuna } from "@/hooks/useTarefas";
+import { useTiposTarefas } from "@/hooks/useTiposTarefas";
 import { useTarefasClientes } from "@/hooks/useTarefasClientes";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 import { useMembroAtual } from "@/hooks/useMembroAtual";
