@@ -42,19 +42,23 @@ export function useTarefaMockups(tarefaId: string | null) {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["tarefa-mockups", tarefaId] });
 
   const saveMockups = useMutation({
-    mutationFn: async (slides: { subtitulo: string; titulo: string; legenda: string; cta: string; ordem: number }[]) => {
+    mutationFn: async (slides: { id?: string; subtitulo: string; titulo: string; legenda: string; cta: string; ordem: number }[]) => {
       if (!tarefaId || !effectiveUserId) throw new Error("Não autenticado");
       
       // Delete existing
       await supabase.from("tarefa_mockups").delete().eq("tarefa_id", tarefaId);
       
-      // Insert new
+      // Insert new (strip client-side id)
       if (slides.length > 0) {
         const { error } = await supabase.from("tarefa_mockups").insert(
-          slides.map(s => ({
+          slides.map(({ id, ...s }) => ({
             tarefa_id: tarefaId,
             user_id: effectiveUserId,
-            ...s,
+            subtitulo: s.subtitulo,
+            titulo: s.titulo,
+            legenda: s.legenda,
+            cta: s.cta,
+            ordem: s.ordem,
           }))
         );
         if (error) throw error;
