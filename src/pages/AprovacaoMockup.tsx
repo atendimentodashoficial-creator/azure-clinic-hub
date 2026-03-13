@@ -523,14 +523,7 @@ function LinkOnlyApproval({
                     {statusLabel(linkApprovalStatus)}
                   </Badge>
                 </div>
-                <DeviceFrame>
-                  <iframe
-                    src={href}
-                    className="block w-full h-full min-w-0 max-w-full border-0 touch-pan-y"
-                    sandbox="allow-scripts allow-same-origin allow-popups"
-                    title={link.titulo || `Link ${i + 1}`}
-                  />
-                </DeviceFrame>
+                <DeviceFrameWithFallback href={href} title={link.titulo || link.url} />
               </div>
             );
           })}
