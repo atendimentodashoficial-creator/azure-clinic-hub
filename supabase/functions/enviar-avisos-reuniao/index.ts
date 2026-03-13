@@ -20,6 +20,7 @@ interface AvisoReuniao {
   envio_imediato: boolean;
   tipo_gatilho: string;
   procedimento_id: string | null;
+  tipo_reuniao_id: string | null;
   audio_url: string | null;
   audio_posicao: string | null;
 }
