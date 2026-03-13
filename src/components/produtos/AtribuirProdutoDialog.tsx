@@ -16,7 +16,8 @@ import { useTarefas } from "@/hooks/useTarefas";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Video } from "lucide-react";
+import { Video, UserCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
 import {
   SelectClientStep,
