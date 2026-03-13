@@ -99,6 +99,92 @@ serve(async (req) => {
 
     const participantes = [clienteNome || "Cliente", member.nome].filter(Boolean);
 
+    // Check if the target user has Google Calendar connected
+    let meetLink: string | null = null;
+    let googleEventId: string | null = null;
+
+    const { data: gcalConfig } = await supabaseAdmin
+      .from("google_calendar_config")
+      .select("access_token, refresh_token, client_id, client_secret, token_expires_at, calendar_id")
+      .eq("user_id", targetUserId)
+      .maybeSingle();
+
+    if (gcalConfig?.access_token) {
+      try {
+        let accessToken = gcalConfig.access_token;
+
+        // Refresh token if expired
+        if (gcalConfig.token_expires_at && new Date(gcalConfig.token_expires_at) <= new Date()) {
+          console.log("Google token expired, refreshing...");
+          const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: gcalConfig.client_id,
+              client_secret: gcalConfig.client_secret,
+              refresh_token: gcalConfig.refresh_token,
+              grant_type: "refresh_token",
+            }),
+          });
+
+          const refreshData = await refreshResponse.json();
+          if (refreshResponse.ok) {
+            accessToken = refreshData.access_token;
+            const expiresAt = new Date(Date.now() + refreshData.expires_in * 1000).toISOString();
+            await supabaseAdmin
+              .from("google_calendar_config")
+              .update({ access_token: accessToken, token_expires_at: expiresAt, updated_at: new Date().toISOString() })
+              .eq("user_id", targetUserId);
+          } else {
+            console.error("Token refresh failed:", refreshData);
+          }
+        }
+
+        // Create Google Calendar event with Meet
+        const startDate = new Date(dataHora);
+        const endDate = new Date(startDate.getTime() + (duracao || 60) * 60 * 1000);
+
+        const eventBody = {
+          summary: titulo,
+          description: `Reunião agendada via CRM - ${clienteNome || "Cliente"}`,
+          start: { dateTime: startDate.toISOString(), timeZone: "America/Sao_Paulo" },
+          end: { dateTime: endDate.toISOString(), timeZone: "America/Sao_Paulo" },
+          conferenceData: {
+            createRequest: {
+              requestId: crypto.randomUUID(),
+              conferenceSolutionKey: { type: "hangoutsMeet" },
+            },
+          },
+        };
+
+        const calendarId = gcalConfig.calendar_id || "primary";
+        const eventResponse = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(eventBody),
+          }
+        );
+
+        const eventData = await eventResponse.json();
+        if (eventResponse.ok) {
+          googleEventId = eventData.id;
+          meetLink = eventData.conferenceData?.entryPoints?.find(
+            (ep: { entryPointType: string }) => ep.entryPointType === "video"
+          )?.uri || null;
+          console.log("Google Calendar event created with Meet link:", meetLink);
+        } else {
+          console.error("Google Calendar event creation failed:", eventData);
+        }
+      } catch (gcalError) {
+        console.error("Error creating Google Calendar event:", gcalError);
+      }
+    }
+
     const { data: reuniao, error: reuniaoError } = await supabaseAdmin
       .from("reunioes")
       .insert({
@@ -111,6 +197,8 @@ serve(async (req) => {
         profissional_id: profissionalId,
         status: "agendado",
         participantes,
+        meet_link: meetLink,
+        google_event_id: googleEventId,
       })
       .select("id")
       .single();
