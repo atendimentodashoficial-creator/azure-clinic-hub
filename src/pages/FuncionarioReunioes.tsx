@@ -745,6 +745,10 @@ export default function FuncionarioReunioes() {
           }
         }}
       />
+      <NovaReuniaoDialog
+        open={novaReuniaoOpen}
+        onOpenChange={setNovaReuniaoOpen}
+      />
     </div>
   );
 }
