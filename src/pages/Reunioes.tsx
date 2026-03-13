@@ -595,6 +595,10 @@ export default function Reunioes() {
         <TabsContent value="avisos">
           <AvisosReuniaoTab />
         </TabsContent>
+
+        <TabsContent value="escalas">
+          <EscalaMembrosTab />
+        </TabsContent>
       </Tabs>
 
       {/* Dialog de detalhes */}
