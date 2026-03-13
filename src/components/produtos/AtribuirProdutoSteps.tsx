@@ -372,7 +372,7 @@ export function SelectMemberAndTimeStep({
         <Button variant="outline" onClick={onBack} disabled={saving}>Voltar</Button>
         <Button
           onClick={handleConfirm}
-          disabled={saving || !selectedDate || !selectedTime || !selectedMemberId}
+          disabled={saving || !selectedDate || !selectedTime || !selectedMemberId || hasTimeConflict(selectedMemberId, selectedTime)}
           className="gap-1.5"
         >
           <Video className="h-4 w-4" />
