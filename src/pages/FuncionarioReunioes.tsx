@@ -57,22 +57,35 @@ export default function FuncionarioReunioes() {
     enabled: !!membro?.email,
   });
 
-  // Fetch reuniões for this profissional
+  // Fetch reuniões for this profissional or by name in participantes
   const { data: reunioes, isLoading } = useQuery({
-    queryKey: ["funcionario-reunioes", profissional?.id],
+    queryKey: ["funcionario-reunioes", profissional?.id, membro?.nome],
     queryFn: async () => {
-      if (!profissional?.id) return [];
+      if (!profissional?.id && !membro?.nome) return [];
+      
+      if (profissional?.id) {
+        // Primary: match by profissional_id
+        const { data, error } = await supabase
+          .from("reunioes" as any)
+          .select("*, profissionais(nome), leads:cliente_id(nome, telefone)")
+          .eq("profissional_id", profissional.id)
+          .or("google_event_id.not.is.null,status.eq.agendado")
+          .order("data_reuniao", { ascending: false });
+        if (error) throw error;
+        return (data || []) as unknown as Reuniao[];
+      }
+      
+      // Fallback: match by name in participantes array
       const { data, error } = await supabase
         .from("reunioes" as any)
         .select("*, profissionais(nome), leads:cliente_id(nome, telefone)")
-        .eq("profissional_id", profissional.id)
+        .contains("participantes", [membro!.nome])
         .or("google_event_id.not.is.null,status.eq.agendado")
         .order("data_reuniao", { ascending: false });
-
       if (error) throw error;
       return (data || []) as unknown as Reuniao[];
     },
-    enabled: !!profissional?.id,
+    enabled: !!profissional?.id || !!membro?.nome,
   });
 
   const getClienteNome = (reuniao: Reuniao) => {
