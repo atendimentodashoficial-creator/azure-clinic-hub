@@ -20,6 +20,8 @@ interface AvisoReuniao {
   envio_imediato: boolean;
   tipo_gatilho: string;
   procedimento_id: string | null;
+  audio_url: string | null;
+  audio_posicao: string | null;
 }
 
 interface WhatsAppConfig {
@@ -45,6 +47,8 @@ interface PendingAviso {
   meetLink: string | null;
   tipoGatilho: string;
   numeroReagendamentos?: number;
+  audioUrl?: string | null;
+  audioPosicao?: string | null;
 }
 
 // Configuration
@@ -170,11 +174,48 @@ async function processAviso(
 
   console.log(`Sending aviso to ${aviso.telefone} for reuniao ${aviso.reuniaoId}`);
 
+  // Helper to send audio via /send/media
+  const sendAudio = async (targetNumber: string) => {
+    if (!aviso.audioUrl) return;
+    try {
+      console.log(`Sending audio for aviso "${aviso.avisoNome}" to ${targetNumber}`);
+      const audioResponse = await fetch(`${config.base_url}/send/media`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          token: config.api_key,
+        },
+        body: JSON.stringify({
+          number: targetNumber,
+          type: "ptt",
+          file: aviso.audioUrl,
+        }),
+      });
+      const audioText = await audioResponse.text();
+      if (!audioResponse.ok) {
+        console.error(`Error sending audio for aviso "${aviso.avisoNome}":`, audioText);
+      } else {
+        console.log(`Audio sent successfully for aviso "${aviso.avisoNome}"`);
+      }
+    } catch (audioErr) {
+      console.error(`Exception sending audio for aviso "${aviso.avisoNome}":`, audioErr);
+    }
+  };
+
+  const audioPosicao = aviso.audioPosicao || "depois";
+
   let deliveredTo: string | null = null;
   let lastError: string | null = null;
 
   for (const candidate of phoneCandidates) {
     try {
+      // Send audio BEFORE text if configured
+      if (aviso.audioUrl && audioPosicao === "antes") {
+        await sendAudio(candidate);
+        await delay(2000);
+      }
+
       const response = await fetch(`${config.base_url}/send/text`, {
         method: "POST",
         headers: {
@@ -192,6 +233,13 @@ async function processAviso(
         const responseData = await response.json();
         if (responseData.status !== "error") {
           deliveredTo = candidate;
+
+          // Send audio AFTER text if configured
+          if (aviso.audioUrl && audioPosicao !== "antes") {
+            await delay(2000);
+            await sendAudio(candidate);
+          }
+
           break;
         }
         lastError = responseData.message || "Unknown error";
@@ -514,6 +562,8 @@ Deno.serve(async (req) => {
           meetLink: reuniao.meet_link || null,
           tipoGatilho: aviso.tipo_gatilho || 'dias_antes',
           numeroReagendamentos: reuniao.numero_reagendamentos || 0,
+          audioUrl: (aviso as any).audio_url || null,
+          audioPosicao: (aviso as any).audio_posicao || null,
         });
       }
 

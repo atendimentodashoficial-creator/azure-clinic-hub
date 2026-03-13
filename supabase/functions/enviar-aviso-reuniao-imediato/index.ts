@@ -472,6 +472,38 @@ serve(async (req) => {
         // Replace variables in message
         const mensagem = replaceVariables(aviso.mensagem, reuniao, clienteNome);
 
+        // Helper to send audio
+        const sendAudio = async (targetNumber: string) => {
+          const audioUrl = (aviso as any).audio_url;
+          if (!audioUrl) return;
+          try {
+            console.log(`Sending audio for aviso "${aviso.nome}" to ${targetNumber}`);
+            const audioResponse = await fetch(`${avisoBaseUrl}/send/media`, {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                token: avisoApiKey,
+              },
+              body: JSON.stringify({
+                number: targetNumber,
+                type: "ptt",
+                file: audioUrl,
+              }),
+            });
+            const audioText = await audioResponse.text();
+            if (!audioResponse.ok) {
+              console.error(`Error sending audio for aviso "${aviso.nome}":`, audioText);
+            } else {
+              console.log(`Audio sent successfully for aviso "${aviso.nome}"`);
+            }
+          } catch (audioErr) {
+            console.error(`Exception sending audio for aviso "${aviso.nome}":`, audioErr);
+          }
+        };
+
+        const audioPosicao = (aviso as any).audio_posicao || "depois";
+
         // Send WhatsApp message (UAZapi padrão usado em Disparos)
         const sendUrl = `${avisoBaseUrl}/send/text`;
 
@@ -479,6 +511,12 @@ serve(async (req) => {
         let lastError: string | null = null;
 
         for (const candidate of phoneCandidates) {
+          // Send audio BEFORE text if configured
+          if ((aviso as any).audio_url && audioPosicao === "antes") {
+            await sendAudio(candidate);
+            await sleep(2000); // small delay between audio and text
+          }
+
           const sendResponse = await fetch(sendUrl, {
             method: "POST",
             headers: {
@@ -502,6 +540,13 @@ serve(async (req) => {
 
           if (sendResponse.ok) {
             deliveredTo = candidate;
+
+            // Send audio AFTER text if configured
+            if ((aviso as any).audio_url && audioPosicao !== "antes") {
+              await sleep(2000); // small delay between text and audio
+              await sendAudio(candidate);
+            }
+
             break;
           }
 
