@@ -137,12 +137,13 @@ interface SelectMemberAndTimeStepProps {
   clienteNome: string;
   templateNome: string;
   saving: boolean;
+  defaultDuracao?: number;
   onBack: () => void;
   onConfirm: (data: { titulo: string; dataHora: string; duracao: number; memberNome: string; memberId: string }) => void;
 }
 
 export function SelectMemberAndTimeStep({
-  clienteNome, templateNome, saving, onBack, onConfirm,
+  clienteNome, templateNome, saving, defaultDuracao, onBack, onConfirm,
 }: SelectMemberAndTimeStepProps) {
   const { user } = useAuth();
   const { membros } = useTarefasMembros();
@@ -150,7 +151,7 @@ export function SelectMemberAndTimeStep({
   const { data: allAusencias = [] } = useAusenciasMembros();
 
   const [reuniaoTitulo, setReuniaoTitulo] = useState(`Reunião - ${clienteNome} - ${templateNome}`);
-  const [reuniaoDuracao, setReuniaDuracao] = useState("60");
+  const [reuniaoDuracao, setReuniaDuracao] = useState(String(defaultDuracao || 60));
   const [use15min, setUse15min] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");

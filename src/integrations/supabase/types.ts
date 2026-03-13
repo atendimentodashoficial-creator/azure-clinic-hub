@@ -4211,6 +4211,7 @@ export type Database = {
           ativo: boolean
           created_at: string
           descricao: string | null
+          duracao_reuniao: number
           id: string
           nome: string
           ordem: number | null
@@ -4222,6 +4223,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string | null
+          duracao_reuniao?: number
           id?: string
           nome: string
           ordem?: number | null
@@ -4233,6 +4235,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string | null
+          duracao_reuniao?: number
           id?: string
           nome?: string
           ordem?: number | null

@@ -364,6 +364,7 @@ function ProdutoDialog({
   const [nome, setNome] = useState(editando?.nome || "");
   const [descricao, setDescricao] = useState(editando?.descricao || "");
   const [requerReuniao, setRequerReuniao] = useState(editando?.requer_reuniao || false);
+  const [duracaoReuniao, setDuracaoReuniao] = useState(editando?.duracao_reuniao || 60);
   const [tarefas, setTarefas] = useState<TarefaLocal[]>(
     existingTarefas ? existingTarefas.map(tarefaDbToLocal) : []
   );
@@ -431,9 +432,9 @@ function ProdutoDialog({
       let templateId = editando?.id;
 
       if (isEditing && templateId) {
-        await atualizarTemplate.mutateAsync({ id: templateId, nome: nome.trim(), descricao: descricao.trim() || null, requer_reuniao: requerReuniao });
+        await atualizarTemplate.mutateAsync({ id: templateId, nome: nome.trim(), descricao: descricao.trim() || null, requer_reuniao: requerReuniao, duracao_reuniao: duracaoReuniao });
       } else {
-        const created = await criarTemplate.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined, requer_reuniao: requerReuniao });
+        const created = await criarTemplate.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined, requer_reuniao: requerReuniao, duracao_reuniao: duracaoReuniao });
         templateId = (created as any).id;
       }
 
@@ -490,6 +491,20 @@ function ProdutoDialog({
             </div>
             <Switch checked={requerReuniao} onCheckedChange={setRequerReuniao} />
           </div>
+
+          {requerReuniao && (
+            <div className="space-y-2">
+              <Label>Duração da Reunião (minutos)</Label>
+              <Input
+                type="number"
+                min={15}
+                step={15}
+                value={duracaoReuniao}
+                onChange={e => setDuracaoReuniao(Number(e.target.value) || 60)}
+                placeholder="60"
+              />
+            </div>
+          )}
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
