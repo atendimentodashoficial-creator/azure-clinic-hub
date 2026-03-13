@@ -300,6 +300,36 @@ export default function FuncionarioReunioes() {
         </TabsList>
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
+          {/* Period filter chips */}
+          <ReunioesPeriodFilter
+            value={periodFilter.filterValue}
+            onChange={periodFilter.setFilterValue}
+            dateStart={periodFilter.customStart}
+            dateEnd={periodFilter.customEnd}
+            onDateStartChange={periodFilter.setCustomStart}
+            onDateEndChange={periodFilter.setCustomEnd}
+            count={reunioes?.length}
+          />
+
+          {/* Member selector */}
+          {membros.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+                <SelectTrigger className="w-[220px] h-8 text-xs">
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  <SelectValue placeholder="Filtrar por colaborador" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="meus">Minhas reuniões</SelectItem>
+                  {membros.map((m: any) => (
+                    <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {isLoading ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
