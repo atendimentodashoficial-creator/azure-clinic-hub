@@ -245,18 +245,34 @@ export default function FuncionarioReunioes() {
     return map;
   }, [membros, ownerId, ownerProfile]);
 
+  // Helper: get profissional IDs linked to a member (by email match)
+  const getProfissionalIdsForMember = (m: any): string[] => {
+    if (!m?.email) return [];
+    return profissionais.filter((p: any) => p.email === m.email).map((p: any) => p.id);
+  };
+
   // Filter by member then by period
   const reunioes = useMemo(() => {
     if (!allReunioes) return [];
     let filtered = allReunioes;
-    if (selectedMemberId === "meus") filtered = filtered.filter(r => r.user_id === user?.id);
-    else if (selectedMemberId !== "todos") {
+    if (selectedMemberId === "meus") {
+      // Match by user_id OR by profissional_id linked to current membro
+      const myProfIds = membro ? getProfissionalIdsForMember(membro) : [];
+      filtered = filtered.filter(r => 
+        r.user_id === user?.id || 
+        (myProfIds.length > 0 && r.profissional_id && myProfIds.includes(r.profissional_id))
+      );
+    } else if (selectedMemberId !== "todos") {
       const m = membros.find((mb: any) => mb.id === selectedMemberId);
-      if (!m?.auth_user_id) return [];
-      filtered = filtered.filter(r => r.user_id === m.auth_user_id);
+      if (!m) return [];
+      const memberProfIds = getProfissionalIdsForMember(m);
+      filtered = filtered.filter(r => 
+        (m.auth_user_id && r.user_id === m.auth_user_id) ||
+        (memberProfIds.length > 0 && r.profissional_id && memberProfIds.includes(r.profissional_id))
+      );
     }
     return periodFilter.filterReunioes(filtered);
-  }, [allReunioes, selectedMemberId, membros, user?.id, periodFilter]);
+  }, [allReunioes, selectedMemberId, membros, user?.id, periodFilter, membro, profissionais]);
 
   const formatDuration = (minutes: number | null) => {
     if (!minutes) return "—";
