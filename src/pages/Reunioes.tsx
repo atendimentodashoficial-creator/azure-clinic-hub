@@ -514,7 +514,7 @@ export default function Reunioes() {
                                   setReuniaoParaVincular(reuniao);
                                   setVincularDialogOpen(true);
                                 }}
-                                title={reuniao.transcricao ? "Vincular outra transcrição do Fireflies" : "Vincular transcrição do Fireflies"}
+                                title={reuniao.transcricao ? "Vincular outra transcrição" : "Vincular transcrição"}
                               >
                                 <FileText className="w-4 h-4" />
                                 {reuniao.transcricao ? "Vincular outra" : "Vincular"}
