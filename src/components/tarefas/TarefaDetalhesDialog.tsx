@@ -58,6 +58,22 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const [taskLinks, setTaskLinks] = useState<{ url: string; titulo: string }[]>([]);
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showClienteSheet, setShowClienteSheet] = useState(false);
+
+  const { data: clienteCompleto } = useQuery({
+    queryKey: ["tarefa-cliente-detalhes", tarefa?.cliente_id],
+    queryFn: async () => {
+      if (!tarefa?.cliente_id) return null;
+      const { data, error } = await supabase
+        .from("tarefas_clientes")
+        .select("*")
+        .eq("id", tarefa.cliente_id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tarefa?.cliente_id && showClienteSheet,
+  });
 
   const { data: revisoes = [] } = useQuery({
     queryKey: ["tarefa-revisoes", tarefa?.id],
