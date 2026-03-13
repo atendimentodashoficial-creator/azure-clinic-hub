@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { useTarefasMembros } from "@/hooks/useTarefasMembros";
+import { useTarefasMembros, type TarefaMembro } from "@/hooks/useTarefasMembros";
+import { useMembroAtual } from "@/hooks/useMembroAtual";
 import {
   useEscalasMembros,
   useCreateEscalaMembro,
@@ -35,18 +36,32 @@ const DIAS_SEMANA = [
   { value: 6, label: "Sábado" },
 ];
 
-export function EscalaMembrosTab() {
-  const { membros, isLoading: loadingMembros } = useTarefasMembros();
-  const { data: todasEscalas = [] } = useEscalasMembros();
-  const { data: todasAusencias = [] } = useAusenciasMembros();
+interface EscalaMembrosTabProps {
+  membroIdFixo?: string;
+}
+
+export function EscalaMembrosTab({ membroIdFixo }: EscalaMembrosTabProps) {
+  const { membros: membrosAdmin, isLoading: loadingMembros } = useTarefasMembros();
+  const { membro: membroAtual } = useMembroAtual();
+
+  // When locked (funcionario), use their own membro record; otherwise use admin's list
+  const membros: TarefaMembro[] = useMemo(() => {
+    if (membroIdFixo && membroAtual) {
+      return [membroAtual as TarefaMembro];
+    }
+    return membrosAdmin;
+  }, [membroIdFixo, membroAtual, membrosAdmin]);
+  const { data: todasEscalas = [] } = useEscalasMembros(membroIdFixo);
+  const { data: todasAusencias = [] } = useAusenciasMembros(membroIdFixo);
   const criarEscala = useCreateEscalaMembro();
   const updateEscala = useUpdateEscalaMembro();
   const deletarEscala = useDeleteEscalaMembro();
   const criarAusencia = useCreateAusenciaMembro();
   const deletarAusencia = useDeleteAusenciaMembro();
 
-  const [membroSelecionado, setMembroSelecionado] = useState<string>("todos");
-  const [membrosExpandidos, setMembrosExpandidos] = useState<Set<string>>(new Set());
+  const isLocked = !!membroIdFixo;
+  const [membroSelecionado, setMembroSelecionado] = useState<string>(membroIdFixo || "todos");
+  const [membrosExpandidos, setMembrosExpandidos] = useState<Set<string>>(membroIdFixo ? new Set([membroIdFixo]) : new Set());
   const [diasExpandidos, setDiasExpandidos] = useState<Set<string>>(new Set());
   const [horariosRascunho, setHorariosRascunho] = useState<Record<string, Array<{ tempId: string; inicio: string; fim: string }>>>({});
 
@@ -383,21 +398,23 @@ export function EscalaMembrosTab() {
 
   return (
     <div className="space-y-4">
-      {/* Filtro por membro */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold">Filtrar por Membro</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select value={membroSelecionado} onValueChange={setMembroSelecionado}>
-            <SelectTrigger><SelectValue placeholder="Todos os membros" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os membros</SelectItem>
-              {membros.map(m => <SelectItem key={m.id} value={m.id}>{m.nome} {m.cargo && `- ${m.cargo}`}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      {/* Filtro por membro - hidden when locked to single member */}
+      {!isLocked && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold">Filtrar por Membro</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select value={membroSelecionado} onValueChange={setMembroSelecionado}>
+              <SelectTrigger><SelectValue placeholder="Todos os membros" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os membros</SelectItem>
+                {membros.map(m => <SelectItem key={m.id} value={m.id}>{m.nome} {m.cargo && `- ${m.cargo}`}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Escala por membro */}
       {escalasPorMembro.map(({ membro, dias }) => (

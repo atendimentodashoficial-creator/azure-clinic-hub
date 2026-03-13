@@ -42,6 +42,7 @@ import Equipe from "./pages/Equipe";
 import ProdutosTarefas from "./pages/ProdutosTarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
+import FuncionarioEscala from "./pages/FuncionarioEscala";
 
 const queryClient = new QueryClient();
 
@@ -129,6 +130,7 @@ const App = () => (
           >
             <Route index element={<FuncionarioDashboard />} />
             <Route path="agenda" element={<FuncionarioDashboard />} />
+            <Route path="escala" element={<FuncionarioEscala />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
