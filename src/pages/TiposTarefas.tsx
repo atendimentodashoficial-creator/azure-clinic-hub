@@ -119,6 +119,7 @@ export default function TiposTarefas() {
     setFormDescricao("");
     setFormArquivos([]);
     setFormLimites({});
+    setFormExigeAprovacao(false);
     setIsDialogOpen(true);
   };
 
