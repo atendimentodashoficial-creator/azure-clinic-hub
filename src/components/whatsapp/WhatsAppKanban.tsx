@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { ReuniaoDetalhesDialog } from "@/components/reunioes/ReuniaoDetalhesDialog";
 import { useHorizontalScroll } from "@/hooks/useHorizontalScroll";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import { FaturasClienteDialog, type FaturaResumo } from "./FaturasClienteDialog"
 import { AgendamentosClienteDialog, type AgendamentoResumo } from "./AgendamentosClienteDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhoneNumber, formatRelativeTime, formatLastMessagePreview, truncateText } from "@/utils/whatsapp";
-import { Plus, Settings, Trash2, GripVertical, X, Check, Pencil, Calendar, CheckSquare, Square, XCircle, DollarSign } from "lucide-react";
+import { Plus, Settings, Trash2, GripVertical, X, Check, Pencil, Calendar, CheckSquare, Square, XCircle, DollarSign, FileText } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -37,8 +38,18 @@ interface ChatAgendamento {
   id: string;
   data_agendamento: string;
   status: string;
-  totalAgendamentos: number; // How many agendamentos this client has in history
-  updated_at?: string; // When the agendamento was last updated
+  totalAgendamentos: number;
+  updated_at?: string;
+}
+interface ChatReuniao {
+  id: string;
+  titulo: string;
+  resumo_ia: string | null;
+  data_reuniao: string;
+  duracao_minutos: number | null;
+  participantes: string[] | null;
+  transcricao: string | null;
+  status: string;
 }
 interface WhatsAppKanbanProps {
   chats: any[];
@@ -99,6 +110,11 @@ export function WhatsAppKanban({
   const [selectedAgendamentos, setSelectedAgendamentos] = useState<AgendamentoResumo[]>([]);
   const [selectedAgendamentoClienteNome, setSelectedAgendamentoClienteNome] = useState("");
 
+  // Reuniões state
+  const [chatReunioes, setChatReunioes] = useState<Record<string, ChatReuniao | null>>({});
+  const [reuniaoDialogOpen, setReuniaoDialogOpen] = useState(false);
+  const [selectedReuniao, setSelectedReuniao] = useState<ChatReuniao | null>(null);
+
   // Selection state
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedChats, setSelectedChats] = useState<Set<string>>(new Set());
@@ -115,6 +131,7 @@ export function WhatsAppKanban({
     if (chats.length > 0) {
       loadChatAgendamentos();
       loadChatFaturas();
+      loadChatReunioes();
     }
   }, [chats]);
 
@@ -453,6 +470,87 @@ export function WhatsAppKanban({
     } catch (error) {
       console.error("Error loading chat faturas:", error);
     }
+  };
+
+  // Load reuniões with resumo for chats
+  const loadChatReunioes = async () => {
+    try {
+      const onlyDigits = (v: string) => (v || "").replace(/\D/g, "");
+      const last8 = (v: string) => {
+        const d = onlyDigits(v);
+        return d.length >= 8 ? d.slice(-8) : d;
+      };
+
+      const { data: allReunioes, error } = await supabase
+        .from("reunioes")
+        .select("id, titulo, resumo_ia, data_reuniao, cliente_telefone, duracao_minutos, participantes, transcricao, status")
+        .not("resumo_ia", "is", null)
+        .neq("resumo_ia", "")
+        .order("data_reuniao", { ascending: false });
+
+      if (error) {
+        console.error("Error loading reunioes:", error);
+        return;
+      }
+      if (!allReunioes || allReunioes.length === 0) {
+        setChatReunioes({});
+        return;
+      }
+
+      const last8ToReuniao: Record<string, ChatReuniao> = {};
+      allReunioes.forEach((r: any) => {
+        const k = last8(r.cliente_telefone || "");
+        if (!k || last8ToReuniao[k]) return;
+        last8ToReuniao[k] = {
+          id: r.id,
+          titulo: r.titulo,
+          resumo_ia: r.resumo_ia,
+          data_reuniao: r.data_reuniao,
+          duracao_minutos: r.duracao_minutos,
+          participantes: r.participantes,
+          transcricao: r.transcricao,
+          status: r.status,
+        };
+      });
+
+      const chatReMap: Record<string, ChatReuniao | null> = {};
+      chats.forEach((chat) => {
+        const k = last8(chat?.normalized_number || chat?.contact_number || "");
+        chatReMap[chat.id] = k ? (last8ToReuniao[k] ?? null) : null;
+      });
+      setChatReunioes(chatReMap);
+    } catch (error) {
+      console.error("Error loading chat reunioes:", error);
+    }
+  };
+
+  // Render reunião badge for a chat
+  const renderReuniaoBadge = (chatId: string) => {
+    const reuniao = chatReunioes[chatId];
+    if (!reuniao) return null;
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedReuniao(reuniao);
+                setReuniaoDialogOpen(true);
+              }}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs mt-1 w-full bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900 transition-colors text-left"
+            >
+              <FileText className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">Resumo de reunião</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Clique para ver o resumo</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   };
 
   // Render fatura badge for a chat
@@ -1120,6 +1218,7 @@ export function WhatsAppKanban({
                         </div>
                         {renderAgendamentoBadge(chat.id, chat)}
                         {renderFaturaBadge(chat)}
+                        {renderReuniaoBadge(chat.id)}
                       </div>
                       {chat.unread_count > 0 && <Badge variant="default" className="absolute bottom-3 right-3 text-xs h-5 min-w-5 rounded-full">
                           {chat.unread_count}
@@ -1204,6 +1303,7 @@ export function WhatsAppKanban({
                             </div>
                             {renderAgendamentoBadge(chat.id, chat)}
                             {renderFaturaBadge(chat)}
+                            {renderReuniaoBadge(chat.id)}
                           </div>
                           {chat.unread_count > 0 && <Badge variant="default" className="absolute bottom-3 right-3 text-xs h-5 min-w-5 rounded-full">
                               {chat.unread_count}
@@ -1236,5 +1336,15 @@ export function WhatsAppKanban({
         agendamentos={selectedAgendamentos}
         clienteNome={selectedAgendamentoClienteNome}
       />
+      {selectedReuniao && (
+        <ReuniaoDetalhesDialog
+          reuniao={selectedReuniao as any}
+          open={reuniaoDialogOpen}
+          onOpenChange={(open) => {
+            setReuniaoDialogOpen(open);
+            if (!open) setSelectedReuniao(null);
+          }}
+        />
+      )}
     </div>;
 }
