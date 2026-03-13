@@ -318,6 +318,19 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                           ))}
                         </div>
 
+                        {/* Resubmit rejected items button */}
+                        {mockups.some(m => m.status === "reprovado") && (
+                          <Button
+                            variant="outline"
+                            className="w-full gap-2 mt-2"
+                            onClick={handleResubmitRejected}
+                            disabled={resubmitting}
+                          >
+                            <Send className="h-4 w-4" />
+                            {resubmitting ? "Reenviando..." : `Reenviar ${mockups.filter(m => m.status === "reprovado").length} item(ns) para Aprovação`}
+                          </Button>
+                        )}
+
                         {/* Revision history */}
                         {revisoes.length > 0 && (
                           <div className="mt-3">
