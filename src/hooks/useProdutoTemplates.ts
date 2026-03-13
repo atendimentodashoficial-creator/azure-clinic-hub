@@ -93,6 +93,19 @@ export function useProdutoTemplateMutations() {
     onSuccess: invalidate,
   });
 
+  const reordenarTemplates = useMutation({
+    mutationFn: async (items: { id: string; ordem: number }[]) => {
+      for (const item of items) {
+        const { error } = await supabase
+          .from("produto_templates" as any)
+          .update({ ordem: item.ordem } as any)
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: invalidate,
+  });
+
   const excluirTemplate = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
