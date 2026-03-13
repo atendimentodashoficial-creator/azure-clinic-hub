@@ -127,9 +127,15 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     if (!tarefa) return;
     try {
       const token = crypto.randomUUID();
+      // Move task to "Aguardando Aprovação" column
+      const aguardandoColuna = colunas.find(c => c.nome === "Aguardando Aprovação");
+      const updateData: Record<string, any> = { approval_token: token, approval_status: "aguardando", updated_at: new Date().toISOString() };
+      if (aguardandoColuna) {
+        updateData.coluna_id = aguardandoColuna.id;
+      }
       const { error } = await supabase
         .from("tarefas")
-        .update({ approval_token: token, approval_status: "aguardando" })
+        .update(updateData)
         .eq("id", tarefa.id);
       if (error) throw error;
       const link = `${window.location.origin}/aprovacao/${token}`;
