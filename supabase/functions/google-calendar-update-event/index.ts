@@ -59,57 +59,38 @@ serve(async (req) => {
       );
     }
 
-    // Verify permission: own meeting or employee under the admin who owns it, or admin of employee
+    // Resolve owner/admin relationship and verify permissions
     const meetingOwnerId = reuniao.user_id;
-    let authorized = meetingOwnerId === user.id;
-    let adminUserId = meetingOwnerId; // For Google Calendar config lookup
-    
-    if (!authorized) {
-      // Check if user is an employee under the admin who owns this meeting
-      const { data: memberLink } = await supabase
+
+    // If the meeting owner is an employee, this returns their admin user_id
+    const { data: ownerMember } = await supabase
+      .from("tarefas_membros")
+      .select("user_id")
+      .eq("auth_user_id", meetingOwnerId)
+      .maybeSingle();
+
+    const adminUserId = ownerMember?.user_id || meetingOwnerId;
+
+    const isAdmin = user.id === adminUserId;
+    const isMeetingOwnerEmployee = user.id === meetingOwnerId;
+
+    let isEmployeeFromSameAdmin = false;
+    if (!isAdmin && !isMeetingOwnerEmployee) {
+      const { data: currentMember } = await supabase
         .from("tarefas_membros")
-        .select("id, user_id")
+        .select("id")
         .eq("auth_user_id", user.id)
-        .eq("user_id", meetingOwnerId)
+        .eq("user_id", adminUserId)
         .maybeSingle();
-      if (memberLink) {
-        authorized = true;
-        adminUserId = memberLink.user_id;
-      }
+      isEmployeeFromSameAdmin = !!currentMember;
     }
-    
-    if (!authorized) {
-      // Check if user is the admin of the employee whose auth_user_id owns this meeting
-      const { data: memberLink } = await supabase
-        .from("tarefas_membros")
-        .select("id, user_id")
-        .eq("auth_user_id", meetingOwnerId)
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (memberLink) {
-        authorized = true;
-        adminUserId = user.id;
-      }
-    }
-    
+
+    const authorized = isAdmin || isMeetingOwnerEmployee || isEmployeeFromSameAdmin;
     if (!authorized) {
       return new Response(
         JSON.stringify({ success: false, error: "Sem permissão" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-    }
-    
-    // Also resolve adminUserId if the meeting owner IS an employee
-    if (adminUserId === meetingOwnerId && adminUserId !== user.id) {
-      // meetingOwnerId might be an employee auth_user_id, find their admin
-      const { data: ownerMember } = await supabase
-        .from("tarefas_membros")
-        .select("user_id")
-        .eq("auth_user_id", meetingOwnerId)
-        .maybeSingle();
-      if (ownerMember) {
-        adminUserId = ownerMember.user_id;
-      }
     }
 
     const finalDuracao = duracaoMinutos || reuniao.duracao_minutos || 60;
