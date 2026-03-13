@@ -67,7 +67,7 @@ export default function FuncionarioReunioes() {
   const periodFilter = useReunioesPeriodFilter();
   const [syncing, setSyncing] = useState(false);
   const [novaReuniaoOpen, setNovaReuniaoOpen] = useState(false);
-  const [selectedMemberId, setSelectedMemberId] = useState<string>("todos");
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("meus");
   const [activeTab, setActiveTab] = useState("reunioes");
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
   const [vincularDialogOpen, setVincularDialogOpen] = useState(false);
