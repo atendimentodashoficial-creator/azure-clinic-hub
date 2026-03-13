@@ -33,6 +33,7 @@ const FILE_TYPES = [
   { key: "pdf", label: "PDF" },
   { key: "zip", label: "ZIP" },
   { key: "texto", label: "Texto" },
+  { key: "links", label: "Links" },
   { key: "mockup", label: "Mockup de Post" },
   { key: "qualquer", label: "Qualquer arquivo" },
 ];
