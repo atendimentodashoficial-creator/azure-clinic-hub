@@ -2,6 +2,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDayBrasilia, endOfDayBrasilia, parseDateStringBrasilia } from "@/utils/timezone";
 
+/** Resolve the owner user_id: if the current user is a funcionario, returns the admin's id */
+async function resolveOwnerId(): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Usuário não autenticado");
+  // Check if this user is a funcionario linked to an admin
+  const { data: membro } = await supabase
+    .from("tarefas_membros" as any)
+    .select("user_id")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+  return (membro as any)?.user_id || user.id;
+}
+
 export type StatusAgendamento = "agendado" | "confirmado" | "realizado" | "cancelado";
 
 export interface Agendamento {
