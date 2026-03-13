@@ -14,7 +14,7 @@ import {
 } from "@/hooks/useProdutoTemplates";
 import { useTarefas } from "@/hooks/useTarefas";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { toast } from "sonner";
 import { Video, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ function parseTarefaMeta(descricao: string | null): any {
 type Step = "select-client" | "schedule-meeting" | "auto-matched";
 
 export function AtribuirProdutoDialog({ template, open, onClose, initialContactData }: AtribuirProdutoDialogProps) {
-  const { user } = useAuth();
+  
   const { clientes, criarCliente } = useTarefasClientes();
   const { data: templateTarefas = [] } = useProdutoTemplateTarefas(template.id);
   const { criarTarefa, colunas } = useTarefas();
@@ -139,69 +139,23 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
         await criarTarefasDoProduto(selectedClient.id);
       }
 
-      // Look up the membro to find their email, then find profissional by email
-      const { data: membroData } = await supabase
-        .from("tarefas_membros" as any)
-        .select("email")
-        .eq("id", data.memberId)
-        .maybeSingle() as any;
-
-      let profissionalId: string | null = null;
-      if (membroData?.email) {
-        const { data: profData } = await supabase
-          .from("profissionais")
-          .select("id")
-          .eq("email", membroData.email)
-          .maybeSingle();
-        profissionalId = profData?.id || null;
-      }
-
-      // Try to find the client in leads table to set cliente_id
-      let clienteId: string | null = null;
-      if (selectedClient.telefone) {
-        const { data: leadData } = await supabase
-          .from("leads")
-          .select("id")
-          .eq("user_id", user!.id)
-          .is("deleted_at", null)
-          .eq("telefone", selectedClient.telefone)
-          .maybeSingle();
-        clienteId = leadData?.id || null;
-      }
-
-      const { data: reuniaoData, error }: any = await supabase
-        .from("reunioes" as any)
-        .insert({
-          user_id: user!.id,
-          titulo: data.titulo,
-          data_reuniao: data.dataHora,
-          duracao_minutos: data.duracao,
-          cliente_telefone: selectedClient.telefone || null,
-          cliente_id: clienteId,
-          profissional_id: profissionalId,
-          status: "agendado",
-          participantes: [selectedClient.nome, data.memberNome],
-        } as any)
-        .select("id")
-        .single();
-
-      if (error) throw error;
-
-      // Send immediate WhatsApp notification
-      if (selectedClient.telefone && reuniaoData?.id) {
-        try {
-          await supabase.functions.invoke("enviar-aviso-reuniao-imediato", {
-            body: {
-              reuniaoId: reuniaoData.id,
-              userId: user!.id,
-              clienteTelefone: selectedClient.telefone,
-              clienteNome: selectedClient.nome,
-              tipo: "imediato",
-            },
-          });
-        } catch (notifyErr) {
-          console.error("Erro ao enviar aviso imediato:", notifyErr);
+      const { data: reuniaoResponse, error: reuniaoError } = await supabase.functions.invoke(
+        "create-member-reuniao",
+        {
+          body: {
+            memberId: data.memberId,
+            titulo: data.titulo,
+            dataHora: data.dataHora,
+            duracao: data.duracao,
+            clienteNome: selectedClient.nome,
+            clienteTelefone: selectedClient.telefone || null,
+          },
         }
+      );
+
+      if (reuniaoError) throw reuniaoError;
+      if (reuniaoResponse?.success === false) {
+        throw new Error(reuniaoResponse.error || "Erro ao criar reunião");
       }
 
       toast.success(`Produto atribuído e reunião agendada com ${selectedClient.nome}`);
