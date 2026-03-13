@@ -511,7 +511,14 @@ function ProdutoDialog({
               {tiposReuniao.filter(t => t.ativo).length > 0 && (
                 <div className="space-y-2">
                   <Label>Tipo de Reunião</Label>
-                  <Select value={tipoReuniaoId} onValueChange={(v) => setTipoReuniaoId(v === "none" ? "" : v)}>
+                  <Select value={tipoReuniaoId} onValueChange={(v) => {
+                    const newId = v === "none" ? "" : v;
+                    setTipoReuniaoId(newId);
+                    if (newId) {
+                      const tipo = tiposReuniao.find(t => t.id === newId);
+                      if (tipo?.duracao_minutos) setDuracaoReuniao(tipo.duracao_minutos);
+                    }
+                  }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo (opcional)" />
                     </SelectTrigger>
