@@ -37,7 +37,7 @@ export function SelectClientStep({
   busca, onBuscaChange, filtrados, saving, requerReuniao, onSelectClient, onNovoCliente,
 }: SelectClientStepProps) {
   return (
-    <div className="flex-1 overflow-hidden flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -48,9 +48,7 @@ export function SelectClientStep({
         </Button>
       </div>
       <ScrollArea className="flex-1 max-h-[50vh]">
-        {!busca.trim() ? (
-          <div className="py-8" />
-        ) : filtrados.length === 0 ? (
+        {!busca.trim() ? null : filtrados.length === 0 ? (
           <div className="text-center py-8 space-y-2">
             <p className="text-sm text-muted-foreground">Nenhum cliente encontrado</p>
             <Button variant="link" size="sm" onClick={onNovoCliente}>Cadastrar novo cliente</Button>
