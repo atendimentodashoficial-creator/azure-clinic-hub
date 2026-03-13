@@ -5961,23 +5961,19 @@ export type Database = {
         Returns: boolean
       }
       generate_slug: { Args: { input_text: string }; Returns: string }
-      get_mockups_by_approval_token: {
-        Args: { p_token: string }
-        Returns: {
-          cliente_empresa: string
-          cliente_nome: string
-          cta: string
-          feedback: string
-          legenda: string
-          mockup_id: string
-          ordem: number
-          status: string
-          subtitulo: string
-          tarefa_id: string
-          tarefa_titulo: string
-          titulo: string
-        }[]
-      }
+      get_mockups_by_approval_token:
+        | {
+            Args: { p_token: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_mockups_by_approval_token(p_token => text), public.get_mockups_by_approval_token(p_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
+        | {
+            Args: { p_token: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_mockups_by_approval_token(p_token => text), public.get_mockups_by_approval_token(p_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
       get_owner_id: { Args: { _user_id: string }; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
