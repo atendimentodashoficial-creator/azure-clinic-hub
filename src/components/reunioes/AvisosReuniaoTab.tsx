@@ -122,6 +122,8 @@ export function AvisosReuniaoTab() {
   const [formAudioUrl, setFormAudioUrl] = useState<string | null>(null);
   const [formAudioPosicao, setFormAudioPosicao] = useState<"antes" | "depois">("antes");
   const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [formLinkCalendarioAtivo, setFormLinkCalendarioAtivo] = useState(false);
+  const [formLinkCalendarioTexto, setFormLinkCalendarioTexto] = useState("📅 Adicionar ao meu calendário");
   const audioInputRef = useRef<HTMLInputElement>(null);
 
   const { data: procedimentos } = useProcedimentos();
