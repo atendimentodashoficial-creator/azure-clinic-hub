@@ -237,17 +237,34 @@ async function processAviso(
         await delay(2000);
       }
 
-      const response = await fetch(`${config.base_url}/send/text`, {
+      const linkCalendarioAtivo = aviso.linkCalendarioAtivo === true;
+      const linkCalendarioTexto = aviso.linkCalendarioTexto || "📅 Adicionar ao meu calendário";
+      const calendarUrl = linkCalendarioAtivo ? buildGoogleCalendarUrl(aviso) : null;
+
+      let finalMensagem = mensagem.replace(/\{link_calendario\}/gi, "").trim();
+
+      const sendUrl = calendarUrl ? `${config.base_url}/send/menu` : `${config.base_url}/send/text`;
+
+      const sendBody = calendarUrl
+        ? {
+            number: candidate,
+            type: "button",
+            text: finalMensagem,
+            choices: [`${linkCalendarioTexto}|${calendarUrl}`],
+          }
+        : {
+            number: candidate,
+            text: finalMensagem,
+          };
+
+      const response = await fetch(sendUrl, {
         method: "POST",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
           token: config.api_key,
         },
-        body: JSON.stringify({
-          number: candidate,
-          text: mensagem,
-        }),
+        body: JSON.stringify(sendBody),
       });
 
       if (response.ok) {
