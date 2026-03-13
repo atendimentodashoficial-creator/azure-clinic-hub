@@ -213,6 +213,9 @@ serve(async (req) => {
       }
     }
 
+    const fallbackMeetLink = `https://meet.jit.si/reuniao-${targetUserId.slice(0, 8)}-${Date.now()}`;
+    const finalMeetLink = meetLink || fallbackMeetLink;
+
     const { data: reuniao, error: reuniaoError } = await supabaseAdmin
       .from("reunioes")
       .insert({
@@ -225,7 +228,7 @@ serve(async (req) => {
         profissional_id: profissionalId,
         status: "agendado",
         participantes,
-        meet_link: meetLink,
+        meet_link: finalMeetLink,
         google_event_id: googleEventId,
       })
       .select("id")
