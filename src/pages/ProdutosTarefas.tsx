@@ -626,6 +626,28 @@ function ProdutoDialogEditWrapper({ template, onClose }: { template: ProdutoTemp
   );
 }
 
+// ─── Sortable Product card wrapper ───
+function SortableProdutoCard(props: {
+  template: ProdutoTemplate;
+  onEdit: () => void;
+  onDelete: () => void;
+  onAtribuir?: () => void;
+  onDuplicar?: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.template.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <ProdutoCard {...props} dragHandleProps={{ ...attributes, ...listeners }} />
+    </div>
+  );
+}
+
 // ─── Product card ───
 function ProdutoCard({
   template,
