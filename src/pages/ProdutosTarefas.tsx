@@ -365,6 +365,7 @@ function ProdutoDialog({
   const [descricao, setDescricao] = useState(editando?.descricao || "");
   const [requerReuniao, setRequerReuniao] = useState(editando?.requer_reuniao || false);
   const [duracaoReuniao, setDuracaoReuniao] = useState(editando?.duracao_reuniao || 60);
+  const [tipoReuniaoId, setTipoReuniaoId] = useState<string>(editando?.tipo_reuniao_id || "");
   const [tarefas, setTarefas] = useState<TarefaLocal[]>(
     existingTarefas ? existingTarefas.map(tarefaDbToLocal) : []
   );
