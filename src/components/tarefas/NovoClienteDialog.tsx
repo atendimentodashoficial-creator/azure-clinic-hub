@@ -62,6 +62,18 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
     setObservacoes(""); setGrupoWhatsapp(""); setTipo("interno"); setFormTab("info");
   };
 
+  // Pre-fill when opened externally with initialData
+  useEffect(() => {
+    if (externalOpen && initialData && !clienteEditando) {
+      if (initialData.nome) setNome(initialData.nome);
+      if (initialData.telefone) {
+        const phoneData = extractCountryCode(initialData.telefone);
+        setCountryCode(phoneData.countryCode);
+        setTelefone(phoneData.phoneWithoutCountry);
+      }
+    }
+  }, [externalOpen]);
+
   const formatCnpj = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 14);
     if (digits.length <= 2) return digits;
