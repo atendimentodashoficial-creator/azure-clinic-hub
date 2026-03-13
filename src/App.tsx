@@ -126,6 +126,7 @@ const App = () => (
           >
             <Route index element={<ClienteDashboard />} />
             <Route path="agendamentos" element={<ClienteDashboard />} />
+            <Route path="aprovacoes" element={<ClienteAprovacoes />} />
           </Route>
 
           {/* Funcionario Panel */}

@@ -1,4 +1,4 @@
-import { Calendar, LogOut, ChevronLeft, ChevronRight, Home } from "lucide-react";
+import { Calendar, LogOut, ChevronLeft, ChevronRight, Home, FileCheck } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,7 @@ import noktaLogoDefault from "@/assets/nokta-logo.png";
 const clienteNavigation = [
   { name: "Início", href: "/cliente", icon: Home },
   { name: "Agendamentos", href: "/cliente/agendamentos", icon: Calendar },
+  { name: "Aprovações", href: "/cliente/aprovacoes", icon: FileCheck },
 ];
 
 interface SidebarContentProps {
