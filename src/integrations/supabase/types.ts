@@ -5048,6 +5048,45 @@ export type Database = {
           },
         ]
       }
+      tipos_tarefas: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          limite_arquivos: Json
+          nome: string
+          ordem: number
+          tipos_arquivo_permitidos: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          limite_arquivos?: Json
+          nome: string
+          ordem?: number
+          tipos_arquivo_permitidos?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          limite_arquivos?: Json
+          nome?: string
+          ordem?: number
+          tipos_arquivo_permitidos?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       uazapi_config: {
         Row: {
           api_key: string
