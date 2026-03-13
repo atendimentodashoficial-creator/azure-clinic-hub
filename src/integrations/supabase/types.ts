@@ -502,6 +502,53 @@ export type Database = {
           },
         ]
       }
+      ausencias_membros: {
+        Row: {
+          created_at: string | null
+          data_fim: string
+          data_inicio: string
+          hora_fim: string | null
+          hora_inicio: string | null
+          id: string
+          membro_id: string
+          motivo: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data_fim: string
+          data_inicio: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          membro_id: string
+          motivo?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data_fim?: string
+          data_inicio?: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          membro_id?: string
+          motivo?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ausencias_membros_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_membros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ausencias_profissionais: {
         Row: {
           created_at: string | null
@@ -1755,6 +1802,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      escalas_membros: {
+        Row: {
+          ativo: boolean
+          created_at: string | null
+          dia_semana: number
+          hora_fim: string
+          hora_inicio: string
+          id: string
+          membro_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string | null
+          dia_semana: number
+          hora_fim: string
+          hora_inicio: string
+          id?: string
+          membro_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string | null
+          dia_semana?: number
+          hora_fim?: string
+          hora_inicio?: string
+          id?: string
+          membro_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalas_membros_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_membros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       escalas_profissionais: {
         Row: {
