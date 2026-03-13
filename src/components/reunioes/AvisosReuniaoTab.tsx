@@ -213,6 +213,8 @@ export function AvisosReuniaoTab() {
     setFormProcedimentoId(null);
     setFormInstanciaId(null);
     setFormTipoGatilho("dias_antes");
+    setFormAudioUrl(null);
+    setFormAudioPosicao("antes");
     setEditingAviso(null);
   };
 
