@@ -298,9 +298,15 @@ function TarefaInlineEditor({
             )}
           </div>
 
-          <div>
-            <Label className="text-xs">Prazo (dias)</Label>
-            <Input type="number" min={0} value={tarefa.prazo} onChange={e => onChange({ ...tarefa, prazo: Number(e.target.value) })} className="h-8 text-sm" placeholder="Ex: 7" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Prazo (dias)</Label>
+              <Input type="number" min={0} value={tarefa.prazo} onChange={e => onChange({ ...tarefa, prazo: Number(e.target.value) })} className="h-8 text-sm" placeholder="Ex: 7" />
+            </div>
+            <div>
+              <Label className="text-xs">Comissão (R$)</Label>
+              <Input type="number" min={0} step={0.01} value={tarefa.comissao || ""} onChange={e => onChange({ ...tarefa, comissao: Number(e.target.value) })} className="h-8 text-sm" placeholder="0,00" />
+            </div>
           </div>
 
           {otherTarefas.length > 0 && (
