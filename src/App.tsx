@@ -130,6 +130,7 @@ const App = () => (
           >
             <Route index element={<FuncionarioDashboard />} />
             <Route path="agenda" element={<FuncionarioDashboard />} />
+            <Route path="escala" element={<FuncionarioEscala />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
