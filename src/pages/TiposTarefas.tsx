@@ -237,6 +237,15 @@ export default function TiposTarefas() {
               <Input value={formDescricao} onChange={e => setFormDescricao(e.target.value)} placeholder="Descrição do tipo..." />
             </div>
 
+            {/* Exige aprovação */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label className="text-sm font-medium">Exige aprovação do cliente</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">A tarefa só poderá ser concluída após aprovação</p>
+              </div>
+              <Switch checked={formExigeAprovacao} onCheckedChange={setFormExigeAprovacao} />
+            </div>
+
             {/* File types */}
             <div className="space-y-2">
               <Label className="mb-2 block">Tipos de arquivo permitidos</Label>
