@@ -53,9 +53,11 @@ export function TiposReuniaoConfig() {
     if (editando) {
       setNome(editando.nome);
       setDescricao(editando.descricao || "");
+      setDuracaoMinutos(editando.duracao_minutos || 60);
     } else {
       setNome("");
       setDescricao("");
+      setDuracaoMinutos(60);
       setSelectedMembros([]);
     }
   }, [editando]);
