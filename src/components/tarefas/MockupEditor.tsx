@@ -40,14 +40,19 @@ export function MockupEditor({ slides, onChange, perfilNome, perfilCategoria, ma
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-sm font-semibold">Slides do Mockup</Label>
+        <Label className="text-sm font-semibold">
+          Slides do Mockup {maxSlides > 0 && <span className="font-normal text-muted-foreground">({slides.length}/{maxSlides})</span>}
+        </Label>
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => setShowPreview(v => !v)}>
             {showPreview ? <EyeOff className="w-3.5 h-3.5 mr-1" /> : <Eye className="w-3.5 h-3.5 mr-1" />}
             {showPreview ? "Editar" : "Preview"}
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={addSlide}>
-            <Plus className="w-3.5 h-3.5 mr-1" />Slide
+          {(maxSlides === 0 || slides.length < maxSlides) && (
+            <Button type="button" variant="outline" size="sm" onClick={addSlide}>
+              <Plus className="w-3.5 h-3.5 mr-1" />Slide
+            </Button>
+          )}
           </Button>
         </div>
       </div>
