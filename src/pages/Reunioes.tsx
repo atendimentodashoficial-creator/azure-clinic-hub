@@ -20,6 +20,7 @@ import { AvisosReuniaoTab } from "@/components/reunioes/AvisosReuniaoTab";
 import { VincularTranscricaoDialog } from "@/components/reunioes/VincularTranscricaoDialog";
 import { ReagendarReuniaoDialog } from "@/components/reunioes/ReagendarReuniaoDialog";
 import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog";
+import { EscalaMembrosTab } from "@/components/reunioes/EscalaMembrosTab";
 import {
   AlertDialog,
   AlertDialogAction,
