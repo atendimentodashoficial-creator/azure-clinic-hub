@@ -144,7 +144,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
         .from("tarefas_membros" as any)
         .select("email")
         .eq("id", data.memberId)
-        .maybeSingle();
+        .maybeSingle() as any;
 
       let profissionalId: string | null = null;
       if (membroData?.email) {
