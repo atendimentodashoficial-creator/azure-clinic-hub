@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, addDays, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { timeToMinutes, minutesToTime, rangesOverlap } from "@/utils/timeSlots";
+import { useTipoReuniaoMembros } from "@/hooks/useTiposReuniao";
 
 export interface MeetingMember {
   id: string;
