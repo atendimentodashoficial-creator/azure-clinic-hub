@@ -494,16 +494,34 @@ function ProdutoDialog({
           </div>
 
           {requerReuniao && (
-            <div className="space-y-2">
-              <Label>Duração da Reunião (minutos)</Label>
-              <Input
-                type="number"
-                min={15}
-                step={15}
-                value={duracaoReuniao}
-                onChange={e => setDuracaoReuniao(Number(e.target.value) || 60)}
-                placeholder="60"
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Duração da Reunião (minutos)</Label>
+                <Input
+                  type="number"
+                  min={15}
+                  step={15}
+                  value={duracaoReuniao}
+                  onChange={e => setDuracaoReuniao(Number(e.target.value) || 60)}
+                  placeholder="60"
+                />
+              </div>
+              {tiposReuniao.filter(t => t.ativo).length > 0 && (
+                <div className="space-y-2">
+                  <Label>Tipo de Reunião</Label>
+                  <Select value={tipoReuniaoId} onValueChange={(v) => setTipoReuniaoId(v === "none" ? "" : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum</SelectItem>
+                      {tiposReuniao.filter(t => t.ativo).map(t => (
+                        <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           )}
 
