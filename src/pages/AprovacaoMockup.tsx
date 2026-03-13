@@ -254,7 +254,30 @@ export default function AprovacaoMockup() {
           <p className="text-sm text-muted-foreground">Aprovação de Posts • {clienteNome}</p>
         </div>
 
-        {/* Status overview - one circle per post */}
+        {/* Task links */}
+        {taskLinks.length > 0 && (
+          <Card className="p-4 space-y-2">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+              <Link2 className="h-4 w-4" />
+              Links da Tarefa
+            </div>
+            <div className="space-y-1.5">
+              {taskLinks.map((link, i) => (
+                <a
+                  key={i}
+                  href={link.url.startsWith("http") ? link.url : `https://${link.url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                  {link.titulo || link.url}
+                </a>
+              ))}
+            </div>
+          </Card>
+        )}
+
         <div className="flex items-center justify-center gap-2 flex-wrap">
           {posts.map((p, i) => (
             <button
