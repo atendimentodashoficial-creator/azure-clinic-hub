@@ -240,6 +240,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
           duracao,
           clienteNome: clienteNome || null,
           clienteTelefone: clienteTelefone || null,
+          tipoReuniaoId: selectedTipoId || null,
         },
       });
 
