@@ -296,6 +296,9 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   // In "Em Revisão" (ordem 3) with pausado_revisao, employee needs to start timer to see details
   const needsManualStart = isFuncionario && colOrdem === 3 && tarefa.timer_status === "pausado_revisao";
 
+  // Task is clickable when not in "A Fazer" and not needing manual start
+  const isClickable = !hideDetails && !needsManualStart && onClick && colOrdem >= 1;
+
   const renderResponsaveis = () => {
     if (!tarefa.responsavel_nome) return null;
     const nomes = tarefa.responsavel_nome.split(",").map(n => n.trim());
