@@ -38,8 +38,18 @@ interface ChatAgendamento {
   id: string;
   data_agendamento: string;
   status: string;
-  totalAgendamentos: number; // How many agendamentos this client has in history
-  updated_at?: string; // When the agendamento was last updated
+  totalAgendamentos: number;
+  updated_at?: string;
+}
+interface ChatReuniao {
+  id: string;
+  titulo: string;
+  resumo_ia: string | null;
+  data_reuniao: string;
+  duracao_minutos: number | null;
+  participantes: string[] | null;
+  transcricao: string | null;
+  status: string;
 }
 interface WhatsAppKanbanProps {
   chats: any[];
