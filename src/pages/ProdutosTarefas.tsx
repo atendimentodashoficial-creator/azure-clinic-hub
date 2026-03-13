@@ -433,9 +433,9 @@ function ProdutoDialog({
       let templateId = editando?.id;
 
       if (isEditing && templateId) {
-        await atualizarTemplate.mutateAsync({ id: templateId, nome: nome.trim(), descricao: descricao.trim() || null, requer_reuniao: requerReuniao, duracao_reuniao: duracaoReuniao });
+        await atualizarTemplate.mutateAsync({ id: templateId, nome: nome.trim(), descricao: descricao.trim() || null, requer_reuniao: requerReuniao, duracao_reuniao: duracaoReuniao, tipo_reuniao_id: tipoReuniaoId || null });
       } else {
-        const created = await criarTemplate.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined, requer_reuniao: requerReuniao, duracao_reuniao: duracaoReuniao });
+        const created = await criarTemplate.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined, requer_reuniao: requerReuniao, duracao_reuniao: duracaoReuniao, tipo_reuniao_id: tipoReuniaoId || null });
         templateId = (created as any).id;
       }
 
