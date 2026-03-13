@@ -989,6 +989,50 @@ export type Database = {
         }
         Relationships: []
       }
+      comissoes: {
+        Row: {
+          aprovado_em: string | null
+          created_at: string
+          id: string
+          membro_nome: string
+          status: string
+          tarefa_id: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          aprovado_em?: string | null
+          created_at?: string
+          id?: string
+          membro_nome: string
+          status?: string
+          tarefa_id: string
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          aprovado_em?: string | null
+          created_at?: string
+          id?: string
+          membro_nome?: string
+          status?: string
+          tarefa_id?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comissoes_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       despesas: {
         Row: {
           categoria_id: string | null
@@ -4628,6 +4672,7 @@ export type Database = {
         Row: {
           cliente_id: string | null
           coluna_id: string
+          comissao: number | null
           created_at: string
           data_limite: string | null
           descricao: string | null
@@ -4645,6 +4690,7 @@ export type Database = {
         Insert: {
           cliente_id?: string | null
           coluna_id: string
+          comissao?: number | null
           created_at?: string
           data_limite?: string | null
           descricao?: string | null
@@ -4662,6 +4708,7 @@ export type Database = {
         Update: {
           cliente_id?: string | null
           coluna_id?: string
+          comissao?: number | null
           created_at?: string
           data_limite?: string | null
           descricao?: string | null

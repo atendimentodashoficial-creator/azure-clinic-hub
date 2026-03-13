@@ -4,6 +4,8 @@ import { useTarefasClientes } from "@/hooks/useTarefasClientes";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 import { useMembroAtual } from "@/hooks/useMembroAtual";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useOwnerId } from "@/hooks/useOwnerId";
+import { supabase } from "@/integrations/supabase/client";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable, closestCenter } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -19,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users } from "lucide-react";
+import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +41,7 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   const [prioridade, setPrioridade] = useState("media");
   const [dataLimite, setDataLimite] = useState("");
   const [subtarefasTotal, setSubtarefasTotal] = useState(0);
+  const [comissao, setComissao] = useState("");
   const [colunaId, setColunaId] = useState(colunas[0]?.id || "");
   const { membros: profissionais } = useTarefasMembros();
   const { clientes } = useTarefasClientes();
@@ -60,8 +63,9 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
       data_limite: dataLimite || undefined,
       coluna_id: colunaId,
       subtarefas_total: subtarefasTotal,
+      comissao: comissao ? parseFloat(comissao) : undefined,
     });
-    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setSubtarefasTotal(0); setColunaId(colunas[0]?.id || "");
+    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setSubtarefasTotal(0); setComissao(""); setColunaId(colunas[0]?.id || "");
     setOpen(false);
   };
 
@@ -147,6 +151,18 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
           <div>
             <Label>Subtarefas (total)</Label>
             <Input type="number" min={0} value={subtarefasTotal} onChange={e => setSubtarefasTotal(Number(e.target.value))} />
+          </div>
+          <div>
+            <Label className="flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5" /> Comissão (R$)</Label>
+            <Input
+              type="number"
+              min={0}
+              step={0.01}
+              value={comissao}
+              onChange={e => setComissao(e.target.value)}
+              placeholder="0,00 (opcional)"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Valor da comissão ao concluir a tarefa</p>
           </div>
         </div>
         <Button onClick={handleSubmit} className="w-full mt-4">Criar Tarefa</Button>
@@ -238,6 +254,12 @@ function TarefaCardContent({ tarefa, colunas, clientes, onDelete, dragHandleProp
                 {format(new Date(tarefa.data_limite + "T00:00:00"), "dd/MM/yyyy")}
               </span>
             )}
+            {tarefa.comissao != null && tarefa.comissao > 0 && (
+              <span className="text-xs text-primary flex items-center gap-1">
+                <DollarSign className="h-3 w-3" />
+                R$ {tarefa.comissao.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -266,6 +288,7 @@ export default function Tarefas() {
   const { clientes } = useTarefasClientes();
   const { membro } = useMembroAtual();
   const { role } = useUserRole();
+  const { ownerId } = useOwnerId();
   const [activeTarefa, setActiveTarefa] = useState<Tarefa | null>(null);
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
@@ -326,7 +349,26 @@ export default function Tarefas() {
     moverTarefa.mutate(
       { id: tarefaId, coluna_id: targetColunaId, ordem: targetTarefas.length },
       {
-        onSuccess: () => toast.success("Tarefa movida!"),
+        onSuccess: async () => {
+          toast.success("Tarefa movida!");
+          // Auto-create commission when moved to last column (Concluído) and has commission
+          const targetColuna = colunas.find(c => c.id === targetColunaId);
+          const lastColuna = colunas[colunas.length - 1];
+          if (tarefa.comissao && tarefa.comissao > 0 && targetColuna?.id === lastColuna?.id && tarefa.responsavel_nome && ownerId) {
+            const responsaveis = tarefa.responsavel_nome.split(",").map(n => n.trim());
+            const comissaoPorPessoa = tarefa.comissao / responsaveis.length;
+            for (const nome of responsaveis) {
+              await supabase.from("comissoes").insert({
+                tarefa_id: tarefa.id,
+                user_id: ownerId,
+                membro_nome: nome,
+                valor: comissaoPorPessoa,
+                status: "pendente",
+              });
+            }
+            toast.info("Comissão criada! Aguardando aprovação.");
+          }
+        },
         onError: (e: any) => toast.error(e.message),
       }
     );

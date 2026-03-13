@@ -1,4 +1,4 @@
-import { Calendar, Clock, LogOut, ChevronLeft, ChevronRight, Home, MessageSquare, Video, ListChecks } from "lucide-react";
+import { Calendar, Clock, LogOut, ChevronLeft, ChevronRight, Home, MessageSquare, Video, ListChecks, Wallet } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ const funcionarioNavigation = [
   { name: "WhatsApp", href: "/funcionario/whatsapp", icon: MessageSquare },
   { name: "Reuniões", href: "/funcionario/reunioes", icon: Video },
   { name: "Tarefas", href: "/funcionario/tarefas", icon: ListChecks },
+  { name: "Financeiro", href: "/funcionario/financeiro", icon: Wallet },
 ];
 
 interface SidebarContentProps {

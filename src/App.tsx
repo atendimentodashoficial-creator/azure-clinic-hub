@@ -45,6 +45,8 @@ import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 import FuncionarioEscala from "./pages/FuncionarioEscala";
 import FuncionarioWhatsApp from "./pages/FuncionarioWhatsApp";
 import FuncionarioReunioes from "./pages/FuncionarioReunioes";
+import AdminFinanceiro from "./pages/AdminFinanceiro";
+import FuncionarioFinanceiro from "./pages/FuncionarioFinanceiro";
 
 const queryClient = new QueryClient();
 
@@ -96,7 +98,7 @@ const App = () => (
             <Route path="instagram" element={<Instagram />} />
             <Route path="formularios" element={<Formularios />} />
             <Route path="reunioes" element={<Reunioes />} />
-            <Route path="financeiro" element={<Dashboard />} />
+            <Route path="financeiro" element={<AdminFinanceiro />} />
             <Route path="metricas-campanhas" element={<MetricasCampanhas />} />
             <Route path="google-ads" element={<GoogleAdsMetrics />} />
             <Route path="usuarios" element={<GerenciarUsuarios />} />
@@ -136,6 +138,7 @@ const App = () => (
             <Route path="reunioes" element={<FuncionarioReunioes />} />
             <Route path="escala" element={<FuncionarioEscala />} />
             <Route path="tarefas" element={<Tarefas />} />
+            <Route path="financeiro" element={<FuncionarioFinanceiro />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

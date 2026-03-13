@@ -24,6 +24,7 @@ export interface Tarefa {
   subtarefas_total: number;
   subtarefas_concluidas: number;
   ordem: number;
+  comissao: number | null;
   created_at: string;
 }
 
