@@ -368,10 +368,15 @@ export default function Reunioes() {
           {/* Header controls for reunioes tab */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
+              <Button onClick={() => setNovaReuniaoOpen(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Nova Reunião
+              </Button>
               <TemplateCamposDialog />
               <Button 
                 onClick={handleSync} 
                 disabled={syncing || !hasGoogleCalendar}
+                variant="outline"
                 className="gap-2"
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
