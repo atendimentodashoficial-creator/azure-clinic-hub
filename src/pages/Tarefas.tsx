@@ -41,7 +41,6 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   const [prioridade, setPrioridade] = useState("media");
   const [dataLimite, setDataLimite] = useState("");
   const [comissao, setComissao] = useState("");
-  const [colunaId, setColunaId] = useState(colunas[0]?.id || "");
   const { membros: profissionais } = useTarefasMembros();
   const { clientes } = useTarefasClientes();
 
@@ -53,6 +52,7 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
 
   const handleSubmit = () => {
     if (!titulo.trim()) { toast.error("Título obrigatório"); return; }
+    const primeiraColuna = colunas[0]?.id || "";
     onSubmit({
       titulo: titulo.trim(),
       descricao: descricao.trim() || undefined,
@@ -60,10 +60,10 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
       cliente_id: clienteId && clienteId !== "none" ? clienteId : undefined,
       prioridade,
       data_limite: dataLimite || undefined,
-      coluna_id: colunaId,
+      coluna_id: primeiraColuna,
       comissao: comissao ? parseFloat(comissao) : undefined,
     });
-    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setComissao(""); setColunaId(colunas[0]?.id || "");
+    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setComissao("");
     setOpen(false);
   };
 
@@ -76,30 +76,18 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader><DialogTitle>Nova Tarefa</DialogTitle></DialogHeader>
-        <div className="flex-1 overflow-y-auto space-y-5 pr-1">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           <div>
-            <Label className="mb-2 block">Título *</Label>
+            <Label className="mb-1.5 block text-sm">Título *</Label>
             <Input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Criar landing page" />
           </div>
           <div>
-            <Label className="mb-2 block">Descrição</Label>
+            <Label className="mb-1.5 block text-sm">Descrição</Label>
             <Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Detalhes da tarefa..." />
           </div>
-          
+
           <div>
-            <Label className="mb-2 block">Coluna *</Label>
-            <Select value={colunaId} onValueChange={setColunaId}>
-              <SelectTrigger><SelectValue placeholder="Selecione a coluna" /></SelectTrigger>
-              <SelectContent>
-                {colunas.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label className="mb-2 block">Cliente</Label>
+            <Label className="mb-1.5 block text-sm">Cliente</Label>
             <Select value={clienteId} onValueChange={setClienteId}>
               <SelectTrigger><SelectValue placeholder="Selecione um cliente (opcional)" /></SelectTrigger>
               <SelectContent>
@@ -114,7 +102,7 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
           </div>
 
           <div>
-            <Label className="mb-2 block">Responsável(is)</Label>
+            <Label className="mb-1.5 block text-sm">Responsável(is)</Label>
             {profissionais.length > 0 ? (
               <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border p-3">
                 {profissionais.map(prof => (
@@ -142,7 +130,7 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="mb-2 block">Prioridade</Label>
+              <Label className="mb-1.5 block text-sm">Prioridade</Label>
               <Select value={prioridade} onValueChange={setPrioridade}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -151,13 +139,13 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
               </Select>
             </div>
             <div>
-              <Label className="mb-2 block">Data limite</Label>
+              <Label className="mb-1.5 block text-sm">Data limite</Label>
               <Input type="date" value={dataLimite} onChange={e => setDataLimite(e.target.value)} />
             </div>
           </div>
 
           <div>
-            <Label className="mb-2 block flex items-center gap-1.5">
+            <Label className="mb-1.5 block text-sm flex items-center gap-1.5">
               <DollarSign className="h-3.5 w-3.5" /> Comissão (R$)
             </Label>
             <Input
@@ -168,10 +156,10 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
               onChange={e => setComissao(e.target.value)}
               placeholder="0,00 (opcional)"
             />
-            <p className="text-xs text-muted-foreground mt-1.5">Valor da comissão ao concluir a tarefa</p>
+            <p className="text-xs text-muted-foreground mt-1">Valor da comissão ao concluir a tarefa</p>
           </div>
         </div>
-        <Button onClick={handleSubmit} className="w-full mt-5">Criar Tarefa</Button>
+        <Button onClick={handleSubmit} className="w-full mt-4">Criar Tarefa</Button>
       </DialogContent>
     </Dialog>
   );
