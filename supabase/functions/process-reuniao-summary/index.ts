@@ -113,23 +113,30 @@ Por favor, preencha os seguintes campos baseado na transcrição acima:
 
 ${fieldsDescription}`;
 
-    // 4. Get OpenAI API key from user's configuration using service role
+    // 4. Get OpenAI API key: try user config first, then fall back to global secret
+    let openaiApiKey: string | null = null;
+
     const serviceSupabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: openaiConfig, error: configError } = await serviceSupabase
+    const { data: openaiConfig } = await serviceSupabase
       .from("openai_config")
       .select("api_key")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
-    console.log("OpenAI config lookup for user:", userId, "result:", openaiConfig ? "found" : "not found", "error:", configError?.message);
+    if (openaiConfig?.api_key) {
+      openaiApiKey = openaiConfig.api_key;
+      console.log("Using per-user OpenAI key");
+    } else {
+      openaiApiKey = Deno.env.get("OPENAI_API_KEY") || null;
+      console.log("Using global OpenAI key:", openaiApiKey ? "found" : "not found");
+    }
 
-    if (configError || !openaiConfig?.api_key) {
-      console.error("OpenAI API key not configured for user:", configError?.message);
-      return new Response(JSON.stringify({ error: "Configure sua chave da OpenAI em Configurações > Conexões" }), {
+    if (!openaiApiKey) {
+      return new Response(JSON.stringify({ error: "Chave da OpenAI não configurada. Configure em Configurações > Conexões ou peça ao administrador." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -174,7 +181,7 @@ ${fieldsDescription}`;
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${openaiConfig.api_key}`,
+        Authorization: `Bearer ${openaiApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
