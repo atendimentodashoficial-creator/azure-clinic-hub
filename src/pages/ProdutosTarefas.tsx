@@ -106,6 +106,7 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
     coluna_id: t.colunaId || undefined,
     dependencias: depOrdens.length > 0 ? depOrdens : undefined,
     comissao: t.comissao > 0 ? t.comissao : undefined,
+    tipo_tarefa_id: t.tipoTarefaId || undefined,
   };
   return JSON.stringify(meta);
 }
