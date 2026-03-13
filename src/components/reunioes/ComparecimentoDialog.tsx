@@ -96,10 +96,10 @@ export function ComparecimentoDialog({
   const comprovanteRef = useRef<HTMLInputElement>(null);
 
   const { data: columns, isLoading } = useQuery({
-    queryKey: ["disparos-kanban-columns", user?.id],
+    queryKey: ["whatsapp-kanban-columns", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("disparos_kanban_columns")
+        .from("whatsapp_kanban_columns")
         .select("id, nome, cor")
         .eq("user_id", user!.id)
         .eq("ativo", true)
