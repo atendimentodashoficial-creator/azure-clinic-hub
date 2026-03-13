@@ -1267,15 +1267,37 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
             </Button>
           )}
           
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={handleCreateAgendamento}
-            title="Criar Agendamento"
-          >
-            <Calendar className="w-4 h-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                title="Atribuir Produto"
+              >
+                <Package className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Atribuir Produto</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {produtoTemplates.length === 0 ? (
+                <DropdownMenuItem disabled>Nenhum produto cadastrado</DropdownMenuItem>
+              ) : (
+                produtoTemplates.filter(t => t.ativo).map(template => (
+                  <DropdownMenuItem
+                    key={template.id}
+                    onClick={() => {
+                      setSelectedTemplate(template);
+                      setProdutoDialogOpen(true);
+                    }}
+                  >
+                    {template.nome}
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="ghost"
             size="icon"
