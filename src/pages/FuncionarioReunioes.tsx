@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Video, Calendar, Clock, FileText, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, RefreshCw, Users } from "lucide-react";
+import { Video, Calendar, Clock, FileText, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, RefreshCw, Users, Settings2 } from "lucide-react";
 import { formatPhoneDisplay, getLast8Digits } from "@/utils/phoneFormat";
 import { navigateToChat } from "@/utils/chatRouting";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ReuniaoDetalhesDialog } from "@/components/reunioes/ReuniaoDetalhesDialog";
 import { AvisosReuniaoTab } from "@/components/reunioes/AvisosReuniaoTab";
+import { TemplateCamposDialog } from "@/components/reunioes/TemplateCamposDialog";
 import { VincularTranscricaoDialog } from "@/components/reunioes/VincularTranscricaoDialog";
 import { ReagendarReuniaoDialog } from "@/components/reunioes/ReagendarReuniaoDialog";
 import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog";
@@ -63,6 +64,7 @@ export default function FuncionarioReunioes() {
   const { ownerId } = useOwnerId();
   const queryClient = useQueryClient();
   const periodFilter = useReunioesPeriodFilter();
+  const [syncing, setSyncing] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string>("todos");
   const [activeTab, setActiveTab] = useState("reunioes");
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
@@ -161,6 +163,43 @@ export default function FuncionarioReunioes() {
     },
     enabled: !!user?.id,
   });
+
+  const { data: googleCalendarConfig } = useQuery({
+    queryKey: ["google-calendar-config", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("google_calendar_config" as any)
+        .select("access_token, refresh_token")
+        .single();
+      if (error && error.code !== "PGRST116") throw error;
+      return data as any;
+    },
+    enabled: !!user?.id,
+  });
+
+  const hasGoogleCalendar = !!googleCalendarConfig?.access_token;
+
+  const handleSync = async () => {
+    if (!hasGoogleCalendar) {
+      toast.error("Conecte o Google Calendar em Configurações > Conexões primeiro");
+      return;
+    }
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-google-transcripts", {
+        body: { userId: user?.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`${data.synced || 0} transcrições sincronizadas`);
+      queryClient.invalidateQueries({ queryKey: ["funcionario-reunioes"] });
+    } catch (error: any) {
+      console.error("Sync error:", error);
+      toast.error(error.message || "Erro ao sincronizar transcrições");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   // Map user_id → member name
   const memberNameByUserId = useMemo(() => {
@@ -320,9 +359,22 @@ export default function FuncionarioReunioes() {
             count={reunioes?.length}
           />
 
-          {/* Member selector */}
-          {membros.length > 0 && (
-            <div className="flex items-center gap-2">
+          {/* Header controls */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <TemplateCamposDialog />
+              <Button 
+                onClick={handleSync} 
+                disabled={syncing || !hasGoogleCalendar}
+                className="gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+                Sincronizar Transcrições
+              </Button>
+            </div>
+
+            {/* Member selector */}
+            {membros.length > 0 && (
               <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
                 <SelectTrigger className="w-[220px] h-8 text-xs">
                   <Users className="h-3.5 w-3.5 mr-1.5" />
@@ -336,8 +388,8 @@ export default function FuncionarioReunioes() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          )}
+            )}
+          </div>
 
           {isLoading ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
