@@ -246,7 +246,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col min-h-0 overflow-hidden">
+      <DialogContent className="max-w-lg max-h-[85vh] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
