@@ -178,7 +178,8 @@ export function ComparecimentoDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reunioes"] });
-      queryClient.invalidateQueries({ queryKey: ["disparos-chat-kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-chat-kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-kanban"] });
       queryClient.invalidateQueries({ queryKey: ["fatura-pagamentos"] });
       toast.success(
         tipo === "compareceu"
