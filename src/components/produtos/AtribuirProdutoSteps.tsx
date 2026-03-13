@@ -151,6 +151,8 @@ export function SelectMemberAndTimeStep({
   const { membros } = useTarefasMembros();
   const { data: allEscalas = [] } = useEscalasMembros();
   const { data: allAusencias = [] } = useAusenciasMembros();
+  const { data: tipoMembros = [] } = useTipoReuniaoMembros(tipoReuniaoId || null);
+  const tipoMembrosIds = useMemo(() => new Set(tipoMembros.map(tm => tm.membro_id)), [tipoMembros]);
 
   const [reuniaoTitulo, setReuniaoTitulo] = useState(`Reunião - ${clienteNome} - ${templateNome}`);
   const [reuniaoDuracao, setReuniaDuracao] = useState(String(defaultDuracao || 60));
@@ -180,8 +182,8 @@ export function SelectMemberAndTimeStep({
     fetchMeetings();
   }, [selectedDate]);
 
-  // Build member list: team members only (admin excluded)
-  const allMembers: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[]; authUserId?: string | null })[] = useMemo(() => {
+  // Build member list
+  const allMembersRaw: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[]; authUserId?: string | null })[] = useMemo(() => {
     const list: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[]; authUserId?: string | null })[] = [];
     for (const m of membros) {
       list.push({
@@ -196,6 +198,12 @@ export function SelectMemberAndTimeStep({
     }
     return list;
   }, [membros, allEscalas, allAusencias]);
+
+  // Filter members by tipo_reuniao if set
+  const allMembers = useMemo(() => {
+    if (!tipoReuniaoId || tipoMembrosIds.size === 0) return allMembersRaw;
+    return allMembersRaw.filter(m => tipoMembrosIds.has(m.id));
+  }, [allMembersRaw, tipoReuniaoId, tipoMembrosIds]);
 
   // Compute slots per member for the selected date
   const memberSlots = useMemo(() => {
