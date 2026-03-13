@@ -161,7 +161,8 @@ export function GoogleCalendarConfig({ defaultOpen = false }: GoogleCalendarConf
       // Build OAuth URL
       const scopes = [
         "https://www.googleapis.com/auth/calendar",
-        "https://www.googleapis.com/auth/calendar.events"
+        "https://www.googleapis.com/auth/calendar.events",
+        "https://www.googleapis.com/auth/drive.readonly"
       ].join(" ");
 
       const params = new URLSearchParams({
