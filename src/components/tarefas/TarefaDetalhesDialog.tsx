@@ -17,6 +17,7 @@ import { TarefaTimer } from "./TarefaTimer";
 import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History, Plus, Trash2, ExternalLink, Globe, Instagram, Phone, Mail, FileText, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { formatPhoneDisplay } from "@/utils/phoneFormat";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
