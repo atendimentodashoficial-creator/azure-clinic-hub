@@ -319,6 +319,21 @@ function TarefaInlineEditor({
             </div>
           </div>
 
+          {tiposTarefas.filter(t => t.ativo !== false).length > 0 && (
+            <div>
+              <Label className="text-xs">Tipo de Tarefa</Label>
+              <Select value={tarefa.tipoTarefaId} onValueChange={v => onChange({ ...tarefa, tipoTarefaId: v === "none" ? "" : v })}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {tiposTarefas.filter(t => t.ativo !== false).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {otherTarefas.length > 0 && (
             <details className="group">
               <summary className="text-xs font-medium cursor-pointer select-none flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
