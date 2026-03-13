@@ -262,6 +262,8 @@ export function AvisosReuniaoTab() {
     setFormInstanciaId(aviso.instancia_id || null);
     setFormAudioUrl(aviso.audio_url || null);
     setFormAudioPosicao((aviso.audio_posicao as "antes" | "depois") || "antes");
+    setFormLinkCalendarioAtivo(aviso.link_calendario_ativo || false);
+    setFormLinkCalendarioTexto(aviso.link_calendario_texto || "📅 Adicionar ao meu calendário");
     // Map envio_imediato to tipo_gatilho for backwards compatibility
     if (aviso.envio_imediato) {
       setFormTipoGatilho("imediato");
