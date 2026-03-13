@@ -169,39 +169,42 @@ export default function Reunioes() {
     return allReunioes.filter(r => r.user_id === membro.auth_user_id);
   }, [allReunioes, selectedMemberId, membros, user?.id]);
 
-  const { data: firefliesConfig } = useQuery({
-    queryKey: ["fireflies-config", user?.id],
+  const { data: googleCalendarConfig } = useQuery({
+    queryKey: ["google-calendar-config", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("fireflies_config")
-        .select("*")
+        .from("google_calendar_config" as any)
+        .select("access_token, refresh_token")
         .single();
       
       if (error && error.code !== "PGRST116") throw error;
-      return data;
+      return data as any;
     },
     enabled: !!user?.id,
   });
 
+  const hasGoogleCalendar = !!googleCalendarConfig?.access_token;
+
   const handleSync = async () => {
-    if (!firefliesConfig?.api_key) {
-      toast.error("Configure a API do Fireflies em Configurações > Conexões");
+    if (!hasGoogleCalendar) {
+      toast.error("Conecte o Google Calendar em Configurações > Conexões primeiro");
       return;
     }
 
     setSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("sync-fireflies", {
+      const { data, error } = await supabase.functions.invoke("sync-google-transcripts", {
         body: { userId: user?.id },
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       
-      toast.success(`${data.synced || 0} reuniões sincronizadas`);
+      toast.success(`${data.synced || 0} transcrições sincronizadas`);
       refetch();
     } catch (error: any) {
       console.error("Sync error:", error);
-      toast.error("Erro ao sincronizar reuniões");
+      toast.error(error.message || "Erro ao sincronizar transcrições");
     } finally {
       setSyncing(false);
     }
@@ -342,11 +345,11 @@ export default function Reunioes() {
               <TemplateCamposDialog />
               <Button 
                 onClick={handleSync} 
-                disabled={syncing || !firefliesConfig?.api_key}
+                disabled={syncing || !hasGoogleCalendar}
                 className="gap-2"
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-                Sincronizar Fireflies
+                Sincronizar Transcrições
               </Button>
             </div>
 
@@ -511,7 +514,7 @@ export default function Reunioes() {
                                   setReuniaoParaVincular(reuniao);
                                   setVincularDialogOpen(true);
                                 }}
-                                title={reuniao.transcricao ? "Vincular outra transcrição do Fireflies" : "Vincular transcrição do Fireflies"}
+                                title={reuniao.transcricao ? "Vincular outra transcrição" : "Vincular transcrição"}
                               >
                                 <FileText className="w-4 h-4" />
                                 {reuniao.transcricao ? "Vincular outra" : "Vincular"}
@@ -601,7 +604,7 @@ export default function Reunioes() {
                   <Video className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
                   <h3 className="text-lg font-medium mb-2">Nenhuma reunião encontrada</h3>
                   <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                    Clique em "Sincronizar Fireflies" para importar suas reuniões ou configure a API em Conexões.
+                    Clique em "Sincronizar Transcrições" para importar as transcrições do Google Meet ou conecte o Google Calendar em Configurações.
                   </p>
                 </div>
               </CardContent>
@@ -633,7 +636,7 @@ export default function Reunioes() {
           reuniaoId={reuniaoParaVincular.id}
           reuniaoTitulo={reuniaoParaVincular.titulo}
           transcricaoAtual={reuniaoParaVincular.transcricao ? {
-            fireflies_id: reuniaoParaVincular.fireflies_id,
+            transcript_id: reuniaoParaVincular.fireflies_id,
             transcricao: reuniaoParaVincular.transcricao,
             resumo_ia: reuniaoParaVincular.resumo_ia,
           } : null}

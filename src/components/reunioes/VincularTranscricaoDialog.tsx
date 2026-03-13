@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface TranscricaoAtual {
-  fireflies_id?: string | null;
+  transcript_id?: string | null;
   transcricao?: string | null;
   resumo_ia?: string | null;
 }
@@ -32,7 +32,7 @@ interface VincularTranscricaoDialogProps {
   transcricaoAtual?: TranscricaoAtual | null;
 }
 
-interface ReuniaoFireflies {
+interface ReuniaoTranscricao {
   id: string;
   fireflies_id: string;
   titulo: string;
@@ -53,16 +53,16 @@ export function VincularTranscricaoDialog({
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
-  // Buscar reuniões do Fireflies que têm transcrição (sem google_event_id = apenas Fireflies)
-  const { data: reunioesFireflies, isLoading } = useQuery({
-    queryKey: ["reunioes-fireflies", user?.id, search],
+  // Buscar reuniões que têm transcrição (importadas do Google Meet via Drive)
+  const { data: reunioesComTranscricao, isLoading } = useQuery({
+    queryKey: ["reunioes-transcricoes", user?.id, search],
     queryFn: async () => {
       let query = supabase
         .from("reunioes" as any)
         .select("id, fireflies_id, titulo, data_reuniao, duracao_minutos, transcricao, resumo_ia")
         .not("fireflies_id", "is", null)
         .not("transcricao", "is", null)
-        .is("google_event_id", null) // Apenas reuniões só do Fireflies
+        .is("google_event_id", null)
         .order("data_reuniao", { ascending: false });
 
       if (search.trim()) {
@@ -71,21 +71,21 @@ export function VincularTranscricaoDialog({
 
       const { data, error } = await query.limit(50);
       if (error) throw error;
-      return (data || []) as unknown as ReuniaoFireflies[];
+      return (data || []) as unknown as ReuniaoTranscricao[];
     },
     enabled: !!user?.id && open,
   });
 
   const vincularMutation = useMutation({
-    mutationFn: async (reuniaoFireflies: ReuniaoFireflies) => {
-      // 1. Primeiro, deletar o registro Fireflies-only para evitar conflito de unique constraint
+    mutationFn: async (reuniaoTranscricao: ReuniaoTranscricao) => {
+      // 1. Deletar o registro importado para evitar conflito de unique constraint
       const { error: deleteError } = await supabase
         .from("reunioes" as any)
         .delete()
-        .eq("id", reuniaoFireflies.id);
+        .eq("id", reuniaoTranscricao.id);
 
       if (deleteError) {
-        console.error("Erro ao deletar registro Fireflies:", deleteError);
+        console.error("Erro ao deletar registro importado:", deleteError);
         throw deleteError;
       }
 
@@ -97,17 +97,15 @@ export function VincularTranscricaoDialog({
 
       if (deleteCamposError) {
         console.error("Erro ao deletar campos anteriores:", deleteCamposError);
-        // Não bloqueia, apenas loga
       }
 
-      // 3. Agora podemos atualizar a reunião agendada com os dados da transcrição
-      // Sempre limpa o resumo_ia para permitir gerar um novo resumo com a nova transcrição
+      // 3. Atualizar a reunião agendada com os dados da transcrição
       const { error: updateError } = await supabase
         .from("reunioes" as any)
         .update({
-          fireflies_id: reuniaoFireflies.fireflies_id,
-          transcricao: reuniaoFireflies.transcricao,
-          resumo_ia: null, // Limpa resumo para permitir gerar novamente
+          fireflies_id: reuniaoTranscricao.fireflies_id,
+          transcricao: reuniaoTranscricao.transcricao,
+          resumo_ia: null,
           status: "transcrito",
         })
         .eq("id", reuniaoId);
@@ -126,8 +124,8 @@ export function VincularTranscricaoDialog({
     },
   });
 
-  const handleVincular = (reuniaoFireflies: ReuniaoFireflies) => {
-    vincularMutation.mutate(reuniaoFireflies);
+  const handleVincular = (reuniaoTranscricao: ReuniaoTranscricao) => {
+    vincularMutation.mutate(reuniaoTranscricao);
   };
 
   const formatDuration = (minutes: number | null) => {
@@ -144,10 +142,10 @@ export function VincularTranscricaoDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link2 className="w-5 h-5 shrink-0" />
-            Vincular Transcrição do Fireflies
+            Vincular Transcrição
           </DialogTitle>
           <DialogDescription className="break-words">
-            Selecione uma reunião transcrita pelo Fireflies para vincular a{" "}
+            Selecione uma transcrição do Google Meet para vincular a{" "}
             <span className="font-medium" title={reuniaoTitulo}>
               "{reuniaoTitulo.length > 40 ? `${reuniaoTitulo.substring(0, 40)}...` : reuniaoTitulo}"
             </span>
@@ -185,15 +183,15 @@ export function VincularTranscricaoDialog({
             />
           </div>
 
-          {/* Lista de reuniões do Fireflies */}
+          {/* Lista de transcrições */}
           <ScrollArea className="h-[350px] border rounded-lg overflow-hidden">
             {isLoading ? (
               <div className="p-4 text-center text-muted-foreground">
                 Carregando transcrições...
               </div>
-            ) : reunioesFireflies && reunioesFireflies.length > 0 ? (
+            ) : reunioesComTranscricao && reunioesComTranscricao.length > 0 ? (
               <div className="divide-y">
-                {reunioesFireflies.map((reuniao) => (
+                {reunioesComTranscricao.map((reuniao) => (
                   <div
                     key={reuniao.id}
                     className="p-4 hover:bg-muted/50 transition-colors space-y-2"
@@ -219,7 +217,6 @@ export function VincularTranscricaoDialog({
                       )}
                     </div>
 
-                    {/* Preview da transcrição */}
                     {reuniao.resumo_ia && (
                       <p className="text-sm text-muted-foreground line-clamp-2 italic border-l-2 border-primary/30 pl-2">
                         {reuniao.resumo_ia}
@@ -244,7 +241,7 @@ export function VincularTranscricaoDialog({
                 <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
                 <p className="font-medium">Nenhuma transcrição encontrada</p>
                 <p className="text-sm mt-1">
-                  Sincronize suas reuniões do Fireflies primeiro
+                  Sincronize as transcrições do Google Meet primeiro
                 </p>
               </div>
             )}

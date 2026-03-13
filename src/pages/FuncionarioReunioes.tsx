@@ -400,7 +400,7 @@ export default function FuncionarioReunioes() {
                                   setReuniaoParaVincular(reuniao);
                                   setVincularDialogOpen(true);
                                 }}
-                                title={reuniao.transcricao ? "Vincular outra transcrição do Fireflies" : "Vincular transcrição do Fireflies"}
+                                title={reuniao.transcricao ? "Vincular outra transcrição" : "Vincular transcrição"}
                               >
                                 <FileText className="w-4 h-4" />
                                 {reuniao.transcricao ? "Vincular outra" : "Vincular"}
@@ -518,7 +518,7 @@ export default function FuncionarioReunioes() {
           reuniaoId={reuniaoParaVincular.id}
           reuniaoTitulo={reuniaoParaVincular.titulo}
           transcricaoAtual={reuniaoParaVincular.transcricao ? {
-            fireflies_id: reuniaoParaVincular.fireflies_id,
+            transcript_id: reuniaoParaVincular.fireflies_id,
             transcricao: reuniaoParaVincular.transcricao,
             resumo_ia: reuniaoParaVincular.resumo_ia,
           } : null}
