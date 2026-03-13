@@ -62,7 +62,7 @@ export default function Reunioes() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { membros } = useTarefasMembros();
-  const [selectedMemberId, setSelectedMemberId] = useState<string>("todos");
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("meus");
   const [syncing, setSyncing] = useState(false);
   const periodFilter = useReunioesPeriodFilter();
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
