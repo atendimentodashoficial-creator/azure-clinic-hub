@@ -59,7 +59,7 @@ export function useTipoReuniaoMembros(tipoId: string | null) {
 
 export function useTiposReuniaoMutations() {
   const queryClient = useQueryClient();
-  const ownerId = useOwnerId();
+  const { ownerId } = useOwnerId();
 
   const criarTipo = useMutation({
     mutationFn: async (data: { nome: string; descricao?: string; duracao_minutos?: number }) => {
