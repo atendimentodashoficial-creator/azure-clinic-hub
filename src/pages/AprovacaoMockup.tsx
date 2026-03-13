@@ -526,7 +526,7 @@ function LinkOnlyApproval({
                 <DeviceFrame>
                   <iframe
                     src={href}
-                    className="w-full h-full border-0"
+                    className="w-full h-full border-0 block touch-pan-y"
                     sandbox="allow-scripts allow-same-origin allow-popups"
                     title={link.titulo || `Link ${i + 1}`}
                   />
