@@ -26,10 +26,24 @@ interface MockupData {
   cliente_empresa: string;
 }
 
+interface TaskLink {
+  url: string;
+  titulo: string | null;
+  ordem: number;
+}
+
+interface TaskInfo {
+  tarefa_id: string;
+  tarefa_titulo: string;
+  cliente_nome: string;
+  cliente_empresa: string;
+  approval_status: string;
+}
+
 interface PostForApproval {
   postIndex: number;
   mockups: MockupData[];
-  status: string; // derived: all same = that status, mixed = "pendente"
+  status: string;
 }
 
 function derivePostStatus(mockups: MockupData[]): string {
@@ -41,32 +55,50 @@ function derivePostStatus(mockups: MockupData[]): string {
 export default function AprovacaoMockup() {
   const { token } = useParams<{ token: string }>();
   const [mockups, setMockups] = useState<MockupData[]>([]);
-  const [taskLinks, setTaskLinks] = useState<{ url: string; titulo: string | null; ordem: number }[]>([]);
+  const [taskLinks, setTaskLinks] = useState<TaskLink[]>([]);
+  const [taskInfo, setTaskInfo] = useState<TaskInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPostIdx, setCurrentPostIdx] = useState(0);
-  const [feedbacks, setFeedbacks] = useState<Record<number, string>>({}); // keyed by postIndex
+  const [feedbacks, setFeedbacks] = useState<Record<number, string>>({});
+  const [linkFeedback, setLinkFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [linkApprovalStatus, setLinkApprovalStatus] = useState<string>("pendente");
+
+  const isLinkOnlyMode = mockups.length === 0 && taskLinks.length > 0;
 
   useEffect(() => {
     if (!token) return;
-    loadMockups();
+    loadData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const loadMockups = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const [mockupRes, linksRes] = await Promise.all([
+      const [mockupRes, linksRes, taskRes] = await Promise.all([
         supabase.rpc("get_mockups_by_approval_token", { p_token: token! }),
         supabase.rpc("get_links_by_approval_token", { p_token: token! }),
+        supabase.rpc("get_task_by_approval_token", { p_token: token! }),
       ]);
+
       if (mockupRes.error) throw mockupRes.error;
       const raw = (mockupRes.data || []) as MockupData[];
       const withPostIndex = raw.map(m => ({ ...m, post_index: (m as any).post_index ?? 0 }));
       setMockups(withPostIndex);
-      setTaskLinks((linksRes.data || []) as { url: string; titulo: string | null; ordem: number }[]);
+      setTaskLinks((linksRes.data || []) as TaskLink[]);
+
+      const taskData = (taskRes.data || []) as TaskInfo[];
+      if (taskData.length > 0) {
+        setTaskInfo(taskData[0]);
+        if (taskData[0].approval_status === "concluido") {
+          setLinkApprovalStatus("aprovado");
+        } else if (taskData[0].approval_status === "em_revisao") {
+          setLinkApprovalStatus("reprovado");
+        }
+      }
+
       const fb: Record<number, string> = {};
       const grouped = groupByPost(withPostIndex);
       grouped.forEach(post => {
@@ -97,6 +129,7 @@ export default function AprovacaoMockup() {
       }));
   };
 
+  // === MOCKUP APPROVAL HANDLERS ===
   const posts = groupByPost(mockups);
   const currentPost = posts[currentPostIdx];
 
@@ -119,7 +152,6 @@ export default function AprovacaoMockup() {
             ? { ...m, status: "aprovado", feedback: feedbacks[currentPost.postIndex] || null }
             : m
         );
-        // Auto-advance to next undecided post
         setTimeout(() => {
           const nextPosts = groupByPost(updated);
           const nextUndecided = nextPosts.findIndex((p, i) => i > currentPostIdx && p.status === "pendente");
@@ -181,6 +213,48 @@ export default function AprovacaoMockup() {
     }
   };
 
+  // === LINK-ONLY APPROVAL HANDLERS ===
+  const handleApproveLinks = async () => {
+    setSubmitting(true);
+    try {
+      const { error: err } = await supabase.rpc("update_task_approval_by_token", {
+        p_token: token!,
+        p_status: "aprovado",
+        p_feedback: linkFeedback || null,
+      });
+      if (err) throw err;
+      setLinkApprovalStatus("aprovado");
+      toast.success("Aprovado com sucesso!");
+    } catch {
+      toast.error("Erro ao aprovar");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectLinks = async () => {
+    if (!linkFeedback.trim()) {
+      toast.error("Por favor, adicione um feedback antes de solicitar mudanças.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error: err } = await supabase.rpc("update_task_approval_by_token", {
+        p_token: token!,
+        p_status: "reprovado",
+        p_feedback: linkFeedback,
+      });
+      if (err) throw err;
+      setLinkApprovalStatus("reprovado");
+      toast.success("Mudança solicitada com sucesso.");
+    } catch {
+      toast.error("Erro ao solicitar mudança");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // === RENDER ===
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -203,19 +277,36 @@ export default function AprovacaoMockup() {
     );
   }
 
-  if (error || posts.length === 0) {
+  if (error || (!isLinkOnlyMode && posts.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="p-8 text-center max-w-md">
           <h2 className="text-lg font-semibold text-foreground mb-2">Nenhum item pendente</h2>
           <p className="text-sm text-muted-foreground">
-            {error || "Todos os mockups já foram aprovados ou não há itens para revisar."}
+            {error || "Todos os itens já foram aprovados ou não há itens para revisar."}
           </p>
         </Card>
       </div>
     );
   }
 
+  // Link-only approval mode
+  if (isLinkOnlyMode) {
+    return <LinkOnlyApproval
+      taskInfo={taskInfo}
+      taskLinks={taskLinks}
+      linkFeedback={linkFeedback}
+      setLinkFeedback={setLinkFeedback}
+      linkApprovalStatus={linkApprovalStatus}
+      submitting={submitting}
+      submitted={submitted}
+      onApprove={handleApproveLinks}
+      onReject={handleRejectLinks}
+      onSubmit={() => setSubmitted(true)}
+    />;
+  }
+
+  // Mockup approval mode
   const tarefaTitulo = mockups[0]?.tarefa_titulo || "Tarefa";
   const clienteNome = mockups[0]?.cliente_nome || "perfil";
   const clienteEmpresa = mockups[0]?.cliente_empresa || "";
@@ -248,13 +339,11 @@ export default function AprovacaoMockup() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-        {/* Header */}
         <div className="text-center space-y-1">
           <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
           <p className="text-sm text-muted-foreground">Aprovação de Posts • {clienteNome}</p>
         </div>
 
-        {/* Task links */}
         {taskLinks.length > 0 && (
           <Card className="p-4 space-y-2">
             <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
@@ -296,16 +385,10 @@ export default function AprovacaoMockup() {
           ))}
         </div>
 
-        {/* Current post preview */}
         {currentPost && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={currentPostIdx === 0}
-                onClick={() => setCurrentPostIdx(i => i - 1)}
-              >
+              <Button variant="ghost" size="sm" disabled={currentPostIdx === 0} onClick={() => setCurrentPostIdx(i => i - 1)}>
                 <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
               </Button>
               <div className="flex items-center gap-2">
@@ -318,23 +401,13 @@ export default function AprovacaoMockup() {
                   </Badge>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={currentPostIdx === posts.length - 1}
-                onClick={() => setCurrentPostIdx(i => i + 1)}
-              >
+              <Button variant="ghost" size="sm" disabled={currentPostIdx === posts.length - 1} onClick={() => setCurrentPostIdx(i => i + 1)}>
                 Próximo <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
 
-            <MockupPreview
-              slides={previewSlides}
-              perfilNome={clienteNome}
-              perfilCategoria={clienteEmpresa}
-            />
+            <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} />
 
-            {/* Feedback + actions */}
             {!allDecided && (
               <Card className="p-4 space-y-3">
                 <Textarea
@@ -344,21 +417,11 @@ export default function AprovacaoMockup() {
                   rows={2}
                 />
                 <div className="flex gap-2">
-                  <Button
-                    onClick={handleApprovePost}
-                    disabled={submitting || currentPost.status === "aprovado"}
-                    className="flex-1 gap-1.5"
-                    variant={currentPost.status === "aprovado" ? "secondary" : "default"}
-                  >
+                  <Button onClick={handleApprovePost} disabled={submitting || currentPost.status === "aprovado"} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
                     <Check className="w-4 h-4" />
                     {currentPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
                   </Button>
-                  <Button
-                    onClick={handleRejectPost}
-                    disabled={submitting || currentPost.status === "reprovado"}
-                    variant="destructive"
-                    className="flex-1 gap-1.5"
-                  >
+                  <Button onClick={handleRejectPost} disabled={submitting || currentPost.status === "reprovado"} variant="destructive" className="flex-1 gap-1.5">
                     <X className="w-4 h-4" />
                     {currentPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
                   </Button>
@@ -370,22 +433,148 @@ export default function AprovacaoMockup() {
 
         {allDecided && (
           <Card className="p-5 space-y-4 text-center border-primary/30">
-            <p className="text-sm font-medium text-foreground">
-              Todos os posts foram revisados!
-            </p>
+            <p className="text-sm font-medium text-foreground">Todos os posts foram revisados!</p>
             <div className="flex flex-col items-center gap-2">
               <p className="text-xs text-muted-foreground">
                 {posts.filter(p => p.status === "aprovado").length} aprovado(s) • {posts.filter(p => p.status === "reprovado").length} reprovado(s)
               </p>
-              <Button
-                onClick={() => setSubmitted(true)}
-                className="gap-2"
-                size="lg"
-              >
+              <Button onClick={() => setSubmitted(true)} className="gap-2" size="lg">
                 <Send className="w-4 h-4" />
                 Enviar respostas
               </Button>
             </div>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// === LINK-ONLY APPROVAL COMPONENT ===
+function LinkOnlyApproval({
+  taskInfo,
+  taskLinks,
+  linkFeedback,
+  setLinkFeedback,
+  linkApprovalStatus,
+  submitting,
+  submitted,
+  onApprove,
+  onReject,
+  onSubmit,
+}: {
+  taskInfo: TaskInfo | null;
+  taskLinks: TaskLink[];
+  linkFeedback: string;
+  setLinkFeedback: (v: string) => void;
+  linkApprovalStatus: string;
+  submitting: boolean;
+  submitted: boolean;
+  onApprove: () => void;
+  onReject: () => void;
+  onSubmit: () => void;
+}) {
+  const tarefaTitulo = taskInfo?.tarefa_titulo || "Tarefa";
+  const clienteNome = taskInfo?.cliente_nome || "";
+  const decided = linkApprovalStatus === "aprovado" || linkApprovalStatus === "reprovado";
+
+  const statusColor = (s: string) => {
+    if (s === "aprovado") return "bg-emerald-500/20 text-emerald-400";
+    if (s === "reprovado") return "bg-red-500/20 text-red-400";
+    return "bg-amber-500/20 text-amber-400";
+  };
+  const statusLabel = (s: string) => {
+    if (s === "aprovado") return "Aprovado";
+    if (s === "reprovado") return "Mudança solicitada";
+    return "Pendente";
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+        <div className="text-center space-y-1">
+          <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
+          <p className="text-sm text-muted-foreground">
+            Aprovação de Entrega{clienteNome ? ` • ${clienteNome}` : ""}
+          </p>
+        </div>
+
+        <Badge className={cn("border-0 mx-auto block w-fit", statusColor(linkApprovalStatus))}>
+          {statusLabel(linkApprovalStatus)}
+        </Badge>
+
+        {/* Embedded link previews */}
+        <div className="space-y-4">
+          {taskLinks.map((link, i) => {
+            const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
+            return (
+              <Card key={i} className="overflow-hidden">
+                <div className="flex items-center gap-2 p-3 border-b bg-muted/50">
+                  <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline truncate"
+                  >
+                    {link.titulo || link.url}
+                  </a>
+                </div>
+                <div className="w-full aspect-[16/10] bg-muted">
+                  <iframe
+                    src={href}
+                    className="w-full h-full border-0"
+                    sandbox="allow-scripts allow-same-origin allow-popups"
+                    title={link.titulo || `Link ${i + 1}`}
+                  />
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Feedback + actions */}
+        {!decided && (
+          <Card className="p-4 space-y-3">
+            <Textarea
+              placeholder="Feedback ou observações (obrigatório para solicitar mudanças)..."
+              value={linkFeedback}
+              onChange={e => setLinkFeedback(e.target.value)}
+              rows={3}
+            />
+            <div className="flex gap-2">
+              <Button
+                onClick={onApprove}
+                disabled={submitting}
+                className="flex-1 gap-1.5"
+              >
+                <Check className="w-4 h-4" />
+                Aprovar
+              </Button>
+              <Button
+                onClick={onReject}
+                disabled={submitting}
+                variant="destructive"
+                className="flex-1 gap-1.5"
+              >
+                <X className="w-4 h-4" />
+                Solicitar Mudança
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {decided && (
+          <Card className="p-5 space-y-4 text-center border-primary/30">
+            <p className="text-sm font-medium text-foreground">
+              {linkApprovalStatus === "aprovado"
+                ? "Entrega aprovada!"
+                : "Mudança solicitada com sucesso."}
+            </p>
+            <Button onClick={onSubmit} className="gap-2" size="lg">
+              <Send className="w-4 h-4" />
+              Concluir
+            </Button>
           </Card>
         )}
       </div>
