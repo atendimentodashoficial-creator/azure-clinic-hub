@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TarefaCliente } from "@/hooks/useTarefasClientes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,18 +20,22 @@ interface NovoClienteDialogProps {
   externalOpen?: boolean;
   /** Hide the trigger button (used when opened externally) */
   hideTrigger?: boolean;
+  /** Pre-fill data for new client */
+  initialData?: { nome?: string; telefone?: string };
 }
 
-export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, externalOpen, hideTrigger }: NovoClienteDialogProps) {
+export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, externalOpen, hideTrigger, initialData }: NovoClienteDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditing = !!clienteEditando;
   const [formTab, setFormTab] = useState("info");
 
   const initialPhoneData = clienteEditando?.telefone
     ? extractCountryCode(clienteEditando.telefone)
-    : { countryCode: "55", phoneWithoutCountry: "" };
+    : initialData?.telefone
+      ? extractCountryCode(initialData.telefone)
+      : { countryCode: "55", phoneWithoutCountry: "" };
 
-  const [nome, setNome] = useState(clienteEditando?.nome || "");
+  const [nome, setNome] = useState(clienteEditando?.nome || initialData?.nome || "");
   const [email, setEmail] = useState(clienteEditando?.email || "");
   const [senhaAcesso, setSenhaAcesso] = useState(clienteEditando?.senha_acesso || "");
   const [countryCode, setCountryCode] = useState(initialPhoneData.countryCode);
@@ -57,6 +61,18 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
     setCnpj(""); setDocTipo("cnpj"); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
     setObservacoes(""); setGrupoWhatsapp(""); setTipo("interno"); setFormTab("info");
   };
+
+  // Pre-fill when opened externally with initialData
+  useEffect(() => {
+    if (externalOpen && initialData && !clienteEditando) {
+      if (initialData.nome) setNome(initialData.nome);
+      if (initialData.telefone) {
+        const phoneData = extractCountryCode(initialData.telefone);
+        setCountryCode(phoneData.countryCode);
+        setTelefone(phoneData.phoneWithoutCountry);
+      }
+    }
+  }, [externalOpen]);
 
   const formatCnpj = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 14);

@@ -26,6 +26,7 @@ interface AtribuirProdutoDialogProps {
   template: ProdutoTemplate;
   open: boolean;
   onClose: () => void;
+  initialContactData?: { nome?: string; telefone?: string };
 }
 
 function parseTarefaMeta(descricao: string | null): any {
@@ -39,7 +40,7 @@ function parseTarefaMeta(descricao: string | null): any {
 
 type Step = "select-client" | "schedule-meeting";
 
-export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdutoDialogProps) {
+export function AtribuirProdutoDialog({ template, open, onClose, initialContactData }: AtribuirProdutoDialogProps) {
   const { user } = useAuth();
   const { clientes, criarCliente } = useTarefasClientes();
   const { data: templateTarefas = [] } = useProdutoTemplateTarefas(template.id);
@@ -212,6 +213,7 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
         hideTrigger
         onSubmit={handleNovoClienteCriado}
         onClose={() => setShowNovoCliente(false)}
+        initialData={initialContactData}
       />
     </>
   );
