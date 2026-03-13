@@ -364,6 +364,7 @@ export function AvisosReuniaoTab() {
             next_check_at: nextCheckAt,
             procedimento_id: formProcedimentoId,
             instancia_id: formInstanciaId,
+            tipo_reuniao_id: formTipoReuniaoId,
             tipo_gatilho: tipoGatilhoToSave,
             audio_url: formAudioUrl,
             audio_posicao: formAudioPosicao,
