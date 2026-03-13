@@ -472,6 +472,87 @@ export function WhatsAppKanban({
     }
   };
 
+  // Load reuniões with resumo for chats
+  const loadChatReunioes = async () => {
+    try {
+      const onlyDigits = (v: string) => (v || "").replace(/\D/g, "");
+      const last8 = (v: string) => {
+        const d = onlyDigits(v);
+        return d.length >= 8 ? d.slice(-8) : d;
+      };
+
+      const { data: allReunioes, error } = await supabase
+        .from("reunioes")
+        .select("id, titulo, resumo_ia, data_reuniao, cliente_telefone, duracao_minutos, participantes, transcricao, status")
+        .not("resumo_ia", "is", null)
+        .neq("resumo_ia", "")
+        .order("data_reuniao", { ascending: false });
+
+      if (error) {
+        console.error("Error loading reunioes:", error);
+        return;
+      }
+      if (!allReunioes || allReunioes.length === 0) {
+        setChatReunioes({});
+        return;
+      }
+
+      const last8ToReuniao: Record<string, ChatReuniao> = {};
+      allReunioes.forEach((r: any) => {
+        const k = last8(r.cliente_telefone || "");
+        if (!k || last8ToReuniao[k]) return;
+        last8ToReuniao[k] = {
+          id: r.id,
+          titulo: r.titulo,
+          resumo_ia: r.resumo_ia,
+          data_reuniao: r.data_reuniao,
+          duracao_minutos: r.duracao_minutos,
+          participantes: r.participantes,
+          transcricao: r.transcricao,
+          status: r.status,
+        };
+      });
+
+      const chatReMap: Record<string, ChatReuniao | null> = {};
+      chats.forEach((chat) => {
+        const k = last8(chat?.normalized_number || chat?.contact_number || "");
+        chatReMap[chat.id] = k ? (last8ToReuniao[k] ?? null) : null;
+      });
+      setChatReunioes(chatReMap);
+    } catch (error) {
+      console.error("Error loading chat reunioes:", error);
+    }
+  };
+
+  // Render reunião badge for a chat
+  const renderReuniaoBadge = (chatId: string) => {
+    const reuniao = chatReunioes[chatId];
+    if (!reuniao) return null;
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedReuniao(reuniao);
+                setReuniaoDialogOpen(true);
+              }}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs mt-1 w-full bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900 transition-colors text-left"
+            >
+              <FileText className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">Resumo de reunião</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Clique para ver o resumo</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
   // Render fatura badge for a chat
   const renderFaturaBadge = (chat: any) => {
     const faturas = chatFaturas[chat.id];
