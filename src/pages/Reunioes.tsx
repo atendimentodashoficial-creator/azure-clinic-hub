@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, Users } from "lucide-react";
+import { ReunioesPeriodFilter, useReunioesPeriodFilter } from "@/components/reunioes/ReunioesPeriodFilter";
 import { formatPhoneDisplay, getLast8Digits } from "@/utils/phoneFormat";
 import { navigateToChat } from "@/utils/chatRouting";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -62,6 +63,7 @@ export default function Reunioes() {
   const { membros } = useTarefasMembros();
   const [selectedMemberId, setSelectedMemberId] = useState<string>("todos");
   const [syncing, setSyncing] = useState(false);
+  const periodFilter = useReunioesPeriodFilter();
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
   const [activeTab, setActiveTab] = useState("reunioes");
   const [vincularDialogOpen, setVincularDialogOpen] = useState(false);
@@ -158,16 +160,18 @@ export default function Reunioes() {
     enabled: !!user?.id,
   });
 
-  // Filter by selected member
+  // Filter by selected member then by period
   const reunioes = useMemo(() => {
     if (!allReunioes) return [];
-    if (selectedMemberId === "todos") return allReunioes;
-    if (selectedMemberId === "meus") return allReunioes.filter(r => r.user_id === user?.id);
-    // Find the member's auth_user_id
-    const membro = membros.find(m => m.id === selectedMemberId);
-    if (!membro?.auth_user_id) return [];
-    return allReunioes.filter(r => r.user_id === membro.auth_user_id);
-  }, [allReunioes, selectedMemberId, membros, user?.id]);
+    let filtered = allReunioes;
+    if (selectedMemberId === "meus") filtered = filtered.filter(r => r.user_id === user?.id);
+    else if (selectedMemberId !== "todos") {
+      const membro = membros.find(m => m.id === selectedMemberId);
+      if (!membro?.auth_user_id) return [];
+      filtered = filtered.filter(r => r.user_id === membro.auth_user_id);
+    }
+    return periodFilter.filterReunioes(filtered);
+  }, [allReunioes, selectedMemberId, membros, user?.id, periodFilter]);
 
   const { data: googleCalendarConfig } = useQuery({
     queryKey: ["google-calendar-config", user?.id],
@@ -339,6 +343,17 @@ export default function Reunioes() {
         </TabsList>
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
+          {/* Period filter chips */}
+          <ReunioesPeriodFilter
+            value={periodFilter.filterValue}
+            onChange={periodFilter.setFilterValue}
+            dateStart={periodFilter.customStart}
+            dateEnd={periodFilter.customEnd}
+            onDateStartChange={periodFilter.setCustomStart}
+            onDateEndChange={periodFilter.setCustomEnd}
+            count={reunioes?.length}
+          />
+
           {/* Header controls for reunioes tab */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
