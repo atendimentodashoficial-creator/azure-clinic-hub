@@ -213,6 +213,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
         hideTrigger
         onSubmit={handleNovoClienteCriado}
         onClose={() => setShowNovoCliente(false)}
+        initialData={initialContactData}
       />
     </>
   );
