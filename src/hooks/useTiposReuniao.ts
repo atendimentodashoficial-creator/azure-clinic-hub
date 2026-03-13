@@ -21,7 +21,7 @@ export interface TipoReuniaoMembro {
 }
 
 export function useTiposReuniao() {
-  const ownerId = useOwnerId();
+  const { ownerId } = useOwnerId();
 
   const query = useQuery({
     queryKey: ["tipos-reuniao", ownerId],
