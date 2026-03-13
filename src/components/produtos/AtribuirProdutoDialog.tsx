@@ -254,6 +254,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
               clienteNome={selectedClient.nome}
               templateNome={template.nome}
               saving={saving}
+              defaultDuracao={template.duracao_reuniao}
               onBack={() => setStep("select-client")}
               onConfirm={handleAtribuirComReuniao}
             />
