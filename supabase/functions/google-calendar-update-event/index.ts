@@ -59,23 +59,57 @@ serve(async (req) => {
       );
     }
 
-    // Verify permission: own meeting or admin of the member
+    // Verify permission: own meeting or employee under the admin who owns it, or admin of employee
     const meetingOwnerId = reuniao.user_id;
     let authorized = meetingOwnerId === user.id;
+    let adminUserId = meetingOwnerId; // For Google Calendar config lookup
+    
     if (!authorized) {
+      // Check if user is an employee under the admin who owns this meeting
       const { data: memberLink } = await supabase
         .from("tarefas_membros")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("auth_user_id", meetingOwnerId)
+        .select("id, user_id")
+        .eq("auth_user_id", user.id)
+        .eq("user_id", meetingOwnerId)
         .maybeSingle();
-      authorized = !!memberLink;
+      if (memberLink) {
+        authorized = true;
+        adminUserId = memberLink.user_id;
+      }
     }
+    
+    if (!authorized) {
+      // Check if user is the admin of the employee whose auth_user_id owns this meeting
+      const { data: memberLink } = await supabase
+        .from("tarefas_membros")
+        .select("id, user_id")
+        .eq("auth_user_id", meetingOwnerId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (memberLink) {
+        authorized = true;
+        adminUserId = user.id;
+      }
+    }
+    
     if (!authorized) {
       return new Response(
         JSON.stringify({ success: false, error: "Sem permissão" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+    
+    // Also resolve adminUserId if the meeting owner IS an employee
+    if (adminUserId === meetingOwnerId && adminUserId !== user.id) {
+      // meetingOwnerId might be an employee auth_user_id, find their admin
+      const { data: ownerMember } = await supabase
+        .from("tarefas_membros")
+        .select("user_id")
+        .eq("auth_user_id", meetingOwnerId)
+        .maybeSingle();
+      if (ownerMember) {
+        adminUserId = ownerMember.user_id;
+      }
     }
 
     const finalDuracao = duracaoMinutos || reuniao.duracao_minutos || 60;
