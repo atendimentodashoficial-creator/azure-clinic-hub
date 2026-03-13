@@ -431,7 +431,13 @@ export default function FuncionarioReunioes() {
                     {reunioesDodia.map((reuniao) => (
                       <Card
                         key={reuniao.id}
-                        className="shadow-card hover:shadow-elegant transition-all duration-300 animate-fade-in"
+                        className={`shadow-card hover:shadow-elegant transition-all duration-300 animate-fade-in border-l-4 ${
+                          reuniao.status === "nao_compareceu" || reuniao.status === "cancelado"
+                            ? "border-l-destructive"
+                            : reuniao.status === "realizada" || reuniao.status === "resumido" || reuniao.status === "transcrito"
+                              ? "border-l-green-500"
+                              : "border-l-transparent"
+                        }`}
                       >
                         <CardContent className="p-4 flex-1 flex flex-col">
                           <div className="space-y-3 flex-1">
