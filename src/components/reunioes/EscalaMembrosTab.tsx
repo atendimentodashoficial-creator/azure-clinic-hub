@@ -41,7 +41,16 @@ interface EscalaMembrosTabProps {
 }
 
 export function EscalaMembrosTab({ membroIdFixo }: EscalaMembrosTabProps) {
-  const { membros, isLoading: loadingMembros } = useTarefasMembros();
+  const { membros: membrosAdmin, isLoading: loadingMembros } = useTarefasMembros();
+  const { membro: membroAtual } = useMembroAtual();
+
+  // When locked (funcionario), use their own membro record; otherwise use admin's list
+  const membros: TarefaMembro[] = useMemo(() => {
+    if (membroIdFixo && membroAtual) {
+      return [membroAtual as TarefaMembro];
+    }
+    return membrosAdmin;
+  }, [membroIdFixo, membroAtual, membrosAdmin]);
   const { data: todasEscalas = [] } = useEscalasMembros(membroIdFixo);
   const { data: todasAusencias = [] } = useAusenciasMembros(membroIdFixo);
   const criarEscala = useCreateEscalaMembro();
