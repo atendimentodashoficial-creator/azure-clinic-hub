@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -123,25 +123,56 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     }
   };
 
+  const normalizeColumnName = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+  const isAguardandoAprovacaoColumn = (name: string) => {
+    const normalized = normalizeColumnName(name);
+    return normalized.includes("aguardando") && normalized.includes("aprovacao");
+  };
+
+  const findAguardandoAprovacaoColumnId = async () => {
+    const fromProps = colunas.find(c => isAguardandoAprovacaoColumn(c.nome));
+    if (fromProps) return fromProps.id;
+    if (!tarefa?.user_id) return null;
+
+    const { data, error } = await supabase
+      .from("tarefas_colunas")
+      .select("id, nome")
+      .eq("user_id", tarefa.user_id)
+      .order("ordem", { ascending: true });
+
+    if (error) throw error;
+
+    return data?.find(c => isAguardandoAprovacaoColumn(c.nome))?.id ?? null;
+  };
+
   const handleSendForApproval = async () => {
     if (!tarefa) return;
     try {
       const token = crypto.randomUUID();
-      // Move task to "Aguardando Aprovação" column
-      const aguardandoColuna = colunas.find(c => c.nome === "Aguardando Aprovação");
-      const updateData: Record<string, any> = { approval_token: token, approval_status: "aguardando", updated_at: new Date().toISOString() };
-      if (aguardandoColuna) {
-        updateData.coluna_id = aguardandoColuna.id;
+      const approvalColumnId = await findAguardandoAprovacaoColumnId();
+      const updateData: Record<string, any> = {
+        approval_token: token,
+        approval_status: "aguardando",
+        updated_at: new Date().toISOString(),
+      };
+      if (approvalColumnId) {
+        updateData.coluna_id = approvalColumnId;
       }
       const { error } = await supabase
         .from("tarefas")
         .update(updateData)
         .eq("id", tarefa.id);
       if (error) throw error;
+
       const link = `${window.location.origin}/aprovacao/${token}`;
       await navigator.clipboard.writeText(link);
       toast.success("Link de aprovação copiado para a área de transferência!");
-      // Force refresh
       window.location.reload();
     } catch {
       toast.error("Erro ao gerar link de aprovação");
@@ -152,19 +183,17 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     if (!tarefa) return;
     setResubmitting(true);
     try {
-      // Reset only rejected mockups to pendente
       await resubmitRejected.mutateAsync();
-      
-      // Move task to "Aguardando Aprovação" column
-      const aguardandoColuna = colunas.find(c => c.nome === "Aguardando Aprovação");
-      if (aguardandoColuna) {
+
+      const approvalColumnId = await findAguardandoAprovacaoColumnId();
+      if (approvalColumnId) {
         const { error } = await supabase
           .from("tarefas")
-          .update({ coluna_id: aguardandoColuna.id, updated_at: new Date().toISOString() })
+          .update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() })
           .eq("id", tarefa.id);
         if (error) throw error;
       }
-      
+
       toast.success("Itens revisados reenviados para aprovação!");
       window.location.reload();
     } catch {
