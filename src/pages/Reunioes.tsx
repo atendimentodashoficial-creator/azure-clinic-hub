@@ -336,19 +336,6 @@ export default function Reunioes() {
             </Button>
           </div>
 
-          {/* Warning if no Fireflies config */}
-          {!firefliesConfig?.api_key && (
-            <Card className="border-yellow-500/50 bg-yellow-500/10">
-              <CardContent className="pt-6">
-                <p className="text-sm text-yellow-700 dark:text-yellow-400">
-                  Configure sua API Key do Fireflies em{" "}
-                  <a href="/configuracoes?tab=conexoes" className="underline font-medium">
-                    Configurações → Conexões
-                  </a>{" "}
-                  para sincronizar suas reuniões.
-                </p>
-              </CardContent>
-            </Card>
           )}
 
           {/* Meetings List */}
