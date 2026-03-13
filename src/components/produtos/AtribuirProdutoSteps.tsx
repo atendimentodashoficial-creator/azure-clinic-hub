@@ -230,7 +230,7 @@ export function SelectMemberAndTimeStep({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col gap-4">
+    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4">
       <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 self-start" onClick={onBack}>
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Button>
