@@ -1336,5 +1336,15 @@ export function WhatsAppKanban({
         agendamentos={selectedAgendamentos}
         clienteNome={selectedAgendamentoClienteNome}
       />
+      {selectedReuniao && (
+        <ReuniaoDetalhesDialog
+          reuniao={selectedReuniao as any}
+          open={reuniaoDialogOpen}
+          onOpenChange={(open) => {
+            setReuniaoDialogOpen(open);
+            if (!open) setSelectedReuniao(null);
+          }}
+        />
+      )}
     </div>;
 }
