@@ -491,7 +491,7 @@ function LinkOnlyApproval({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <div className="w-full px-4 py-8 space-y-6">
         <div className="text-center space-y-1">
           <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
           <p className="text-sm text-muted-foreground">
@@ -535,7 +535,7 @@ function LinkOnlyApproval({
 
         {/* Feedback + actions */}
         {!decided && (
-          <Card className="p-4 space-y-3">
+          <Card className="p-4 space-y-3 max-w-xl mx-auto">
             <Textarea
               placeholder="Feedback ou observações (obrigatório para solicitar mudanças)..."
               value={linkFeedback}
