@@ -49,6 +49,9 @@ interface PendingAviso {
   numeroReagendamentos?: number;
   audioUrl?: string | null;
   audioPosicao?: string | null;
+  linkCalendarioAtivo?: boolean;
+  linkCalendarioTexto?: string;
+  duracaoMinutos?: number;
 }
 
 // Configuration
