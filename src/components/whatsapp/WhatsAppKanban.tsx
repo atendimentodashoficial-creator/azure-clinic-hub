@@ -1359,5 +1359,34 @@ export function WhatsAppKanban({
           }}
         />
       )}
+      {/* Reunião Selector Dialog (multiple reuniões) */}
+      <Dialog open={reuniaoSelectorOpen} onOpenChange={setReuniaoSelectorOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Selecionar Reunião</DialogTitle>
+            <DialogDescription>Este cliente possui {reuniaoSelectorList.length} reuniões com resumo. Selecione qual deseja visualizar.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {reuniaoSelectorList.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => {
+                  setReuniaoSelectorOpen(false);
+                  setSelectedReuniao(r);
+                  setReuniaoDialogOpen(true);
+                }}
+                className="w-full text-left p-3 rounded-lg border hover:bg-accent/50 transition-colors space-y-1"
+              >
+                <div className="font-medium text-sm">{r.titulo}</div>
+                <div className="text-xs text-muted-foreground flex items-center gap-2">
+                  <Calendar className="w-3 h-3" />
+                  {format(new Date(r.data_reuniao), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  {r.duracao_minutos && <span>· {r.duracao_minutos}min</span>}
+                </div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>;
 }
