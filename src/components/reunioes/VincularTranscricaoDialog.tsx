@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface TranscricaoAtual {
-  fireflies_id?: string | null;
+  transcript_id?: string | null;
   transcricao?: string | null;
   resumo_ia?: string | null;
 }
