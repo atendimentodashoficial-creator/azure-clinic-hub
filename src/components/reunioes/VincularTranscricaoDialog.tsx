@@ -183,15 +183,15 @@ export function VincularTranscricaoDialog({
             />
           </div>
 
-          {/* Lista de reuniões do Fireflies */}
+          {/* Lista de transcrições */}
           <ScrollArea className="h-[350px] border rounded-lg overflow-hidden">
             {isLoading ? (
               <div className="p-4 text-center text-muted-foreground">
                 Carregando transcrições...
               </div>
-            ) : reunioesFireflies && reunioesFireflies.length > 0 ? (
+            ) : reunioesComTranscricao && reunioesComTranscricao.length > 0 ? (
               <div className="divide-y">
-                {reunioesFireflies.map((reuniao) => (
+                {reunioesComTranscricao.map((reuniao) => (
                   <div
                     key={reuniao.id}
                     className="p-4 hover:bg-muted/50 transition-colors space-y-2"
@@ -217,7 +217,6 @@ export function VincularTranscricaoDialog({
                       )}
                     </div>
 
-                    {/* Preview da transcrição */}
                     {reuniao.resumo_ia && (
                       <p className="text-sm text-muted-foreground line-clamp-2 italic border-l-2 border-primary/30 pl-2">
                         {reuniao.resumo_ia}
@@ -242,7 +241,7 @@ export function VincularTranscricaoDialog({
                 <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
                 <p className="font-medium">Nenhuma transcrição encontrada</p>
                 <p className="text-sm mt-1">
-                  Sincronize suas reuniões do Fireflies primeiro
+                  Sincronize as transcrições do Google Meet primeiro
                 </p>
               </div>
             )}

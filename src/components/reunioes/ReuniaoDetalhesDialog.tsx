@@ -204,7 +204,7 @@ export function ReuniaoDetalhesDialog({ reuniao, open, onOpenChange }: ReuniaoDe
             ) : (
               <p className="text-sm text-muted-foreground italic text-center py-4">
                 {!reuniao.transcricao 
-                  ? "Aguardando transcrição. Vincule uma transcrição do Fireflies primeiro."
+                  ? "Aguardando transcrição. Vincule uma transcrição do Google Meet primeiro."
                   : "Configure os campos do template para gerar resumos personalizados."
                 }
               </p>

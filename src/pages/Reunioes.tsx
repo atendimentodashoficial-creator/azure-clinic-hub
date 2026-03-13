@@ -604,7 +604,7 @@ export default function Reunioes() {
                   <Video className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
                   <h3 className="text-lg font-medium mb-2">Nenhuma reunião encontrada</h3>
                   <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                    Clique em "Sincronizar Fireflies" para importar suas reuniões ou configure a API em Conexões.
+                    Clique em "Sincronizar Transcrições" para importar as transcrições do Google Meet ou conecte o Google Calendar em Configurações.
                   </p>
                 </div>
               </CardContent>
