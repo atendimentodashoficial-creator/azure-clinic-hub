@@ -258,38 +258,6 @@ export default function AprovacaoMockup() {
           </Card>
         </div>
 
-        {/* Bulk actions */}
-        {mockups.length > 1 && (
-          <>
-            <Separator />
-            <Card className="p-4 space-y-3">
-              <p className="text-sm font-semibold text-foreground">Ação em massa</p>
-              <Textarea
-                placeholder="Feedback geral (obrigatório para reprovar todos)..."
-                value={bulkFeedback}
-                onChange={e => setBulkFeedback(e.target.value)}
-                rows={2}
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => handleBulkAction("aprovado")}
-                  disabled={submitting}
-                  className="flex-1 gap-1.5"
-                >
-                  <CheckCheck className="w-4 h-4" /> Aprovar Todos
-                </Button>
-                <Button
-                  onClick={() => handleBulkAction("reprovado")}
-                  disabled={submitting}
-                  variant="destructive"
-                  className="flex-1 gap-1.5"
-                >
-                  <XCircle className="w-4 h-4" /> Reprovar Todos
-                </Button>
-              </div>
-            </Card>
-          </>
-        )}
 
         {allDecided && (
           <Card className="p-4 text-center bg-emerald-500/10 border-emerald-500/30">
