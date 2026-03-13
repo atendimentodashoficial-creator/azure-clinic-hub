@@ -156,7 +156,23 @@ function replaceVariables(
   return processSpintax(result);
 }
 
-// Sleep function for delays
+// Build Google Calendar "Add to Calendar" URL
+function buildGoogleCalendarUrl(reuniao: { titulo: string; data_reuniao: string; meet_link?: string | null; duracao_minutos?: number }): string {
+  const start = new Date(reuniao.data_reuniao);
+  const end = new Date(start.getTime() + ((reuniao.duracao_minutos || 60) * 60 * 1000));
+  
+  const formatGCalDate = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: reuniao.titulo,
+    dates: `${formatGCalDate(start)}/${formatGCalDate(end)}`,
+    details: reuniao.meet_link ? `Link da reunião: ${reuniao.meet_link}` : "Reunião agendada via CRM",
+    ctz: "America/Sao_Paulo",
+  });
+  
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
