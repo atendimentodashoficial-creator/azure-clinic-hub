@@ -455,7 +455,7 @@ serve(async (req) => {
           success: false,
           error: "Instância WhatsApp desconectada. Reconecte em Conexões → Disparos (QR Code).",
           sent: 0,
-          total: avisos.length,
+          total: filteredAvisos.length,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
