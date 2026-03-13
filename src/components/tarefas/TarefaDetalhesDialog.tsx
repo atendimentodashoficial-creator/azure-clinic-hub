@@ -610,6 +610,42 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                       </Badge>
                     )}
 
+                    {/* Resubmit for approval when in revision */}
+                    {tarefa.approval_status === "em_revisao" && (
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2 mt-2"
+                        onClick={async () => {
+                          setResubmitting(true);
+                          try {
+                            const approvalColumnId = await findAguardandoAprovacaoColumnId();
+                            const updateData: Record<string, any> = {
+                              approval_status: "aguardando",
+                              updated_at: new Date().toISOString(),
+                            };
+                            if (approvalColumnId) {
+                              updateData.coluna_id = approvalColumnId;
+                            }
+                            const { error } = await supabase
+                              .from("tarefas")
+                              .update(updateData)
+                              .eq("id", tarefa.id);
+                            if (error) throw error;
+                            toast.success("Reenviado para aprovação!");
+                            window.location.reload();
+                          } catch {
+                            toast.error("Erro ao reenviar para aprovação");
+                          } finally {
+                            setResubmitting(false);
+                          }
+                        }}
+                        disabled={resubmitting}
+                      >
+                        <Send className="h-4 w-4" />
+                        {resubmitting ? "Reenviando..." : "Reenviar para Aprovação"}
+                      </Button>
+                    )}
+
                     {/* Revision history for link approvals */}
                     {revisoes.length > 0 && (
                       <div className="mt-2">
