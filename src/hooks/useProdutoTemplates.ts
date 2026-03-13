@@ -33,6 +33,7 @@ export function useProdutoTemplates() {
         .from("produto_templates" as any)
         .select("*")
         .eq("user_id", user.id)
+        .order("ordem")
         .order("nome");
       if (error) throw error;
       return data as unknown as ProdutoTemplate[];
@@ -92,6 +93,19 @@ export function useProdutoTemplateMutations() {
     onSuccess: invalidate,
   });
 
+  const reordenarTemplates = useMutation({
+    mutationFn: async (items: { id: string; ordem: number }[]) => {
+      for (const item of items) {
+        const { error } = await supabase
+          .from("produto_templates" as any)
+          .update({ ordem: item.ordem } as any)
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: invalidate,
+  });
+
   const excluirTemplate = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -135,5 +149,5 @@ export function useProdutoTemplateMutations() {
     onSuccess: invalidate,
   });
 
-  return { criarTemplate, atualizarTemplate, excluirTemplate, adicionarTarefa, atualizarTarefa, excluirTarefa };
+  return { criarTemplate, atualizarTemplate, reordenarTemplates, excluirTemplate, adicionarTarefa, atualizarTarefa, excluirTarefa };
 }

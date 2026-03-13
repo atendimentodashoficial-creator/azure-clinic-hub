@@ -1,0 +1,1 @@
+ALTER TABLE public.produto_templates ADD COLUMN IF NOT EXISTS ordem integer DEFAULT 0;

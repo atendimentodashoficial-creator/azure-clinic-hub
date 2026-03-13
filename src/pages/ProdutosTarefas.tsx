@@ -515,7 +515,7 @@ function ProdutoDialog({
 // ─── Main page ───
 export default function ProdutosTarefas() {
   const { data: templates = [], isLoading } = useProdutoTemplates();
-  const { excluirTemplate } = useProdutoTemplateMutations();
+  const { excluirTemplate, reordenarTemplates } = useProdutoTemplateMutations();
   const [dialogState, setDialogState] = useState<{ mode: "create" | "edit"; template?: ProdutoTemplate } | null>(null);
   const [atribuirTemplate, setAtribuirTemplate] = useState<ProdutoTemplate | null>(null);
   const [busca, setBusca] = useState("");
@@ -530,6 +530,21 @@ export default function ProdutosTarefas() {
       onSuccess: () => toast.success("Produto removido"),
       onError: (e: any) => toast.error(e.message),
     });
+  };
+
+  const productSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const handleProductDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = filtrados.findIndex(t => t.id === active.id);
+    const newIndex = filtrados.findIndex(t => t.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(filtrados, oldIndex, newIndex);
+    const updates = reordered.map((t, i) => ({ id: t.id, ordem: i }));
+    reordenarTemplates.mutate(updates);
   };
 
   if (isLoading) {
@@ -556,18 +571,22 @@ export default function ProdutosTarefas() {
       {filtrados.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">Nenhum produto cadastrado</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtrados.map(template => (
-            <ProdutoCard
-              key={template.id}
-              template={template}
-              onEdit={() => setDialogState({ mode: "edit", template })}
-              onDelete={() => handleExcluir(template.id)}
-              onAtribuir={() => setAtribuirTemplate(template)}
-              onDuplicar={() => {}}
-            />
-          ))}
-        </div>
+        <DndContext sensors={productSensors} collisionDetection={closestCenter} onDragEnd={handleProductDragEnd}>
+          <SortableContext items={filtrados.map(t => t.id)} strategy={verticalListSortingStrategy}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtrados.map(template => (
+                <SortableProdutoCard
+                  key={template.id}
+                  template={template}
+                  onEdit={() => setDialogState({ mode: "edit", template })}
+                  onDelete={() => handleExcluir(template.id)}
+                  onAtribuir={() => setAtribuirTemplate(template)}
+                  onDuplicar={() => {}}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {dialogState && (
@@ -607,6 +626,28 @@ function ProdutoDialogEditWrapper({ template, onClose }: { template: ProdutoTemp
   );
 }
 
+// ─── Sortable Product card wrapper ───
+function SortableProdutoCard(props: {
+  template: ProdutoTemplate;
+  onEdit: () => void;
+  onDelete: () => void;
+  onAtribuir?: () => void;
+  onDuplicar?: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.template.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <ProdutoCard {...props} dragHandleProps={{ ...attributes, ...listeners }} />
+    </div>
+  );
+}
+
 // ─── Product card ───
 function ProdutoCard({
   template,
@@ -614,12 +655,14 @@ function ProdutoCard({
   onDelete,
   onAtribuir,
   onDuplicar,
+  dragHandleProps,
 }: {
   template: ProdutoTemplate;
   onEdit: () => void;
   onDelete: () => void;
   onAtribuir?: () => void;
   onDuplicar?: () => void;
+  dragHandleProps?: Record<string, any>;
 }) {
   const { data: tarefas = [] } = useProdutoTemplateTarefas(template.id);
   const MAX_VISIBLE = 3;
@@ -628,11 +671,18 @@ function ProdutoCard({
 
   return (
     <Card className="p-4 flex flex-col gap-3 hover:bg-accent/30 transition-colors">
-      <div>
-        <p className="font-semibold text-sm">{template.nome}</p>
-        {template.descricao && (
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.descricao}</p>
+      <div className="flex items-start gap-2">
+        {dragHandleProps && (
+          <button type="button" {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none mt-0.5">
+            <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+          </button>
         )}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm">{template.nome}</p>
+          {template.descricao && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.descricao}</p>
+          )}
+        </div>
       </div>
 
       {tarefas.length > 0 && (
