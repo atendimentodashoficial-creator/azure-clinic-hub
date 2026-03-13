@@ -251,19 +251,25 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                           </Button>
                         </div>
                         {/* Show mockup statuses */}
-                        <div className="flex flex-wrap gap-1.5 mt-1">
+                        <div className="space-y-1.5 mt-1">
                           {mockups.map((m, i) => (
-                            <Badge
-                              key={m.id}
-                              variant="outline"
-                              className={cn("text-[10px]",
-                                m.status === "aprovado" ? "border-emerald-500 text-emerald-400" :
-                                m.status === "reprovado" ? "border-red-500 text-red-400" :
-                                "border-muted-foreground/30 text-muted-foreground"
+                            <div key={m.id} className="space-y-1">
+                              <Badge
+                                variant="outline"
+                                className={cn("text-[10px]",
+                                  m.status === "aprovado" ? "border-emerald-500 text-emerald-400" :
+                                  m.status === "reprovado" ? "border-red-500 text-red-400" :
+                                  "border-muted-foreground/30 text-muted-foreground"
+                                )}
+                              >
+                                Slide {i + 1}: {m.status === "aprovado" ? "Aprovado" : m.status === "reprovado" ? "Reprovado" : "Pendente"}
+                              </Badge>
+                              {m.status === "reprovado" && m.feedback && (
+                                <p className="text-[11px] text-red-400 bg-red-500/10 rounded px-2 py-1 ml-1">
+                                  💬 {m.feedback}
+                                </p>
                               )}
-                            >
-                              Slide {i + 1}: {m.status === "aprovado" ? "Aprovado" : m.status === "reprovado" ? "Reprovado" : "Pendente"}
-                            </Badge>
+                            </div>
                           ))}
                         </div>
                       </div>
