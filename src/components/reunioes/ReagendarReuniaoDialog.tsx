@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
@@ -237,7 +237,7 @@ export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: Reagenda
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col min-h-0 overflow-hidden">
         <DialogHeader>
           <DialogTitle>Reagendar Reunião</DialogTitle>
           <p className="text-sm text-muted-foreground">
@@ -245,7 +245,7 @@ export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: Reagenda
           </p>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col space-y-5 pr-1">
           {/* Date & interval options */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -279,7 +279,7 @@ export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: Reagenda
                 Selecione Profissional e Horário
               </Label>
 
-              <ScrollArea className="max-h-[300px]">
+              <div className="h-[300px] overflow-y-auto pr-1">
                 <div className="space-y-3">
                   {allMembers.map(member => {
                     const slots = memberSlots[member.id] || [];
@@ -333,7 +333,7 @@ export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: Reagenda
                     </p>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           )}
         </div>
