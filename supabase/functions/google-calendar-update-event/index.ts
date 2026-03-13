@@ -100,14 +100,22 @@ serve(async (req) => {
     // Increment numero_reagendamentos
     const newNumeroReagendamentos = (reuniao.numero_reagendamentos || 0) + 1;
 
-    // Build update payload - include profissional_id if provided
+    // Build update payload - only include profissional_id if it exists in profissionais table
     const updatePayload: Record<string, unknown> = {
       data_reuniao: startDate.toISOString(),
       status: "agendado",
       numero_reagendamentos: newNumeroReagendamentos,
     };
-    if (profissionalId !== undefined) {
-      updatePayload.profissional_id = profissionalId;
+    if (profissionalId) {
+      // Verify it's a valid profissional before setting
+      const { data: validProf } = await supabase
+        .from("profissionais")
+        .select("id")
+        .eq("id", profissionalId)
+        .maybeSingle();
+      if (validProf) {
+        updatePayload.profissional_id = profissionalId;
+      }
     }
 
     // Helper function to trigger rescheduling notifications in background (non-blocking)
