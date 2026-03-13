@@ -63,6 +63,7 @@ export default function Reunioes() {
   const { membros } = useTarefasMembros();
   const [selectedMemberId, setSelectedMemberId] = useState<string>("todos");
   const [syncing, setSyncing] = useState(false);
+  const periodFilter = useReunioesPeriodFilter();
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
   const [activeTab, setActiveTab] = useState("reunioes");
   const [vincularDialogOpen, setVincularDialogOpen] = useState(false);
