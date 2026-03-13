@@ -32,7 +32,7 @@ interface VincularTranscricaoDialogProps {
   transcricaoAtual?: TranscricaoAtual | null;
 }
 
-interface ReuniaoFireflies {
+interface ReuniaoTranscricao {
   id: string;
   fireflies_id: string;
   titulo: string;
