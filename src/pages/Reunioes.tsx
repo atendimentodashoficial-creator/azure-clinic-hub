@@ -316,6 +316,10 @@ export default function Reunioes() {
             <Bell className="h-3.5 w-3.5" />
             Avisos
           </TabsTrigger>
+          <TabsTrigger value="escalas" className="gap-1.5 text-xs px-3 h-7">
+            <CalendarClock className="h-3.5 w-3.5" />
+            Escalas
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
