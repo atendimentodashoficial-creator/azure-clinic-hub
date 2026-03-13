@@ -14,6 +14,7 @@ interface MockupData {
   mockup_id: string;
   tarefa_id: string;
   ordem: number;
+  post_index: number;
   subtitulo: string;
   titulo: string;
   legenda: string;
@@ -25,13 +26,25 @@ interface MockupData {
   cliente_empresa: string;
 }
 
+interface PostForApproval {
+  postIndex: number;
+  mockups: MockupData[];
+  status: string; // derived: all same = that status, mixed = "pendente"
+}
+
+function derivePostStatus(mockups: MockupData[]): string {
+  const statuses = new Set(mockups.map(m => m.status));
+  if (statuses.size === 1) return mockups[0].status;
+  return "pendente";
+}
+
 export default function AprovacaoMockup() {
   const { token } = useParams<{ token: string }>();
   const [mockups, setMockups] = useState<MockupData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [feedbacks, setFeedbacks] = useState<Record<string, string>>({});
+  const [currentPostIdx, setCurrentPostIdx] = useState(0);
+  const [feedbacks, setFeedbacks] = useState<Record<number, string>>({}); // keyed by postIndex
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -46,10 +59,16 @@ export default function AprovacaoMockup() {
       setLoading(true);
       const { data, error: err } = await supabase.rpc("get_mockups_by_approval_token", { p_token: token! });
       if (err) throw err;
-      setMockups(data || []);
-      const fb: Record<string, string> = {};
-      (data || []).forEach((m: MockupData) => {
-        if (m.feedback) fb[m.mockup_id] = m.feedback;
+      const raw = (data || []) as MockupData[];
+      // Add default post_index for legacy data
+      const withPostIndex = raw.map(m => ({ ...m, post_index: (m as any).post_index ?? 0 }));
+      setMockups(withPostIndex);
+      // Load feedbacks per post
+      const fb: Record<number, string> = {};
+      const grouped = groupByPost(withPostIndex);
+      grouped.forEach(post => {
+        const existingFeedback = post.mockups.find(m => m.feedback)?.feedback;
+        if (existingFeedback) fb[post.postIndex] = existingFeedback;
       });
       setFeedbacks(fb);
     } catch (e: any) {
@@ -59,46 +78,57 @@ export default function AprovacaoMockup() {
     }
   };
 
-  const advanceToNext = () => {
-    // Find next undecided item after current
-    const nextUndecided = mockups.findIndex((m, i) => i > currentIndex && m.status === "pendente");
-    if (nextUndecided !== -1) {
-      setCurrentIndex(nextUndecided);
-    } else {
-      // Try from beginning
-      const firstUndecided = mockups.findIndex(m => m.status === "pendente");
-      if (firstUndecided !== -1 && firstUndecided !== currentIndex) {
-        setCurrentIndex(firstUndecided);
-      }
-      // If none left, stay on current (all decided)
-    }
+  const groupByPost = (data: MockupData[]): PostForApproval[] => {
+    const map = new Map<number, MockupData[]>();
+    data.forEach(m => {
+      const pi = m.post_index ?? 0;
+      if (!map.has(pi)) map.set(pi, []);
+      map.get(pi)!.push(m);
+    });
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([postIndex, mocks]) => ({
+        postIndex,
+        mockups: mocks.sort((a, b) => a.ordem - b.ordem),
+        status: derivePostStatus(mocks),
+      }));
   };
 
-  const handleApprove = async (mockupId: string) => {
+  const posts = groupByPost(mockups);
+  const currentPost = posts[currentPostIdx];
+
+  const handleApprovePost = async () => {
+    if (!currentPost) return;
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_mockup_approval", {
-        p_token: token!,
-        p_mockup_id: mockupId,
-        p_status: "aprovado",
-        p_feedback: feedbacks[mockupId] || null,
-      });
-      if (err) throw err;
+      for (const m of currentPost.mockups) {
+        const { error: err } = await supabase.rpc("update_mockup_approval", {
+          p_token: token!,
+          p_mockup_id: m.mockup_id,
+          p_status: "aprovado",
+          p_feedback: feedbacks[currentPost.postIndex] || null,
+        });
+        if (err) throw err;
+      }
       setMockups(prev => {
-        const updated = prev.map(m => m.mockup_id === mockupId ? { ...m, status: "aprovado", feedback: feedbacks[mockupId] || null } : m);
-        // Schedule advance after state update
+        const updated = prev.map(m =>
+          currentPost.mockups.some(cm => cm.mockup_id === m.mockup_id)
+            ? { ...m, status: "aprovado", feedback: feedbacks[currentPost.postIndex] || null }
+            : m
+        );
+        // Auto-advance to next undecided post
         setTimeout(() => {
-          const nextUndecided = updated.findIndex((m, i) => i > currentIndex && m.status === "pendente");
-          if (nextUndecided !== -1) {
-            setCurrentIndex(nextUndecided);
-          } else {
-            const first = updated.findIndex(m => m.status === "pendente");
-            if (first !== -1) setCurrentIndex(first);
+          const nextPosts = groupByPost(updated);
+          const nextUndecided = nextPosts.findIndex((p, i) => i > currentPostIdx && p.status === "pendente");
+          if (nextUndecided !== -1) setCurrentPostIdx(nextUndecided);
+          else {
+            const first = nextPosts.findIndex(p => p.status === "pendente");
+            if (first !== -1) setCurrentPostIdx(first);
           }
         }, 300);
         return updated;
       });
-      toast.success("Mockup aprovado!");
+      toast.success("Post aprovado!");
     } catch {
       toast.error("Erro ao aprovar");
     } finally {
@@ -106,34 +136,41 @@ export default function AprovacaoMockup() {
     }
   };
 
-  const handleReject = async (mockupId: string) => {
-    if (!feedbacks[mockupId]?.trim()) {
+  const handleRejectPost = async () => {
+    if (!currentPost) return;
+    if (!feedbacks[currentPost.postIndex]?.trim()) {
       toast.error("Por favor, adicione um feedback antes de reprovar.");
       return;
     }
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_mockup_approval", {
-        p_token: token!,
-        p_mockup_id: mockupId,
-        p_status: "reprovado",
-        p_feedback: feedbacks[mockupId],
-      });
-      if (err) throw err;
+      for (const m of currentPost.mockups) {
+        const { error: err } = await supabase.rpc("update_mockup_approval", {
+          p_token: token!,
+          p_mockup_id: m.mockup_id,
+          p_status: "reprovado",
+          p_feedback: feedbacks[currentPost.postIndex],
+        });
+        if (err) throw err;
+      }
       setMockups(prev => {
-        const updated = prev.map(m => m.mockup_id === mockupId ? { ...m, status: "reprovado", feedback: feedbacks[mockupId] } : m);
+        const updated = prev.map(m =>
+          currentPost.mockups.some(cm => cm.mockup_id === m.mockup_id)
+            ? { ...m, status: "reprovado", feedback: feedbacks[currentPost.postIndex] }
+            : m
+        );
         setTimeout(() => {
-          const nextUndecided = updated.findIndex((m, i) => i > currentIndex && m.status === "pendente");
-          if (nextUndecided !== -1) {
-            setCurrentIndex(nextUndecided);
-          } else {
-            const first = updated.findIndex(m => m.status === "pendente");
-            if (first !== -1) setCurrentIndex(first);
+          const nextPosts = groupByPost(updated);
+          const nextUndecided = nextPosts.findIndex((p, i) => i > currentPostIdx && p.status === "pendente");
+          if (nextUndecided !== -1) setCurrentPostIdx(nextUndecided);
+          else {
+            const first = nextPosts.findIndex(p => p.status === "pendente");
+            if (first !== -1) setCurrentPostIdx(first);
           }
         }, 300);
         return updated;
       });
-      toast.success("Mockup reprovado com feedback.");
+      toast.success("Post reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
     } finally {
@@ -163,7 +200,7 @@ export default function AprovacaoMockup() {
     );
   }
 
-  if (error || mockups.length === 0) {
+  if (error || posts.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="p-8 text-center max-w-md">
@@ -176,7 +213,6 @@ export default function AprovacaoMockup() {
     );
   }
 
-  const currentMockup = mockups[currentIndex];
   const tarefaTitulo = mockups[0]?.tarefa_titulo || "Tarefa";
   const clienteNome = mockups[0]?.cliente_nome || "perfil";
   const clienteEmpresa = mockups[0]?.cliente_empresa || "";
@@ -193,7 +229,18 @@ export default function AprovacaoMockup() {
     return "Pendente";
   };
 
-  const allDecided = mockups.every(m => m.status === "aprovado" || m.status === "reprovado");
+  const allDecided = posts.every(p => p.status === "aprovado" || p.status === "reprovado");
+  const isCarousel = currentPost && currentPost.mockups.length > 1;
+
+  const previewSlides: MockupSlide[] = currentPost
+    ? currentPost.mockups.map(m => ({
+        ordem: m.ordem,
+        subtitulo: m.subtitulo || "",
+        titulo: m.titulo || "",
+        legenda: m.legenda || "",
+        cta: m.cta || "",
+      }))
+    : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -201,105 +248,108 @@ export default function AprovacaoMockup() {
         {/* Header */}
         <div className="text-center space-y-1">
           <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
-          <p className="text-sm text-muted-foreground">Aprovação de Mockups • {clienteNome}</p>
+          <p className="text-sm text-muted-foreground">Aprovação de Posts • {clienteNome}</p>
         </div>
 
-        {/* Status overview */}
+        {/* Status overview - one circle per post */}
         <div className="flex items-center justify-center gap-2 flex-wrap">
-          {mockups.map((m, i) => (
+          {posts.map((p, i) => (
             <button
-              key={m.mockup_id}
-              onClick={() => setCurrentIndex(i)}
+              key={p.postIndex}
+              onClick={() => setCurrentPostIdx(i)}
               className={cn(
                 "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
-                i === currentIndex ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
-                m.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
-                m.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
+                i === currentPostIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                p.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
+                p.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
                 "bg-muted border-muted-foreground/30 text-muted-foreground"
               )}
             >
-              {m.ordem + 1}
+              {i + 1}
             </button>
           ))}
         </div>
 
-        {/* Current mockup preview */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={currentIndex === 0}
-              onClick={() => setCurrentIndex(i => i - 1)}
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-            </Button>
-            <Badge className={cn("border-0", statusColor(currentMockup.status))}>
-              {statusLabel(currentMockup.status)}
-            </Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={currentIndex === mockups.length - 1}
-              onClick={() => setCurrentIndex(i => i + 1)}
-            >
-              Próximo <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-
-          <MockupPreview
-            slides={[{
-              ordem: currentMockup.ordem,
-              subtitulo: currentMockup.subtitulo || "",
-              titulo: currentMockup.titulo || "",
-              legenda: currentMockup.legenda || "",
-              cta: currentMockup.cta || "",
-            }]}
-            perfilNome={clienteNome}
-            perfilCategoria={clienteEmpresa}
-          />
-
-          {/* Individual feedback + actions */}
-          {!allDecided && (
-            <Card className="p-4 space-y-3">
-              <Textarea
-                placeholder="Feedback para este slide (obrigatório para reprovar)..."
-                value={feedbacks[currentMockup.mockup_id] || ""}
-                onChange={e => setFeedbacks(prev => ({ ...prev, [currentMockup.mockup_id]: e.target.value }))}
-                rows={2}
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => handleApprove(currentMockup.mockup_id)}
-                  disabled={submitting || currentMockup.status === "aprovado"}
-                  className="flex-1 gap-1.5"
-                  variant={currentMockup.status === "aprovado" ? "secondary" : "default"}
-                >
-                  <Check className="w-4 h-4" />
-                  {currentMockup.status === "aprovado" ? "Aprovado" : "Aprovar"}
-                </Button>
-                <Button
-                  onClick={() => handleReject(currentMockup.mockup_id)}
-                  disabled={submitting || currentMockup.status === "reprovado"}
-                  variant="destructive"
-                  className="flex-1 gap-1.5"
-                >
-                  <X className="w-4 h-4" />
-                  {currentMockup.status === "reprovado" ? "Reprovado" : "Reprovar"}
-                </Button>
+        {/* Current post preview */}
+        {currentPost && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={currentPostIdx === 0}
+                onClick={() => setCurrentPostIdx(i => i - 1)}
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+              </Button>
+              <div className="flex items-center gap-2">
+                <Badge className={cn("border-0", statusColor(currentPost.status))}>
+                  {statusLabel(currentPost.status)}
+                </Badge>
+                {isCarousel && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    Carrossel ({currentPost.mockups.length} slides)
+                  </Badge>
+                )}
               </div>
-            </Card>
-          )}
-        </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={currentPostIdx === posts.length - 1}
+                onClick={() => setCurrentPostIdx(i => i + 1)}
+              >
+                Próximo <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+
+            <MockupPreview
+              slides={previewSlides}
+              perfilNome={clienteNome}
+              perfilCategoria={clienteEmpresa}
+            />
+
+            {/* Feedback + actions */}
+            {!allDecided && (
+              <Card className="p-4 space-y-3">
+                <Textarea
+                  placeholder="Feedback para este post (obrigatório para reprovar)..."
+                  value={feedbacks[currentPost.postIndex] || ""}
+                  onChange={e => setFeedbacks(prev => ({ ...prev, [currentPost.postIndex]: e.target.value }))}
+                  rows={2}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleApprovePost}
+                    disabled={submitting || currentPost.status === "aprovado"}
+                    className="flex-1 gap-1.5"
+                    variant={currentPost.status === "aprovado" ? "secondary" : "default"}
+                  >
+                    <Check className="w-4 h-4" />
+                    {currentPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                  </Button>
+                  <Button
+                    onClick={handleRejectPost}
+                    disabled={submitting || currentPost.status === "reprovado"}
+                    variant="destructive"
+                    className="flex-1 gap-1.5"
+                  >
+                    <X className="w-4 h-4" />
+                    {currentPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
 
         {allDecided && (
           <Card className="p-5 space-y-4 text-center border-primary/30">
             <p className="text-sm font-medium text-foreground">
-              Todos os itens foram revisados!
+              Todos os posts foram revisados!
             </p>
             <div className="flex flex-col items-center gap-2">
               <p className="text-xs text-muted-foreground">
-                {mockups.filter(m => m.status === "aprovado").length} aprovado(s) • {mockups.filter(m => m.status === "reprovado").length} reprovado(s)
+                {posts.filter(p => p.status === "aprovado").length} aprovado(s) • {posts.filter(p => p.status === "reprovado").length} reprovado(s)
               </p>
               <Button
                 onClick={() => setSubmitted(true)}
