@@ -122,7 +122,7 @@ serve(async (req) => {
           token_expires_at: expiresAt,
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", user.id);
+        .eq("user_id", config.user_id);
     }
 
     // Calculate start and end times
