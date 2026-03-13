@@ -53,16 +53,16 @@ export function VincularTranscricaoDialog({
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
-  // Buscar reuniões do Fireflies que têm transcrição (sem google_event_id = apenas Fireflies)
-  const { data: reunioesFireflies, isLoading } = useQuery({
-    queryKey: ["reunioes-fireflies", user?.id, search],
+  // Buscar reuniões que têm transcrição (importadas do Google Meet via Drive)
+  const { data: reunioesComTranscricao, isLoading } = useQuery({
+    queryKey: ["reunioes-transcricoes", user?.id, search],
     queryFn: async () => {
       let query = supabase
         .from("reunioes" as any)
         .select("id, fireflies_id, titulo, data_reuniao, duracao_minutos, transcricao, resumo_ia")
         .not("fireflies_id", "is", null)
         .not("transcricao", "is", null)
-        .is("google_event_id", null) // Apenas reuniões só do Fireflies
+        .is("google_event_id", null)
         .order("data_reuniao", { ascending: false });
 
       if (search.trim()) {
@@ -71,7 +71,7 @@ export function VincularTranscricaoDialog({
 
       const { data, error } = await query.limit(50);
       if (error) throw error;
-      return (data || []) as unknown as ReuniaoFireflies[];
+      return (data || []) as unknown as ReuniaoTranscricao[];
     },
     enabled: !!user?.id && open,
   });
