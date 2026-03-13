@@ -476,6 +476,7 @@ export default function Tarefas() {
                         colunas={colunas}
                         clientes={clientes}
                         membrosNomes={membrosNomes}
+                        reunioesMap={reunioesMap}
                         onDelete={handleExcluir}
                       />
                     ))}
