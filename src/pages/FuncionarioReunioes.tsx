@@ -64,6 +64,7 @@ export default function FuncionarioReunioes() {
   const { ownerId } = useOwnerId();
   const queryClient = useQueryClient();
   const periodFilter = useReunioesPeriodFilter();
+  const [syncing, setSyncing] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string>("todos");
   const [activeTab, setActiveTab] = useState("reunioes");
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
