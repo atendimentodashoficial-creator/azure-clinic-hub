@@ -58,6 +58,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const coluna = tarefa ? colunas.find(c => c.id === tarefa.coluna_id) : null;
 
   // Load existing mockups or initialize with required count
+  const mockupsKey = mockups.map(m => m.id).join(",");
   useEffect(() => {
     if (mockups.length > 0) {
       setMockupSlides(mockups.map(m => ({
@@ -68,13 +69,14 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         legenda: m.legenda || "",
         cta: m.cta || "",
       })));
-    } else {
+    } else if (hasMockup) {
       const count = mockupLimit > 0 ? mockupLimit : 1;
       setMockupSlides(
         Array.from({ length: count }, (_, i) => ({ ordem: i, subtitulo: "", titulo: "", legenda: "", cta: "" }))
       );
     }
-  }, [mockups, mockupLimit]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mockupsKey, mockupLimit, hasMockup]);
 
   const handleSaveMockups = async () => {
     try {
