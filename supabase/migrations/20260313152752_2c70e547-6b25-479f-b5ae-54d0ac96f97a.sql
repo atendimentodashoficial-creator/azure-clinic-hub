@@ -1,0 +1,1 @@
+ALTER TABLE public.avisos_reuniao ADD COLUMN tipo_reuniao_id uuid REFERENCES public.tipos_reuniao(id) ON DELETE SET NULL DEFAULT NULL;

@@ -773,6 +773,7 @@ export type Database = {
           nome: string
           procedimento_id: string | null
           tipo_gatilho: string
+          tipo_reuniao_id: string | null
           updated_at: string
           user_id: string
         }
@@ -796,6 +797,7 @@ export type Database = {
           nome: string
           procedimento_id?: string | null
           tipo_gatilho?: string
+          tipo_reuniao_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -819,6 +821,7 @@ export type Database = {
           nome?: string
           procedimento_id?: string | null
           tipo_gatilho?: string
+          tipo_reuniao_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -835,6 +838,13 @@ export type Database = {
             columns: ["procedimento_id"]
             isOneToOne: false
             referencedRelation: "procedimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avisos_reuniao_tipo_reuniao_id_fkey"
+            columns: ["tipo_reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_reuniao"
             referencedColumns: ["id"]
           },
         ]

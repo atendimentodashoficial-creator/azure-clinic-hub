@@ -285,6 +285,20 @@ serve(async (req) => {
       );
     }
 
+    // Filter avisos by tipo_reuniao_id if specified
+    const filteredAvisos = avisos.filter((aviso: any) => {
+      if (!aviso.tipo_reuniao_id) return true; // no filter = matches all
+      return aviso.tipo_reuniao_id === reuniao.tipo_reuniao_id;
+    });
+
+    if (filteredAvisos.length === 0) {
+      console.log(`No matching notifications for reuniao type ${reuniao.tipo_reuniao_id}`);
+      return new Response(
+        JSON.stringify({ success: true, message: "Nenhum aviso configurado para este tipo de reunião", sent: 0 }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Pick instance: prefer the one from the client's chat history (same instance they were chatting with)
     let instancia: InstanciaConfig | null = null;
     
@@ -441,7 +455,7 @@ serve(async (req) => {
           success: false,
           error: "Instância WhatsApp desconectada. Reconecte em Conexões → Disparos (QR Code).",
           sent: 0,
-          total: avisos.length,
+          total: filteredAvisos.length,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -457,7 +471,7 @@ serve(async (req) => {
       .eq("user_id", resolvedUserId)
       .eq("is_active", true);
 
-    for (const aviso of avisos) {
+    for (const aviso of filteredAvisos) {
       try {
         // Resolve instance: use aviso's fixed instancia_id if set, otherwise use the one from chat history
         let avisoBaseUrl = baseUrl;

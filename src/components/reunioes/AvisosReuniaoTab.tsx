@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useProcedimentos } from "@/hooks/useProcedimentos";
+import { useTiposReuniao } from "@/hooks/useTiposReuniao";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -78,6 +79,7 @@ interface AvisoReuniao {
   intervalo_max: number;
   procedimento_id: string | null;
   instancia_id: string | null;
+  tipo_reuniao_id: string | null;
   tipo_gatilho: string;
   audio_url: string | null;
   audio_posicao: string | null;
@@ -118,6 +120,7 @@ export function AvisosReuniaoTab() {
   const [formAtivo, setFormAtivo] = useState(true);
   const [formProcedimentoId, setFormProcedimentoId] = useState<string | null>(null);
   const [formInstanciaId, setFormInstanciaId] = useState<string | null>(null);
+  const [formTipoReuniaoId, setFormTipoReuniaoId] = useState<string | null>(null);
   const [formTipoGatilho, setFormTipoGatilho] = useState<"dias_antes" | "imediato" | "reagendamento">("dias_antes");
   const [formAudioUrl, setFormAudioUrl] = useState<string | null>(null);
   const [formAudioPosicao, setFormAudioPosicao] = useState<"antes" | "depois">("antes");
@@ -127,6 +130,7 @@ export function AvisosReuniaoTab() {
   const audioInputRef = useRef<HTMLInputElement>(null);
 
   const { data: procedimentos } = useProcedimentos();
+  const { data: tiposReuniao } = useTiposReuniao();
 
   // Próximas reuniões (próximos 7 dias)
   const proximasReunioes = useMemo(() => {
@@ -216,6 +220,7 @@ export function AvisosReuniaoTab() {
     setFormAtivo(true);
     setFormProcedimentoId(null);
     setFormInstanciaId(null);
+    setFormTipoReuniaoId(null);
     setFormTipoGatilho("dias_antes");
     setFormAudioUrl(null);
     setFormAudioPosicao("antes");
@@ -260,6 +265,7 @@ export function AvisosReuniaoTab() {
     setFormAtivo(aviso.ativo);
     setFormProcedimentoId(aviso.procedimento_id || null);
     setFormInstanciaId(aviso.instancia_id || null);
+    setFormTipoReuniaoId(aviso.tipo_reuniao_id || null);
     setFormAudioUrl(aviso.audio_url || null);
     setFormAudioPosicao((aviso.audio_posicao as "antes" | "depois") || "antes");
     setFormLinkCalendarioAtivo(aviso.link_calendario_ativo || false);
@@ -331,6 +337,7 @@ export function AvisosReuniaoTab() {
             next_check_at: nextCheckAt,
             procedimento_id: formProcedimentoId,
             instancia_id: formInstanciaId,
+            tipo_reuniao_id: formTipoReuniaoId,
             tipo_gatilho: tipoGatilhoToSave,
             audio_url: formAudioUrl,
             audio_posicao: formAudioPosicao,
@@ -357,6 +364,7 @@ export function AvisosReuniaoTab() {
             next_check_at: nextCheckAt,
             procedimento_id: formProcedimentoId,
             instancia_id: formInstanciaId,
+            tipo_reuniao_id: formTipoReuniaoId,
             tipo_gatilho: tipoGatilhoToSave,
             audio_url: formAudioUrl,
             audio_posicao: formAudioPosicao,
@@ -519,6 +527,16 @@ export function AvisosReuniaoTab() {
                       </div>
                     )}
 
+                    {/* Tipo de reunião se especificado */}
+                    {aviso.tipo_reuniao_id && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Video className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">
+                          {tiposReuniao?.find(t => t.id === aviso.tipo_reuniao_id)?.nome || "Tipo específico"}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Instância configurada */}
                     {aviso.instancia_id && (
                       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -613,6 +631,16 @@ export function AvisosReuniaoTab() {
                         <FileText className="h-3.5 w-3.5 flex-shrink-0" />
                         <span className="truncate">
                           {procedimentos?.find(p => p.id === aviso.procedimento_id)?.nome || "Específico"}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Tipo de reunião se especificado */}
+                    {aviso.tipo_reuniao_id && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Video className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">
+                          {tiposReuniao?.find(t => t.id === aviso.tipo_reuniao_id)?.nome || "Tipo específico"}
                         </span>
                       </div>
                     )}
@@ -732,6 +760,16 @@ export function AvisosReuniaoTab() {
                         <FileText className="h-3.5 w-3.5 flex-shrink-0" />
                         <span className="truncate">
                           {procedimentos?.find(p => p.id === aviso.procedimento_id)?.nome || "Específico"}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Tipo de reunião se especificado */}
+                    {aviso.tipo_reuniao_id && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Video className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">
+                          {tiposReuniao?.find(t => t.id === aviso.tipo_reuniao_id)?.nome || "Tipo específico"}
                         </span>
                       </div>
                     )}
@@ -955,6 +993,33 @@ export function AvisosReuniaoTab() {
                   : formTipoGatilho === 'reagendamento'
                     ? 'Aviso será enviado automaticamente quando uma reunião for reagendada'
                     : 'Aviso será enviado X dias antes da reunião'}
+              </p>
+            </div>
+
+            {/* Tipo de reunião */}
+            <div className="space-y-2">
+              <Label>Tipo de reunião (opcional)</Label>
+              <Select
+                value={formTipoReuniaoId || "todos"}
+                onValueChange={(v) => setFormTipoReuniaoId(v === "todos" ? null : v)}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Todos os tipos" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  <SelectItem value="todos">Todos os tipos</SelectItem>
+                  {tiposReuniao?.filter(t => t.ativo).map(tipo => (
+                    <SelectItem key={tipo.id} value={tipo.id}>
+                      <div className="flex items-center gap-2">
+                        <Video className="h-4 w-4" />
+                        <span>{tipo.nome}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Filtre para enviar este aviso apenas para reuniões de um tipo específico
               </p>
             </div>
 
