@@ -51,6 +51,22 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     { ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" },
   ]);
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const { data: revisoes = [] } = useQuery({
+    queryKey: ["tarefa-revisoes", tarefa?.id],
+    queryFn: async () => {
+      if (!tarefa?.id) return [];
+      const { data, error } = await supabase
+        .from("tarefa_revisoes")
+        .select("*")
+        .eq("tarefa_id", tarefa.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as { id: string; slide_ordem: number; feedback: string | null; status: string; created_at: string }[];
+    },
+    enabled: !!tarefa?.id,
+  });
 
   const tipoTarefa = tarefa?.tipo_tarefa_id ? tipos.find(t => t.id === tarefa.tipo_tarefa_id) : null;
   const hasMockup = tipoTarefa?.tipos_arquivo_permitidos?.includes("mockup");
