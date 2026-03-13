@@ -7,6 +7,7 @@ export interface TipoReuniao {
   user_id: string;
   nome: string;
   descricao: string | null;
+  duracao_minutos: number;
   ativo: boolean;
   created_at: string;
   updated_at: string;
@@ -61,11 +62,11 @@ export function useTiposReuniaoMutations() {
   const ownerId = useOwnerId();
 
   const criarTipo = useMutation({
-    mutationFn: async (data: { nome: string; descricao?: string }) => {
+    mutationFn: async (data: { nome: string; descricao?: string; duracao_minutos?: number }) => {
       if (!ownerId) throw new Error("Usuário não identificado");
       const { data: created, error } = await supabase
         .from("tipos_reuniao" as any)
-        .insert({ user_id: ownerId, nome: data.nome, descricao: data.descricao || null })
+        .insert({ user_id: ownerId, nome: data.nome, descricao: data.descricao || null, duracao_minutos: data.duracao_minutos ?? 60 })
         .select()
         .single();
       if (error) throw error;
@@ -75,10 +76,12 @@ export function useTiposReuniaoMutations() {
   });
 
   const atualizarTipo = useMutation({
-    mutationFn: async (data: { id: string; nome: string; descricao?: string | null; ativo?: boolean }) => {
+    mutationFn: async (data: { id: string; nome: string; descricao?: string | null; duracao_minutos?: number; ativo?: boolean }) => {
+      const updateData: any = { nome: data.nome, descricao: data.descricao, ativo: data.ativo, updated_at: new Date().toISOString() };
+      if (data.duracao_minutos !== undefined) updateData.duracao_minutos = data.duracao_minutos;
       const { error } = await supabase
         .from("tipos_reuniao" as any)
-        .update({ nome: data.nome, descricao: data.descricao, ativo: data.ativo, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq("id", data.id);
       if (error) throw error;
     },

@@ -42,6 +42,7 @@ export function TiposReuniaoConfig() {
   // Form state
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [duracaoMinutos, setDuracaoMinutos] = useState(60);
   const [selectedMembros, setSelectedMembros] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -52,9 +53,11 @@ export function TiposReuniaoConfig() {
     if (editando) {
       setNome(editando.nome);
       setDescricao(editando.descricao || "");
+      setDuracaoMinutos(editando.duracao_minutos || 60);
     } else {
       setNome("");
       setDescricao("");
+      setDuracaoMinutos(60);
       setSelectedMembros([]);
     }
   }, [editando]);
@@ -75,6 +78,7 @@ export function TiposReuniaoConfig() {
     setEditando(null);
     setNome("");
     setDescricao("");
+    setDuracaoMinutos(60);
     setSelectedMembros([]);
   };
 
@@ -87,10 +91,10 @@ export function TiposReuniaoConfig() {
     try {
       let tipoId: string;
       if (editando) {
-        await atualizarTipo.mutateAsync({ id: editando.id, nome: nome.trim(), descricao: descricao.trim() || null });
+        await atualizarTipo.mutateAsync({ id: editando.id, nome: nome.trim(), descricao: descricao.trim() || null, duracao_minutos: duracaoMinutos });
         tipoId = editando.id;
       } else {
-        const created = await criarTipo.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined });
+        const created = await criarTipo.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined, duracao_minutos: duracaoMinutos });
         tipoId = created.id;
       }
       await setMembros.mutateAsync({ tipoId, membroIds: selectedMembros });
@@ -193,6 +197,12 @@ export function TiposReuniaoConfig() {
               <Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Descreva o tipo de reunião..." rows={2} />
             </div>
 
+            <div className="space-y-2">
+              <Label>Duração padrão (minutos)</Label>
+              <Input type="number" min={15} step={15} value={duracaoMinutos} onChange={e => setDuracaoMinutos(Number(e.target.value))} placeholder="60" />
+              <p className="text-xs text-muted-foreground">Essa duração será preenchida automaticamente ao agendar, mas poderá ser alterada.</p>
+            </div>
+
             <div className="space-y-3">
               <Label className="flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
@@ -267,6 +277,7 @@ function TipoReuniaoCard({ tipo, membros, onEdit, onDelete, onToggleAtivo }: {
             {!tipo.ativo && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
           </div>
           {tipo.descricao && <p className="text-xs text-muted-foreground mb-1">{tipo.descricao}</p>}
+          <p className="text-xs text-muted-foreground mb-1">Duração: {tipo.duracao_minutos} min</p>
           {membroNomes.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {membroNomes.map((n, i) => (

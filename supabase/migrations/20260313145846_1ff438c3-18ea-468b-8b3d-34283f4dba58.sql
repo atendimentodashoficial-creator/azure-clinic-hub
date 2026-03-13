@@ -1,0 +1,1 @@
+ALTER TABLE public.tipos_reuniao ADD COLUMN duracao_minutos integer NOT NULL DEFAULT 60;

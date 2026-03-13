@@ -283,7 +283,16 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
           {tiposReuniao.filter(t => t.ativo).length > 0 && (
             <div className="space-y-2">
               <Label>Tipo de Reunião</Label>
-              <Select value={selectedTipoId} onValueChange={(v) => { setSelectedTipoId(v === "none" ? "" : v); setSelectedMemberId(""); setSelectedTime(""); }}>
+              <Select value={selectedTipoId} onValueChange={(v) => {
+                const newId = v === "none" ? "" : v;
+                setSelectedTipoId(newId);
+                setSelectedMemberId("");
+                setSelectedTime("");
+                if (newId) {
+                  const tipo = tiposReuniao.find(t => t.id === newId);
+                  if (tipo?.duracao_minutos) setDuracao(tipo.duracao_minutos);
+                }
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tipo (opcional)" />
                 </SelectTrigger>

@@ -4955,6 +4955,7 @@ export type Database = {
           ativo: boolean
           created_at: string
           descricao: string | null
+          duracao_minutos: number
           id: string
           nome: string
           updated_at: string
@@ -4964,6 +4965,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string | null
+          duracao_minutos?: number
           id?: string
           nome: string
           updated_at?: string
@@ -4973,6 +4975,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string | null
+          duracao_minutos?: number
           id?: string
           nome?: string
           updated_at?: string
