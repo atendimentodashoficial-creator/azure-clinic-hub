@@ -26,7 +26,7 @@ interface NovoClienteDialogProps {
   defaultTipo?: "interno" | "preview";
 }
 
-export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, externalOpen, hideTrigger, initialData }: NovoClienteDialogProps) {
+export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, externalOpen, hideTrigger, initialData, defaultTipo }: NovoClienteDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditing = !!clienteEditando;
   const [formTab, setFormTab] = useState("info");
