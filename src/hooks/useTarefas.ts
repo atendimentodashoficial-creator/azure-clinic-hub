@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOwnerId } from "@/hooks/useOwnerId";
 
 export interface TarefaColuna {
   id: string;
@@ -36,23 +37,26 @@ const DEFAULT_COLUMNS = [
 
 export function useTarefas() {
   const { user } = useAuth();
+  const { ownerId } = useOwnerId();
   const qc = useQueryClient();
+
+  const effectiveUserId = ownerId || user?.id;
 
   // Fetch columns
   const { data: colunas = [], isLoading: loadingColunas } = useQuery({
-    queryKey: ["tarefas-colunas", user?.id],
+    queryKey: ["tarefas-colunas", effectiveUserId],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!effectiveUserId) return [];
       const { data, error } = await supabase
         .from("tarefas_colunas")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .order("ordem");
       if (error) throw error;
 
       // Auto-create default columns if none exist
       if (!data || data.length === 0) {
-        const inserts = DEFAULT_COLUMNS.map((c) => ({ ...c, user_id: user.id }));
+        const inserts = DEFAULT_COLUMNS.map((c) => ({ ...c, user_id: effectiveUserId }));
         const { data: created, error: err2 } = await supabase
           .from("tarefas_colunas")
           .insert(inserts)
@@ -62,23 +66,23 @@ export function useTarefas() {
       }
       return data as TarefaColuna[];
     },
-    enabled: !!user?.id,
+    enabled: !!effectiveUserId,
   });
 
   // Fetch tasks
   const { data: tarefas = [], isLoading: loadingTarefas } = useQuery({
-    queryKey: ["tarefas", user?.id],
+    queryKey: ["tarefas", effectiveUserId],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!effectiveUserId) return [];
       const { data, error } = await supabase
         .from("tarefas")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .order("ordem");
       if (error) throw error;
       return data as Tarefa[];
     },
-    enabled: !!user?.id,
+    enabled: !!effectiveUserId,
   });
 
   const invalidate = () => {
@@ -89,11 +93,11 @@ export function useTarefas() {
   // Create task
   const criarTarefa = useMutation({
     mutationFn: async (tarefa: { titulo: string; descricao?: string; responsavel_nome?: string; prioridade?: string; data_limite?: string; coluna_id: string; cliente_id?: string; subtarefas_total?: number }) => {
-      if (!user?.id) throw new Error("Não autenticado");
+      if (!effectiveUserId) throw new Error("Não autenticado");
       const maxOrdem = tarefas.filter((t) => t.coluna_id === tarefa.coluna_id).length;
       const { error } = await supabase.from("tarefas").insert({
         ...tarefa,
-        user_id: user.id,
+        user_id: effectiveUserId,
         ordem: maxOrdem,
       });
       if (error) throw error;
@@ -131,9 +135,9 @@ export function useTarefas() {
   // Add column
   const criarColuna = useMutation({
     mutationFn: async ({ nome, cor }: { nome: string; cor: string }) => {
-      if (!user?.id) throw new Error("Não autenticado");
+      if (!effectiveUserId) throw new Error("Não autenticado");
       const maxOrdem = colunas.length;
-      const { error } = await supabase.from("tarefas_colunas").insert({ nome, cor, user_id: user.id, ordem: maxOrdem });
+      const { error } = await supabase.from("tarefas_colunas").insert({ nome, cor, user_id: effectiveUserId, ordem: maxOrdem });
       if (error) throw error;
     },
     onSuccess: invalidate,
