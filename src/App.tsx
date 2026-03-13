@@ -133,7 +133,7 @@ const App = () => (
             }
           >
             <Route index element={<FuncionarioDashboard />} />
-            <Route path="agenda" element={<Agenda />} />
+            
             <Route path="whatsapp" element={<FuncionarioWhatsApp />} />
             <Route path="reunioes" element={<FuncionarioReunioes />} />
             <Route path="escala" element={<FuncionarioEscala />} />

@@ -8,7 +8,6 @@ import noktaLogoDefault from "@/assets/nokta-logo.png";
 
 const funcionarioNavigation = [
   { name: "Início", href: "/funcionario", icon: Home },
-  { name: "Agenda", href: "/funcionario/agenda", icon: Calendar },
   { name: "WhatsApp", href: "/funcionario/whatsapp", icon: MessageSquare },
   { name: "Reuniões", href: "/funcionario/reunioes", icon: Video },
   { name: "Tarefas", href: "/funcionario/tarefas", icon: ListChecks },
