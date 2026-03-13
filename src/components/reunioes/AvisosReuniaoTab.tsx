@@ -966,6 +966,33 @@ export function AvisosReuniaoTab() {
               </p>
             </div>
 
+            {/* Tipo de reunião */}
+            <div className="space-y-2">
+              <Label>Tipo de reunião (opcional)</Label>
+              <Select
+                value={formTipoReuniaoId || "todos"}
+                onValueChange={(v) => setFormTipoReuniaoId(v === "todos" ? null : v)}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Todos os tipos" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  <SelectItem value="todos">Todos os tipos</SelectItem>
+                  {tiposReuniao?.filter(t => t.ativo).map(tipo => (
+                    <SelectItem key={tipo.id} value={tipo.id}>
+                      <div className="flex items-center gap-2">
+                        <Video className="h-4 w-4" />
+                        <span>{tipo.nome}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Filtre para enviar este aviso apenas para reuniões de um tipo específico
+              </p>
+            </div>
+
             {/* Período e horário - only show for dias_antes type */}
             <div className="grid grid-cols-2 gap-4">
               {formTipoGatilho === 'dias_antes' && (
