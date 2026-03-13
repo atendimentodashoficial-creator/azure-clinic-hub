@@ -86,6 +86,7 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     prazo: meta.prazo || 0,
     colunaId: meta.coluna_id || "",
     dependencias: meta.dependencias || [],
+    comissao: meta.comissao || 0,
   };
 }
 
