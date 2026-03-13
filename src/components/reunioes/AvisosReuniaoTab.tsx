@@ -81,6 +81,8 @@ interface AvisoReuniao {
   tipo_gatilho: string;
   audio_url: string | null;
   audio_posicao: string | null;
+  link_calendario_ativo: boolean;
+  link_calendario_texto: string;
   created_at: string;
   updated_at: string;
 }
