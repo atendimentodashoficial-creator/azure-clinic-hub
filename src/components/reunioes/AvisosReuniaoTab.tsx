@@ -910,61 +910,6 @@ export function AvisosReuniaoTab() {
               </p>
             </div>
 
-            {/* Procedimento específico */}
-            <div className="space-y-2">
-              <Label>Procedimento (opcional)</Label>
-              <Select 
-                value={formProcedimentoId || "all"} 
-                onValueChange={(v) => setFormProcedimentoId(v === "all" ? null : v)}
-              >
-                <SelectTrigger className="bg-background">
-                  <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <SelectValue placeholder="Todos os procedimentos" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border shadow-lg z-50">
-                  <SelectItem value="all">Todos os procedimentos</SelectItem>
-                  {procedimentos?.filter(p => p.ativo).map(proc => (
-                    <SelectItem key={proc.id} value={proc.id}>{proc.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Deixe em "Todos" para enviar para qualquer reunião, ou escolha um específico
-              </p>
-            </div>
-
-            {/* Instância de envio */}
-            <div className="space-y-2">
-              <Label>Instância de envio (opcional)</Label>
-              <Select
-                value={formInstanciaId || "default"}
-                onValueChange={(v) => setFormInstanciaId(v === "default" ? null : v)}
-              >
-                <SelectTrigger className="bg-background">
-                  <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <SelectValue placeholder="Instância padrão do cliente" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border shadow-lg z-50">
-                  <SelectItem value="default">
-                    <div className="flex items-center gap-2">
-                      <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                      <span>Instância padrão do cliente</span>
-                    </div>
-                  </SelectItem>
-                  {instancias.map(inst => (
-                    <SelectItem key={inst.id} value={inst.id}>
-                      <div className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4 text-green-600" />
-                        <span>{inst.nome}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Por padrão usa a instância original do chat com o cliente. Escolha outra para forçar uma instância específica.
-              </p>
-            </div>
 
             {/* Período e horário - only show for dias_antes type */}
             <div className="grid grid-cols-2 gap-4">
