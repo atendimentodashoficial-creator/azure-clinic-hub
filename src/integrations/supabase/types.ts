@@ -4702,6 +4702,59 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefa_mockups: {
+        Row: {
+          created_at: string
+          cta: string | null
+          feedback: string | null
+          id: string
+          legenda: string | null
+          ordem: number
+          status: string
+          subtitulo: string | null
+          tarefa_id: string
+          titulo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cta?: string | null
+          feedback?: string | null
+          id?: string
+          legenda?: string | null
+          ordem?: number
+          status?: string
+          subtitulo?: string | null
+          tarefa_id: string
+          titulo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cta?: string | null
+          feedback?: string | null
+          id?: string
+          legenda?: string | null
+          ordem?: number
+          status?: string
+          subtitulo?: string | null
+          tarefa_id?: string
+          titulo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_mockups_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefas: {
         Row: {
           cliente_id: string | null
@@ -4721,6 +4774,7 @@ export type Database = {
           tempo_registrado: string
           timer_inicio: string | null
           timer_status: string
+          tipo_tarefa_id: string | null
           titulo: string
           updated_at: string
           user_id: string
@@ -4743,6 +4797,7 @@ export type Database = {
           tempo_registrado?: string
           timer_inicio?: string | null
           timer_status?: string
+          tipo_tarefa_id?: string | null
           titulo: string
           updated_at?: string
           user_id: string
@@ -4765,6 +4820,7 @@ export type Database = {
           tempo_registrado?: string
           timer_inicio?: string | null
           timer_status?: string
+          tipo_tarefa_id?: string | null
           titulo?: string
           updated_at?: string
           user_id?: string
@@ -4789,6 +4845,13 @@ export type Database = {
             columns: ["reuniao_id"]
             isOneToOne: false
             referencedRelation: "reunioes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_tipo_tarefa_id_fkey"
+            columns: ["tipo_tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_tarefas"
             referencedColumns: ["id"]
           },
         ]
