@@ -359,9 +359,22 @@ export default function FuncionarioReunioes() {
             count={reunioes?.length}
           />
 
-          {/* Member selector */}
-          {membros.length > 0 && (
-            <div className="flex items-center gap-2">
+          {/* Header controls */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <TemplateCamposDialog />
+              <Button 
+                onClick={handleSync} 
+                disabled={syncing || !hasGoogleCalendar}
+                className="gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+                Sincronizar Transcrições
+              </Button>
+            </div>
+
+            {/* Member selector */}
+            {membros.length > 0 && (
               <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
                 <SelectTrigger className="w-[220px] h-8 text-xs">
                   <Users className="h-3.5 w-3.5 mr-1.5" />
@@ -375,8 +388,8 @@ export default function FuncionarioReunioes() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          )}
+            )}
+          </div>
 
           {isLoading ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
