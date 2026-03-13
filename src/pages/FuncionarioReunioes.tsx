@@ -222,8 +222,12 @@ export default function FuncionarioReunioes() {
     for (const m of membros) {
       if (m.auth_user_id) map.set(m.auth_user_id, m.nome);
     }
+    // Add admin/owner to the map
+    if (ownerId && ownerProfile) {
+      map.set(ownerId, ownerProfile.full_name || ownerProfile.email || "Admin");
+    }
     return map;
-  }, [membros]);
+  }, [membros, ownerId, ownerProfile]);
 
   // Filter by member then by period
   const reunioes = useMemo(() => {
