@@ -499,9 +499,6 @@ function LinkOnlyApproval({
           </p>
         </div>
 
-        <Badge className={cn("border-0 mx-auto block w-fit", statusColor(linkApprovalStatus))}>
-          {statusLabel(linkApprovalStatus)}
-        </Badge>
 
         {/* Embedded link previews */}
         <div className="space-y-4">
