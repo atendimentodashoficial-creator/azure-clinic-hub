@@ -87,6 +87,7 @@ function computeSlots(
   existingMeetings: Array<{ data_reuniao: string; duracao_minutos: number }>,
   date: string,
   durationMin: number,
+  stepMin: number = 30,
 ): string[] {
   const d = new Date(date + "T00:00:00");
   const dow = getDay(d);
@@ -102,7 +103,7 @@ function computeSlots(
   if (fullAbsent) return [];
 
   const slots: string[] = [];
-  const step = 30;
+  const step = stepMin;
 
   for (const escala of dayEscalas) {
     const startMin = timeToMinutes(escala.hora_inicio);
@@ -155,7 +156,8 @@ export function SelectMemberAndTimeStep({
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [existingMeetings, setExistingMeetings] = useState<Array<{ data_reuniao: string; duracao_minutos: number }>>([]);
 
-  const duration = use15min ? 15 : (parseInt(reuniaoDuracao) || 60);
+  const duration = parseInt(reuniaoDuracao) || 60;
+  const stepInterval = use15min ? 15 : 30;
 
   useEffect(() => {
     (async () => {
@@ -201,13 +203,13 @@ export function SelectMemberAndTimeStep({
         // Admin has no escala restrictions — no slots shown, free pick
         map[m.id] = [];
       } else if (m.escalas.length > 0) {
-        map[m.id] = computeSlots(m.escalas, m.ausencias, existingMeetings, selectedDate, duration);
+        map[m.id] = computeSlots(m.escalas, m.ausencias, existingMeetings, selectedDate, duration, stepInterval);
       } else {
         map[m.id] = [];
       }
     }
     return map;
-  }, [allMembers, selectedDate, existingMeetings, duration]);
+  }, [allMembers, selectedDate, existingMeetings, duration, stepInterval]);
 
   const selectedMemberObj = allMembers.find(m => m.id === selectedMemberId);
 
@@ -252,11 +254,10 @@ export function SelectMemberAndTimeStep({
           <Label>Duração (min)</Label>
           <Input
             type="number"
-            value={use15min ? "15" : reuniaoDuracao}
-            onChange={e => { setReuniaDuracao(e.target.value); setUse15min(false); setSelectedTime(""); }}
+            value={reuniaoDuracao}
+            onChange={e => { setReuniaDuracao(e.target.value); setSelectedTime(""); }}
             min={15}
             step={15}
-            disabled={use15min}
           />
         </div>
       </div>
@@ -267,7 +268,7 @@ export function SelectMemberAndTimeStep({
           checked={use15min}
           onCheckedChange={(c) => { setUse15min(!!c); setSelectedTime(""); }}
         />
-        <label htmlFor="use15" className="text-xs text-muted-foreground cursor-pointer">15 min</label>
+        <label htmlFor="use15" className="text-xs text-muted-foreground cursor-pointer">Intervalos de 15 min</label>
       </div>
 
       {/* Members with time slots */}
