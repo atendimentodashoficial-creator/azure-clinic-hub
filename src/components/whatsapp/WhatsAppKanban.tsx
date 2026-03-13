@@ -11,7 +11,7 @@ import { FaturasClienteDialog, type FaturaResumo } from "./FaturasClienteDialog"
 import { AgendamentosClienteDialog, type AgendamentoResumo } from "./AgendamentosClienteDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhoneNumber, formatRelativeTime, formatLastMessagePreview, truncateText } from "@/utils/whatsapp";
-import { Plus, Settings, Trash2, GripVertical, X, Check, Pencil, Calendar, CheckSquare, Square, XCircle, DollarSign } from "lucide-react";
+import { Plus, Settings, Trash2, GripVertical, X, Check, Pencil, Calendar, CheckSquare, Square, XCircle, DollarSign, FileText } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
