@@ -55,6 +55,22 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
   const [step, setStep] = useState<Step>("select-client");
   const [selectedClient, setSelectedClient] = useState<TarefaCliente | null>(null);
 
+  // Auto-match client by last 8 digits of phone
+  const matchedClient = useMemo(() => {
+    if (!initialContactData?.telefone) return null;
+    const last8 = getLast8Digits(initialContactData.telefone);
+    if (!last8 || last8.length < 8) return null;
+    return clientes.find(c => c.telefone && getLast8Digits(c.telefone) === last8) || null;
+  }, [initialContactData?.telefone, clientes]);
+
+  // Auto-set step when opening with a matched client
+  useEffect(() => {
+    if (open && matchedClient && step === "select-client") {
+      setStep("auto-matched");
+      setSelectedClient(matchedClient);
+    }
+  }, [open, matchedClient]);
+
   const filtrados = clientes.filter(c =>
     c.nome.toLowerCase().includes(busca.toLowerCase()) ||
     c.email?.toLowerCase().includes(busca.toLowerCase()) ||
