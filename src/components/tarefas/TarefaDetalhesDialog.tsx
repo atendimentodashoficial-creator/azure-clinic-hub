@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -10,7 +11,7 @@ import { useTarefaMockups } from "@/hooks/useTarefaMockups";
 import { MockupEditor } from "./MockupEditor";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
-import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy } from "lucide-react";
+import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -50,6 +51,22 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     { ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" },
   ]);
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const { data: revisoes = [] } = useQuery({
+    queryKey: ["tarefa-revisoes", tarefa?.id],
+    queryFn: async () => {
+      if (!tarefa?.id) return [];
+      const { data, error } = await supabase
+        .from("tarefa_revisoes")
+        .select("*")
+        .eq("tarefa_id", tarefa.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as { id: string; slide_ordem: number; feedback: string | null; status: string; created_at: string }[];
+    },
+    enabled: !!tarefa?.id,
+  });
 
   const tipoTarefa = tarefa?.tipo_tarefa_id ? tipos.find(t => t.id === tarefa.tipo_tarefa_id) : null;
   const hasMockup = tipoTarefa?.tipos_arquivo_permitidos?.includes("mockup");
@@ -274,6 +291,47 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                             </div>
                           ))}
                         </div>
+
+                        {/* Revision history */}
+                        {revisoes.length > 0 && (
+                          <div className="mt-3">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full gap-1.5 text-xs text-muted-foreground"
+                              onClick={() => setShowHistory(prev => !prev)}
+                            >
+                              <History className="h-3.5 w-3.5" />
+                              Histórico de revisões ({revisoes.length})
+                            </Button>
+                            {showHistory && (
+                              <div className="mt-2 space-y-2 max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+                                {revisoes.map(r => (
+                                  <div key={r.id} className="text-[11px] border rounded px-2.5 py-1.5 space-y-0.5">
+                                    <div className="flex items-center justify-between">
+                                      <Badge
+                                        variant="outline"
+                                        className={cn("text-[10px] border-0 px-0",
+                                          r.status === "aprovado" ? "text-emerald-400" :
+                                          r.status === "reprovado" ? "text-red-400" :
+                                          "text-muted-foreground"
+                                        )}
+                                      >
+                                        Slide {(r.slide_ordem ?? 0) + 1} — {r.status === "aprovado" ? "Aprovado" : "Reprovado"}
+                                      </Badge>
+                                      <span className="text-muted-foreground">
+                                        {format(new Date(r.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                                      </span>
+                                    </div>
+                                    {r.feedback && (
+                                      <p className="text-muted-foreground">💬 {r.feedback}</p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <Button

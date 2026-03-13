@@ -4755,6 +4755,51 @@ export type Database = {
           },
         ]
       }
+      tarefa_revisoes: {
+        Row: {
+          created_at: string
+          feedback: string | null
+          id: string
+          mockup_id: string | null
+          slide_ordem: number | null
+          status: string
+          tarefa_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          mockup_id?: string | null
+          slide_ordem?: number | null
+          status?: string
+          tarefa_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          mockup_id?: string | null
+          slide_ordem?: number | null
+          status?: string
+          tarefa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_revisoes_mockup_id_fkey"
+            columns: ["mockup_id"]
+            isOneToOne: false
+            referencedRelation: "tarefa_mockups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_revisoes_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefas: {
         Row: {
           approval_status: string | null
