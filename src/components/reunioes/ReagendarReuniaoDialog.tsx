@@ -279,7 +279,7 @@ export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: Reagenda
                 Selecione Profissional e Horário
               </Label>
 
-              <ScrollArea className="max-h-[300px]">
+              <div className="h-[300px] overflow-y-auto pr-1">
                 <div className="space-y-3">
                   {allMembers.map(member => {
                     const slots = memberSlots[member.id] || [];
@@ -333,7 +333,7 @@ export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: Reagenda
                     </p>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           )}
         </div>
