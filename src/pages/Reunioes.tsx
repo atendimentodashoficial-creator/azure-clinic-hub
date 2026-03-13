@@ -169,39 +169,42 @@ export default function Reunioes() {
     return allReunioes.filter(r => r.user_id === membro.auth_user_id);
   }, [allReunioes, selectedMemberId, membros, user?.id]);
 
-  const { data: firefliesConfig } = useQuery({
-    queryKey: ["fireflies-config", user?.id],
+  const { data: googleCalendarConfig } = useQuery({
+    queryKey: ["google-calendar-config", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("fireflies_config")
-        .select("*")
+        .from("google_calendar_config" as any)
+        .select("access_token, refresh_token")
         .single();
       
       if (error && error.code !== "PGRST116") throw error;
-      return data;
+      return data as any;
     },
     enabled: !!user?.id,
   });
 
+  const hasGoogleCalendar = !!googleCalendarConfig?.access_token;
+
   const handleSync = async () => {
-    if (!firefliesConfig?.api_key) {
-      toast.error("Configure a API do Fireflies em Configurações > Conexões");
+    if (!hasGoogleCalendar) {
+      toast.error("Conecte o Google Calendar em Configurações > Conexões primeiro");
       return;
     }
 
     setSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("sync-fireflies", {
+      const { data, error } = await supabase.functions.invoke("sync-google-transcripts", {
         body: { userId: user?.id },
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       
-      toast.success(`${data.synced || 0} reuniões sincronizadas`);
+      toast.success(`${data.synced || 0} transcrições sincronizadas`);
       refetch();
     } catch (error: any) {
       console.error("Sync error:", error);
-      toast.error("Erro ao sincronizar reuniões");
+      toast.error(error.message || "Erro ao sincronizar transcrições");
     } finally {
       setSyncing(false);
     }
