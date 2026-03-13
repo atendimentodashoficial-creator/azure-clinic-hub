@@ -766,6 +766,8 @@ export type Database = {
           intervalo_max: number
           intervalo_min: number
           last_check_at: string | null
+          link_calendario_ativo: boolean
+          link_calendario_texto: string
           mensagem: string
           next_check_at: string | null
           nome: string
@@ -787,6 +789,8 @@ export type Database = {
           intervalo_max?: number
           intervalo_min?: number
           last_check_at?: string | null
+          link_calendario_ativo?: boolean
+          link_calendario_texto?: string
           mensagem: string
           next_check_at?: string | null
           nome: string
@@ -808,6 +812,8 @@ export type Database = {
           intervalo_max?: number
           intervalo_min?: number
           last_check_at?: string | null
+          link_calendario_ativo?: boolean
+          link_calendario_texto?: string
           mensagem?: string
           next_check_at?: string | null
           nome?: string
