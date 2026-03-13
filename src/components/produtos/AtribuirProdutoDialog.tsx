@@ -26,6 +26,7 @@ interface AtribuirProdutoDialogProps {
   template: ProdutoTemplate;
   open: boolean;
   onClose: () => void;
+  initialContactData?: { nome?: string; telefone?: string };
 }
 
 function parseTarefaMeta(descricao: string | null): any {
