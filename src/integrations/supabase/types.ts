@@ -4157,6 +4157,7 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
+          ordem: number | null
           requer_reuniao: boolean
           updated_at: string
           user_id: string
@@ -4167,6 +4168,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
+          ordem?: number | null
           requer_reuniao?: boolean
           updated_at?: string
           user_id: string
@@ -4177,6 +4179,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
+          ordem?: number | null
           requer_reuniao?: boolean
           updated_at?: string
           user_id?: string
