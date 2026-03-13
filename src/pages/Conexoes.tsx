@@ -128,7 +128,7 @@ export default function Conexoes() {
   const [googleAdsOpen, setGoogleAdsOpen] = useState(false);
   const [openAIOpen, setOpenAIOpen] = useState(false);
   const [apifyOpen, setApifyOpen] = useState(false);
-  const [firefliesOpen, setFirefliesOpen] = useState(false);
+  
   const [metaPixelOpen, setMetaPixelOpen] = useState(false);
   const [instagramOpen, setInstagramOpen] = useState(false);
   const [googleCalendarOpen, setGoogleCalendarOpen] = useState(false);
