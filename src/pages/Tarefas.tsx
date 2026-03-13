@@ -27,6 +27,7 @@ import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Buildin
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TarefaTimer } from "@/components/tarefas/TarefaTimer";
+import { TarefaDetalhesDialog } from "@/components/tarefas/TarefaDetalhesDialog";
 
 const PRIORIDADES = [
   { value: "baixa", label: "Baixa", color: "bg-emerald-500/20 text-emerald-400" },
