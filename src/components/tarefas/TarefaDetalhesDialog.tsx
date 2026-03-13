@@ -80,18 +80,31 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const mockupsKey = mockups.map(m => m.id).join(",");
   useEffect(() => {
     if (mockups.length > 0) {
-      setMockupSlides(mockups.map(m => ({
-        id: m.id,
-        ordem: m.ordem,
-        subtitulo: m.subtitulo || "",
-        titulo: m.titulo || "",
-        legenda: m.legenda || "",
-        cta: m.cta || "",
-      })));
+      // Group mockups by post_index
+      const grouped = new Map<number, MockupSlide[]>();
+      mockups.forEach(m => {
+        const pi = m.post_index ?? 0;
+        if (!grouped.has(pi)) grouped.set(pi, []);
+        grouped.get(pi)!.push({
+          id: m.id,
+          ordem: m.ordem,
+          subtitulo: m.subtitulo || "",
+          titulo: m.titulo || "",
+          legenda: m.legenda || "",
+          cta: m.cta || "",
+        });
+      });
+      const postGroups: PostGroup[] = Array.from(grouped.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([postIndex, slides]) => ({ postIndex, slides }));
+      setPosts(postGroups);
     } else if (hasMockup) {
       const count = mockupLimit > 0 ? mockupLimit : 1;
-      setMockupSlides(
-        Array.from({ length: count }, (_, i) => ({ ordem: i, subtitulo: "", titulo: "", legenda: "", cta: "" }))
+      setPosts(
+        Array.from({ length: count }, (_, i) => ({
+          postIndex: i,
+          slides: [{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }],
+        }))
       );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
