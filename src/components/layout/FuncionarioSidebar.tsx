@@ -1,4 +1,4 @@
-import { Calendar, Clock, LogOut, ChevronLeft, ChevronRight, Home } from "lucide-react";
+import { Calendar, Clock, LogOut, ChevronLeft, ChevronRight, Home, MessageSquare, Video } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,8 @@ import noktaLogoDefault from "@/assets/nokta-logo.png";
 const funcionarioNavigation = [
   { name: "Início", href: "/funcionario", icon: Home },
   { name: "Agenda", href: "/funcionario/agenda", icon: Calendar },
+  { name: "WhatsApp", href: "/funcionario/whatsapp", icon: MessageSquare },
+  { name: "Reuniões", href: "/funcionario/reunioes", icon: Video },
   { name: "Minha Escala", href: "/funcionario/escala", icon: Clock },
 ];
 

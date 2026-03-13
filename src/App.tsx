@@ -43,6 +43,8 @@ import ProdutosTarefas from "./pages/ProdutosTarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 import FuncionarioEscala from "./pages/FuncionarioEscala";
+import FuncionarioWhatsApp from "./pages/FuncionarioWhatsApp";
+import FuncionarioReunioes from "./pages/FuncionarioReunioes";
 
 const queryClient = new QueryClient();
 
