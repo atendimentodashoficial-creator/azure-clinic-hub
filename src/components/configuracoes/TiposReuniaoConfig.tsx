@@ -78,6 +78,7 @@ export function TiposReuniaoConfig() {
     setEditando(null);
     setNome("");
     setDescricao("");
+    setDuracaoMinutos(60);
     setSelectedMembros([]);
   };
 
