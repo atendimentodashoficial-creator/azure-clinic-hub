@@ -76,10 +76,12 @@ export function useTiposReuniaoMutations() {
   });
 
   const atualizarTipo = useMutation({
-    mutationFn: async (data: { id: string; nome: string; descricao?: string | null; ativo?: boolean }) => {
+    mutationFn: async (data: { id: string; nome: string; descricao?: string | null; duracao_minutos?: number; ativo?: boolean }) => {
+      const updateData: any = { nome: data.nome, descricao: data.descricao, ativo: data.ativo, updated_at: new Date().toISOString() };
+      if (data.duracao_minutos !== undefined) updateData.duracao_minutos = data.duracao_minutos;
       const { error } = await supabase
         .from("tipos_reuniao" as any)
-        .update({ nome: data.nome, descricao: data.descricao, ativo: data.ativo, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq("id", data.id);
       if (error) throw error;
     },

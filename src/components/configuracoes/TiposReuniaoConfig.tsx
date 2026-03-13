@@ -277,6 +277,7 @@ function TipoReuniaoCard({ tipo, membros, onEdit, onDelete, onToggleAtivo }: {
             {!tipo.ativo && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
           </div>
           {tipo.descricao && <p className="text-xs text-muted-foreground mb-1">{tipo.descricao}</p>}
+          <p className="text-xs text-muted-foreground mb-1">Duração: {tipo.duracao_minutos} min</p>
           {membroNomes.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {membroNomes.map((n, i) => (
