@@ -48,7 +48,7 @@ async function moveKanbanCard(userId: string, telefone: string, columnId: string
   if (!last8) return;
 
   const { data: chats } = await supabase
-    .from("disparos_chats")
+    .from("whatsapp_chats")
     .select("id")
     .eq("user_id", userId)
     .like("normalized_number", `%${last8}`)
@@ -57,12 +57,22 @@ async function moveKanbanCard(userId: string, telefone: string, columnId: string
   if (!chats || chats.length === 0) return;
 
   for (const chat of chats) {
-    await supabase
-      .from("disparos_chat_kanban")
-      .upsert(
-        { chat_id: chat.id, column_id: columnId, user_id: userId },
-        { onConflict: "chat_id" }
-      );
+    const { data: existing } = await supabase
+      .from("whatsapp_chat_kanban")
+      .select("id")
+      .eq("chat_id", chat.id)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from("whatsapp_chat_kanban")
+        .update({ column_id: columnId })
+        .eq("chat_id", chat.id);
+    } else {
+      await supabase
+        .from("whatsapp_chat_kanban")
+        .insert({ chat_id: chat.id, column_id: columnId, user_id: userId });
+    }
   }
 }
 
