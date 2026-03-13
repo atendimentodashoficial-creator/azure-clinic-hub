@@ -307,6 +307,25 @@ export default function Tarefas() {
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
 
+  // Fetch reunioes for tasks that have reuniao_id
+  const reuniaoIds = tarefas.filter(t => t.reuniao_id).map(t => t.reuniao_id!);
+  const { data: reunioesData } = useQuery({
+    queryKey: ["tarefas-reunioes", reuniaoIds.sort().join(",")],
+    queryFn: async () => {
+      if (reuniaoIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("reunioes")
+        .select("id, data_reuniao, status")
+        .in("id", reuniaoIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: reuniaoIds.length > 0,
+  });
+
+  const reunioesMap: Record<string, { data_reuniao: string; status: string }> = {};
+  (reunioesData || []).forEach((r: any) => { reunioesMap[r.id] = r; });
+
   // Filter tasks for employee "minhas" view
   const tarefasFiltradas = filtro === "minhas" && membro
     ? tarefas.filter(t => {
