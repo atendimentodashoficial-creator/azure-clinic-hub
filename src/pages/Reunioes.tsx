@@ -142,12 +142,10 @@ export default function Reunioes() {
     return "Cliente não informado";
   };
 
-  const { data: reunioes, isLoading, refetch } = useQuery({
+  const { data: allReunioes, isLoading, refetch } = useQuery({
     queryKey: ["reunioes", user?.id],
     refetchOnMount: "always",
     queryFn: async () => {
-      // Buscar reuniões agendadas (com google_event_id OU criadas manualmente com status agendado)
-      // Reuniões só do Fireflies (sem google_event_id e sem status agendado) ficam ocultas
       const { data, error } = await supabase
         .from("reunioes" as any)
         .select("*, profissionais(nome), leads:cliente_id(nome, telefone)")
@@ -159,6 +157,17 @@ export default function Reunioes() {
     },
     enabled: !!user?.id,
   });
+
+  // Filter by selected member
+  const reunioes = useMemo(() => {
+    if (!allReunioes) return [];
+    if (selectedMemberId === "todos") return allReunioes;
+    if (selectedMemberId === "meus") return allReunioes.filter(r => r.user_id === user?.id);
+    // Find the member's auth_user_id
+    const membro = membros.find(m => m.id === selectedMemberId);
+    if (!membro?.auth_user_id) return [];
+    return allReunioes.filter(r => r.user_id === membro.auth_user_id);
+  }, [allReunioes, selectedMemberId, membros, user?.id]);
 
   const { data: firefliesConfig } = useQuery({
     queryKey: ["fireflies-config", user?.id],
