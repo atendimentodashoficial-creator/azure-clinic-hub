@@ -20,6 +20,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ReuniaoDetalhesDialog } from "@/components/reunioes/ReuniaoDetalhesDialog";
 import { AvisosReuniaoTab } from "@/components/reunioes/AvisosReuniaoTab";
+import { TemplateCamposDialog } from "@/components/reunioes/TemplateCamposDialog";
 import { VincularTranscricaoDialog } from "@/components/reunioes/VincularTranscricaoDialog";
 import { ReagendarReuniaoDialog } from "@/components/reunioes/ReagendarReuniaoDialog";
 import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog";
