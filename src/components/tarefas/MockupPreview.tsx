@@ -45,11 +45,11 @@ export function MockupPreview({ slides, perfilNome = "perfil", perfilCategoria =
 
       {/* Image area - simulated post */}
       <div className="relative aspect-square bg-gradient-to-b from-zinc-800 to-zinc-900 flex flex-col items-center justify-center p-8 text-center">
-        {slide.subtitulo && (
-          <p className="text-sm text-zinc-300 mb-2 max-w-[80%]">{slide.subtitulo}</p>
-        )}
         {slide.titulo && (
           <h2 className="text-xl font-bold text-white leading-tight max-w-[90%]">{slide.titulo}</h2>
+        )}
+        {slide.subtitulo && (
+          <p className="text-sm text-zinc-300 mt-2 max-w-[80%]">{slide.subtitulo}</p>
         )}
         {slide.cta && (
           <p className="text-[10px] text-zinc-500 absolute bottom-4 right-4 uppercase tracking-wider">{slide.cta}</p>
