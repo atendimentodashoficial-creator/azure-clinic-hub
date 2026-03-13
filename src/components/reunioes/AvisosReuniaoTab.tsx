@@ -334,6 +334,8 @@ export function AvisosReuniaoTab() {
             tipo_gatilho: tipoGatilhoToSave,
             audio_url: formAudioUrl,
             audio_posicao: formAudioPosicao,
+            link_calendario_ativo: formLinkCalendarioAtivo,
+            link_calendario_texto: formLinkCalendarioTexto,
           } as any)
           .eq('id', editingAviso.id);
 
