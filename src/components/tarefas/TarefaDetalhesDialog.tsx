@@ -117,6 +117,18 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mockupsKey, mockupLimit, hasMockup]);
 
+  // Load saved links
+  const savedLinksKey = savedLinks.map(l => l.id).join(",");
+  useEffect(() => {
+    if (savedLinks.length > 0) {
+      setTaskLinks(savedLinks.map(l => ({ url: l.url, titulo: l.titulo || "" })));
+    } else if (hasLinks) {
+      const count = linksLimit > 0 ? linksLimit : 1;
+      setTaskLinks(Array.from({ length: count }, () => ({ url: "", titulo: "" })));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedLinksKey, hasLinks, linksLimit]);
+
   const handleSaveMockups = async () => {
     try {
       // Flatten posts into slides with post_index
