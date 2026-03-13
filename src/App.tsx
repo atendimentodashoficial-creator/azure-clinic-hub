@@ -42,6 +42,7 @@ import Equipe from "./pages/Equipe";
 import ProdutosTarefas from "./pages/ProdutosTarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
+import FuncionarioEscala from "./pages/FuncionarioEscala";
 
 const queryClient = new QueryClient();
 
