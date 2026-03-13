@@ -10,10 +10,11 @@ import { useTarefaMockups } from "@/hooks/useTarefaMockups";
 import { MockupEditor } from "./MockupEditor";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
-import { Building2, Calendar, Video, Upload, Save } from "lucide-react";
+import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const PRIORIDADES = [
   { value: "baixa", label: "Baixa", color: "bg-emerald-500/20 text-emerald-400" },
@@ -84,6 +85,25 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       toast.success("Mockup salvo com sucesso!");
     } catch {
       toast.error("Erro ao salvar mockup");
+    }
+  };
+
+  const handleSendForApproval = async () => {
+    if (!tarefa) return;
+    try {
+      const token = crypto.randomUUID();
+      const { error } = await supabase
+        .from("tarefas")
+        .update({ approval_token: token, approval_status: "aguardando" })
+        .eq("id", tarefa.id);
+      if (error) throw error;
+      const link = `${window.location.origin}/aprovacao/${token}`;
+      await navigator.clipboard.writeText(link);
+      toast.success("Link de aprovação copiado para a área de transferência!");
+      // Force refresh
+      window.location.reload();
+    } catch {
+      toast.error("Erro ao gerar link de aprovação");
     }
   };
 
@@ -207,6 +227,58 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   <Save className="h-4 w-4" />
                   {saveMockups.isPending ? "Salvando..." : "Salvar Mockup"}
                 </Button>
+
+                {/* Approval actions */}
+                {mockups.length > 0 && (
+                  <div className="space-y-2">
+                    <Separator />
+                    {tarefa.approval_token ? (
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Link de aprovação</Label>
+                        <div className="flex gap-2">
+                          <code className="flex-1 text-xs bg-muted px-3 py-2 rounded truncate">
+                            {`${window.location.origin}/aprovacao/${tarefa.approval_token}`}
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/aprovacao/${tarefa.approval_token}`);
+                              toast.success("Link copiado!");
+                            }}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        {/* Show mockup statuses */}
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {mockups.map((m, i) => (
+                            <Badge
+                              key={m.id}
+                              variant="outline"
+                              className={cn("text-[10px]",
+                                m.status === "aprovado" ? "border-emerald-500 text-emerald-400" :
+                                m.status === "reprovado" ? "border-red-500 text-red-400" :
+                                "border-muted-foreground/30 text-muted-foreground"
+                              )}
+                            >
+                              Slide {i + 1}: {m.status === "aprovado" ? "Aprovado" : m.status === "reprovado" ? "Reprovado" : "Pendente"}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={handleSendForApproval}
+                      >
+                        <Send className="h-4 w-4" />
+                        Enviar para Aprovação
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}

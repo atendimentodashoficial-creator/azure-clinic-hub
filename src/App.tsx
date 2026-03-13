@@ -41,6 +41,7 @@ import TarefasClientes from "./pages/TarefasClientes";
 import Equipe from "./pages/Equipe";
 import ProdutosTarefas from "./pages/ProdutosTarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
+import ClienteAprovacoes from "./pages/ClienteAprovacoes";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 import FuncionarioEscala from "./pages/FuncionarioEscala";
 import FuncionarioWhatsApp from "./pages/FuncionarioWhatsApp";
@@ -48,6 +49,7 @@ import FuncionarioReunioes from "./pages/FuncionarioReunioes";
 import AdminFinanceiro from "./pages/AdminFinanceiro";
 import FuncionarioFinanceiro from "./pages/FuncionarioFinanceiro";
 import TiposTarefas from "./pages/TiposTarefas";
+import AprovacaoMockup from "./pages/AprovacaoMockup";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +66,7 @@ const App = () => (
           <Route path="/formulario/:templateId" element={<FormularioPublico />} />
           <Route path="/formularioig/:formSlug" element={<FormularioCaptura />} />
           <Route path="/cliente-form/:clienteId" element={<FormularioCliente />} />
+          <Route path="/aprovacao/:token" element={<AprovacaoMockup />} />
 
           {/* Root: redirect based on role */}
           <Route
@@ -123,6 +126,7 @@ const App = () => (
           >
             <Route index element={<ClienteDashboard />} />
             <Route path="agendamentos" element={<ClienteDashboard />} />
+            <Route path="aprovacoes" element={<ClienteAprovacoes />} />
           </Route>
 
           {/* Funcionario Panel */}
