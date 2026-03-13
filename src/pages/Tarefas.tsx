@@ -243,12 +243,6 @@ function TarefaCardContent({ tarefa, colunas, clientes, onDelete, dragHandleProp
                 {format(new Date(tarefa.data_limite + "T00:00:00"), "dd/MM/yyyy")}
               </span>
             )}
-            {tarefa.comissao != null && tarefa.comissao > 0 && (
-              <span className="text-xs text-primary flex items-center gap-1">
-                <DollarSign className="h-3 w-3" />
-                R$ {tarefa.comissao.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </span>
-            )}
           </div>
         </div>
       </div>
