@@ -602,6 +602,9 @@ Deno.serve(async (req) => {
           numeroReagendamentos: reuniao.numero_reagendamentos || 0,
           audioUrl: (aviso as any).audio_url || null,
           audioPosicao: (aviso as any).audio_posicao || null,
+          linkCalendarioAtivo: (aviso as any).link_calendario_ativo || false,
+          linkCalendarioTexto: (aviso as any).link_calendario_texto || "📅 Adicionar ao meu calendário",
+          duracaoMinutos: reuniao.duracao_minutos || 60,
         });
       }
 
