@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { RefreshCw, Send, Calendar, Trash2, MessageSquare, Image, Mic, Forward, X, ArrowLeft, Pencil, Check, ChevronDown, Repeat, Wifi, Info } from "lucide-react";
+import { RefreshCw, Send, Package, Trash2, MessageSquare, Image, Mic, Forward, X, ArrowLeft, Pencil, Check, ChevronDown, Repeat, Wifi, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
