@@ -333,17 +333,22 @@ export function SelectMemberAndTimeStep({
                   ) : hasEscala && slots.length === 0 ? (
                     <p className="text-xs text-muted-foreground italic">Sem horários disponíveis nesta data</p>
                   ) : member.isAdmin ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="time"
-                        className="w-28 h-7 text-xs"
-                        value={selectedMemberId === member.id ? selectedTime : "08:00"}
-                        onChange={e => handleSelectSlot(member.id, e.target.value)}
-                      />
-                      <span className="text-xs text-muted-foreground">Horário livre</span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          className="w-28 h-7 text-xs"
+                          value={selectedMemberId === member.id ? selectedTime : "08:00"}
+                          onChange={e => handleSelectSlot(member.id, e.target.value)}
+                        />
+                        <span className="text-xs text-muted-foreground">Horário livre</span>
+                      </div>
+                      {selectedMemberId === member.id && selectedTime && hasTimeConflict(member.id, selectedTime) && (
+                        <p className="text-xs text-destructive font-medium">⚠ Já existe uma reunião neste horário</p>
+                      )}
                     </div>
                   ) : (
-                    <div>
+                    <div className="space-y-1">
                       <p className="text-xs text-muted-foreground italic mb-1.5">Sem escala configurada — horário livre</p>
                       <Input
                         type="time"
@@ -351,6 +356,9 @@ export function SelectMemberAndTimeStep({
                         value={selectedMemberId === member.id ? selectedTime : "08:00"}
                         onChange={e => handleSelectSlot(member.id, e.target.value)}
                       />
+                      {selectedMemberId === member.id && selectedTime && hasTimeConflict(member.id, selectedTime) && (
+                        <p className="text-xs text-destructive font-medium">⚠ Já existe uma reunião neste horário</p>
+                      )}
                     </div>
                   )}
                 </div>
