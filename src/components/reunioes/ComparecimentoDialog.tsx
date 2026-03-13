@@ -227,7 +227,7 @@ export function ComparecimentoDialog({
             {isCompareceu ? "Compareceu" : "Não Compareceu"}
           </DialogTitle>
           <DialogDescription>
-            Selecione para qual coluna do Kanban de Disparos o card do cliente deve ser movido.
+            Selecione para qual coluna do Kanban do WhatsApp o card do cliente deve ser movido.
           </DialogDescription>
         </DialogHeader>
 
