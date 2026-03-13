@@ -125,6 +125,32 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     }
   };
 
+  const handleResubmitRejected = async () => {
+    if (!tarefa) return;
+    setResubmitting(true);
+    try {
+      // Reset only rejected mockups to pendente
+      await resubmitRejected.mutateAsync();
+      
+      // Move task to "Aguardando Aprovação" column
+      const aguardandoColuna = colunas.find(c => c.nome === "Aguardando Aprovação");
+      if (aguardandoColuna) {
+        const { error } = await supabase
+          .from("tarefas")
+          .update({ coluna_id: aguardandoColuna.id, updated_at: new Date().toISOString() })
+          .eq("id", tarefa.id);
+        if (error) throw error;
+      }
+      
+      toast.success("Itens revisados reenviados para aprovação!");
+      window.location.reload();
+    } catch {
+      toast.error("Erro ao reenviar para aprovação");
+    } finally {
+      setResubmitting(false);
+    }
+  };
+
   if (!tarefa) return null;
 
   // Determine which file types this task type requires (excluding mockup)
