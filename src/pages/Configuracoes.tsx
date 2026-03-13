@@ -11,6 +11,7 @@ import Produtos from "./Produtos";
 import Conexoes from "./Conexoes";
 import TiposAgendamento from "./TiposAgendamento";
 import { ResetDataConfig } from "@/components/configuracoes/ResetDataConfig";
+import { TiposReuniaoConfig } from "@/components/configuracoes/TiposReuniaoConfig";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
 
 const tabOptions = [
@@ -18,7 +19,8 @@ const tabOptions = [
   { value: "profissionais", label: "Profissionais" },
   { value: "vinculos", label: "Vínculos" },
   { value: "escala", label: "Escala" },
-  { value: "tipos", label: "Tipos" },
+  { value: "tipos", label: "Tipos Agendamento" },
+  { value: "tipos-reuniao", label: "Tipos Reunião" },
   { value: "produtos", label: "Produtos" },
   { value: "mensagens", label: "Mensagens" },
   { value: "conexoes", label: "Conexões" },
@@ -84,6 +86,10 @@ export default function Configuracoes() {
 
         <TabsContent value="tipos">
           <TiposAgendamento />
+        </TabsContent>
+
+        <TabsContent value="tipos-reuniao">
+          <TiposReuniaoConfig />
         </TabsContent>
         
         <TabsContent value="produtos">

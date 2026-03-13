@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTiposReuniao } from "@/hooks/useTiposReuniao";
 import { AtribuirProdutoDialog } from "@/components/produtos/AtribuirProdutoDialog";
 import {
   useProdutoTemplates,
@@ -359,12 +360,14 @@ function ProdutoDialog({
   const { criarTemplate, atualizarTemplate, adicionarTarefa, atualizarTarefa, excluirTarefa } = useProdutoTemplateMutations();
   const { membros } = useTarefasMembros();
   const { colunas } = useTarefas();
+  const { data: tiposReuniao = [] } = useTiposReuniao();
 
   const isEditing = !!editando;
   const [nome, setNome] = useState(editando?.nome || "");
   const [descricao, setDescricao] = useState(editando?.descricao || "");
   const [requerReuniao, setRequerReuniao] = useState(editando?.requer_reuniao || false);
   const [duracaoReuniao, setDuracaoReuniao] = useState(editando?.duracao_reuniao || 60);
+  const [tipoReuniaoId, setTipoReuniaoId] = useState<string>(editando?.tipo_reuniao_id || "");
   const [tarefas, setTarefas] = useState<TarefaLocal[]>(
     existingTarefas ? existingTarefas.map(tarefaDbToLocal) : []
   );
@@ -432,9 +435,9 @@ function ProdutoDialog({
       let templateId = editando?.id;
 
       if (isEditing && templateId) {
-        await atualizarTemplate.mutateAsync({ id: templateId, nome: nome.trim(), descricao: descricao.trim() || null, requer_reuniao: requerReuniao, duracao_reuniao: duracaoReuniao });
+        await atualizarTemplate.mutateAsync({ id: templateId, nome: nome.trim(), descricao: descricao.trim() || null, requer_reuniao: requerReuniao, duracao_reuniao: duracaoReuniao, tipo_reuniao_id: tipoReuniaoId || null });
       } else {
-        const created = await criarTemplate.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined, requer_reuniao: requerReuniao, duracao_reuniao: duracaoReuniao });
+        const created = await criarTemplate.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined, requer_reuniao: requerReuniao, duracao_reuniao: duracaoReuniao, tipo_reuniao_id: tipoReuniaoId || null });
         templateId = (created as any).id;
       }
 
@@ -493,16 +496,34 @@ function ProdutoDialog({
           </div>
 
           {requerReuniao && (
-            <div className="space-y-2">
-              <Label>Duração da Reunião (minutos)</Label>
-              <Input
-                type="number"
-                min={15}
-                step={15}
-                value={duracaoReuniao}
-                onChange={e => setDuracaoReuniao(Number(e.target.value) || 60)}
-                placeholder="60"
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Duração da Reunião (minutos)</Label>
+                <Input
+                  type="number"
+                  min={15}
+                  step={15}
+                  value={duracaoReuniao}
+                  onChange={e => setDuracaoReuniao(Number(e.target.value) || 60)}
+                  placeholder="60"
+                />
+              </div>
+              {tiposReuniao.filter(t => t.ativo).length > 0 && (
+                <div className="space-y-2">
+                  <Label>Tipo de Reunião</Label>
+                  <Select value={tipoReuniaoId} onValueChange={(v) => setTipoReuniaoId(v === "none" ? "" : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum</SelectItem>
+                      {tiposReuniao.filter(t => t.ativo).map(t => (
+                        <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           )}
 

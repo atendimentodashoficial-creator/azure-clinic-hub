@@ -19,6 +19,7 @@ export interface ProdutoTemplate {
   ativo: boolean;
   requer_reuniao: boolean;
   duracao_reuniao: number;
+  tipo_reuniao_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -70,7 +71,7 @@ export function useProdutoTemplateMutations() {
   };
 
   const criarTemplate = useMutation({
-    mutationFn: async (data: { nome: string; descricao?: string; requer_reuniao?: boolean; duracao_reuniao?: number }) => {
+    mutationFn: async (data: { nome: string; descricao?: string; requer_reuniao?: boolean; duracao_reuniao?: number; tipo_reuniao_id?: string | null }) => {
       if (!user?.id) throw new Error("Não autenticado");
       const { data: created, error } = await supabase
         .from("produto_templates" as any)

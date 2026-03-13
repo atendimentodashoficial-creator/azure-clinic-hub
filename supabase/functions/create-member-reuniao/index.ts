@@ -45,7 +45,7 @@ serve(async (req) => {
       });
     }
 
-    const { memberId, titulo, dataHora, duracao = 60, clienteNome, clienteTelefone } = await req.json();
+    const { memberId, titulo, dataHora, duracao = 60, clienteNome, clienteTelefone, tipoReuniaoId } = await req.json();
 
     if (!memberId || !titulo || !dataHora) {
       return new Response(JSON.stringify({ success: false, error: "Dados obrigatórios ausentes" }), {
@@ -273,6 +273,7 @@ serve(async (req) => {
         participantes,
         meet_link: finalMeetLink,
         google_event_id: googleEventId,
+        tipo_reuniao_id: tipoReuniaoId || null,
       })
       .select("id")
       .single();

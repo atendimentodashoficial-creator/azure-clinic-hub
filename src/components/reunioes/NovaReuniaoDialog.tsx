@@ -13,13 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 import { useEscalasMembros, useAusenciasMembros, EscalaMembro, AusenciaMembro } from "@/hooks/useEscalasMembros";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatInTimeZone } from "date-fns-tz";
 import { timeToMinutes, minutesToTime, rangesOverlap } from "@/utils/timeSlots";
+import { useTiposReuniao, useTipoReuniaoMembros } from "@/hooks/useTiposReuniao";
 
 function computeSlots(
   escalas: EscalaMembro[],
@@ -90,10 +91,15 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
   const [clienteNome, setClienteNome] = useState("");
   const [clienteTelefone, setClienteTelefone] = useState("");
   const [clienteSearch, setClienteSearch] = useState("");
+  const [selectedTipoId, setSelectedTipoId] = useState<string>("");
   const [meetingsByUser, setMeetingsByUser] = useState<Record<string, Array<{ id: string; data_reuniao: string; duracao_minutos: number }>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [leads, setLeads] = useState<Array<{ id: string; nome: string; telefone: string }>>([]);
   const [showLeadsList, setShowLeadsList] = useState(false);
+
+  const { data: tiposReuniao = [] } = useTiposReuniao();
+  const { data: tipoMembros = [] } = useTipoReuniaoMembros(selectedTipoId || null);
+  const tipoMembrosIds = useMemo(() => new Set(tipoMembros.map(tm => tm.membro_id)), [tipoMembros]);
 
   const stepInterval = use15min ? 15 : 30;
 
@@ -108,6 +114,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
       setClienteNome("");
       setClienteTelefone("");
       setClienteSearch("");
+      setSelectedTipoId("");
       setShowLeadsList(false);
     }
   }, [open]);
@@ -153,7 +160,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
     ).slice(0, 8);
   }, [leads, clienteSearch]);
 
-  const allMembers = useMemo(() => {
+  const allMembersRaw = useMemo(() => {
     return membros.map(m => ({
       id: m.id,
       nome: m.nome,
@@ -164,6 +171,12 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
       authUserId: (m as any).auth_user_id as string | null,
     }));
   }, [membros, allEscalas, allAusencias]);
+
+  // Filter members by tipo_reuniao if selected
+  const allMembers = useMemo(() => {
+    if (!selectedTipoId || tipoMembrosIds.size === 0) return allMembersRaw;
+    return allMembersRaw.filter(m => tipoMembrosIds.has(m.id));
+  }, [allMembersRaw, selectedTipoId, tipoMembrosIds]);
 
   const memberSlots = useMemo(() => {
     if (!selectedDate) return {};
@@ -227,6 +240,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
           duracao,
           clienteNome: clienteNome || null,
           clienteTelefone: clienteTelefone || null,
+          tipoReuniaoId: selectedTipoId || null,
         },
       });
 
@@ -265,7 +279,24 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
             />
           </div>
 
-          {/* Cliente */}
+          {/* Tipo de Reunião */}
+          {tiposReuniao.filter(t => t.ativo).length > 0 && (
+            <div className="space-y-2">
+              <Label>Tipo de Reunião</Label>
+              <Select value={selectedTipoId} onValueChange={(v) => { setSelectedTipoId(v === "none" ? "" : v); setSelectedMemberId(""); setSelectedTime(""); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Todos os profissionais</SelectItem>
+                  {tiposReuniao.filter(t => t.ativo).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>Cliente</Label>
             <div className="relative">

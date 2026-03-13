@@ -4216,6 +4216,7 @@ export type Database = {
           nome: string
           ordem: number | null
           requer_reuniao: boolean
+          tipo_reuniao_id: string | null
           updated_at: string
           user_id: string
         }
@@ -4228,6 +4229,7 @@ export type Database = {
           nome: string
           ordem?: number | null
           requer_reuniao?: boolean
+          tipo_reuniao_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -4240,10 +4242,19 @@ export type Database = {
           nome?: string
           ordem?: number | null
           requer_reuniao?: boolean
+          tipo_reuniao_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "produto_templates_tipo_reuniao_id_fkey"
+            columns: ["tipo_reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_reuniao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       produtos: {
         Row: {
@@ -4434,6 +4445,7 @@ export type Database = {
           profissional_id: string | null
           resumo_ia: string | null
           status: string
+          tipo_reuniao_id: string | null
           titulo: string
           transcricao: string | null
           ultimo_reagendamento_avisado: number | null
@@ -4458,6 +4470,7 @@ export type Database = {
           profissional_id?: string | null
           resumo_ia?: string | null
           status?: string
+          tipo_reuniao_id?: string | null
           titulo: string
           transcricao?: string | null
           ultimo_reagendamento_avisado?: number | null
@@ -4482,6 +4495,7 @@ export type Database = {
           profissional_id?: string | null
           resumo_ia?: string | null
           status?: string
+          tipo_reuniao_id?: string | null
           titulo?: string
           transcricao?: string | null
           ultimo_reagendamento_avisado?: number | null
@@ -4508,6 +4522,13 @@ export type Database = {
             columns: ["profissional_id"]
             isOneToOne: false
             referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reunioes_tipo_reuniao_id_fkey"
+            columns: ["tipo_reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_reuniao"
             referencedColumns: ["id"]
           },
         ]
@@ -4928,6 +4949,72 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      tipos_reuniao: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tipos_reuniao_membros: {
+        Row: {
+          created_at: string
+          id: string
+          membro_id: string
+          tipo_reuniao_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          membro_id: string
+          tipo_reuniao_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          membro_id?: string
+          tipo_reuniao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tipos_reuniao_membros_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_membros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tipos_reuniao_membros_tipo_reuniao_id_fkey"
+            columns: ["tipo_reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_reuniao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       uazapi_config: {
         Row: {
