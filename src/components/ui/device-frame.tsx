@@ -54,7 +54,7 @@ function IPhoneFrame({ children, className }: DeviceFrameProps) {
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-1 bg-foreground/20 rounded-full z-20" />
         {/* Screen area */}
         <div className="absolute inset-[6px] rounded-[2rem] overflow-hidden bg-background">
-          <div className="w-full h-full overflow-auto">
+          <div className="w-full h-full overflow-y-auto overflow-x-hidden touch-pan-y overscroll-x-none">
             {children}
           </div>
         </div>
