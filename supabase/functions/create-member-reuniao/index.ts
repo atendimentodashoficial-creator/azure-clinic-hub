@@ -273,6 +273,7 @@ serve(async (req) => {
         participantes,
         meet_link: finalMeetLink,
         google_event_id: googleEventId,
+        tipo_reuniao_id: tipoReuniaoId || null,
       })
       .select("id")
       .single();
