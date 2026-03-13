@@ -535,7 +535,7 @@ function LinkOnlyApproval({
 
         {/* Feedback + actions */}
         {!decided && (
-          <Card className="p-4 space-y-3">
+          <Card className="p-4 space-y-3 max-w-xl mx-auto">
             <Textarea
               placeholder="Feedback ou observações (obrigatório para solicitar mudanças)..."
               value={linkFeedback}
