@@ -22,6 +22,8 @@ interface NovoClienteDialogProps {
   hideTrigger?: boolean;
   /** Pre-fill data for new client */
   initialData?: { nome?: string; telefone?: string };
+  /** Default client type - used when coming from Disparos flow */
+  defaultTipo?: "interno" | "preview";
 }
 
 export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, externalOpen, hideTrigger, initialData }: NovoClienteDialogProps) {
