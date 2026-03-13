@@ -254,6 +254,8 @@ export function AvisosReuniaoTab() {
     setFormAtivo(aviso.ativo);
     setFormProcedimentoId(aviso.procedimento_id || null);
     setFormInstanciaId(aviso.instancia_id || null);
+    setFormAudioUrl(aviso.audio_url || null);
+    setFormAudioPosicao((aviso.audio_posicao as "antes" | "depois") || "antes");
     // Map envio_imediato to tipo_gatilho for backwards compatibility
     if (aviso.envio_imediato) {
       setFormTipoGatilho("imediato");
