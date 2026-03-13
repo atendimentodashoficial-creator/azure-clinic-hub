@@ -220,6 +220,7 @@ export function AvisosReuniaoTab() {
     setFormAtivo(true);
     setFormProcedimentoId(null);
     setFormInstanciaId(null);
+    setFormTipoReuniaoId(null);
     setFormTipoGatilho("dias_antes");
     setFormAudioUrl(null);
     setFormAudioPosicao("antes");
