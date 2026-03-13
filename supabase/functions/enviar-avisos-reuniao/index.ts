@@ -45,6 +45,8 @@ interface PendingAviso {
   meetLink: string | null;
   tipoGatilho: string;
   numeroReagendamentos?: number;
+  audioUrl?: string | null;
+  audioPosicao?: string | null;
 }
 
 // Configuration
