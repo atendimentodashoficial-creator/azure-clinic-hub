@@ -4788,6 +4788,9 @@ export type Database = {
           telefone: string | null
           updated_at: string
           user_id: string
+          whatsapp_api_key: string | null
+          whatsapp_base_url: string | null
+          whatsapp_instance_name: string | null
         }
         Insert: {
           auth_user_id?: string | null
@@ -4805,6 +4808,9 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id: string
+          whatsapp_api_key?: string | null
+          whatsapp_base_url?: string | null
+          whatsapp_instance_name?: string | null
         }
         Update: {
           auth_user_id?: string | null
@@ -4822,6 +4828,9 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id?: string
+          whatsapp_api_key?: string | null
+          whatsapp_base_url?: string | null
+          whatsapp_instance_name?: string | null
         }
         Relationships: []
       }
