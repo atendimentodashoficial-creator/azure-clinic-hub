@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { ReuniaoDetalhesDialog } from "@/components/reunioes/ReuniaoDetalhesDialog";
 import { useHorizontalScroll } from "@/hooks/useHorizontalScroll";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
