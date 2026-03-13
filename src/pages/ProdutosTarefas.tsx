@@ -59,6 +59,7 @@ interface TarefaLocal {
   prazo: number;
   colunaId: string;
   dependencias: string[];
+  comissao: number;
 }
 
 function gerarId() {
