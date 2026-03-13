@@ -435,7 +435,6 @@ export function NovoAgendamentoDialog({
               const { data: matchingClientes } = await supabase
                 .from("leads")
                 .select("nome, email, telefone, status")
-                .eq("user_id", user.id)
                 .eq("status", "cliente")
                 .is("deleted_at", null)
                 .like("telefone", `%${last8Digits}`)
@@ -535,7 +534,6 @@ export function NovoAgendamentoDialog({
       const { data: matchingLeads } = await supabase
         .from("leads")
         .select("nome, email, telefone")
-        .eq("user_id", user.id)
         .is("deleted_at", null)
         .like("telefone", `%${last8Digits}`)
         .limit(1);

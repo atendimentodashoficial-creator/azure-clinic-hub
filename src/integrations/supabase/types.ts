@@ -5627,7 +5627,12 @@ export type Database = {
               status: string
             }[]
           }
+      can_access_owner_data: {
+        Args: { _owner_id: string; _user_id: string }
+        Returns: boolean
+      }
       generate_slug: { Args: { input_text: string }; Returns: string }
+      get_owner_id: { Args: { _user_id: string }; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
