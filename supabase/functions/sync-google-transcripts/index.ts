@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
     );
     
     const driveResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${searchQuery}&fields=files(id,name,createdTime,modifiedTime,mimeType)&orderBy=createdTime desc&pageSize=50`,
+      `https://www.googleapis.com/drive/v3/files?q=${searchQuery}&fields=files(id,name,createdTime,modifiedTime,mimeType)&pageSize=50`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
