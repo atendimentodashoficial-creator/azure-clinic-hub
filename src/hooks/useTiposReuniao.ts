@@ -62,11 +62,11 @@ export function useTiposReuniaoMutations() {
   const ownerId = useOwnerId();
 
   const criarTipo = useMutation({
-    mutationFn: async (data: { nome: string; descricao?: string }) => {
+    mutationFn: async (data: { nome: string; descricao?: string; duracao_minutos?: number }) => {
       if (!ownerId) throw new Error("Usuário não identificado");
       const { data: created, error } = await supabase
         .from("tipos_reuniao" as any)
-        .insert({ user_id: ownerId, nome: data.nome, descricao: data.descricao || null })
+        .insert({ user_id: ownerId, nome: data.nome, descricao: data.descricao || null, duracao_minutos: data.duracao_minutos ?? 60 })
         .select()
         .single();
       if (error) throw error;
