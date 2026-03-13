@@ -748,6 +748,11 @@ export default function Reunioes() {
           }
         }}
       />
+      {/* Dialog de nova reunião */}
+      <NovaReuniaoDialog
+        open={novaReuniaoOpen}
+        onOpenChange={setNovaReuniaoOpen}
+      />
     </div>
   );
 }
