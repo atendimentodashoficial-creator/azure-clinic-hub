@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock } from "lucide-react";
+import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, Users } from "lucide-react";
 import { formatPhoneDisplay, getLast8Digits } from "@/utils/phoneFormat";
 import { navigateToChat } from "@/utils/chatRouting";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,9 +31,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 
 interface Reuniao {
   id: string;
+  user_id: string;
   fireflies_id: string | null;
   google_event_id: string | null;
   titulo: string;
@@ -49,7 +52,6 @@ interface Reuniao {
   cliente_telefone: string | null;
   profissional_id: string | null;
   profissionais?: { nome: string } | null;
-  // Join opcional para puxar o nome atualizado do cliente
   leads?: { nome: string; telefone: string } | null;
 }
 
@@ -57,6 +59,8 @@ export default function Reunioes() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { membros } = useTarefasMembros();
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("todos");
   const [syncing, setSyncing] = useState(false);
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
   const [activeTab, setActiveTab] = useState("reunioes");
@@ -138,12 +142,10 @@ export default function Reunioes() {
     return "Cliente não informado";
   };
 
-  const { data: reunioes, isLoading, refetch } = useQuery({
+  const { data: allReunioes, isLoading, refetch } = useQuery({
     queryKey: ["reunioes", user?.id],
     refetchOnMount: "always",
     queryFn: async () => {
-      // Buscar reuniões agendadas (com google_event_id OU criadas manualmente com status agendado)
-      // Reuniões só do Fireflies (sem google_event_id e sem status agendado) ficam ocultas
       const { data, error } = await supabase
         .from("reunioes" as any)
         .select("*, profissionais(nome), leads:cliente_id(nome, telefone)")
@@ -155,6 +157,17 @@ export default function Reunioes() {
     },
     enabled: !!user?.id,
   });
+
+  // Filter by selected member
+  const reunioes = useMemo(() => {
+    if (!allReunioes) return [];
+    if (selectedMemberId === "todos") return allReunioes;
+    if (selectedMemberId === "meus") return allReunioes.filter(r => r.user_id === user?.id);
+    // Find the member's auth_user_id
+    const membro = membros.find(m => m.id === selectedMemberId);
+    if (!membro?.auth_user_id) return [];
+    return allReunioes.filter(r => r.user_id === membro.auth_user_id);
+  }, [allReunioes, selectedMemberId, membros, user?.id]);
 
   const { data: firefliesConfig } = useQuery({
     queryKey: ["fireflies-config", user?.id],
@@ -324,16 +337,34 @@ export default function Reunioes() {
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
           {/* Header controls for reunioes tab */}
-          <div className="flex items-center justify-start gap-2 flex-wrap">
-            <TemplateCamposDialog />
-            <Button 
-              onClick={handleSync} 
-              disabled={syncing || !firefliesConfig?.api_key}
-              className="gap-2"
-            >
-              <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-              Sincronizar Fireflies
-            </Button>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <TemplateCamposDialog />
+              <Button 
+                onClick={handleSync} 
+                disabled={syncing || !firefliesConfig?.api_key}
+                className="gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+                Sincronizar Fireflies
+              </Button>
+            </div>
+
+            {membros.length > 0 && (
+              <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+                <SelectTrigger className="w-[220px] h-8 text-xs">
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  <SelectValue placeholder="Filtrar por colaborador" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="meus">Minhas reuniões</SelectItem>
+                  {membros.map(m => (
+                    <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
 
