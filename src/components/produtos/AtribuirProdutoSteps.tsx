@@ -222,9 +222,9 @@ export function SelectMemberAndTimeStep({
     const slotStart = timeToMinutes(time);
     const slotEnd = slotStart + duration;
     return meetings.some(m => {
-      const mDate = m.data_reuniao.substring(0, 10);
+      const mDate = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "yyyy-MM-dd");
       if (mDate !== selectedDate) return false;
-      const mTime = m.data_reuniao.substring(11, 16);
+      const mTime = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "HH:mm");
       const mS = timeToMinutes(mTime);
       const mE = mS + (m.duracao_minutos || 60);
       return rangesOverlap({ startMin: slotStart, endMin: slotEnd }, { startMin: mS, endMin: mE });
