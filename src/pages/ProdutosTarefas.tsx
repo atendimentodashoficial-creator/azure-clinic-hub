@@ -186,6 +186,7 @@ function TarefaInlineEditor({
   isNew?: boolean;
 }) {
   const [expanded, setExpanded] = useState(isNew);
+  const { tipos: tiposTarefas } = useTiposTarefas();
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade);
   const coluna = tarefa.colunaId ? colunas.find((c: any) => c.id === tarefa.colunaId) : null;
 
