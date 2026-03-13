@@ -655,12 +655,14 @@ function ProdutoCard({
   onDelete,
   onAtribuir,
   onDuplicar,
+  dragHandleProps,
 }: {
   template: ProdutoTemplate;
   onEdit: () => void;
   onDelete: () => void;
   onAtribuir?: () => void;
   onDuplicar?: () => void;
+  dragHandleProps?: Record<string, any>;
 }) {
   const { data: tarefas = [] } = useProdutoTemplateTarefas(template.id);
   const MAX_VISIBLE = 3;
