@@ -135,6 +135,7 @@ const App = () => (
             <Route path="whatsapp" element={<FuncionarioWhatsApp />} />
             <Route path="reunioes" element={<FuncionarioReunioes />} />
             <Route path="escala" element={<FuncionarioEscala />} />
+            <Route path="tarefas" element={<Tarefas />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
