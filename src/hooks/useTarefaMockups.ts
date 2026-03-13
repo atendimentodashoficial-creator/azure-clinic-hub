@@ -123,5 +123,5 @@ export function useTarefaMockups(tarefaId: string | null) {
     onSuccess: invalidate,
   });
 
-  return { mockups, isLoading, saveMockups, updateStatus };
+  return { mockups, isLoading, saveMockups, updateStatus, resubmitRejected };
 }
