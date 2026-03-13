@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -10,7 +11,7 @@ import { useTarefaMockups } from "@/hooks/useTarefaMockups";
 import { MockupEditor } from "./MockupEditor";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
-import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy } from "lucide-react";
+import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
