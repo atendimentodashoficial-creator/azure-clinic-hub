@@ -160,8 +160,7 @@ serve(async (req) => {
     const { error: deleteError } = await supabase
       .from("reunioes")
       .delete()
-      .eq("id", reuniaoId)
-      .eq("user_id", user.id);
+      .eq("id", reuniaoId);
 
     if (deleteError) {
       console.error("Error deleting local record:", deleteError);
