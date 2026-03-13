@@ -24,6 +24,7 @@ import { TemplateCamposDialog } from "@/components/reunioes/TemplateCamposDialog
 import { VincularTranscricaoDialog } from "@/components/reunioes/VincularTranscricaoDialog";
 import { ReagendarReuniaoDialog } from "@/components/reunioes/ReagendarReuniaoDialog";
 import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog";
+import { NovaReuniaoDialog } from "@/components/reunioes/NovaReuniaoDialog";
 import { EscalaMembrosTab } from "@/components/reunioes/EscalaMembrosTab";
 import {
   AlertDialog,
