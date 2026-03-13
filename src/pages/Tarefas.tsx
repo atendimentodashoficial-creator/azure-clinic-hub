@@ -660,6 +660,15 @@ export default function Tarefas() {
           )}
         </DragOverlay>
       </DndContext>
+
+      <TarefaDetalhesDialog
+        tarefa={detalheTarefa}
+        colunas={colunas}
+        clientes={clientes}
+        reunioesMap={reunioesMap}
+        open={!!detalheTarefa}
+        onOpenChange={(open) => { if (!open) setDetalheTarefa(null); }}
+      />
     </div>
   );
 }
