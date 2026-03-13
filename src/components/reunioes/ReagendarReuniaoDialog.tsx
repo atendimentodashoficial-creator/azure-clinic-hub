@@ -237,7 +237,7 @@ export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: Reagenda
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col min-h-0 overflow-hidden">
         <DialogHeader>
           <DialogTitle>Reagendar Reunião</DialogTitle>
           <p className="text-sm text-muted-foreground">
