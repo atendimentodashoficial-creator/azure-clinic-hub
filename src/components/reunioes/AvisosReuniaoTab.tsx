@@ -958,7 +958,32 @@ export function AvisosReuniaoTab() {
               </p>
             </div>
 
-
+            {/* Link para adicionar ao calendário */}
+            <div className="space-y-3 border rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarPlus className="h-4 w-4" />
+                  <Label className="text-sm font-medium">Link para adicionar ao calendário</Label>
+                </div>
+                <Switch
+                  checked={formLinkCalendarioAtivo}
+                  onCheckedChange={setFormLinkCalendarioAtivo}
+                />
+              </div>
+              {formLinkCalendarioAtivo && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Texto do botão/link:</Label>
+                  <Input
+                    value={formLinkCalendarioTexto}
+                    onChange={(e) => setFormLinkCalendarioTexto(e.target.value)}
+                    placeholder="📅 Adicionar ao meu calendário"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use a variável <code className="bg-muted px-1 rounded">{'{link_calendario}'}</code> no template para posicionar o link, ou ele será adicionado automaticamente ao final da mensagem.
+                  </p>
+                </div>
+              )}
+            </div>
             {/* Período e horário - only show for dias_antes type */}
             <div className="grid grid-cols-2 gap-4">
               {formTipoGatilho === 'dias_antes' && (
