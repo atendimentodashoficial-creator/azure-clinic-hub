@@ -22,6 +22,7 @@ import { VincularTranscricaoDialog } from "@/components/reunioes/VincularTranscr
 import { ReagendarReuniaoDialog } from "@/components/reunioes/ReagendarReuniaoDialog";
 import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog";
 import { EscalaMembrosTab } from "@/components/reunioes/EscalaMembrosTab";
+import { NovaReuniaoDialog } from "@/components/reunioes/NovaReuniaoDialog";
 import {
   AlertDialog,
   AlertDialogAction,
