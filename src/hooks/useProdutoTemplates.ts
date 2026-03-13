@@ -33,6 +33,7 @@ export function useProdutoTemplates() {
         .from("produto_templates" as any)
         .select("*")
         .eq("user_id", user.id)
+        .order("ordem")
         .order("nome");
       if (error) throw error;
       return data as unknown as ProdutoTemplate[];
