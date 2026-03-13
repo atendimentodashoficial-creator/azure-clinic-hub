@@ -9,18 +9,30 @@ export function useMembroAtual() {
   const { user } = useAuth();
 
   const { data: membro, isLoading } = useQuery({
-    queryKey: ["membro-atual", user?.email],
+    queryKey: ["membro-atual", user?.id],
     queryFn: async () => {
-      if (!user?.email) return null;
+      if (!user?.id) return null;
+      // Try by auth_user_id first, fallback to email
       const { data, error } = await supabase
         .from("tarefas_membros" as any)
         .select("*")
-        .eq("email", user.email)
+        .eq("auth_user_id", user.id)
         .maybeSingle();
       if (error) throw error;
-      return data as any;
+      if (data) return data as any;
+      // Fallback: match by email
+      if (user.email) {
+        const { data: dataByEmail, error: errEmail } = await supabase
+          .from("tarefas_membros" as any)
+          .select("*")
+          .eq("email", user.email)
+          .maybeSingle();
+        if (errEmail) throw errEmail;
+        return dataByEmail as any;
+      }
+      return null;
     },
-    enabled: !!user?.email,
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
 
