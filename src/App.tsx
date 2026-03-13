@@ -132,6 +132,8 @@ const App = () => (
           >
             <Route index element={<FuncionarioDashboard />} />
             <Route path="agenda" element={<FuncionarioDashboard />} />
+            <Route path="whatsapp" element={<FuncionarioWhatsApp />} />
+            <Route path="reunioes" element={<FuncionarioReunioes />} />
             <Route path="escala" element={<FuncionarioEscala />} />
           </Route>
 
