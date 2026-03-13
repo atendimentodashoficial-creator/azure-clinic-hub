@@ -121,7 +121,7 @@ export function MockupPreview({ slides, perfilNome = "perfil", perfilCategoria =
           )}
           {slide.cta && (
             <p className="text-xs text-muted-foreground border-l-2 border-primary pl-2">
-              👉 {slide.cta}
+              {slide.cta}
             </p>
           )}
         </div>
