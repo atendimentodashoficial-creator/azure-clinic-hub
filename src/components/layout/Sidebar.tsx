@@ -61,6 +61,7 @@ export const navigation = [
   { name: "Clientes *", href: "/admin/tarefas-clientes", icon: Building2 },
   { name: "Equipe", href: "/admin/equipe", icon: UsersRound },
   { name: "Produtos", href: "/admin/produtos-tarefas", icon: Package },
+  { name: "Financeiro", href: "/admin/financeiro", icon: DollarSign },
   { name: "Usuários", href: "/admin/usuarios", icon: Shield, separator: true },
   { name: "Painéis", href: "/admin/paineis", icon: Settings2 },
   { name: "Configurações", href: "/admin/configuracoes", icon: Settings },

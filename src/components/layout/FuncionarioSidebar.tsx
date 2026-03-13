@@ -12,6 +12,7 @@ const funcionarioNavigation = [
   { name: "WhatsApp", href: "/funcionario/whatsapp", icon: MessageSquare },
   { name: "Reuniões", href: "/funcionario/reunioes", icon: Video },
   { name: "Tarefas", href: "/funcionario/tarefas", icon: ListChecks },
+  { name: "Financeiro", href: "/funcionario/financeiro", icon: Wallet },
 ];
 
 interface SidebarContentProps {
