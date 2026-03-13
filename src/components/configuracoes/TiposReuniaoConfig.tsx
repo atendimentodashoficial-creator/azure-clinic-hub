@@ -197,6 +197,12 @@ export function TiposReuniaoConfig() {
               <Textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Descreva o tipo de reunião..." rows={2} />
             </div>
 
+            <div className="space-y-2">
+              <Label>Duração padrão (minutos)</Label>
+              <Input type="number" min={15} step={15} value={duracaoMinutos} onChange={e => setDuracaoMinutos(Number(e.target.value))} placeholder="60" />
+              <p className="text-xs text-muted-foreground">Essa duração será preenchida automaticamente ao agendar, mas poderá ser alterada.</p>
+            </div>
+
             <div className="space-y-3">
               <Label className="flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
