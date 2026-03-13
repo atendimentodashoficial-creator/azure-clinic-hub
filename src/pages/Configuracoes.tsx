@@ -87,6 +87,10 @@ export default function Configuracoes() {
         <TabsContent value="tipos">
           <TiposAgendamento />
         </TabsContent>
+
+        <TabsContent value="tipos-reuniao">
+          <TiposReuniaoConfig />
+        </TabsContent>
         
         <TabsContent value="produtos">
           <Produtos />
