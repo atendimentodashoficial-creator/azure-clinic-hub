@@ -112,10 +112,14 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
   const handleSaveMockups = async () => {
     try {
-      await saveMockups.mutateAsync(mockupSlides);
-      toast.success("Mockup salvo com sucesso!");
+      // Flatten posts into slides with post_index
+      const allSlides = posts.flatMap(post =>
+        post.slides.map(s => ({ ...s, post_index: post.postIndex }))
+      );
+      await saveMockups.mutateAsync(allSlides);
+      toast.success("Mockups salvos com sucesso!");
     } catch {
-      toast.error("Erro ao salvar mockup");
+      toast.error("Erro ao salvar mockups");
     }
   };
 
