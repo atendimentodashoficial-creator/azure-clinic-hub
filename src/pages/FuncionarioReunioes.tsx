@@ -1,100 +1,147 @@
 import { useMemo, useState, useEffect } from "react";
-import { Video, Calendar, Clock, Bell, CalendarClock, User } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { Video, Calendar, Clock, FileText, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, RefreshCw } from "lucide-react";
+import { formatPhoneDisplay, getLast8Digits } from "@/utils/phoneFormat";
+import { navigateToChat } from "@/utils/chatRouting";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMembroAtual } from "@/hooks/useMembroAtual";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import { ReuniaoDetalhesDialog } from "@/components/reunioes/ReuniaoDetalhesDialog";
-import { EscalaMembrosTab } from "@/components/reunioes/EscalaMembrosTab";
 import { AvisosReuniaoTab } from "@/components/reunioes/AvisosReuniaoTab";
+import { VincularTranscricaoDialog } from "@/components/reunioes/VincularTranscricaoDialog";
+import { ReagendarReuniaoDialog } from "@/components/reunioes/ReagendarReuniaoDialog";
+import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog";
+import { EscalaMembrosTab } from "@/components/reunioes/EscalaMembrosTab";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Reuniao {
   id: string;
+  user_id: string;
+  fireflies_id: string | null;
+  google_event_id: string | null;
   titulo: string;
   data_reuniao: string;
   duracao_minutos: number | null;
   participantes: string[] | null;
-  status: string;
+  transcricao: string | null;
+  resumo_ia: string | null;
   meet_link: string | null;
+  status: string;
+  created_at: string;
+  cliente_id: string | null;
   cliente_telefone: string | null;
   profissional_id: string | null;
   profissionais?: { nome: string } | null;
   leads?: { nome: string; telefone: string } | null;
-  transcricao: string | null;
-  resumo_ia: string | null;
-  google_event_id: string | null;
-  fireflies_id: string | null;
-  created_at: string;
-  cliente_id: string | null;
 }
 
 export default function FuncionarioReunioes() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { membro, isLoading: membroLoading } = useMembroAtual();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("reunioes");
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
+  const [vincularDialogOpen, setVincularDialogOpen] = useState(false);
+  const [reuniaoParaVincular, setReuniaoParaVincular] = useState<Reuniao | null>(null);
+  const [reuniaoParaDesmarcar, setReuniaoParaDesmarcar] = useState<Reuniao | null>(null);
+  const [reuniaoParaReagendar, setReuniaoParaReagendar] = useState<Reuniao | null>(null);
+  const [reuniaoParaExcluir, setReuniaoParaExcluir] = useState<Reuniao | null>(null);
+  const [comparecimentoReuniao, setComparecimentoReuniao] = useState<Reuniao | null>(null);
+  const [comparecimentoTipo, setComparecimentoTipo] = useState<"compareceu" | "nao_compareceu" | null>(null);
 
-  // Find the profissional linked to this funcionário (by email match)
-  const { data: profissional } = useQuery({
-    queryKey: ["funcionario-profissional", membro?.email],
-    queryFn: async () => {
-      if (!membro?.email) return null;
-      const { data, error } = await supabase
-        .from("profissionais")
-        .select("id, nome")
-        .eq("email", membro.email)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!membro?.email,
-  });
+  useEffect(() => {
+    const handler = () => {
+      queryClient.invalidateQueries({ queryKey: ["funcionario-reunioes"] });
+    };
+    window.addEventListener("contact-name-updated", handler);
+    return () => window.removeEventListener("contact-name-updated", handler);
+  }, [queryClient]);
 
-  // Fetch reuniões for this profissional or by name in participantes
-  const { data: reunioes, isLoading } = useQuery({
-    queryKey: ["funcionario-reunioes", profissional?.id, membro?.nome],
+  const { data: leadNames } = useQuery({
+    queryKey: ["leads", "names", user?.id],
+    refetchOnMount: "always",
     queryFn: async () => {
-      if (!profissional?.id && !membro?.nome) return [];
-      
-      if (profissional?.id) {
-        // Primary: match by profissional_id
+      const allLeads: Array<{ nome: string; telefone: string }> = [];
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
         const { data, error } = await supabase
-          .from("reunioes" as any)
-          .select("*, profissionais(nome), leads:cliente_id(nome, telefone)")
-          .eq("profissional_id", profissional.id)
-          .or("google_event_id.not.is.null,status.eq.agendado")
-          .order("data_reuniao", { ascending: false });
+          .from("leads")
+          .select("nome, telefone")
+          .is("deleted_at", null)
+          .range(from, from + PAGE_SIZE - 1);
         if (error) throw error;
-        return (data || []) as unknown as Reuniao[];
+        if (!data || data.length === 0) { hasMore = false; }
+        else {
+          allLeads.push(...(data as Array<{ nome: string; telefone: string }>));
+          if (data.length < PAGE_SIZE) hasMore = false;
+          else from += PAGE_SIZE;
+        }
       }
-      
-      // Fallback: match by name in participantes array
-      const { data, error } = await supabase
-        .from("reunioes" as any)
-        .select("*, profissionais(nome), leads:cliente_id(nome, telefone)")
-        .contains("participantes", [membro!.nome])
-        .or("google_event_id.not.is.null,status.eq.agendado")
-        .order("data_reuniao", { ascending: false });
-      if (error) throw error;
-      return (data || []) as unknown as Reuniao[];
+      return allLeads;
     },
-    enabled: !!profissional?.id || !!membro?.nome,
+    enabled: !!user?.id,
   });
+
+  const leadNameByLast8 = useMemo(() => {
+    const map = new Map<string, string>();
+    (leadNames || []).forEach((l) => {
+      const key = getLast8Digits(l.telefone || "");
+      if (!key) return;
+      if (!map.has(key)) map.set(key, l.nome);
+    });
+    return map;
+  }, [leadNames]);
 
   const getClienteNome = (reuniao: Reuniao) => {
     if (reuniao.leads?.nome) return reuniao.leads.nome;
+    if (reuniao.cliente_telefone) {
+      const key = getLast8Digits(reuniao.cliente_telefone);
+      const nome = leadNameByLast8.get(key);
+      if (nome) return nome;
+    }
     if (reuniao.participantes && reuniao.participantes.length > 0) {
       return reuniao.participantes.join(", ");
     }
     return "Cliente não informado";
   };
+
+  // Fetch reuniões - filtered to this user's meetings
+  const { data: reunioes, isLoading } = useQuery({
+    queryKey: ["funcionario-reunioes", user?.id],
+    refetchOnMount: "always",
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reunioes" as any)
+        .select("*, profissionais(nome), leads:cliente_id(nome, telefone)")
+        .eq("user_id", user!.id)
+        .or("google_event_id.not.is.null,status.eq.agendado")
+        .order("data_reuniao", { ascending: false });
+      if (error) throw error;
+      return (data || []) as unknown as Reuniao[];
+    },
+    enabled: !!user?.id,
+  });
 
   const formatDuration = (minutes: number | null) => {
     if (!minutes) return "—";
@@ -102,6 +149,60 @@ export default function FuncionarioReunioes() {
     const mins = minutes % 60;
     if (hours > 0) return `${hours}h ${mins}min`;
     return `${mins}min`;
+  };
+
+  const desmarcarMutation = useMutation({
+    mutationFn: async (reuniaoId: string) => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) throw new Error("Usuário não autenticado");
+      const { data, error } = await supabase.functions.invoke("google-calendar-cancel-event", {
+        headers: { Authorization: `Bearer ${session.session.access_token}` },
+        body: { reuniaoId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["funcionario-reunioes"] });
+      if (data?.warning) toast.warning(data.warning);
+      else toast.success("Reunião desmarcada com sucesso!");
+      setReuniaoParaDesmarcar(null);
+    },
+    onError: (error) => {
+      console.error("Erro ao desmarcar:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao desmarcar reunião");
+    },
+  });
+
+  const excluirMutation = useMutation({
+    mutationFn: async (reuniaoId: string) => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) throw new Error("Usuário não autenticado");
+      const { data, error } = await supabase.functions.invoke("google-calendar-delete-event", {
+        headers: { Authorization: `Bearer ${session.session.access_token}` },
+        body: { reuniaoId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["funcionario-reunioes"] });
+      toast.success("Reunião excluída com sucesso!");
+      setReuniaoParaExcluir(null);
+    },
+    onError: (error) => {
+      console.error("Erro ao excluir:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao excluir reunião");
+    },
+  });
+
+  const isWithinOneHour = (dataReuniao: string) => {
+    const now = new Date();
+    const reuniaoTime = new Date(dataReuniao);
+    const diffMs = reuniaoTime.getTime() - now.getTime();
+    return diffMs <= 60 * 60 * 1000;
   };
 
   const getStatusBadge = (status: string) => {
@@ -143,9 +244,11 @@ export default function FuncionarioReunioes() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Video className="h-6 w-6" />
-        <h1 className="text-2xl font-bold">Reuniões</h1>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-2">
+          <Video className="w-6 h-6" />
+          <h1 className="text-2xl font-bold">Reuniões</h1>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -154,25 +257,17 @@ export default function FuncionarioReunioes() {
             <Video className="h-3.5 w-3.5" />
             Reuniões
           </TabsTrigger>
-          <TabsTrigger value="escala" className="gap-1.5 text-xs px-3 h-7">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Minha Escala
-          </TabsTrigger>
           <TabsTrigger value="avisos" className="gap-1.5 text-xs px-3 h-7">
             <Bell className="h-3.5 w-3.5" />
             Avisos
           </TabsTrigger>
+          <TabsTrigger value="escala" className="gap-1.5 text-xs px-3 h-7">
+            <CalendarClock className="h-3.5 w-3.5" />
+            Minha Escala
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
-          {!profissional && !reunioes?.length && !isLoading && (
-            <Card className="p-6 text-center">
-              <p className="text-muted-foreground">
-                Nenhuma reunião encontrada. Peça ao administrador para vincular seu email ao cadastro de profissionais para ver reuniões automaticamente.
-              </p>
-            </Card>
-          )}
-
           {isLoading ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
@@ -181,69 +276,314 @@ export default function FuncionarioReunioes() {
                     <Skeleton className="h-5 w-1/3" />
                     <Skeleton className="h-6 w-3/4" />
                     <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-10 w-full" />
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : reunioes && reunioes.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {reunioes.map((reuniao) => (
-                <Card
-                  key={reuniao.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setSelectedReuniao(reuniao)}
-                >
-                  <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      {getStatusBadge(reuniao.status)}
-                      <span className="text-xs text-muted-foreground">
-                        {formatDuration(reuniao.duracao_minutos)}
+            <div className="space-y-6">
+              {Object.entries(
+                reunioes.reduce((acc, reuniao) => {
+                  const dateKey = format(new Date(reuniao.data_reuniao), "yyyy-MM-dd");
+                  if (!acc[dateKey]) acc[dateKey] = [];
+                  acc[dateKey].push(reuniao);
+                  return acc;
+                }, {} as Record<string, Reuniao[]>)
+              ).map(([dateKey, reunioesDodia]) => (
+                <div key={dateKey} className="space-y-4">
+                  <div className="bg-secondary text-secondary-foreground rounded-xl p-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      <span className="font-semibold">
+                        {format(parseISO(dateKey), "dd/MM/yyyy")}
                       </span>
                     </div>
+                    <span className="text-sm opacity-80 capitalize">
+                      {format(parseISO(dateKey), "EEEE", { locale: ptBR })}
+                    </span>
+                  </div>
 
-                    <div>
-                      <h3 className="font-semibold text-sm line-clamp-1">
-                        {reuniao.titulo || "Reunião"}
-                      </h3>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <User className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground line-clamp-1">
-                          {getClienteNome(reuniao)}
-                        </span>
-                      </div>
-                    </div>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {reunioesDodia.map((reuniao) => (
+                      <Card
+                        key={reuniao.id}
+                        className="shadow-card hover:shadow-elegant transition-all duration-300 animate-fade-in"
+                      >
+                        <CardContent className="p-4 flex-1 flex flex-col">
+                          <div className="space-y-3 flex-1">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-muted-foreground" />
+                                  <span className="font-semibold text-base">
+                                    {format(new Date(reuniao.data_reuniao), "HH:mm")}
+                                  </span>
+                                  {reuniao.duracao_minutos && (
+                                    <span className="text-xs text-muted-foreground">
+                                      ({formatDuration(reuniao.duracao_minutos)})
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {getStatusBadge(reuniao.status)}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => setReuniaoParaExcluir(reuniao)}
+                                    title="Excluir reunião"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <h3 className="font-semibold text-lg text-foreground">
+                                {getClienteNome(reuniao)}
+                              </h3>
+                            </div>
 
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {format(parseISO(reuniao.data_reuniao), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                    </div>
-                  </CardContent>
-                </Card>
+                            {reuniao.cliente_telefone && (
+                              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span className="truncate">{formatPhoneDisplay(reuniao.cliente_telefone)}</span>
+                              </div>
+                            )}
+
+                            {reuniao.profissionais?.nome && (
+                              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <User className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span className="truncate">{reuniao.profissionais.nome}</span>
+                              </div>
+                            )}
+
+                            {reuniao.titulo && (
+                              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <FileText className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span className="truncate">
+                                  {reuniao.titulo.replace(/^Reunião com\s+[^-–]+\s*[-–]\s*/i, "").trim() || reuniao.titulo}
+                                </span>
+                              </div>
+                            )}
+
+                            {reuniao.meet_link && (
+                              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                <a
+                                  href={reuniao.meet_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline truncate"
+                                >
+                                  Acessar reunião
+                                </a>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="mt-4 pt-3 border-t border-border space-y-2">
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 gap-2"
+                                onClick={() => setSelectedReuniao(reuniao)}
+                              >
+                                <FileText className="w-4 h-4" />
+                                Ver Detalhes
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 gap-2"
+                                onClick={() => {
+                                  setReuniaoParaVincular(reuniao);
+                                  setVincularDialogOpen(true);
+                                }}
+                                title={reuniao.transcricao ? "Vincular outra transcrição do Fireflies" : "Vincular transcrição do Fireflies"}
+                              >
+                                <FileText className="w-4 h-4" />
+                                {reuniao.transcricao ? "Vincular outra" : "Vincular"}
+                              </Button>
+                            </div>
+
+                            {reuniao.status !== "cancelado" && reuniao.status !== "realizada" && reuniao.status !== "nao_compareceu" && isWithinOneHour(reuniao.data_reuniao) && (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                                  onClick={() => {
+                                    setComparecimentoReuniao(reuniao);
+                                    setComparecimentoTipo("compareceu");
+                                  }}
+                                >
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  Compareceu
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="flex-1 gap-1.5"
+                                  onClick={() => {
+                                    setComparecimentoReuniao(reuniao);
+                                    setComparecimentoTipo("nao_compareceu");
+                                  }}
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                  No-show
+                                </Button>
+                              </div>
+                            )}
+
+                            {reuniao.status !== "cancelado" && (
+                              <div className="grid grid-cols-3 gap-2 pt-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full aspect-square p-0 flex items-center justify-center"
+                                  onClick={() => setReuniaoParaReagendar(reuniao)}
+                                  title="Reagendar"
+                                >
+                                  <RefreshCw className="h-4 w-4" />
+                                </Button>
+                                {reuniao.cliente_telefone ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full aspect-square p-0 flex items-center justify-center text-green-600 hover:text-green-700 hover:bg-green-50"
+                                    onClick={() => {
+                                      const phone = reuniao.cliente_telefone?.replace(/\D/g, "") || "";
+                                      navigateToChat(navigate, phone, "/funcionario");
+                                    }}
+                                    title="WhatsApp / Chat"
+                                  >
+                                    <MessageCircle className="h-4 w-4" />
+                                  </Button>
+                                ) : (
+                                  <div className="w-full" />
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full aspect-square p-0 flex items-center justify-center text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => setReuniaoParaDesmarcar(reuniao)}
+                                  title="Desmarcar"
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">Nenhuma reunião encontrada</p>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-12">
+                  <Video className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Nenhuma reunião encontrada</h3>
+                  <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                    Suas reuniões agendadas aparecerão aqui.
+                  </p>
+                </div>
+              </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="avisos">
+          <AvisosReuniaoTab />
         </TabsContent>
 
         <TabsContent value="escala" className="mt-6">
           <EscalaMembrosTab membroIdFixo={membro.id} />
         </TabsContent>
-
-        <TabsContent value="avisos" className="mt-6">
-          <AvisosReuniaoTab />
-        </TabsContent>
       </Tabs>
 
-      {selectedReuniao && (
-        <ReuniaoDetalhesDialog
-          reuniao={selectedReuniao}
-          open={!!selectedReuniao}
-          onOpenChange={(open) => !open && setSelectedReuniao(null)}
+      <ReuniaoDetalhesDialog
+        reuniao={selectedReuniao}
+        open={!!selectedReuniao}
+        onOpenChange={(open) => !open && setSelectedReuniao(null)}
+      />
+
+      {reuniaoParaVincular && (
+        <VincularTranscricaoDialog
+          open={vincularDialogOpen}
+          onOpenChange={setVincularDialogOpen}
+          reuniaoId={reuniaoParaVincular.id}
+          reuniaoTitulo={reuniaoParaVincular.titulo}
+          transcricaoAtual={reuniaoParaVincular.transcricao ? {
+            fireflies_id: reuniaoParaVincular.fireflies_id,
+            transcricao: reuniaoParaVincular.transcricao,
+            resumo_ia: reuniaoParaVincular.resumo_ia,
+          } : null}
         />
       )}
+
+      <ReagendarReuniaoDialog
+        reuniao={reuniaoParaReagendar}
+        open={!!reuniaoParaReagendar}
+        onOpenChange={(open) => !open && setReuniaoParaReagendar(null)}
+      />
+
+      <AlertDialog open={!!reuniaoParaDesmarcar} onOpenChange={(open) => !open && setReuniaoParaDesmarcar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desmarcar Reunião</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja desmarcar a reunião "{reuniaoParaDesmarcar?.titulo}"?
+              Esta ação marcará a reunião como cancelada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => reuniaoParaDesmarcar && desmarcarMutation.mutate(reuniaoParaDesmarcar.id)}
+            >
+              Desmarcar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!reuniaoParaExcluir} onOpenChange={(open) => !open && setReuniaoParaExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Reunião</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a reunião "{reuniaoParaExcluir?.titulo}"?
+              Esta ação irá remover a reunião permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => reuniaoParaExcluir && excluirMutation.mutate(reuniaoParaExcluir.id)}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <ComparecimentoDialog
+        reuniao={comparecimentoReuniao}
+        tipo={comparecimentoTipo}
+        open={!!comparecimentoReuniao}
+        onOpenChange={(open) => {
+          if (!open) {
+            setComparecimentoReuniao(null);
+            setComparecimentoTipo(null);
+          }
+        }}
+      />
     </div>
   );
 }
