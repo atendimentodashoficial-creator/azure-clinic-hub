@@ -96,6 +96,7 @@ export function useTarefaMockups(tarefaId: string | null) {
             legenda: s.legenda,
             cta: s.cta,
             ordem: s.ordem,
+            post_index: s.post_index,
           }))
         );
         if (error) throw error;
