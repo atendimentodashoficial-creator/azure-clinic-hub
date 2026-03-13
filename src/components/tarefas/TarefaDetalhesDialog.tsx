@@ -609,7 +609,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                 <Label className="text-xs text-muted-foreground">Telefone</Label>
                 <p className="text-sm mt-0.5 flex items-center gap-1.5">
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                  {clienteCompleto.telefone}
+                  {formatPhoneDisplay(clienteCompleto.telefone)}
                 </p>
               </div>
             )}
