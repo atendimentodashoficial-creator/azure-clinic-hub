@@ -8,6 +8,7 @@ export interface TarefaMockup {
   tarefa_id: string;
   user_id: string;
   ordem: number;
+  post_index: number;
   subtitulo: string | null;
   titulo: string | null;
   legenda: string | null;
