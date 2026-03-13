@@ -165,10 +165,10 @@ export default function FuncionarioReunioes() {
         </TabsList>
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
-          {!profissional && (
+          {!profissional && !reunioes?.length && !isLoading && (
             <Card className="p-6 text-center">
               <p className="text-muted-foreground">
-                Seu perfil de profissional não foi encontrado. Peça ao administrador para vincular seu email ao cadastro de profissionais.
+                Nenhuma reunião encontrada. Peça ao administrador para vincular seu email ao cadastro de profissionais para ver reuniões automaticamente.
               </p>
             </Card>
           )}
