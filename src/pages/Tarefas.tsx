@@ -39,6 +39,7 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   const [prioridade, setPrioridade] = useState("media");
   const [dataLimite, setDataLimite] = useState("");
   const [subtarefasTotal, setSubtarefasTotal] = useState(0);
+  const [comissao, setComissao] = useState("");
   const [colunaId, setColunaId] = useState(colunas[0]?.id || "");
   const { membros: profissionais } = useTarefasMembros();
   const { clientes } = useTarefasClientes();
