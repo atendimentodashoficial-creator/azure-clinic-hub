@@ -157,7 +157,7 @@ function replaceVariables(message: string, aviso: PendingAviso): string {
   result = result.replace(/\{titulo\}/gi, aviso.titulo);
   result = result.replace(/\{data\}/gi, formatDate(aviso.dataReuniao));
   result = result.replace(/\{horario\}/gi, formatTime(aviso.dataReuniao));
-  result = result.replace(/\{link_call\}/gi, aviso.meetLink || "https://meet.google.com/new");
+  result = result.replace(/\{link_call\}/gi, aviso.meetLink || `https://meet.jit.si/reuniao-${aviso.reuniaoId}`);
 
   return processSpintax(result);
 }
