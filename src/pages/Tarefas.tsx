@@ -211,6 +211,21 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
             />
             <p className="text-xs text-muted-foreground mt-1">Valor da comissão ao concluir a tarefa</p>
           </div>
+
+          {tiposTarefas.filter(t => t.ativo !== false).length > 0 && (
+            <div>
+              <Label className="mb-1.5 block text-sm">Tipo de Tarefa</Label>
+              <Select value={tipoTarefaId} onValueChange={setTipoTarefaId}>
+                <SelectTrigger><SelectValue placeholder="Selecione um tipo (opcional)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {tiposTarefas.filter(t => t.ativo !== false).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <Button onClick={handleSubmit} className="w-full mt-4">Criar Tarefa</Button>
       </DialogContent>
