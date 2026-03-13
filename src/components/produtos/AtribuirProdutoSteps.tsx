@@ -102,7 +102,7 @@ function computeSlots(
   if (fullAbsent) return [];
 
   const slots: string[] = [];
-  const step = 30;
+  const step = stepOverride || 30;
 
   for (const escala of dayEscalas) {
     const startMin = timeToMinutes(escala.hora_inicio);
