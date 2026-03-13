@@ -65,6 +65,7 @@ const App = () => (
           <Route path="/formulario/:templateId" element={<FormularioPublico />} />
           <Route path="/formularioig/:formSlug" element={<FormularioCaptura />} />
           <Route path="/cliente-form/:clienteId" element={<FormularioCliente />} />
+          <Route path="/aprovacao/:token" element={<AprovacaoMockup />} />
 
           {/* Root: redirect based on role */}
           <Route
