@@ -113,10 +113,10 @@ Deno.serve(async (req) => {
       const errText = await driveResponse.text();
       console.error("Drive API error:", driveResponse.status, errText);
       
-      if (driveResponse.status === 403) {
+      if (driveResponse.status === 403 && errText.includes("insufficientPermissions")) {
         throw new Error("Permissão negada. Verifique se o escopo do Google Drive está habilitado na sua conta OAuth.");
       }
-      throw new Error(`Erro ao buscar arquivos do Drive: ${driveResponse.status}`);
+      throw new Error(`Erro ao buscar arquivos do Drive: ${driveResponse.status} - ${errText}`);
     }
 
     const driveData = await driveResponse.json();
