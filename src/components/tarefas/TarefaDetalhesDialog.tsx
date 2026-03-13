@@ -135,7 +135,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     return normalized.includes("aguardando") && normalized.includes("aprovacao");
   };
 
-  const findAguardandoAprovacaoColumnId = useCallback(async () => {
+  const findAguardandoAprovacaoColumnId = async () => {
     const fromProps = colunas.find(c => isAguardandoAprovacaoColumn(c.nome));
     if (fromProps) return fromProps.id;
     if (!tarefa?.user_id) return null;
@@ -149,7 +149,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     if (error) throw error;
 
     return data?.find(c => isAguardandoAprovacaoColumn(c.nome))?.id ?? null;
-  }, [colunas, tarefa?.user_id]);
+  };
 
   const handleSendForApproval = async () => {
     if (!tarefa) return;
