@@ -131,6 +131,7 @@ export function WhatsAppKanban({
     if (chats.length > 0) {
       loadChatAgendamentos();
       loadChatFaturas();
+      loadChatReunioes();
     }
   }, [chats]);
 
