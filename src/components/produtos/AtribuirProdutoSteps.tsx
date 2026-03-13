@@ -156,7 +156,8 @@ export function SelectMemberAndTimeStep({
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [existingMeetings, setExistingMeetings] = useState<Array<{ data_reuniao: string; duracao_minutos: number }>>([]);
 
-  const duration = use15min ? 15 : (parseInt(reuniaoDuracao) || 60);
+  const duration = parseInt(reuniaoDuracao) || 60;
+  const stepInterval = use15min ? 15 : 30;
 
   useEffect(() => {
     (async () => {
