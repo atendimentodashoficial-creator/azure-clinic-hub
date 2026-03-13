@@ -336,7 +336,6 @@ export default function Reunioes() {
             </Button>
           </div>
 
-          )}
 
           {/* Meetings List */}
           {isLoading ? (
