@@ -74,6 +74,31 @@ serve(async (req) => {
 
     const targetUserId = member.auth_user_id || caller.id;
 
+    // --- Server-side conflict check ---
+    const startDate = new Date(dataHora);
+    const endDate = new Date(startDate.getTime() + (duracao || 60) * 60 * 1000);
+
+    const { data: conflicting } = await supabaseAdmin
+      .from("reunioes")
+      .select("id, data_reuniao, duracao_minutos")
+      .eq("user_id", targetUserId)
+      .in("status", ["agendado", "confirmado"])
+      .gte("data_reuniao", new Date(startDate.getTime() - 24 * 60 * 60 * 1000).toISOString())
+      .lte("data_reuniao", new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString());
+
+    const hasConflict = (conflicting || []).some(r => {
+      const rStart = new Date(r.data_reuniao).getTime();
+      const rEnd = rStart + ((r.duracao_minutos || 60) * 60 * 1000);
+      return startDate.getTime() < rEnd && endDate.getTime() > rStart;
+    });
+
+    if (hasConflict) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Este profissional já possui uma reunião neste horário" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     let profissionalId: string | null = null;
     if (member.email) {
       const { data: profissional } = await supabaseAdmin

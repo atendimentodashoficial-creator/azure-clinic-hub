@@ -84,7 +84,7 @@ export function SelectClientStep({
 function computeSlots(
   escalas: EscalaMembro[],
   ausencias: AusenciaMembro[],
-  existingMeetings: Array<{ data_reuniao: string; duracao_minutos: number }>,
+  memberMeetings: Array<{ data_reuniao: string; duracao_minutos: number }>,
   date: string,
   durationMin: number,
   stepMin: number = 30,
@@ -116,7 +116,7 @@ function computeSlots(
         return rangesOverlap(slotRange, { startMin: aS, endMin: aE });
       });
       if (absConflict) continue;
-      const meetConflict = existingMeetings.some(m => {
+      const meetConflict = memberMeetings.some(m => {
         const mDate = m.data_reuniao.substring(0, 10);
         if (mDate !== date) return false;
         const mTime = m.data_reuniao.substring(11, 16);
@@ -154,7 +154,7 @@ export function SelectMemberAndTimeStep({
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [existingMeetings, setExistingMeetings] = useState<Array<{ data_reuniao: string; duracao_minutos: number }>>([]);
+  const [meetingsByUser, setMeetingsByUser] = useState<Record<string, Array<{ data_reuniao: string; duracao_minutos: number }>>>({});
 
   const duration = parseInt(reuniaoDuracao) || 60;
   const stepInterval = use15min ? 15 : 30;
@@ -163,15 +163,20 @@ export function SelectMemberAndTimeStep({
     (async () => {
       const { data } = await supabase
         .from("reunioes")
-        .select("data_reuniao, duracao_minutos")
+        .select("data_reuniao, duracao_minutos, user_id")
         .in("status", ["agendado", "confirmado"]);
-      setExistingMeetings((data as any[]) || []);
+      const grouped: Record<string, Array<{ data_reuniao: string; duracao_minutos: number }>> = {};
+      for (const r of (data as any[]) || []) {
+        if (!grouped[r.user_id]) grouped[r.user_id] = [];
+        grouped[r.user_id].push({ data_reuniao: r.data_reuniao, duracao_minutos: r.duracao_minutos });
+      }
+      setMeetingsByUser(grouped);
     })();
   }, []);
 
   // Build member list: team members only (admin excluded)
-  const allMembers: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[] })[] = useMemo(() => {
-    const list: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[] })[] = [];
+  const allMembers: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[]; authUserId?: string | null })[] = useMemo(() => {
+    const list: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[]; authUserId?: string | null })[] = [];
     for (const m of membros) {
       list.push({
         id: m.id,
@@ -180,6 +185,7 @@ export function SelectMemberAndTimeStep({
         isAdmin: false,
         escalas: allEscalas.filter(e => e.membro_id === m.id),
         ausencias: allAusencias.filter(a => a.membro_id === m.id),
+        authUserId: (m as any).auth_user_id,
       });
     }
     return list;
@@ -189,17 +195,20 @@ export function SelectMemberAndTimeStep({
   const memberSlots = useMemo(() => {
     const map: Record<string, string[]> = {};
     for (const m of allMembers) {
+      // Resolve the user_id this member's meetings are stored under
+      const memberUserId = m.authUserId || user?.id;
+      const memberMeetings = memberUserId ? (meetingsByUser[memberUserId] || []) : [];
+
       if (m.isAdmin) {
-        // Admin has no escala restrictions — no slots shown, free pick
         map[m.id] = [];
       } else if (m.escalas.length > 0) {
-        map[m.id] = computeSlots(m.escalas, m.ausencias, existingMeetings, selectedDate, duration, stepInterval);
+        map[m.id] = computeSlots(m.escalas, m.ausencias, memberMeetings, selectedDate, duration, stepInterval);
       } else {
         map[m.id] = [];
       }
     }
     return map;
-  }, [allMembers, selectedDate, existingMeetings, duration, stepInterval]);
+  }, [allMembers, selectedDate, meetingsByUser, duration, stepInterval, user?.id]);
 
   const selectedMemberObj = allMembers.find(m => m.id === selectedMemberId);
 
