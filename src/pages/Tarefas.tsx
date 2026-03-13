@@ -291,6 +291,7 @@ export default function Tarefas() {
   const { clientes } = useTarefasClientes();
   const { membro } = useMembroAtual();
   const { role } = useUserRole();
+  const { ownerId } = useOwnerId();
   const [activeTarefa, setActiveTarefa] = useState<Tarefa | null>(null);
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
