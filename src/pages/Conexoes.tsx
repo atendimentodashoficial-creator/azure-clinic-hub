@@ -142,7 +142,7 @@ export default function Conexoes() {
       loadLinkedGoogleAdsAccounts();
       checkOpenAIConfig();
       loadApifyConfig();
-      loadFirefliesConfig();
+      
       setLoadingDisparosInstancias(false);
     }
   }, [user]);
