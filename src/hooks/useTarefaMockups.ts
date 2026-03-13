@@ -33,6 +33,7 @@ export function useTarefaMockups(tarefaId: string | null) {
         .from("tarefa_mockups")
         .select("*")
         .eq("tarefa_id", tarefaId)
+        .order("post_index")
         .order("ordem");
       if (error) throw error;
       return data as TarefaMockup[];
