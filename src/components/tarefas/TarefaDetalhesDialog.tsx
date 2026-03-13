@@ -75,7 +75,9 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
   const tipoTarefa = tarefa?.tipo_tarefa_id ? tipos.find(t => t.id === tarefa.tipo_tarefa_id) : null;
   const hasMockup = tipoTarefa?.tipos_arquivo_permitidos?.includes("mockup");
+  const hasLinks = tipoTarefa?.tipos_arquivo_permitidos?.includes("links");
   const mockupLimit = tipoTarefa?.limite_arquivos?.mockup || 0; // 0 = unlimited
+  const linksLimit = tipoTarefa?.limite_arquivos?.links || 0; // 0 = unlimited
   const cliente = tarefa?.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
   const reuniao = tarefa?.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
   const prio = PRIORIDADES.find(p => p.value === tarefa?.prioridade) || PRIORIDADES[1];
