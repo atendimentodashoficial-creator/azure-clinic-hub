@@ -1733,6 +1733,10 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
             setProdutoDialogOpen(false);
             setSelectedTemplate(null);
           }}
+          initialContactData={{
+            nome: chat.contact_name,
+            telefone: chat.contact_number,
+          }}
         />
       )}
 
