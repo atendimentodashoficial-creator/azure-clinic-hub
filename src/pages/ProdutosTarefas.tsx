@@ -387,6 +387,7 @@ function ProdutoDialog({
       prazo: 0,
       colunaId: colunas[0]?.id || "",
       dependencias: [],
+      comissao: 0,
     }]);
   };
 
