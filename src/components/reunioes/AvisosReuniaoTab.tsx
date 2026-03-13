@@ -527,6 +527,16 @@ export function AvisosReuniaoTab() {
                       </div>
                     )}
 
+                    {/* Tipo de reunião se especificado */}
+                    {aviso.tipo_reuniao_id && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Video className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">
+                          {tiposReuniao?.find(t => t.id === aviso.tipo_reuniao_id)?.nome || "Tipo específico"}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Instância configurada */}
                     {aviso.instancia_id && (
                       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
