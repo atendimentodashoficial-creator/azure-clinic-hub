@@ -150,6 +150,18 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
             <Label>Subtarefas (total)</Label>
             <Input type="number" min={0} value={subtarefasTotal} onChange={e => setSubtarefasTotal(Number(e.target.value))} />
           </div>
+          <div>
+            <Label className="flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5" /> Comissão (R$)</Label>
+            <Input
+              type="number"
+              min={0}
+              step={0.01}
+              value={comissao}
+              onChange={e => setComissao(e.target.value)}
+              placeholder="0,00 (opcional)"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Valor da comissão ao concluir a tarefa</p>
+          </div>
         </div>
         <Button onClick={handleSubmit} className="w-full mt-4">Criar Tarefa</Button>
       </DialogContent>
