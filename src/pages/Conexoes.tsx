@@ -122,18 +122,6 @@ export default function Conexoes() {
     message: string;
   } | null>(null);
 
-  // ===== Fireflies State =====
-  const [hasFirefliesKey, setHasFirefliesKey] = useState(false);
-  const [loadingFireflies, setLoadingFireflies] = useState(true);
-  const [showFirefliesKey, setShowFirefliesKey] = useState(false);
-  const [firefliesApiKey, setFirefliesApiKey] = useState("");
-  const [newFirefliesKey, setNewFirefliesKey] = useState("");
-  const [savingFireflies, setSavingFireflies] = useState(false);
-  const [testingFireflies, setTestingFireflies] = useState(false);
-  const [firefliesTestResult, setFirefliesTestResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
 
   // ===== Collapsible States (default collapsed) =====
   const [metaOpen, setMetaOpen] = useState(false);
