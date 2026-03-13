@@ -6032,6 +6032,16 @@ export type Database = {
         }[]
       }
       get_owner_id: { Args: { _user_id: string }; Returns: string }
+      get_task_by_approval_token: {
+        Args: { p_token: string }
+        Returns: {
+          approval_status: string
+          cliente_empresa: string
+          cliente_nome: string
+          tarefa_id: string
+          tarefa_titulo: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -6072,6 +6082,10 @@ export type Database = {
           p_status: string
           p_token: string
         }
+        Returns: undefined
+      }
+      update_task_approval_by_token: {
+        Args: { p_feedback?: string; p_status: string; p_token: string }
         Returns: undefined
       }
     }
