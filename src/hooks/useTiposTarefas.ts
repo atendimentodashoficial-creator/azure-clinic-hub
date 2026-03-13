@@ -10,6 +10,7 @@ export interface TipoTarefa {
   descricao: string | null;
   tipos_arquivo_permitidos: string[];
   limite_arquivos: Record<string, number>;
+  exige_aprovacao: boolean;
   ativo: boolean;
   ordem: number;
   created_at: string;
