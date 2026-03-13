@@ -114,8 +114,9 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
       data_limite: dataLimite || undefined,
       coluna_id: primeiraColuna,
       comissao: comissao ? parseFloat(comissao) : undefined,
+      tipo_tarefa_id: tipoTarefaId && tipoTarefaId !== "none" ? tipoTarefaId : undefined,
     });
-    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setComissao("");
+    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setComissao(""); setTipoTarefaId("");
     setOpen(false);
   };
 
