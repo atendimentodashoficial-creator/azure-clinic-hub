@@ -20,18 +20,22 @@ interface NovoClienteDialogProps {
   externalOpen?: boolean;
   /** Hide the trigger button (used when opened externally) */
   hideTrigger?: boolean;
+  /** Pre-fill data for new client */
+  initialData?: { nome?: string; telefone?: string };
 }
 
-export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, externalOpen, hideTrigger }: NovoClienteDialogProps) {
+export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, externalOpen, hideTrigger, initialData }: NovoClienteDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditing = !!clienteEditando;
   const [formTab, setFormTab] = useState("info");
 
   const initialPhoneData = clienteEditando?.telefone
     ? extractCountryCode(clienteEditando.telefone)
-    : { countryCode: "55", phoneWithoutCountry: "" };
+    : initialData?.telefone
+      ? extractCountryCode(initialData.telefone)
+      : { countryCode: "55", phoneWithoutCountry: "" };
 
-  const [nome, setNome] = useState(clienteEditando?.nome || "");
+  const [nome, setNome] = useState(clienteEditando?.nome || initialData?.nome || "");
   const [email, setEmail] = useState(clienteEditando?.email || "");
   const [senhaAcesso, setSenhaAcesso] = useState(clienteEditando?.senha_acesso || "");
   const [countryCode, setCountryCode] = useState(initialPhoneData.countryCode);
