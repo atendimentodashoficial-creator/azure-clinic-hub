@@ -227,11 +227,6 @@ function TarefaCardContent({ tarefa, colunas, clientes, onDelete, dragHandleProp
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-medium text-sm truncate">{tarefa.titulo}</span>
-              {tarefa.subtarefas_total > 0 && (
-                <Badge variant="secondary" className="text-xs shrink-0">
-                  {tarefa.subtarefas_concluidas}/{tarefa.subtarefas_total}
-                </Badge>
-              )}
             </div>
             {onDelete && (
               <Button
