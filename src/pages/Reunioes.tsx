@@ -345,11 +345,11 @@ export default function Reunioes() {
               <TemplateCamposDialog />
               <Button 
                 onClick={handleSync} 
-                disabled={syncing || !firefliesConfig?.api_key}
+                disabled={syncing || !hasGoogleCalendar}
                 className="gap-2"
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-                Sincronizar Fireflies
+                Sincronizar Transcrições
               </Button>
             </div>
 
