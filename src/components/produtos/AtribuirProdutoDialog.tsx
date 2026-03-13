@@ -95,6 +95,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
         data_limite: dataLimite || undefined,
         coluna_id: colunaId,
         cliente_id: clienteId,
+        comissao: meta.comissao || undefined,
       });
     }
   };

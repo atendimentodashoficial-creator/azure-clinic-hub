@@ -59,6 +59,7 @@ interface TarefaLocal {
   prazo: number;
   colunaId: string;
   dependencias: string[];
+  comissao: number;
 }
 
 function gerarId() {
@@ -85,6 +86,7 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     prazo: meta.prazo || 0,
     colunaId: meta.coluna_id || "",
     dependencias: meta.dependencias || [],
+    comissao: meta.comissao || 0,
   };
 }
 
@@ -99,6 +101,7 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
     prazo: t.prazo > 0 ? t.prazo : undefined,
     coluna_id: t.colunaId || undefined,
     dependencias: depOrdens.length > 0 ? depOrdens : undefined,
+    comissao: t.comissao > 0 ? t.comissao : undefined,
   };
   return JSON.stringify(meta);
 }
@@ -248,6 +251,11 @@ function TarefaInlineEditor({
               <Calendar className="h-3 w-3" />{tarefa.prazo} {tarefa.prazo === 1 ? "dia" : "dias"}
             </span>
           )}
+          {tarefa.comissao > 0 && (
+            <span className="text-xs text-primary flex items-center gap-1">
+              💰 R$ {tarefa.comissao.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </span>
+          )}
           {depNames.length > 0 && (
             <span className="text-xs text-muted-foreground">🔗 Depende de: {depNames.map(d => d!.titulo || "Sem título").join(", ")}</span>
           )}
@@ -295,9 +303,15 @@ function TarefaInlineEditor({
             )}
           </div>
 
-          <div>
-            <Label className="text-xs">Prazo (dias)</Label>
-            <Input type="number" min={0} value={tarefa.prazo} onChange={e => onChange({ ...tarefa, prazo: Number(e.target.value) })} className="h-8 text-sm" placeholder="Ex: 7" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Prazo (dias)</Label>
+              <Input type="number" min={0} value={tarefa.prazo} onChange={e => onChange({ ...tarefa, prazo: Number(e.target.value) })} className="h-8 text-sm" placeholder="Ex: 7" />
+            </div>
+            <div>
+              <Label className="text-xs">Comissão (R$)</Label>
+              <Input type="number" min={0} step={0.01} value={tarefa.comissao || ""} onChange={e => onChange({ ...tarefa, comissao: Number(e.target.value) })} className="h-8 text-sm" placeholder="0,00" />
+            </div>
           </div>
 
           {otherTarefas.length > 0 && (
@@ -384,6 +398,7 @@ function ProdutoDialog({
       prazo: 0,
       colunaId: colunas[0]?.id || "",
       dependencias: [],
+      comissao: 0,
     }]);
   };
 
