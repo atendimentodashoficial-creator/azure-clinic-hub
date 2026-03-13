@@ -421,12 +421,18 @@ export default function FuncionarioReunioes() {
                               </div>
                             )}
 
-                            {reuniao.profissionais?.nome && (
-                              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                <User className="h-3.5 w-3.5 flex-shrink-0" />
-                                <span className="truncate">{reuniao.profissionais.nome}</span>
-                              </div>
-                            )}
+                            {/* Responsável da equipe */}
+                            {(() => {
+                              const membroNome = memberNameByUserId.get(reuniao.user_id);
+                              const isOwn = reuniao.user_id === user?.id;
+                              const displayName = membroNome || (isOwn ? "Você" : reuniao.profissionais?.nome);
+                              return displayName ? (
+                                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                  <Users className="h-3.5 w-3.5 flex-shrink-0" />
+                                  <span className="truncate">{displayName}{isOwn && membroNome ? " (você)" : ""}</span>
+                                </div>
+                              ) : null;
+                            })()}
 
                             {reuniao.titulo && (
                               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
