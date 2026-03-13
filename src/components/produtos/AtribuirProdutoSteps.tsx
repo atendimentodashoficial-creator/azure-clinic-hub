@@ -138,6 +138,7 @@ interface SelectMemberAndTimeStepProps {
   templateNome: string;
   saving: boolean;
   defaultDuracao?: number;
+  tipoReuniaoId?: string | null;
   onBack: () => void;
   onConfirm: (data: { titulo: string; dataHora: string; duracao: number; memberNome: string; memberId: string }) => void;
 }
