@@ -1107,6 +1107,7 @@ export function AvisosReuniaoTab() {
               <p className="text-xs text-muted-foreground">
                 Envie um áudio para acompanhar a mensagem de texto
               </p>
+            </div>
 
             {/* Preview colapsável */}
             <Collapsible>
