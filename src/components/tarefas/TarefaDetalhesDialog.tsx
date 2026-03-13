@@ -199,6 +199,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   onChange={setMockupSlides}
                   perfilNome={cliente?.nome || "perfil"}
                   perfilCategoria={cliente?.empresa || ""}
+                  maxSlides={mockupLimit}
                 />
                 <Button onClick={handleSaveMockups} disabled={saveMockups.isPending} className="w-full gap-2">
                   <Save className="h-4 w-4" />
