@@ -124,7 +124,8 @@ export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: Reagenda
   // Reset form when dialog opens
   useEffect(() => {
     if (reuniao && open) {
-      setSelectedDate("");
+      const reuniaoDate = formatInTimeZone(new Date(reuniao.data_reuniao), "America/Sao_Paulo", "yyyy-MM-dd");
+      setSelectedDate(reuniaoDate);
       setSelectedTime("");
       // Pre-select the member that matches the current profissional_id
       const matchingMember = membros.find(m => m.id === reuniao.profissional_id);
