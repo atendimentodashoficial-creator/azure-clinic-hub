@@ -1724,20 +1724,15 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
         </p>
       </div>
 
-      {/* Dialog de Agendamento */}
-      {clienteData && (
-        <NovoAgendamentoDialog
-          open={agendamentoDialogOpen}
-          onOpenChange={setAgendamentoDialogOpen}
-          clienteId={clienteData.id}
-          initialData={{
-            nome: clienteData.nome,
-            telefone: clienteData.telefone,
-            email: clienteData.email,
+      {/* Dialog de Atribuir Produto */}
+      {selectedTemplate && (
+        <AtribuirProdutoDialog
+          template={selectedTemplate}
+          open={produtoDialogOpen}
+          onClose={() => {
+            setProdutoDialogOpen(false);
+            setSelectedTemplate(null);
           }}
-          origem="Disparos"
-          origemInstanciaId={chat.instancia_id || undefined}
-          origemInstanciaNome={chat.instancia_nome || undefined}
         />
       )}
 
