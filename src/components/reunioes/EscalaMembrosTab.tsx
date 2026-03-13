@@ -388,21 +388,23 @@ export function EscalaMembrosTab({ membroIdFixo }: EscalaMembrosTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filtro por membro */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold">Filtrar por Membro</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select value={membroSelecionado} onValueChange={setMembroSelecionado}>
-            <SelectTrigger><SelectValue placeholder="Todos os membros" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os membros</SelectItem>
-              {membros.map(m => <SelectItem key={m.id} value={m.id}>{m.nome} {m.cargo && `- ${m.cargo}`}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      {/* Filtro por membro - hidden when locked to single member */}
+      {!isLocked && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold">Filtrar por Membro</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select value={membroSelecionado} onValueChange={setMembroSelecionado}>
+              <SelectTrigger><SelectValue placeholder="Todos os membros" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os membros</SelectItem>
+                {membros.map(m => <SelectItem key={m.id} value={m.id}>{m.nome} {m.cargo && `- ${m.cargo}`}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Escala por membro */}
       {escalasPorMembro.map(({ membro, dias }) => (
