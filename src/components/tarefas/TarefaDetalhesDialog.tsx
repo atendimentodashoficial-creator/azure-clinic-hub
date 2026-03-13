@@ -45,8 +45,8 @@ interface TarefaDetalhesDialogProps {
 
 export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, open, onOpenChange }: TarefaDetalhesDialogProps) {
   const { tipos } = useTiposTarefas();
-  const { mockups, saveMockups } = useTarefaMockups(tarefa?.id || null);
-  
+  const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
+  const [resubmitting, setResubmitting] = useState(false);
   const [mockupSlides, setMockupSlides] = useState<MockupSlide[]>([
     { ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" },
   ]);
