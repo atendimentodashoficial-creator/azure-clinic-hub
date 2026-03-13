@@ -11,6 +11,7 @@ import Produtos from "./Produtos";
 import Conexoes from "./Conexoes";
 import TiposAgendamento from "./TiposAgendamento";
 import { ResetDataConfig } from "@/components/configuracoes/ResetDataConfig";
+import { TiposReuniaoConfig } from "@/components/configuracoes/TiposReuniaoConfig";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
 
 const tabOptions = [
