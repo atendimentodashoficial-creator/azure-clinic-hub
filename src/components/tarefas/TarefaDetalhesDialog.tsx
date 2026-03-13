@@ -326,7 +326,95 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
             </>
           )}
 
-          {/* Mockup editor */}
+          {/* Links editor */}
+          {hasLinks && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold flex items-center gap-1.5">
+                  <Link2 className="h-4 w-4" /> Links
+                  {linksLimit > 0 && <span className="text-xs text-muted-foreground font-normal">({taskLinks.length}/{linksLimit})</span>}
+                </Label>
+                <div className="space-y-2">
+                  {taskLinks.map((link, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="flex-1 space-y-1">
+                        <Input
+                          placeholder="https://..."
+                          value={link.url}
+                          onChange={e => {
+                            const updated = [...taskLinks];
+                            updated[i] = { ...updated[i], url: e.target.value };
+                            setTaskLinks(updated);
+                          }}
+                        />
+                        <Input
+                          placeholder="Título do link (opcional)"
+                          value={link.titulo}
+                          className="text-xs h-8"
+                          onChange={e => {
+                            const updated = [...taskLinks];
+                            updated[i] = { ...updated[i], titulo: e.target.value };
+                            setTaskLinks(updated);
+                          }}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {link.url && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => window.open(link.url, "_blank")}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        {taskLinks.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive"
+                            onClick={() => setTaskLinks(taskLinks.filter((_, j) => j !== i))}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {(linksLimit === 0 || taskLinks.length < linksLimit) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTaskLinks([...taskLinks, { url: "", titulo: "" }])}
+                    className="gap-1.5"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Adicionar link
+                  </Button>
+                )}
+                <Button
+                  onClick={async () => {
+                    try {
+                      const filtered = taskLinks.filter(l => l.url.trim());
+                      await saveLinks.mutateAsync(filtered.map(l => ({ url: l.url.trim(), titulo: l.titulo.trim() || null })));
+                      toast.success("Links salvos com sucesso!");
+                    } catch {
+                      toast.error("Erro ao salvar links");
+                    }
+                  }}
+                  disabled={saveLinks.isPending}
+                  className="w-full gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {saveLinks.isPending ? "Salvando..." : "Salvar Links"}
+                </Button>
+              </div>
+            </>
+          )}
+
+
           {hasMockup && (
             <>
               <Separator />
