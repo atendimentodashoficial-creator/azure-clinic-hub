@@ -162,6 +162,15 @@ export default function FuncionarioReunioes() {
     enabled: !!user?.id,
   });
 
+  // Map user_id → member name
+  const memberNameByUserId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of membros) {
+      if (m.auth_user_id) map.set(m.auth_user_id, m.nome);
+    }
+    return map;
+  }, [membros]);
+
   // Filter by member then by period
   const reunioes = useMemo(() => {
     if (!allReunioes) return [];
