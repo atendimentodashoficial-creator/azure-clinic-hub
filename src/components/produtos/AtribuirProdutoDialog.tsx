@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { getLast8Digits } from "@/utils/phoneFormat";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,8 @@ import { useTarefas } from "@/hooks/useTarefas";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Video } from "lucide-react";
+import { Video, UserCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
 import {
   SelectClientStep,
@@ -38,7 +40,7 @@ function parseTarefaMeta(descricao: string | null): any {
   }
 }
 
-type Step = "select-client" | "schedule-meeting";
+type Step = "select-client" | "schedule-meeting" | "auto-matched";
 
 export function AtribuirProdutoDialog({ template, open, onClose, initialContactData }: AtribuirProdutoDialogProps) {
   const { user } = useAuth();
@@ -52,6 +54,22 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
 
   const [step, setStep] = useState<Step>("select-client");
   const [selectedClient, setSelectedClient] = useState<TarefaCliente | null>(null);
+
+  // Auto-match client by last 8 digits of phone
+  const matchedClient = useMemo(() => {
+    if (!initialContactData?.telefone) return null;
+    const last8 = getLast8Digits(initialContactData.telefone);
+    if (!last8 || last8.length < 8) return null;
+    return clientes.find(c => c.telefone && getLast8Digits(c.telefone) === last8) || null;
+  }, [initialContactData?.telefone, clientes]);
+
+  // Auto-set step when opening with a matched client
+  useEffect(() => {
+    if (open && matchedClient && step === "select-client") {
+      setStep("auto-matched");
+      setSelectedClient(matchedClient);
+    }
+  }, [open, matchedClient]);
 
   const filtrados = clientes.filter(c =>
     c.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -166,9 +184,13 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
       <Dialog open={open} onOpenChange={() => handleClose()}>
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{step === "select-client" ? "Atribuir Produto" : "Agendar Reunião"}</DialogTitle>
+            <DialogTitle>
+              {step === "auto-matched" ? "Cliente Encontrado" : step === "select-client" ? "Atribuir Produto" : "Agendar Reunião"}
+            </DialogTitle>
             <DialogDescription>
-              {step === "select-client" ? (
+              {step === "auto-matched" && matchedClient ? (
+                <>Este contato já é um cliente cadastrado</>
+              ) : step === "select-client" ? (
                 <>
                   Selecione um cliente para atribuir "{template.nome}"
                   {template.requer_reuniao && (
@@ -183,6 +205,30 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
               )}
             </DialogDescription>
           </DialogHeader>
+
+          {step === "auto-matched" && matchedClient && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-lg border bg-accent/30">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <UserCheck className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{matchedClient.nome}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {[matchedClient.email, matchedClient.telefone].filter(Boolean).join(" • ")}
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => { setStep("select-client"); setSelectedClient(null); }}>
+                  Escolher outro
+                </Button>
+                <Button onClick={() => handleSelectClient(matchedClient)} disabled={saving}>
+                  {saving ? "Atribuindo..." : `Atribuir "${template.nome}"`}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {step === "select-client" && (
             <SelectClientStep
