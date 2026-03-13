@@ -12,7 +12,6 @@ import {
   ProdutoTemplate,
 } from "@/hooks/useProdutoTemplates";
 import { useTarefas } from "@/hooks/useTarefas";
-import { Profissional } from "@/hooks/useProfissionais";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -20,8 +19,9 @@ import { Video } from "lucide-react";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
 import {
   SelectClientStep,
-  SelectProfissionalStep,
+  SelectMemberStep,
   ScheduleMeetingStep,
+  MeetingMember,
 } from "./AtribuirProdutoSteps";
 
 interface AtribuirProdutoDialogProps {
@@ -53,7 +53,7 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
 
   const [step, setStep] = useState<Step>("select-client");
   const [selectedClient, setSelectedClient] = useState<TarefaCliente | null>(null);
-  const [selectedProfissional, setSelectedProfissional] = useState<Profissional | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MeetingMember | null>(null);
 
   const filtrados = clientes.filter(c =>
     c.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -92,8 +92,8 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
     }
   };
 
-  const handleSelectProfissional = (prof: Profissional) => {
-    setSelectedProfissional(prof);
+  const handleSelectMember = (member: MeetingMember) => {
+    setSelectedMember(member);
     setStep("schedule-meeting");
   };
 
@@ -118,7 +118,7 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
     titulo: string;
     dataHora: string;
     duracao: number;
-    profissionalId: string;
+    memberNome: string;
   }) => {
     if (!selectedClient) return;
     setSaving(true);
@@ -135,9 +135,8 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
           data_reuniao: data.dataHora,
           duracao_minutos: data.duracao,
           cliente_telefone: selectedClient.telefone || null,
-          profissional_id: data.profissionalId,
           status: "agendado",
-          participantes: [selectedClient.nome],
+          participantes: [selectedClient.nome, data.memberNome],
         } as any);
 
       if (error) throw error;
@@ -165,7 +164,7 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
   const handleClose = () => {
     setStep("select-client");
     setSelectedClient(null);
-    setSelectedProfissional(null);
+    setSelectedMember(null);
     setBusca("");
     onClose();
   };
@@ -173,7 +172,7 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
   const getTitle = () => {
     switch (step) {
       case "select-client": return "Atribuir Produto";
-      case "select-member": return "Selecionar Profissional";
+      case "select-member": return "Selecionar Responsável";
       case "schedule-meeting": return "Agendar Reunião";
     }
   };
@@ -193,7 +192,7 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
           </>
         );
       case "select-member":
-        return `Escolha o profissional responsável pela reunião`;
+        return "Escolha quem será o responsável pela reunião";
       case "schedule-meeting":
         return `Agende a reunião para o produto "${template.nome}"`;
     }
@@ -221,16 +220,16 @@ export function AtribuirProdutoDialog({ template, open, onClose }: AtribuirProdu
           )}
 
           {step === "select-member" && selectedClient && (
-            <SelectProfissionalStep
+            <SelectMemberStep
               clienteNome={selectedClient.nome}
-              onSelect={handleSelectProfissional}
+              onSelect={handleSelectMember}
               onBack={() => setStep("select-client")}
             />
           )}
 
-          {step === "schedule-meeting" && selectedProfissional && (
+          {step === "schedule-meeting" && selectedMember && (
             <ScheduleMeetingStep
-              profissional={selectedProfissional}
+              member={selectedMember}
               clienteNome={selectedClient?.nome || ""}
               templateNome={template.nome}
               saving={saving}
