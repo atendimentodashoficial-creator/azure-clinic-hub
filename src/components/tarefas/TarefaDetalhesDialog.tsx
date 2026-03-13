@@ -47,8 +47,8 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const { tipos } = useTiposTarefas();
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
   const [resubmitting, setResubmitting] = useState(false);
-  const [mockupSlides, setMockupSlides] = useState<MockupSlide[]>([
-    { ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" },
+  const [posts, setPosts] = useState<PostGroup[]>([
+    { postIndex: 0, slides: [{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }] },
   ]);
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
