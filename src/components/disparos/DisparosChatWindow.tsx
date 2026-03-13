@@ -1097,60 +1097,7 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
 
   const handleCreateAgendamento = async () => {
     try {
-      // Mesma regra do WhatsApp: não cria lead ao clicar em "agendar".
-      // O lead (se necessário) será criado/restaurado ao salvar no NovoAgendamentoDialog.
-
-      const all = chat.contact_number.replace(/\D/g, "");
-      if (all.length < 10) throw new Error("Número inválido");
-
-      const formattedPhone = formatPhoneNumber(all);
-      const last8Digits = getLast8Digits(all);
-      
-      // Buscar nome do cliente existente se houver
-      // Função para verificar se uma string parece ser um número de telefone
-      const pareceNumeroTelefone = (str: string) => {
-        const apenasDigitos = str.replace(/\D/g, "");
-        // Se tem mais de 8 dígitos e o texto limpo é só números, é telefone
-        return apenasDigitos.length >= 8 && /^[\d\s\-\+\(\)]+$/.test(str);
-      };
-      
-      // Se o contact_name parece ser um número de telefone, usar string vazia
-      let nomeParaUsar = pareceNumeroTelefone(chat.contact_name) ? "" : chat.contact_name;
-      
-      if (last8Digits && last8Digits.length >= 8) {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const { data: allClientes } = await supabase
-              .from("leads")
-              .select("nome, telefone")
-              .eq("user_id", user.id)
-              .eq("status", "cliente")
-              .is("deleted_at", null);
-
-            const clienteExistente = allClientes?.find(cliente => 
-              getLast8Digits(cliente.telefone) === last8Digits
-            );
-
-            if (clienteExistente && !pareceNumeroTelefone(clienteExistente.nome)) {
-              nomeParaUsar = clienteExistente.nome;
-            }
-          }
-        } catch (error) {
-          // Fallback para nome do chat
-        }
-      }
-
-      setClienteData({
-        nome: nomeParaUsar,
-        telefone: formattedPhone,
-      });
-      setAgendamentoDialogOpen(true);
-    } catch (error: any) {
-      console.error("Erro ao preparar agendamento:", error);
-      toast.error(error.message || "Erro ao abrir agendamento");
-    }
-  };
+  // Removed handleCreateAgendamento - replaced by product assignment
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
