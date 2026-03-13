@@ -137,12 +137,13 @@ interface SelectMemberAndTimeStepProps {
   clienteNome: string;
   templateNome: string;
   saving: boolean;
+  defaultDuracao?: number;
   onBack: () => void;
   onConfirm: (data: { titulo: string; dataHora: string; duracao: number; memberNome: string; memberId: string }) => void;
 }
 
 export function SelectMemberAndTimeStep({
-  clienteNome, templateNome, saving, onBack, onConfirm,
+  clienteNome, templateNome, saving, defaultDuracao, onBack, onConfirm,
 }: SelectMemberAndTimeStepProps) {
   const { user } = useAuth();
   const { membros } = useTarefasMembros();
