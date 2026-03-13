@@ -7,6 +7,7 @@ export interface TipoReuniao {
   user_id: string;
   nome: string;
   descricao: string | null;
+  duracao_minutos: number;
   ativo: boolean;
   created_at: string;
   updated_at: string;
