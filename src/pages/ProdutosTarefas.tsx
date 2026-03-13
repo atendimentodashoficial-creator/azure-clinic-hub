@@ -671,11 +671,18 @@ function ProdutoCard({
 
   return (
     <Card className="p-4 flex flex-col gap-3 hover:bg-accent/30 transition-colors">
-      <div>
-        <p className="font-semibold text-sm">{template.nome}</p>
-        {template.descricao && (
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.descricao}</p>
+      <div className="flex items-start gap-2">
+        {dragHandleProps && (
+          <button type="button" {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none mt-0.5">
+            <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+          </button>
         )}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm">{template.nome}</p>
+          {template.descricao && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.descricao}</p>
+          )}
+        </div>
       </div>
 
       {tarefas.length > 0 && (
