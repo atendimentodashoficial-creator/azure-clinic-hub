@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTiposReuniao } from "@/hooks/useTiposReuniao";
 import { AtribuirProdutoDialog } from "@/components/produtos/AtribuirProdutoDialog";
 import {
   useProdutoTemplates,
