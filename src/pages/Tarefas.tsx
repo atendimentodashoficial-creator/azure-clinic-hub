@@ -274,7 +274,7 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioes
   );
 }
 
-function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer, dragHandleProps }: {
+function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer, onClick, dragHandleProps }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
@@ -283,6 +283,7 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   isFuncionario?: boolean;
   onDelete?: (id: string) => void;
   onStartTimer?: (id: string) => void;
+  onClick?: (tarefa: Tarefa) => void;
   dragHandleProps?: Record<string, any>;
 }) {
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
