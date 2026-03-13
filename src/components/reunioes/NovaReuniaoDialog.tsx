@@ -160,7 +160,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
     ).slice(0, 8);
   }, [leads, clienteSearch]);
 
-  const allMembers = useMemo(() => {
+  const allMembersRaw = useMemo(() => {
     return membros.map(m => ({
       id: m.id,
       nome: m.nome,
@@ -171,6 +171,12 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
       authUserId: (m as any).auth_user_id as string | null,
     }));
   }, [membros, allEscalas, allAusencias]);
+
+  // Filter members by tipo_reuniao if selected
+  const allMembers = useMemo(() => {
+    if (!selectedTipoId || tipoMembrosIds.size === 0) return allMembersRaw;
+    return allMembersRaw.filter(m => tipoMembrosIds.has(m.id));
+  }, [allMembersRaw, selectedTipoId, tipoMembrosIds]);
 
   const memberSlots = useMemo(() => {
     if (!selectedDate) return {};
