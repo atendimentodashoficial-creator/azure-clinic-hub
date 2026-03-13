@@ -279,7 +279,24 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
             />
           </div>
 
-          {/* Cliente */}
+          {/* Tipo de Reunião */}
+          {tiposReuniao.filter(t => t.ativo).length > 0 && (
+            <div className="space-y-2">
+              <Label>Tipo de Reunião</Label>
+              <Select value={selectedTipoId} onValueChange={(v) => { setSelectedTipoId(v === "none" ? "" : v); setSelectedMemberId(""); setSelectedTime(""); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Todos os profissionais</SelectItem>
+                  {tiposReuniao.filter(t => t.ativo).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>Cliente</Label>
             <div className="relative">
