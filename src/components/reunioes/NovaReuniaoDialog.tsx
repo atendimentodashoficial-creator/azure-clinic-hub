@@ -137,19 +137,18 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
     fetchMeetings();
   }, [open, selectedDate]);
 
-  // Fetch leads for autocomplete
+  // Fetch clientes (internos e preview) for autocomplete
   useEffect(() => {
     if (!open) return;
-    const fetchLeads = async () => {
+    const fetchClientes = async () => {
       const { data } = await supabase
-        .from("leads")
+        .from("tarefas_clientes")
         .select("id, nome, telefone")
-        .is("deleted_at", null)
         .order("nome")
         .limit(500);
       setLeads((data as any[]) || []);
     };
-    fetchLeads();
+    fetchClientes();
   }, [open]);
 
   const filteredLeads = useMemo(() => {
