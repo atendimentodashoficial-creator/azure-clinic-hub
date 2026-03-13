@@ -615,6 +615,13 @@ export function AvisosReuniaoTab() {
                       </div>
                     )}
 
+                    {aviso.audio_url && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Volume2 className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
+                        <span>Áudio {aviso.audio_posicao === 'depois' ? 'após' : 'antes da'} mensagem</span>
+                      </div>
+                    )}
+
                     {/* Preview da mensagem */}
                     <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">
                       {aviso.mensagem}
