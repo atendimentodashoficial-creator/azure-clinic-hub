@@ -362,21 +362,21 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                     <div key={i} className="flex items-center gap-2">
                       <div className="flex-1 space-y-1">
                         <Input
-                          placeholder="https://..."
-                          value={link.url}
-                          onChange={e => {
-                            const updated = [...taskLinks];
-                            updated[i] = { ...updated[i], url: e.target.value };
-                            setTaskLinks(updated);
-                          }}
-                        />
-                        <Input
                           placeholder="Título do link (opcional)"
                           value={link.titulo}
                           className="text-xs h-8"
                           onChange={e => {
                             const updated = [...taskLinks];
                             updated[i] = { ...updated[i], titulo: e.target.value };
+                            setTaskLinks(updated);
+                          }}
+                        />
+                        <Input
+                          placeholder="https://..."
+                          value={link.url}
+                          onChange={e => {
+                            const updated = [...taskLinks];
+                            updated[i] = { ...updated[i], url: e.target.value };
                             setTaskLinks(updated);
                           }}
                         />
