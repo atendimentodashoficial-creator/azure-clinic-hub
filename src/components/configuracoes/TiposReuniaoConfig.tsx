@@ -42,6 +42,7 @@ export function TiposReuniaoConfig() {
   // Form state
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [duracaoMinutos, setDuracaoMinutos] = useState(60);
   const [selectedMembros, setSelectedMembros] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
