@@ -58,12 +58,12 @@ export function ReunioesPeriodFilter({
           key={opt.value}
           variant={value === opt.value ? "default" : "outline"}
           size="sm"
-          className="h-8 text-xs px-3 rounded-full"
+          className="h-8 text-xs px-3 rounded-md"
           onClick={() => onChange(opt.value)}
         >
           {opt.label}
           {value === opt.value && opt.value === "hoje" && count !== undefined && (
-            <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px] rounded-full">
+            <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px] rounded-md">
               {count}
             </Badge>
           )}
@@ -74,7 +74,7 @@ export function ReunioesPeriodFilter({
       <Button
         variant={value === "periodo" ? "default" : "outline"}
         size="sm"
-        className="h-8 text-xs px-3 rounded-full gap-1.5"
+        className="h-8 text-xs px-3 rounded-md gap-1.5"
         onClick={() => onChange("periodo")}
       >
         <Calendar className="h-3.5 w-3.5" />
@@ -83,7 +83,7 @@ export function ReunioesPeriodFilter({
 
       {/* Count badge for non-hoje active filters */}
       {value !== "todas" && value !== "hoje" && count !== undefined && (
-        <Badge className="h-6 px-2 text-xs rounded-full bg-primary text-primary-foreground">
+        <Badge className="h-6 px-2 text-xs rounded-md bg-primary text-primary-foreground">
           {count} reunião(ões)
         </Badge>
       )}
