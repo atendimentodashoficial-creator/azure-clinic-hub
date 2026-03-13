@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTarefas, Tarefa, TarefaColuna } from "@/hooks/useTarefas";
+import { useTiposTarefas } from "@/hooks/useTiposTarefas";
 import { useTarefasClientes } from "@/hooks/useTarefasClientes";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 import { useMembroAtual } from "@/hooks/useMembroAtual";
@@ -91,9 +92,10 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   const [prioridade, setPrioridade] = useState("media");
   const [dataLimite, setDataLimite] = useState("");
   const [comissao, setComissao] = useState("");
+  const [tipoTarefaId, setTipoTarefaId] = useState<string>("");
   const { membros: profissionais } = useTarefasMembros();
   const { clientes } = useTarefasClientes();
-
+  const { tipos: tiposTarefas } = useTiposTarefas();
   const toggleResponsavel = (nome: string) => {
     setResponsaveisSelecionados(prev =>
       prev.includes(nome) ? prev.filter(n => n !== nome) : [...prev, nome]
@@ -112,8 +114,9 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
       data_limite: dataLimite || undefined,
       coluna_id: primeiraColuna,
       comissao: comissao ? parseFloat(comissao) : undefined,
+      tipo_tarefa_id: tipoTarefaId && tipoTarefaId !== "none" ? tipoTarefaId : undefined,
     });
-    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setComissao("");
+    setTitulo(""); setDescricao(""); setResponsaveisSelecionados([]); setClienteId(""); setPrioridade("media"); setDataLimite(""); setComissao(""); setTipoTarefaId("");
     setOpen(false);
   };
 
@@ -208,6 +211,21 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
             />
             <p className="text-xs text-muted-foreground mt-1">Valor da comissão ao concluir a tarefa</p>
           </div>
+
+          {tiposTarefas.filter(t => t.ativo !== false).length > 0 && (
+            <div>
+              <Label className="mb-1.5 block text-sm">Tipo de Tarefa</Label>
+              <Select value={tipoTarefaId} onValueChange={setTipoTarefaId}>
+                <SelectTrigger><SelectValue placeholder="Selecione um tipo (opcional)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {tiposTarefas.filter(t => t.ativo !== false).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <Button onClick={handleSubmit} className="w-full mt-4">Criar Tarefa</Button>
       </DialogContent>

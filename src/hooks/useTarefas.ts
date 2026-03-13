@@ -26,6 +26,7 @@ export interface Tarefa {
   ordem: number;
   comissao: number | null;
   reuniao_id: string | null;
+  tipo_tarefa_id: string | null;
   timer_inicio: string | null;
   tempo_acumulado_segundos: number;
   timer_status: string;
@@ -97,7 +98,7 @@ export function useTarefas() {
 
   // Create task
   const criarTarefa = useMutation({
-    mutationFn: async (tarefa: { titulo: string; descricao?: string; responsavel_nome?: string; prioridade?: string; data_limite?: string; coluna_id: string; cliente_id?: string; subtarefas_total?: number; comissao?: number; reuniao_id?: string }) => {
+    mutationFn: async (tarefa: { titulo: string; descricao?: string; responsavel_nome?: string; prioridade?: string; data_limite?: string; coluna_id: string; cliente_id?: string; subtarefas_total?: number; comissao?: number; reuniao_id?: string; tipo_tarefa_id?: string }) => {
       if (!effectiveUserId) throw new Error("Não autenticado");
       const maxOrdem = tarefas.filter((t) => t.coluna_id === tarefa.coluna_id).length;
       const { error } = await supabase.from("tarefas").insert({

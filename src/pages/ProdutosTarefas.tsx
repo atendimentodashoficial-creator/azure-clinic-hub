@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTiposReuniao } from "@/hooks/useTiposReuniao";
+import { useTiposTarefas } from "@/hooks/useTiposTarefas";
 import { AtribuirProdutoDialog } from "@/components/produtos/AtribuirProdutoDialog";
 import {
   useProdutoTemplates,
@@ -61,6 +62,7 @@ interface TarefaLocal {
   colunaId: string;
   dependencias: string[];
   comissao: number;
+  tipoTarefaId: string;
 }
 
 function gerarId() {
@@ -88,6 +90,7 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     colunaId: meta.coluna_id || "",
     dependencias: meta.dependencias || [],
     comissao: meta.comissao || 0,
+    tipoTarefaId: meta.tipo_tarefa_id || "",
   };
 }
 
@@ -103,6 +106,7 @@ function tarefaLocalToDesc(t: TarefaLocal, allTarefas: TarefaLocal[]): string {
     coluna_id: t.colunaId || undefined,
     dependencias: depOrdens.length > 0 ? depOrdens : undefined,
     comissao: t.comissao > 0 ? t.comissao : undefined,
+    tipo_tarefa_id: t.tipoTarefaId || undefined,
   };
   return JSON.stringify(meta);
 }
@@ -182,6 +186,7 @@ function TarefaInlineEditor({
   isNew?: boolean;
 }) {
   const [expanded, setExpanded] = useState(isNew);
+  const { tipos: tiposTarefas } = useTiposTarefas();
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade);
   const coluna = tarefa.colunaId ? colunas.find((c: any) => c.id === tarefa.colunaId) : null;
 
@@ -315,6 +320,21 @@ function TarefaInlineEditor({
             </div>
           </div>
 
+          {tiposTarefas.filter(t => t.ativo !== false).length > 0 && (
+            <div>
+              <Label className="text-xs">Tipo de Tarefa</Label>
+              <Select value={tarefa.tipoTarefaId} onValueChange={v => onChange({ ...tarefa, tipoTarefaId: v === "none" ? "" : v })}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {tiposTarefas.filter(t => t.ativo !== false).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {otherTarefas.length > 0 && (
             <details className="group">
               <summary className="text-xs font-medium cursor-pointer select-none flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
@@ -403,6 +423,7 @@ function ProdutoDialog({
       colunaId: colunas[0]?.id || "",
       dependencias: [],
       comissao: 0,
+      tipoTarefaId: "",
     }]);
   };
 
