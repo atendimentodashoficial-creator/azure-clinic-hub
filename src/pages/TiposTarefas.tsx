@@ -106,6 +106,7 @@ export default function TiposTarefas() {
   const [formDescricao, setFormDescricao] = useState("");
   const [formArquivos, setFormArquivos] = useState<string[]>([]);
   const [formLimites, setFormLimites] = useState<Record<string, number>>({});
+  const [formExigeAprovacao, setFormExigeAprovacao] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -118,6 +119,7 @@ export default function TiposTarefas() {
     setFormDescricao("");
     setFormArquivos([]);
     setFormLimites({});
+    setFormExigeAprovacao(false);
     setIsDialogOpen(true);
   };
 
@@ -127,6 +129,7 @@ export default function TiposTarefas() {
     setFormDescricao(tipo.descricao || "");
     setFormArquivos(tipo.tipos_arquivo_permitidos);
     setFormLimites(tipo.limite_arquivos);
+    setFormExigeAprovacao(tipo.exige_aprovacao);
     setIsDialogOpen(true);
   };
 
@@ -148,6 +151,7 @@ export default function TiposTarefas() {
       descricao: formDescricao || null,
       tipos_arquivo_permitidos: formArquivos,
       limite_arquivos: formLimites,
+      exige_aprovacao: formExigeAprovacao,
     };
     if (editingTipo) {
       await updateTipo.mutateAsync({ id: editingTipo.id, ...payload });
@@ -231,6 +235,15 @@ export default function TiposTarefas() {
             <div className="space-y-2">
               <Label className="mb-2 block">Descrição (opcional)</Label>
               <Input value={formDescricao} onChange={e => setFormDescricao(e.target.value)} placeholder="Descrição do tipo..." />
+            </div>
+
+            {/* Exige aprovação */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label className="text-sm font-medium">Exige aprovação do cliente</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">A tarefa só poderá ser concluída após aprovação</p>
+              </div>
+              <Switch checked={formExigeAprovacao} onCheckedChange={setFormExigeAprovacao} />
             </div>
 
             {/* File types */}

@@ -416,6 +416,7 @@ function DroppableColumn({ coluna, children }: { coluna: TarefaColuna; children:
 export default function Tarefas() {
   const { colunas, tarefas, isLoading, criarTarefa, atualizarTarefa, excluirTarefa, moverTarefa, criarColuna, excluirColuna } = useTarefas();
   const { clientes } = useTarefasClientes();
+  const { tipos: tiposTarefas } = useTiposTarefas();
   const { membros } = useTarefasMembros();
   const membrosNomes = membros.map(m => m.nome);
   const { membro } = useMembroAtual();
@@ -509,6 +510,16 @@ export default function Tarefas() {
 
     const tarefa = tarefas.find(t => t.id === tarefaId);
     if (!tarefa || tarefa.coluna_id === targetColunaId) return;
+
+    // Block move to last column (Concluído) if task type requires approval and it's not approved
+    const lastColuna = colunas[colunas.length - 1];
+    if (targetColunaId === lastColuna?.id) {
+      const tipoTarefa = tarefa.tipo_tarefa_id ? tiposTarefas.find(t => t.id === tarefa.tipo_tarefa_id) : null;
+      if (tipoTarefa?.exige_aprovacao && tarefa.approval_status !== "concluido") {
+        toast.error("Esta tarefa exige aprovação do cliente antes de ser concluída.");
+        return;
+      }
+    }
 
     const fromOrdem = getColOrdem(colunas, tarefa.coluna_id);
     const toOrdem = getColOrdem(colunas, targetColunaId);

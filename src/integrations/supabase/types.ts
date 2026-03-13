@@ -5211,6 +5211,7 @@ export type Database = {
           ativo: boolean
           created_at: string
           descricao: string | null
+          exige_aprovacao: boolean
           id: string
           limite_arquivos: Json
           nome: string
@@ -5223,6 +5224,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string | null
+          exige_aprovacao?: boolean
           id?: string
           limite_arquivos?: Json
           nome: string
@@ -5235,6 +5237,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string | null
+          exige_aprovacao?: boolean
           id?: string
           limite_arquivos?: Json
           nome?: string
