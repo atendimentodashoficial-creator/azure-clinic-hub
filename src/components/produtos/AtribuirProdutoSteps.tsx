@@ -169,19 +169,9 @@ export function SelectMemberAndTimeStep({
     })();
   }, []);
 
-  // Build member list: admin + team members
+  // Build member list: team members only (admin excluded)
   const allMembers: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[] })[] = useMemo(() => {
     const list: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[] })[] = [];
-    if (user) {
-      list.push({
-        id: user.id,
-        nome: user.user_metadata?.full_name || user.email || "Administrador",
-        cargo: "Administrador",
-        isAdmin: true,
-        escalas: [],
-        ausencias: [],
-      });
-    }
     for (const m of membros) {
       list.push({
         id: m.id,
@@ -193,7 +183,7 @@ export function SelectMemberAndTimeStep({
       });
     }
     return list;
-  }, [user, membros, allEscalas, allAusencias]);
+  }, [membros, allEscalas, allAusencias]);
 
   // Compute slots per member for the selected date
   const memberSlots = useMemo(() => {
