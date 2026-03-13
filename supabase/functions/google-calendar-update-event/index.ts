@@ -35,7 +35,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { reuniaoId, novaDataHora, duracaoMinutos } = body;
+    const { reuniaoId, novaDataHora, duracaoMinutos, profissionalId } = body;
 
     if (!reuniaoId || !novaDataHora) {
       return new Response(
@@ -59,23 +59,57 @@ serve(async (req) => {
       );
     }
 
-    // Verify permission: own meeting or admin of the member
+    // Verify permission: own meeting or employee under the admin who owns it, or admin of employee
     const meetingOwnerId = reuniao.user_id;
     let authorized = meetingOwnerId === user.id;
+    let adminUserId = meetingOwnerId; // For Google Calendar config lookup
+    
     if (!authorized) {
+      // Check if user is an employee under the admin who owns this meeting
       const { data: memberLink } = await supabase
         .from("tarefas_membros")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("auth_user_id", meetingOwnerId)
+        .select("id, user_id")
+        .eq("auth_user_id", user.id)
+        .eq("user_id", meetingOwnerId)
         .maybeSingle();
-      authorized = !!memberLink;
+      if (memberLink) {
+        authorized = true;
+        adminUserId = memberLink.user_id;
+      }
     }
+    
+    if (!authorized) {
+      // Check if user is the admin of the employee whose auth_user_id owns this meeting
+      const { data: memberLink } = await supabase
+        .from("tarefas_membros")
+        .select("id, user_id")
+        .eq("auth_user_id", meetingOwnerId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (memberLink) {
+        authorized = true;
+        adminUserId = user.id;
+      }
+    }
+    
     if (!authorized) {
       return new Response(
         JSON.stringify({ success: false, error: "Sem permissão" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+    
+    // Also resolve adminUserId if the meeting owner IS an employee
+    if (adminUserId === meetingOwnerId && adminUserId !== user.id) {
+      // meetingOwnerId might be an employee auth_user_id, find their admin
+      const { data: ownerMember } = await supabase
+        .from("tarefas_membros")
+        .select("user_id")
+        .eq("auth_user_id", meetingOwnerId)
+        .maybeSingle();
+      if (ownerMember) {
+        adminUserId = ownerMember.user_id;
+      }
     }
 
     const finalDuracao = duracaoMinutos || reuniao.duracao_minutos || 60;
@@ -84,6 +118,16 @@ serve(async (req) => {
     
     // Increment numero_reagendamentos
     const newNumeroReagendamentos = (reuniao.numero_reagendamentos || 0) + 1;
+
+    // Build update payload - include profissional_id if provided
+    const updatePayload: Record<string, unknown> = {
+      data_reuniao: startDate.toISOString(),
+      status: "agendado",
+      numero_reagendamentos: newNumeroReagendamentos,
+    };
+    if (profissionalId !== undefined) {
+      updatePayload.profissional_id = profissionalId;
+    }
 
     // Helper function to trigger rescheduling notifications in background (non-blocking)
     const triggerReschedulingNotificationsInBackground = () => {
@@ -125,11 +169,7 @@ serve(async (req) => {
     if (!reuniao.google_event_id) {
       const { error: updateError } = await supabase
         .from("reunioes")
-        .update({ 
-          data_reuniao: startDate.toISOString(),
-          status: "agendado",
-          numero_reagendamentos: newNumeroReagendamentos
-        })
+        .update(updatePayload)
         .eq("id", reuniaoId);
 
       if (updateError) throw updateError;
@@ -142,20 +182,16 @@ serve(async (req) => {
       );
     }
 
-    // Get Google Calendar config using the MEETING OWNER's config
+    // Get Google Calendar config using the ADMIN's user_id (not the employee's)
     const { data: config, error: configError } = await supabase
       .from("google_calendar_config")
       .select("*")
-      .eq("user_id", meetingOwnerId)
+      .eq("user_id", adminUserId)
       .single();
 
     if (configError || !config || !config.access_token) {
       console.error("Config error:", configError);
-      await supabase.from("reunioes").update({ 
-        data_reuniao: startDate.toISOString(),
-        status: "agendado",
-        numero_reagendamentos: newNumeroReagendamentos
-      }).eq("id", reuniaoId);
+      await supabase.from("reunioes").update(updatePayload).eq("id", reuniaoId);
       
       triggerReschedulingNotificationsInBackground();
       
@@ -186,11 +222,7 @@ serve(async (req) => {
 
       if (!refreshResponse.ok) {
         console.error("Token refresh error:", refreshData);
-        await supabase.from("reunioes").update({ 
-          data_reuniao: startDate.toISOString(),
-          status: "agendado",
-          numero_reagendamentos: newNumeroReagendamentos
-        }).eq("id", reuniaoId);
+        await supabase.from("reunioes").update(updatePayload).eq("id", reuniaoId);
         
         triggerReschedulingNotificationsInBackground();
         
@@ -210,14 +242,14 @@ serve(async (req) => {
           token_expires_at: expiresAt,
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", meetingOwnerId);
+        .eq("user_id", adminUserId);
     }
 
     // Update event in Google Calendar
     const calendarId = config.calendar_id || "primary";
     console.log(`Updating Google Calendar event: ${reuniao.google_event_id}`);
     
-    const updateBody = {
+    const calendarUpdateBody = {
       start: {
         dateTime: startDate.toISOString(),
         timeZone: "America/Sao_Paulo",
@@ -236,18 +268,14 @@ serve(async (req) => {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updateBody),
+        body: JSON.stringify(calendarUpdateBody),
       }
     );
 
     if (!updateResponse.ok) {
       const errorData = await updateResponse.json().catch(() => ({}));
       console.error("Google Calendar update error:", errorData);
-      await supabase.from("reunioes").update({ 
-        data_reuniao: startDate.toISOString(),
-        status: "agendado",
-        numero_reagendamentos: newNumeroReagendamentos
-      }).eq("id", reuniaoId);
+      await supabase.from("reunioes").update(updatePayload).eq("id", reuniaoId);
       
       triggerReschedulingNotificationsInBackground();
       
@@ -266,11 +294,7 @@ serve(async (req) => {
     // Update local record
     const { error: updateError } = await supabase
       .from("reunioes")
-      .update({ 
-        data_reuniao: startDate.toISOString(),
-        status: "agendado",
-        numero_reagendamentos: newNumeroReagendamentos
-      })
+      .update(updatePayload)
       .eq("id", reuniaoId);
 
     if (updateError) {
