@@ -171,6 +171,15 @@ export default function Reunioes() {
     return map;
   }, [membros]);
 
+  const selectableMembros = useMemo(() => {
+    const currentEmail = (user?.email || "").toLowerCase();
+    return membros.filter((m) => {
+      const memberEmail = (m.email || "").toLowerCase();
+      const memberNome = (m.nome || "").toLowerCase();
+      return m.auth_user_id !== user?.id && memberEmail !== currentEmail && memberNome !== currentEmail;
+    });
+  }, [membros, user?.id, user?.email]);
+
   // Filter by selected member then by period
   const reunioes = useMemo(() => {
     if (!allReunioes) return [];
@@ -393,7 +402,7 @@ export default function Reunioes() {
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
                   <SelectItem value="meus">Minhas reuniões</SelectItem>
-                  {membros.filter(m => m.auth_user_id !== user?.id).map(m => (
+                  {selectableMembros.map(m => (
                     <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
                   ))}
                 </SelectContent>
