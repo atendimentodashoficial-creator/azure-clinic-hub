@@ -149,5 +149,5 @@ export function useProdutoTemplateMutations() {
     onSuccess: invalidate,
   });
 
-  return { criarTemplate, atualizarTemplate, excluirTemplate, adicionarTarefa, atualizarTarefa, excluirTarefa };
+  return { criarTemplate, atualizarTemplate, reordenarTemplates, excluirTemplate, adicionarTarefa, atualizarTarefa, excluirTarefa };
 }
