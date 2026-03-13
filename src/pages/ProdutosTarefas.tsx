@@ -406,6 +406,7 @@ function ProdutoDialog({
       colunaId: colunas[0]?.id || "",
       dependencias: [],
       comissao: 0,
+      tipoTarefaId: "",
     }]);
   };
 
