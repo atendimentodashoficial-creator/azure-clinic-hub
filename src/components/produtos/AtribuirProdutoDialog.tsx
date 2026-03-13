@@ -169,7 +169,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
         clienteId = leadData?.id || null;
       }
 
-      const { error } = await supabase
+      const { data: reuniaoData, error } = await supabase
         .from("reunioes" as any)
         .insert({
           user_id: user!.id,
@@ -181,9 +181,28 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
           profissional_id: profissionalId,
           status: "agendado",
           participantes: [selectedClient.nome, data.memberNome],
-        } as any);
+        } as any)
+        .select("id")
+        .single();
 
       if (error) throw error;
+
+      // Send immediate WhatsApp notification
+      if (selectedClient.telefone && reuniaoData?.id) {
+        try {
+          await supabase.functions.invoke("enviar-aviso-reuniao-imediato", {
+            body: {
+              reuniaoId: reuniaoData.id,
+              userId: user!.id,
+              clienteTelefone: selectedClient.telefone,
+              clienteNome: selectedClient.nome,
+              tipo: "imediato",
+            },
+          });
+        } catch (notifyErr) {
+          console.error("Erro ao enviar aviso imediato:", notifyErr);
+        }
+      }
 
       toast.success(`Produto atribuído e reunião agendada com ${selectedClient.nome}`);
       handleClose();
