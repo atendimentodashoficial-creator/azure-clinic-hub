@@ -184,9 +184,13 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
       <Dialog open={open} onOpenChange={() => handleClose()}>
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{step === "select-client" ? "Atribuir Produto" : "Agendar Reunião"}</DialogTitle>
+            <DialogTitle>
+              {step === "auto-matched" ? "Cliente Encontrado" : step === "select-client" ? "Atribuir Produto" : "Agendar Reunião"}
+            </DialogTitle>
             <DialogDescription>
-              {step === "select-client" ? (
+              {step === "auto-matched" && matchedClient ? (
+                <>Este contato já é um cliente cadastrado</>
+              ) : step === "select-client" ? (
                 <>
                   Selecione um cliente para atribuir "{template.nome}"
                   {template.requer_reuniao && (
@@ -201,6 +205,30 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
               )}
             </DialogDescription>
           </DialogHeader>
+
+          {step === "auto-matched" && matchedClient && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-lg border bg-accent/30">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <UserCheck className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{matchedClient.nome}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {[matchedClient.email, matchedClient.telefone].filter(Boolean).join(" • ")}
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => { setStep("select-client"); setSelectedClient(null); }}>
+                  Escolher outro
+                </Button>
+                <Button onClick={() => handleSelectClient(matchedClient)} disabled={saving}>
+                  {saving ? "Atribuindo..." : `Atribuir "${template.nome}"`}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {step === "select-client" && (
             <SelectClientStep
