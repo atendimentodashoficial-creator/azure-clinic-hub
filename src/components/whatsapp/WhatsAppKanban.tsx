@@ -495,15 +495,17 @@ export function WhatsAppKanban({
         return;
       }
       if (!allReunioes || allReunioes.length === 0) {
-        setChatReunioes({});
+        setChatAllReunioes({});
         return;
       }
 
-      const last8ToReuniao: Record<string, ChatReuniao> = {};
+      // Collect ALL reuniões per phone (last8)
+      const last8ToReunioes: Record<string, ChatReuniao[]> = {};
       allReunioes.forEach((r: any) => {
         const k = last8(r.cliente_telefone || "");
-        if (!k || last8ToReuniao[k]) return;
-        last8ToReuniao[k] = {
+        if (!k) return;
+        if (!last8ToReunioes[k]) last8ToReunioes[k] = [];
+        last8ToReunioes[k].push({
           id: r.id,
           titulo: r.titulo,
           resumo_ia: r.resumo_ia,
@@ -512,15 +514,15 @@ export function WhatsAppKanban({
           participantes: r.participantes,
           transcricao: r.transcricao,
           status: r.status,
-        };
+        });
       });
 
-      const chatReMap: Record<string, ChatReuniao | null> = {};
+      const chatReMap: Record<string, ChatReuniao[]> = {};
       chats.forEach((chat) => {
         const k = last8(chat?.normalized_number || chat?.contact_number || "");
-        chatReMap[chat.id] = k ? (last8ToReuniao[k] ?? null) : null;
+        chatReMap[chat.id] = k ? (last8ToReunioes[k] ?? []) : [];
       });
-      setChatReunioes(chatReMap);
+      setChatAllReunioes(chatReMap);
     } catch (error) {
       console.error("Error loading chat reunioes:", error);
     }
@@ -528,27 +530,36 @@ export function WhatsAppKanban({
 
   // Render reunião badge for a chat
   const renderReuniaoBadge = (chatId: string) => {
-    const reuniao = chatReunioes[chatId];
-    if (!reuniao) return null;
+    const reunioes = chatAllReunioes[chatId];
+    if (!reunioes || reunioes.length === 0) return null;
+
+    const handleClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (reunioes.length === 1) {
+        setSelectedReuniao(reunioes[0]);
+        setReuniaoDialogOpen(true);
+      } else {
+        setReuniaoSelectorList(reunioes);
+        setReuniaoSelectorOpen(true);
+      }
+    };
 
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedReuniao(reuniao);
-                setReuniaoDialogOpen(true);
-              }}
+              onClick={handleClick}
               className="flex items-center gap-1 px-2 py-1 rounded-md text-xs mt-1 w-full bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900 transition-colors text-left"
             >
               <FileText className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">Resumo de reunião</span>
+              <span className="truncate">
+                {reunioes.length === 1 ? "Resumo de reunião" : `${reunioes.length} resumos de reunião`}
+              </span>
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Clique para ver o resumo</p>
+            <p>{reunioes.length === 1 ? "Clique para ver o resumo" : "Clique para selecionar uma reunião"}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
