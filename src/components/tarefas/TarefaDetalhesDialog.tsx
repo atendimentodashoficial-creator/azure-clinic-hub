@@ -258,14 +258,15 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                                 variant="outline"
                                 className={cn("text-[10px]",
                                   m.status === "aprovado" ? "border-emerald-500 text-emerald-400" :
-                                  m.status === "reprovado" ? "border-red-500 text-red-400" :
+                                  m.status === "reprovado" ? "border-red-500 text-red-400 cursor-pointer hover:bg-red-500/10" :
                                   "border-muted-foreground/30 text-muted-foreground"
                                 )}
+                                onClick={() => m.status === "reprovado" && m.feedback && setExpandedFeedback(prev => prev === m.id ? null : m.id)}
                               >
                                 Slide {i + 1}: {m.status === "aprovado" ? "Aprovado" : m.status === "reprovado" ? "Reprovado" : "Pendente"}
                               </Badge>
-                              {m.status === "reprovado" && m.feedback && (
-                                <p className="text-[11px] text-red-400 bg-red-500/10 rounded px-2 py-1 ml-1">
+                              {m.status === "reprovado" && m.feedback && expandedFeedback === m.id && (
+                                <p className="text-[11px] text-red-400 bg-red-500/10 rounded px-2 py-1 ml-1 animate-in fade-in slide-in-from-top-1">
                                   💬 {m.feedback}
                                 </p>
                               )}
