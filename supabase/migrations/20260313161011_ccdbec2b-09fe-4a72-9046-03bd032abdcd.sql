@@ -1,0 +1,1 @@
+ALTER TABLE public.tarefas ADD COLUMN reuniao_id uuid REFERENCES public.reunioes(id) ON DELETE SET NULL;
