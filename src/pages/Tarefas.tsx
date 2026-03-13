@@ -197,15 +197,33 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, onDelete
   );
 }
 
-function TarefaCardContent({ tarefa, colunas, clientes, onDelete, dragHandleProps }: {
+function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, onDelete, dragHandleProps }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
+  membrosNomes?: string[];
   onDelete?: (id: string) => void;
   dragHandleProps?: Record<string, any>;
 }) {
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
   const cliente = tarefa.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
+
+  const renderResponsaveis = () => {
+    if (!tarefa.responsavel_nome) return null;
+    const nomes = tarefa.responsavel_nome.split(",").map(n => n.trim());
+    return (
+      <p className="text-xs mt-1 flex flex-wrap gap-x-1">
+        {nomes.map((nome, i) => {
+          const existe = !membrosNomes || membrosNomes.some(m => m.toLowerCase() === nome.toLowerCase());
+          return (
+            <span key={i} className={existe ? "text-muted-foreground" : "text-destructive"}>
+              {nome}{i < nomes.length - 1 ? "," : ""}
+            </span>
+          );
+        })}
+      </p>
+    );
+  };
 
   return (
     <Card className="p-3 bg-card border-l-4 hover:bg-accent/30 transition-colors group" style={{ borderLeftColor: colunas.find(c => c.id === tarefa.coluna_id)?.cor || '#f59e0b' }}>
@@ -229,9 +247,7 @@ function TarefaCardContent({ tarefa, colunas, clientes, onDelete, dragHandleProp
               </Button>
             )}
           </div>
-          {tarefa.responsavel_nome && (
-            <p className="text-xs text-muted-foreground mt-1">{tarefa.responsavel_nome}</p>
-          )}
+          {renderResponsaveis()}
           {cliente && (
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <Building2 className="h-3 w-3" /> {cliente.nome}
