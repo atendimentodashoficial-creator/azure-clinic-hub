@@ -99,10 +99,7 @@ serve(async (req) => {
 
     const participantes = [clienteNome || "Cliente", member.nome].filter(Boolean);
 
-    // Check if the target user has Google Calendar connected
-    let meetLink: string | null = null;
-    let googleEventId: string | null = null;
-
+    // Resolve qual conta Google Calendar usar para gerar Meet
     const calendarCandidateIds = new Set<string>();
     calendarCandidateIds.add(targetUserId);
     calendarCandidateIds.add(caller.id);
@@ -139,10 +136,30 @@ serve(async (req) => {
       }
     }
 
+    let meetLink: string | null = null;
+    let googleEventId: string | null = null;
+
     if (gcalConfig?.access_token && calendarOwnerUserId) {
       try {
         let accessToken = gcalConfig.access_token;
-...
+
+        if (gcalConfig.token_expires_at && new Date(gcalConfig.token_expires_at) <= new Date()) {
+          console.log("Google token expired, refreshing...");
+          const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: gcalConfig.client_id,
+              client_secret: gcalConfig.client_secret,
+              refresh_token: gcalConfig.refresh_token,
+              grant_type: "refresh_token",
+            }),
+          });
+
+          const refreshData = await refreshResponse.json();
+          if (refreshResponse.ok) {
+            accessToken = refreshData.access_token;
+            const expiresAt = new Date(Date.now() + refreshData.expires_in * 1000).toISOString();
             await supabaseAdmin
               .from("google_calendar_config")
               .update({ access_token: accessToken, token_expires_at: expiresAt, updated_at: new Date().toISOString() })
@@ -152,7 +169,6 @@ serve(async (req) => {
           }
         }
 
-        // Create Google Calendar event with Meet
         const startDate = new Date(dataHora);
         const endDate = new Date(startDate.getTime() + (duracao || 60) * 60 * 1000);
 
@@ -171,7 +187,7 @@ serve(async (req) => {
 
         const calendarId = gcalConfig.calendar_id || "primary";
         const eventResponse = await fetch(
-          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1`,
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=none`,
           {
             method: "POST",
             headers: {
@@ -244,7 +260,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, reuniaoId: reuniao.id, targetUserId, notificationSent }),
+      JSON.stringify({ success: true, reuniaoId: reuniao.id, targetUserId, notificationSent, meetLinkGenerated: !!meetLink }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
