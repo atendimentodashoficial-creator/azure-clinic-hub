@@ -49,6 +49,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const [mockupSlides, setMockupSlides] = useState<MockupSlide[]>([
     { ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" },
   ]);
+  const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
 
   const tipoTarefa = tarefa?.tipo_tarefa_id ? tipos.find(t => t.id === tarefa.tipo_tarefa_id) : null;
   const hasMockup = tipoTarefa?.tipos_arquivo_permitidos?.includes("mockup");
