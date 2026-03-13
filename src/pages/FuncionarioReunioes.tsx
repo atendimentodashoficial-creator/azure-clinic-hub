@@ -60,7 +60,10 @@ export default function FuncionarioReunioes() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { membro, isLoading: membroLoading } = useMembroAtual();
+  const { ownerId } = useOwnerId();
   const queryClient = useQueryClient();
+  const periodFilter = useReunioesPeriodFilter();
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("todos");
   const [activeTab, setActiveTab] = useState("reunioes");
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
   const [vincularDialogOpen, setVincularDialogOpen] = useState(false);
