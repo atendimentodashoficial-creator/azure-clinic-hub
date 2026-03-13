@@ -110,10 +110,12 @@ export function WhatsAppKanban({
   const [selectedAgendamentos, setSelectedAgendamentos] = useState<AgendamentoResumo[]>([]);
   const [selectedAgendamentoClienteNome, setSelectedAgendamentoClienteNome] = useState("");
 
-  // Reuniões state
-  const [chatReunioes, setChatReunioes] = useState<Record<string, ChatReuniao | null>>({});
+  // Reuniões state - store ALL reuniões per chat
+  const [chatAllReunioes, setChatAllReunioes] = useState<Record<string, ChatReuniao[]>>({});
   const [reuniaoDialogOpen, setReuniaoDialogOpen] = useState(false);
   const [selectedReuniao, setSelectedReuniao] = useState<ChatReuniao | null>(null);
+  const [reuniaoSelectorOpen, setReuniaoSelectorOpen] = useState(false);
+  const [reuniaoSelectorList, setReuniaoSelectorList] = useState<ChatReuniao[]>([]);
 
   // Selection state
   const [selectionMode, setSelectionMode] = useState(false);
