@@ -160,6 +160,15 @@ export default function Reunioes() {
     enabled: !!user?.id,
   });
 
+  // Map user_id → member name for card display
+  const memberNameByUserId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of membros) {
+      if (m.auth_user_id) map.set(m.auth_user_id, m.nome);
+    }
+    return map;
+  }, [membros]);
+
   // Filter by selected member then by period
   const reunioes = useMemo(() => {
     if (!allReunioes) return [];
