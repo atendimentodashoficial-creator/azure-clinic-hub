@@ -209,7 +209,7 @@ export function SelectMemberAndTimeStep({
       }
     }
     return map;
-  }, [allMembers, selectedDate, existingMeetings, duration]);
+  }, [allMembers, selectedDate, existingMeetings, duration, stepInterval]);
 
   const selectedMemberObj = allMembers.find(m => m.id === selectedMemberId);
 
