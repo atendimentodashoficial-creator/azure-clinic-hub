@@ -156,7 +156,23 @@ function replaceVariables(
   return processSpintax(result);
 }
 
-// Sleep function for delays
+// Build Google Calendar "Add to Calendar" URL
+function buildGoogleCalendarUrl(reuniao: { titulo: string; data_reuniao: string; meet_link?: string | null; duracao_minutos?: number }): string {
+  const start = new Date(reuniao.data_reuniao);
+  const end = new Date(start.getTime() + ((reuniao.duracao_minutos || 60) * 60 * 1000));
+  
+  const formatGCalDate = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: reuniao.titulo,
+    dates: `${formatGCalDate(start)}/${formatGCalDate(end)}`,
+    details: reuniao.meet_link ? `Link da reunião: ${reuniao.meet_link}` : "Reunião agendada via CRM",
+    ctz: "America/Sao_Paulo",
+  });
+  
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -504,8 +520,16 @@ serve(async (req) => {
 
         const audioPosicao = (aviso as any).audio_posicao || "depois";
 
-        // Send WhatsApp message (UAZapi padrão usado em Disparos)
-        const sendUrl = `${avisoBaseUrl}/send/text`;
+        // Determine if calendar button should be sent
+        const linkCalendarioAtivo = (aviso as any).link_calendario_ativo === true;
+        const linkCalendarioTexto = (aviso as any).link_calendario_texto || "📅 Adicionar ao meu calendário";
+        const calendarUrl = linkCalendarioAtivo ? buildGoogleCalendarUrl(reuniao) : null;
+
+        // Remove {link_calendario} from message text (it's handled by button)
+        let finalMensagem = mensagem.replace(/\{link_calendario\}/gi, "").trim();
+
+        // Choose send endpoint based on whether we need buttons
+        const sendUrl = calendarUrl ? `${avisoBaseUrl}/send/menu` : `${avisoBaseUrl}/send/text`;
 
         let deliveredTo: string | null = null;
         let lastError: string | null = null;
@@ -514,8 +538,20 @@ serve(async (req) => {
           // Send audio BEFORE text if configured
           if ((aviso as any).audio_url && audioPosicao === "antes") {
             await sendAudio(candidate);
-            await sleep(2000); // small delay between audio and text
+            await sleep(2000);
           }
+
+          const sendBody = calendarUrl
+            ? {
+                number: candidate,
+                type: "button",
+                text: finalMensagem,
+                choices: [`${linkCalendarioTexto}|${calendarUrl}`],
+              }
+            : {
+                number: candidate,
+                text: finalMensagem,
+              };
 
           const sendResponse = await fetch(sendUrl, {
             method: "POST",
@@ -524,10 +560,7 @@ serve(async (req) => {
               "Content-Type": "application/json",
               token: avisoApiKey,
             },
-            body: JSON.stringify({
-              number: candidate,
-              text: mensagem,
-            }),
+            body: JSON.stringify(sendBody),
           });
 
           const responseText = await sendResponse.text();

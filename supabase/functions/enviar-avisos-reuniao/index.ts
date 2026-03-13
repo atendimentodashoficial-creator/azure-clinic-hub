@@ -49,6 +49,9 @@ interface PendingAviso {
   numeroReagendamentos?: number;
   audioUrl?: string | null;
   audioPosicao?: string | null;
+  linkCalendarioAtivo?: boolean;
+  linkCalendarioTexto?: string;
+  duracaoMinutos?: number;
 }
 
 // Configuration
@@ -162,6 +165,24 @@ function replaceVariables(message: string, aviso: PendingAviso): string {
   return processSpintax(result);
 }
 
+// Build Google Calendar "Add to Calendar" URL
+function buildGoogleCalendarUrl(aviso: PendingAviso): string {
+  const start = new Date(aviso.dataReuniao);
+  const end = new Date(start.getTime() + ((aviso.duracaoMinutos || 60) * 60 * 1000));
+  
+  const formatGCalDate = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: aviso.titulo,
+    dates: `${formatGCalDate(start)}/${formatGCalDate(end)}`,
+    details: aviso.meetLink ? `Link da reunião: ${aviso.meetLink}` : "Reunião agendada via CRM",
+    ctz: "America/Sao_Paulo",
+  });
+  
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 // Process a single aviso message
 async function processAviso(
   supabase: any,
@@ -216,17 +237,34 @@ async function processAviso(
         await delay(2000);
       }
 
-      const response = await fetch(`${config.base_url}/send/text`, {
+      const linkCalendarioAtivo = aviso.linkCalendarioAtivo === true;
+      const linkCalendarioTexto = aviso.linkCalendarioTexto || "📅 Adicionar ao meu calendário";
+      const calendarUrl = linkCalendarioAtivo ? buildGoogleCalendarUrl(aviso) : null;
+
+      let finalMensagem = mensagem.replace(/\{link_calendario\}/gi, "").trim();
+
+      const sendUrl = calendarUrl ? `${config.base_url}/send/menu` : `${config.base_url}/send/text`;
+
+      const sendBody = calendarUrl
+        ? {
+            number: candidate,
+            type: "button",
+            text: finalMensagem,
+            choices: [`${linkCalendarioTexto}|${calendarUrl}`],
+          }
+        : {
+            number: candidate,
+            text: finalMensagem,
+          };
+
+      const response = await fetch(sendUrl, {
         method: "POST",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
           token: config.api_key,
         },
-        body: JSON.stringify({
-          number: candidate,
-          text: mensagem,
-        }),
+        body: JSON.stringify(sendBody),
       });
 
       if (response.ok) {
@@ -564,6 +602,9 @@ Deno.serve(async (req) => {
           numeroReagendamentos: reuniao.numero_reagendamentos || 0,
           audioUrl: (aviso as any).audio_url || null,
           audioPosicao: (aviso as any).audio_posicao || null,
+          linkCalendarioAtivo: (aviso as any).link_calendario_ativo || false,
+          linkCalendarioTexto: (aviso as any).link_calendario_texto || "📅 Adicionar ao meu calendário",
+          duracaoMinutos: reuniao.duracao_minutos || 60,
         });
       }
 

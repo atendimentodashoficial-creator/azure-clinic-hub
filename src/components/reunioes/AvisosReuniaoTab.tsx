@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Bell, Plus, Trash2, Edit, Loader2, Send, Clock, Zap, FileText, RefreshCw, Save, Eye, ChevronDown, TrendingUp, Video, User, Phone, MessageCircle, Volume2, Upload, X } from "lucide-react";
+import { Bell, Plus, Trash2, Edit, Loader2, Send, Clock, Zap, FileText, RefreshCw, Save, Eye, ChevronDown, TrendingUp, Video, User, Phone, MessageCircle, Volume2, Upload, X, CalendarPlus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -81,6 +81,8 @@ interface AvisoReuniao {
   tipo_gatilho: string;
   audio_url: string | null;
   audio_posicao: string | null;
+  link_calendario_ativo: boolean;
+  link_calendario_texto: string;
   created_at: string;
   updated_at: string;
 }
@@ -120,6 +122,8 @@ export function AvisosReuniaoTab() {
   const [formAudioUrl, setFormAudioUrl] = useState<string | null>(null);
   const [formAudioPosicao, setFormAudioPosicao] = useState<"antes" | "depois">("antes");
   const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [formLinkCalendarioAtivo, setFormLinkCalendarioAtivo] = useState(false);
+  const [formLinkCalendarioTexto, setFormLinkCalendarioTexto] = useState("📅 Adicionar ao meu calendário");
   const audioInputRef = useRef<HTMLInputElement>(null);
 
   const { data: procedimentos } = useProcedimentos();
@@ -215,6 +219,8 @@ export function AvisosReuniaoTab() {
     setFormTipoGatilho("dias_antes");
     setFormAudioUrl(null);
     setFormAudioPosicao("antes");
+    setFormLinkCalendarioAtivo(false);
+    setFormLinkCalendarioTexto("📅 Adicionar ao meu calendário");
     setEditingAviso(null);
   };
 
@@ -256,6 +262,8 @@ export function AvisosReuniaoTab() {
     setFormInstanciaId(aviso.instancia_id || null);
     setFormAudioUrl(aviso.audio_url || null);
     setFormAudioPosicao((aviso.audio_posicao as "antes" | "depois") || "antes");
+    setFormLinkCalendarioAtivo(aviso.link_calendario_ativo || false);
+    setFormLinkCalendarioTexto(aviso.link_calendario_texto || "📅 Adicionar ao meu calendário");
     // Map envio_imediato to tipo_gatilho for backwards compatibility
     if (aviso.envio_imediato) {
       setFormTipoGatilho("imediato");
@@ -326,6 +334,8 @@ export function AvisosReuniaoTab() {
             tipo_gatilho: tipoGatilhoToSave,
             audio_url: formAudioUrl,
             audio_posicao: formAudioPosicao,
+            link_calendario_ativo: formLinkCalendarioAtivo,
+            link_calendario_texto: formLinkCalendarioTexto,
           } as any)
           .eq('id', editingAviso.id);
 
@@ -350,6 +360,8 @@ export function AvisosReuniaoTab() {
             tipo_gatilho: tipoGatilhoToSave,
             audio_url: formAudioUrl,
             audio_posicao: formAudioPosicao,
+            link_calendario_ativo: formLinkCalendarioAtivo,
+            link_calendario_texto: formLinkCalendarioTexto,
           } as any);
 
         if (error) throw error;
@@ -946,7 +958,6 @@ export function AvisosReuniaoTab() {
               </p>
             </div>
 
-
             {/* Período e horário - only show for dias_antes type */}
             <div className="grid grid-cols-2 gap-4">
               {formTipoGatilho === 'dias_antes' && (
@@ -1131,7 +1142,33 @@ export function AvisosReuniaoTab() {
               </p>
             </div>
 
-            {/* Preview colapsável */}
+            {/* Link para adicionar ao calendário */}
+            <div className="space-y-3 border rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarPlus className="h-4 w-4" />
+                  <Label className="text-sm font-medium">Link para adicionar ao calendário</Label>
+                </div>
+                <Switch
+                  checked={formLinkCalendarioAtivo}
+                  onCheckedChange={setFormLinkCalendarioAtivo}
+                />
+              </div>
+              {formLinkCalendarioAtivo && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Texto do botão/link:</Label>
+                  <Input
+                    value={formLinkCalendarioTexto}
+                    onChange={(e) => setFormLinkCalendarioTexto(e.target.value)}
+                    placeholder="📅 Adicionar ao meu calendário"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use a variável <code className="bg-muted px-1 rounded">{'{link_calendario}'}</code> no template para posicionar o link, ou ele será adicionado automaticamente ao final da mensagem.
+                  </p>
+                </div>
+              )}
+            </div>
+
             <Collapsible>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="w-full justify-between p-2 h-auto">
