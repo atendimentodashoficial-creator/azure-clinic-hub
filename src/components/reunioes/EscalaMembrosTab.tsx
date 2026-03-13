@@ -61,7 +61,7 @@ export function EscalaMembrosTab({ membroIdFixo }: EscalaMembrosTabProps) {
 
   const isLocked = !!membroIdFixo;
   const [membroSelecionado, setMembroSelecionado] = useState<string>(membroIdFixo || "todos");
-  const [membrosExpandidos, setMembrosExpandidos] = useState<Set<string>>(new Set());
+  const [membrosExpandidos, setMembrosExpandidos] = useState<Set<string>>(membroIdFixo ? new Set([membroIdFixo]) : new Set());
   const [diasExpandidos, setDiasExpandidos] = useState<Set<string>>(new Set());
   const [horariosRascunho, setHorariosRascunho] = useState<Record<string, Array<{ tempId: string; inicio: string; fim: string }>>>({});
 
