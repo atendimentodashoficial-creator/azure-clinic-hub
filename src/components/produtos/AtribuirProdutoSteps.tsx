@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { formatInTimeZone } from "date-fns-tz";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,9 +118,9 @@ function computeSlots(
       });
       if (absConflict) continue;
       const meetConflict = memberMeetings.some(m => {
-        const mDate = m.data_reuniao.substring(0, 10);
+        const mDate = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "yyyy-MM-dd");
         if (mDate !== date) return false;
-        const mTime = m.data_reuniao.substring(11, 16);
+        const mTime = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "HH:mm");
         const mS = timeToMinutes(mTime);
         const mE = mS + (m.duracao_minutos || 60);
         return rangesOverlap(slotRange, { startMin: mS, endMin: mE });
@@ -159,20 +160,22 @@ export function SelectMemberAndTimeStep({
   const duration = parseInt(reuniaoDuracao) || 60;
   const stepInterval = use15min ? 15 : 30;
 
+  const fetchMeetings = async () => {
+    const { data } = await supabase
+      .from("reunioes")
+      .select("data_reuniao, duracao_minutos, user_id")
+      .in("status", ["agendado", "confirmado"]);
+    const grouped: Record<string, Array<{ data_reuniao: string; duracao_minutos: number }>> = {};
+    for (const r of (data as any[]) || []) {
+      if (!grouped[r.user_id]) grouped[r.user_id] = [];
+      grouped[r.user_id].push({ data_reuniao: r.data_reuniao, duracao_minutos: r.duracao_minutos });
+    }
+    setMeetingsByUser(grouped);
+  };
+
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("reunioes")
-        .select("data_reuniao, duracao_minutos, user_id")
-        .in("status", ["agendado", "confirmado"]);
-      const grouped: Record<string, Array<{ data_reuniao: string; duracao_minutos: number }>> = {};
-      for (const r of (data as any[]) || []) {
-        if (!grouped[r.user_id]) grouped[r.user_id] = [];
-        grouped[r.user_id].push({ data_reuniao: r.data_reuniao, duracao_minutos: r.duracao_minutos });
-      }
-      setMeetingsByUser(grouped);
-    })();
-  }, []);
+    fetchMeetings();
+  }, [selectedDate]);
 
   // Build member list: team members only (admin excluded)
   const allMembers: (MeetingMember & { escalas: EscalaMembro[]; ausencias: AusenciaMembro[]; authUserId?: string | null })[] = useMemo(() => {
@@ -221,9 +224,9 @@ export function SelectMemberAndTimeStep({
     const slotStart = timeToMinutes(time);
     const slotEnd = slotStart + duration;
     return meetings.some(m => {
-      const mDate = m.data_reuniao.substring(0, 10);
+      const mDate = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "yyyy-MM-dd");
       if (mDate !== selectedDate) return false;
-      const mTime = m.data_reuniao.substring(11, 16);
+      const mTime = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "HH:mm");
       const mS = timeToMinutes(mTime);
       const mE = mS + (m.duracao_minutos || 60);
       return rangesOverlap({ startMin: slotStart, endMin: slotEnd }, { startMin: mS, endMin: mE });
