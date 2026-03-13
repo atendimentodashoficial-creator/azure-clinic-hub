@@ -445,6 +445,7 @@ export default function Tarefas() {
                         tarefa={tarefa}
                         colunas={colunas}
                         clientes={clientes}
+                        membrosNomes={membrosNomes}
                         onDelete={handleExcluir}
                       />
                     ))}
