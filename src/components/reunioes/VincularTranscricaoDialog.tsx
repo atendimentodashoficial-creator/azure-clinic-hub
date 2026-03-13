@@ -142,10 +142,10 @@ export function VincularTranscricaoDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link2 className="w-5 h-5 shrink-0" />
-            Vincular Transcrição do Fireflies
+            Vincular Transcrição
           </DialogTitle>
           <DialogDescription className="break-words">
-            Selecione uma reunião transcrita pelo Fireflies para vincular a{" "}
+            Selecione uma transcrição do Google Meet para vincular a{" "}
             <span className="font-medium" title={reuniaoTitulo}>
               "{reuniaoTitulo.length > 40 ? `${reuniaoTitulo.substring(0, 40)}...` : reuniaoTitulo}"
             </span>
