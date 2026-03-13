@@ -203,7 +203,7 @@ export function SelectMemberAndTimeStep({
         // Admin has no escala restrictions — no slots shown, free pick
         map[m.id] = [];
       } else if (m.escalas.length > 0) {
-        map[m.id] = computeSlots(m.escalas, m.ausencias, existingMeetings, selectedDate, duration);
+        map[m.id] = computeSlots(m.escalas, m.ausencias, existingMeetings, selectedDate, duration, stepInterval);
       } else {
         map[m.id] = [];
       }
