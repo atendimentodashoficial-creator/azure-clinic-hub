@@ -84,11 +84,21 @@ serve(async (req) => {
       });
     }
 
-    const userId = userData.user.id;
+    // Resolve owner: if the caller is a funcionario, use the admin's user_id
+    let userId = userData.user.id;
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    
+    const { data: membroData } = await admin
+      .from("tarefas_membros")
+      .select("user_id")
+      .eq("auth_user_id", userData.user.id)
+      .maybeSingle();
+    if (membroData?.user_id) {
+      userId = membroData.user_id;
+    }
+    
     const wantedLast8 = last8(telefoneRaw);
     const telefone = normalizeForStore(telefoneRaw);
-
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     const ensureClienteRecord = async (leadsList: any[]): Promise<string | null> => {
       // Busca cliente ativo (status=cliente, não deletado) - sem origem específica (cliente manual)
