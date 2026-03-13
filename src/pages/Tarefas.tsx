@@ -513,7 +513,7 @@ export default function Tarefas() {
     // Block move to last column (Concluído) if task type requires approval and it's not approved
     const lastColuna = colunas[colunas.length - 1];
     if (targetColunaId === lastColuna?.id) {
-      const tipoTarefa = tarefa.tipo_tarefa_id ? tipos.find(t => t.id === tarefa.tipo_tarefa_id) : null;
+      const tipoTarefa = tarefa.tipo_tarefa_id ? tiposTarefas.find(t => t.id === tarefa.tipo_tarefa_id) : null;
       if (tipoTarefa?.exige_aprovacao && tarefa.approval_status !== "concluido") {
         toast.error("Esta tarefa exige aprovação do cliente antes de ser concluída.");
         return;
