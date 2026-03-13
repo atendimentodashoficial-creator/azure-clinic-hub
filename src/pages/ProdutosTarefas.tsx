@@ -492,6 +492,20 @@ function ProdutoDialog({
             <Switch checked={requerReuniao} onCheckedChange={setRequerReuniao} />
           </div>
 
+          {requerReuniao && (
+            <div className="space-y-2">
+              <Label>Duração da Reunião (minutos)</Label>
+              <Input
+                type="number"
+                min={15}
+                step={15}
+                value={duracaoReuniao}
+                onChange={e => setDuracaoReuniao(Number(e.target.value) || 60)}
+                placeholder="60"
+              />
+            </div>
+          )}
+
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold">Tarefas do Produto</Label>

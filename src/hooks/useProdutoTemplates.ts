@@ -18,6 +18,7 @@ export interface ProdutoTemplate {
   descricao: string | null;
   ativo: boolean;
   requer_reuniao: boolean;
+  duracao_reuniao: number;
   created_at: string;
   updated_at: string;
 }
