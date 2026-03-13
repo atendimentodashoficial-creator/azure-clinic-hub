@@ -154,7 +154,7 @@ export function SelectMemberAndTimeStep({
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [existingMeetings, setExistingMeetings] = useState<Array<{ data_reuniao: string; duracao_minutos: number }>>([]);
+  const [meetingsByUser, setMeetingsByUser] = useState<Record<string, Array<{ data_reuniao: string; duracao_minutos: number }>>>({});
 
   const duration = parseInt(reuniaoDuracao) || 60;
   const stepInterval = use15min ? 15 : 30;
@@ -163,9 +163,14 @@ export function SelectMemberAndTimeStep({
     (async () => {
       const { data } = await supabase
         .from("reunioes")
-        .select("data_reuniao, duracao_minutos")
+        .select("data_reuniao, duracao_minutos, user_id")
         .in("status", ["agendado", "confirmado"]);
-      setExistingMeetings((data as any[]) || []);
+      const grouped: Record<string, Array<{ data_reuniao: string; duracao_minutos: number }>> = {};
+      for (const r of (data as any[]) || []) {
+        if (!grouped[r.user_id]) grouped[r.user_id] = [];
+        grouped[r.user_id].push({ data_reuniao: r.data_reuniao, duracao_minutos: r.duracao_minutos });
+      }
+      setMeetingsByUser(grouped);
     })();
   }, []);
 
