@@ -48,9 +48,13 @@ export function SelectClientStep({
         </Button>
       </div>
       <ScrollArea className="flex-1 max-h-[50vh]">
-        {filtrados.length === 0 ? (
+        {!busca.trim() ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-muted-foreground">Digite o nome do cliente para buscar</p>
+          </div>
+        ) : filtrados.length === 0 ? (
           <div className="text-center py-8 space-y-2">
-            <p className="text-sm text-muted-foreground">{busca ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}</p>
+            <p className="text-sm text-muted-foreground">Nenhum cliente encontrado</p>
             <Button variant="link" size="sm" onClick={onNovoCliente}>Cadastrar novo cliente</Button>
           </div>
         ) : (
