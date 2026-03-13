@@ -192,14 +192,13 @@ export const useDeleteAgendamento = () => {
       if (fetchError) throw fetchError;
       if (!agendamento) throw new Error("Agendamento não encontrado");
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
+      const ownerId = await resolveOwnerId();
 
       // Logar a exclusão antes de deletar
       const { error: logError } = await supabase
         .from("agendamentos_excluidos_log")
         .insert({
-          user_id: user.id,
+          user_id: ownerId,
           cliente_id: agendamento.cliente_id,
           cliente_nome: agendamento.leads?.nome || "Desconhecido",
           cliente_telefone: agendamento.leads?.telefone || "",
