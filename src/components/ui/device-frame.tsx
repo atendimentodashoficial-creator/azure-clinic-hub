@@ -1,8 +1,17 @@
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface DeviceFrameProps {
   children: React.ReactNode;
+  className?: string;
+}
+
+interface DeviceFrameWithFallbackProps {
+  href: string;
+  title?: string;
   className?: string;
 }
 
@@ -14,6 +23,75 @@ export function DeviceFrame({ children, className }: DeviceFrameProps) {
   }
 
   return <MonitorFrame className={className}>{children}</MonitorFrame>;
+}
+
+export function DeviceFrameWithFallback({ href, title, className }: DeviceFrameWithFallbackProps) {
+  const isMobile = useIsMobile();
+  const [iframeBlocked, setIframeBlocked] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Detect blocked iframes via a timeout check
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const iframe = iframeRef.current;
+        if (iframe) {
+          // Try accessing contentWindow - blocked iframes will throw or be null
+          const doc = iframe.contentDocument || iframe.contentWindow?.document;
+          // If we can access it and it's empty/about:blank, it's likely blocked
+          if (!doc || doc.URL === "about:blank") {
+            setIframeBlocked(true);
+          }
+        }
+      } catch {
+        // Cross-origin access denied = iframe loaded successfully (not blocked)
+        setIframeBlocked(false);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [href]);
+
+  const screenshotWidth = isMobile ? 390 : 1280;
+  const screenshotUrl = `https://image.thum.io/get/width/${screenshotWidth}/crop/900/noanimate/${href}`;
+
+  const content = iframeBlocked ? (
+    <div className="w-full h-full flex flex-col items-center justify-start overflow-y-auto bg-muted/30">
+      <img
+        src={screenshotUrl}
+        alt={title || href}
+        className="w-full object-cover object-top"
+        loading="lazy"
+      />
+      <div className="sticky bottom-0 w-full p-3 bg-background/90 backdrop-blur border-t border-border">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full gap-2"
+          onClick={() => window.open(href, "_blank")}
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          Abrir site em nova aba
+        </Button>
+      </div>
+    </div>
+  ) : (
+    <>
+      <iframe
+        ref={iframeRef}
+        src={href}
+        className="block w-full h-full min-w-0 max-w-full border-0 touch-pan-y"
+        sandbox="allow-scripts allow-same-origin allow-popups"
+        title={title || href}
+      />
+    </>
+  );
+
+  if (isMobile) {
+    return <IPhoneFrame className={className}>{content}</IPhoneFrame>;
+  }
+
+  return <MonitorFrame className={className}>{content}</MonitorFrame>;
 }
 
 function MonitorFrame({ children, className }: DeviceFrameProps) {
