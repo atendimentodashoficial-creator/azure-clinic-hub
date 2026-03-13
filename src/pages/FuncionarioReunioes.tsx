@@ -142,7 +142,21 @@ export default function FuncionarioReunioes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tarefas_membros" as any)
-        .select("id, nome, auth_user_id")
+        .select("id, nome, auth_user_id, email")
+        .order("nome");
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!ownerId,
+  });
+
+  // Build a map: auth_user_id → profissional_ids for filtering "meus"
+  const { data: profissionais = [] } = useQuery({
+    queryKey: ["profissionais-map", ownerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profissionais" as any)
+        .select("id, email")
         .order("nome");
       if (error) throw error;
       return data as any[];
