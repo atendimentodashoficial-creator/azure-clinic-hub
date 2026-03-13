@@ -17,6 +17,7 @@ import { TarefaTimer } from "./TarefaTimer";
 import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History, Plus, Trash2, ExternalLink, Globe, Instagram, Phone, Mail, FileText, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { formatPhoneDisplay } from "@/utils/phoneFormat";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -609,7 +610,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                 <Label className="text-xs text-muted-foreground">Telefone</Label>
                 <p className="text-sm mt-0.5 flex items-center gap-1.5">
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                  {clienteCompleto.telefone}
+                  {formatPhoneDisplay(clienteCompleto.telefone)}
                 </p>
               </div>
             )}
