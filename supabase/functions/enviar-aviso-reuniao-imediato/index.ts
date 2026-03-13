@@ -471,7 +471,7 @@ serve(async (req) => {
       .eq("user_id", resolvedUserId)
       .eq("is_active", true);
 
-    for (const aviso of avisos) {
+    for (const aviso of filteredAvisos) {
       try {
         // Resolve instance: use aviso's fixed instancia_id if set, otherwise use the one from chat history
         let avisoBaseUrl = baseUrl;
