@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { DeviceFrame } from "@/components/ui/device-frame";
+import { DeviceFrame, DeviceFrameWithFallback } from "@/components/ui/device-frame";
 import { Check, X, ChevronLeft, ChevronRight, Send, ExternalLink, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -523,14 +523,7 @@ function LinkOnlyApproval({
                     {statusLabel(linkApprovalStatus)}
                   </Badge>
                 </div>
-                <DeviceFrame>
-                  <iframe
-                    src={href}
-                    className="block w-full h-full min-w-0 max-w-full border-0 touch-pan-y"
-                    sandbox="allow-scripts allow-same-origin allow-popups"
-                    title={link.titulo || `Link ${i + 1}`}
-                  />
-                </DeviceFrame>
+                <DeviceFrameWithFallback href={href} title={link.titulo || link.url} />
               </div>
             );
           })}
