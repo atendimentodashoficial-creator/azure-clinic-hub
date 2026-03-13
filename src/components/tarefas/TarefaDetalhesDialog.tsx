@@ -88,6 +88,25 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     }
   };
 
+  const handleSendForApproval = async () => {
+    if (!tarefa) return;
+    try {
+      const token = crypto.randomUUID();
+      const { error } = await supabase
+        .from("tarefas")
+        .update({ approval_token: token, approval_status: "aguardando" })
+        .eq("id", tarefa.id);
+      if (error) throw error;
+      const link = `${window.location.origin}/aprovacao/${token}`;
+      await navigator.clipboard.writeText(link);
+      toast.success("Link de aprovação copiado para a área de transferência!");
+      // Force refresh
+      window.location.reload();
+    } catch {
+      toast.error("Erro ao gerar link de aprovação");
+    }
+  };
+
   if (!tarefa) return null;
 
   // Determine which file types this task type requires (excluding mockup)

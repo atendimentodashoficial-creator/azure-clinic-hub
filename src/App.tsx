@@ -48,6 +48,7 @@ import FuncionarioReunioes from "./pages/FuncionarioReunioes";
 import AdminFinanceiro from "./pages/AdminFinanceiro";
 import FuncionarioFinanceiro from "./pages/FuncionarioFinanceiro";
 import TiposTarefas from "./pages/TiposTarefas";
+import AprovacaoMockup from "./pages/AprovacaoMockup";
 
 const queryClient = new QueryClient();
 
