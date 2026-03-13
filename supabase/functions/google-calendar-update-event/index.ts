@@ -119,6 +119,16 @@ serve(async (req) => {
     // Increment numero_reagendamentos
     const newNumeroReagendamentos = (reuniao.numero_reagendamentos || 0) + 1;
 
+    // Build update payload - include profissional_id if provided
+    const updatePayload: Record<string, unknown> = {
+      data_reuniao: startDate.toISOString(),
+      status: "agendado",
+      numero_reagendamentos: newNumeroReagendamentos,
+    };
+    if (profissionalId !== undefined) {
+      updatePayload.profissional_id = profissionalId;
+    }
+
     // Helper function to trigger rescheduling notifications in background (non-blocking)
     const triggerReschedulingNotificationsInBackground = () => {
       const notificationPromise = (async () => {
@@ -159,11 +169,7 @@ serve(async (req) => {
     if (!reuniao.google_event_id) {
       const { error: updateError } = await supabase
         .from("reunioes")
-        .update({ 
-          data_reuniao: startDate.toISOString(),
-          status: "agendado",
-          numero_reagendamentos: newNumeroReagendamentos
-        })
+        .update(updatePayload)
         .eq("id", reuniaoId);
 
       if (updateError) throw updateError;
@@ -176,20 +182,16 @@ serve(async (req) => {
       );
     }
 
-    // Get Google Calendar config using the MEETING OWNER's config
+    // Get Google Calendar config using the ADMIN's user_id (not the employee's)
     const { data: config, error: configError } = await supabase
       .from("google_calendar_config")
       .select("*")
-      .eq("user_id", meetingOwnerId)
+      .eq("user_id", adminUserId)
       .single();
 
     if (configError || !config || !config.access_token) {
       console.error("Config error:", configError);
-      await supabase.from("reunioes").update({ 
-        data_reuniao: startDate.toISOString(),
-        status: "agendado",
-        numero_reagendamentos: newNumeroReagendamentos
-      }).eq("id", reuniaoId);
+      await supabase.from("reunioes").update(updatePayload).eq("id", reuniaoId);
       
       triggerReschedulingNotificationsInBackground();
       
@@ -220,11 +222,7 @@ serve(async (req) => {
 
       if (!refreshResponse.ok) {
         console.error("Token refresh error:", refreshData);
-        await supabase.from("reunioes").update({ 
-          data_reuniao: startDate.toISOString(),
-          status: "agendado",
-          numero_reagendamentos: newNumeroReagendamentos
-        }).eq("id", reuniaoId);
+        await supabase.from("reunioes").update(updatePayload).eq("id", reuniaoId);
         
         triggerReschedulingNotificationsInBackground();
         
@@ -244,14 +242,14 @@ serve(async (req) => {
           token_expires_at: expiresAt,
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", meetingOwnerId);
+        .eq("user_id", adminUserId);
     }
 
     // Update event in Google Calendar
     const calendarId = config.calendar_id || "primary";
     console.log(`Updating Google Calendar event: ${reuniao.google_event_id}`);
     
-    const updateBody = {
+    const calendarUpdateBody = {
       start: {
         dateTime: startDate.toISOString(),
         timeZone: "America/Sao_Paulo",
@@ -270,18 +268,14 @@ serve(async (req) => {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updateBody),
+        body: JSON.stringify(calendarUpdateBody),
       }
     );
 
     if (!updateResponse.ok) {
       const errorData = await updateResponse.json().catch(() => ({}));
       console.error("Google Calendar update error:", errorData);
-      await supabase.from("reunioes").update({ 
-        data_reuniao: startDate.toISOString(),
-        status: "agendado",
-        numero_reagendamentos: newNumeroReagendamentos
-      }).eq("id", reuniaoId);
+      await supabase.from("reunioes").update(updatePayload).eq("id", reuniaoId);
       
       triggerReschedulingNotificationsInBackground();
       
@@ -300,11 +294,7 @@ serve(async (req) => {
     // Update local record
     const { error: updateError } = await supabase
       .from("reunioes")
-      .update({ 
-        data_reuniao: startDate.toISOString(),
-        status: "agendado",
-        numero_reagendamentos: newNumeroReagendamentos
-      })
+      .update(updatePayload)
       .eq("id", reuniaoId);
 
     if (updateError) {
