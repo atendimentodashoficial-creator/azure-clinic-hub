@@ -343,6 +343,17 @@ export default function Reunioes() {
         </TabsList>
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
+          {/* Period filter chips */}
+          <ReunioesPeriodFilter
+            value={periodFilter.filterValue}
+            onChange={periodFilter.setFilterValue}
+            dateStart={periodFilter.customStart}
+            dateEnd={periodFilter.customEnd}
+            onDateStartChange={periodFilter.setCustomStart}
+            onDateEndChange={periodFilter.setCustomEnd}
+            count={reunioes?.length}
+          />
+
           {/* Header controls for reunioes tab */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
