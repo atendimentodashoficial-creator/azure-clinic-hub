@@ -1,48 +1,26 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { format, getDay } from "date-fns";
+import { User, Shield, Video } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useProfissionais } from "@/hooks/useProfissionais";
-import { useEscalas, useAusencias } from "@/hooks/useEscalas";
-import { useAgendamentos } from "@/hooks/useAgendamentos";
-import { useProcedimentos } from "@/hooks/useProcedimentos";
+import { useTarefasMembros } from "@/hooks/useTarefasMembros";
+import { useEscalasMembros, useAusenciasMembros, EscalaMembro, AusenciaMembro } from "@/hooks/useEscalasMembros";
+import { useAuth } from "@/contexts/AuthContext";
 import { formatInTimeZone } from "date-fns-tz";
-import { buildCandidateStartTimes, rangesOverlap, timeToMinutes, type MinuteRange, type TimeRange } from "@/utils/timeSlots";
+import { timeToMinutes, minutesToTime, rangesOverlap } from "@/utils/timeSlots";
 
 interface Reuniao {
   id: string;
@@ -58,167 +36,166 @@ interface ReagendarReuniaoDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const reagendamentoSchema = z.object({
-  data_reuniao: z.date({
-    required_error: "Data é obrigatória",
-  }),
-  hora: z.string().min(1, "Selecione um horário"),
-  profissional_id: z.string().min(1, "Selecione um profissional"),
-});
+function computeSlots(
+  escalas: EscalaMembro[],
+  ausencias: AusenciaMembro[],
+  memberMeetings: Array<{ data_reuniao: string; duracao_minutos: number }>,
+  date: string,
+  durationMin: number,
+  stepMin: number = 30,
+  excludeReuniaoId?: string,
+): string[] {
+  const d = new Date(date + "T00:00:00");
+  const dow = getDay(d);
+  const dayEscalas = escalas.filter(e => e.dia_semana === dow);
+  if (dayEscalas.length === 0) return [];
 
-type ReagendamentoFormData = z.infer<typeof reagendamentoSchema>;
+  const partialAbsences = ausencias.filter(a =>
+    date >= a.data_inicio && date <= a.data_fim && a.hora_inicio && a.hora_fim
+  );
+  const fullAbsent = ausencias.some(a =>
+    date >= a.data_inicio && date <= a.data_fim && !a.hora_inicio
+  );
+  if (fullAbsent) return [];
 
-const gerarHorariosIntervalo = (
-  horaInicio: string,
-  horaFim: string,
-  intervaloMinutos: number = 30
-) => {
-  const horarios: string[] = [];
-  const [hInicio, mInicio] = horaInicio.split(':').map(Number);
-  const [hFim, mFim] = horaFim.split(':').map(Number);
-  
-  let minutoAtual = hInicio * 60 + mInicio;
-  const minutoFim = hFim * 60 + mFim;
+  const slots: string[] = [];
 
-  while (minutoAtual < minutoFim) {
-    const h = Math.floor(minutoAtual / 60);
-    const m = minutoAtual % 60;
-    horarios.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
-    minutoAtual += intervaloMinutos;
+  for (const escala of dayEscalas) {
+    const startMin = timeToMinutes(escala.hora_inicio);
+    const endMin = timeToMinutes(escala.hora_fim);
+    for (let t = startMin; t + durationMin <= endMin; t += stepMin) {
+      const slotRange = { startMin: t, endMin: t + durationMin };
+      const absConflict = partialAbsences.some(a => {
+        const aS = timeToMinutes(a.hora_inicio!);
+        const aE = timeToMinutes(a.hora_fim!);
+        return rangesOverlap(slotRange, { startMin: aS, endMin: aE });
+      });
+      if (absConflict) continue;
+      const meetConflict = memberMeetings.some(m => {
+        const mDate = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "yyyy-MM-dd");
+        if (mDate !== date) return false;
+        const mTime = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "HH:mm");
+        const mS = timeToMinutes(mTime);
+        const mE = mS + ((m as any).duracao_minutos || 60);
+        return rangesOverlap(slotRange, { startMin: mS, endMin: mE });
+      });
+      if (meetConflict) continue;
+      slots.push(minutesToTime(t));
+    }
   }
-
-  return horarios;
-};
+  return slots;
+}
 
 export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: ReagendarReuniaoDialogProps) {
   const queryClient = useQueryClient();
-  const { data: profissionais } = useProfissionais();
-  const { data: todosAgendamentos } = useAgendamentos();
-  const { data: procedimentos } = useProcedimentos();
-  const { data: escalas } = useEscalas();
-  const { data: ausencias } = useAusencias();
-  const [todasReunioes, setTodasReunioes] = useState<any[]>([]);
-  // Opção para mostrar horários de 15 em 15 min
-  const [mostrarHorarios15min, setMostrarHorarios15min] = useState(false);
+  const { user } = useAuth();
+  const { membros } = useTarefasMembros();
+  const { data: allEscalas = [] } = useEscalasMembros();
+  const { data: allAusencias = [] } = useAusenciasMembros();
 
-  // Buscar reuniões para verificar ocupação
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("");
+  const [selectedTime, setSelectedTime] = useState<string>("");
+  const [use15min, setUse15min] = useState(false);
+  const [meetingsByUser, setMeetingsByUser] = useState<Record<string, Array<{ id: string; data_reuniao: string; duracao_minutos: number }>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const duration = reuniao?.duracao_minutos || 60;
+  const stepInterval = use15min ? 15 : 30;
+
+  // Fetch meetings
   useEffect(() => {
-    const fetchReunioes = async () => {
+    if (!open) return;
+    const fetchMeetings = async () => {
       const { data } = await supabase
-        .from('reunioes')
-        .select('id, data_reuniao, profissional_id, status, duracao_minutos')
-        .neq('status', 'cancelada');
-      setTodasReunioes(data || []);
+        .from("reunioes")
+        .select("id, data_reuniao, duracao_minutos, user_id")
+        .in("status", ["agendado", "confirmado"]);
+      const grouped: Record<string, Array<{ id: string; data_reuniao: string; duracao_minutos: number }>> = {};
+      for (const r of (data as any[]) || []) {
+        if (!grouped[r.user_id]) grouped[r.user_id] = [];
+        grouped[r.user_id].push({ id: r.id, data_reuniao: r.data_reuniao, duracao_minutos: r.duracao_minutos });
+      }
+      setMeetingsByUser(grouped);
     };
-    if (open) fetchReunioes();
-  }, [open]);
+    fetchMeetings();
+  }, [open, selectedDate]);
 
-  const form = useForm<ReagendamentoFormData>({
-    resolver: zodResolver(reagendamentoSchema),
-    defaultValues: {
-      hora: "",
-      profissional_id: "",
-    },
-  });
-
-  // Reset form quando reunião mudar - pré-selecionar o profissional atual
+  // Reset form when dialog opens
   useEffect(() => {
     if (reuniao && open) {
-      form.reset({
-        data_reuniao: undefined,
-        hora: "",
-        profissional_id: reuniao.profissional_id || "",
-      });
+      setSelectedDate("");
+      setSelectedTime("");
+      // Pre-select the member that matches the current profissional_id
+      const matchingMember = membros.find(m => m.id === reuniao.profissional_id);
+      setSelectedMemberId(matchingMember?.id || "");
     }
-  }, [reuniao, open, form]);
+  }, [reuniao, open, membros]);
 
-  const dataWatch = form.watch("data_reuniao");
-  const profissionalWatch = form.watch("profissional_id");
-
-  // Duração da reunião (padrão 30 min se não definida)
-  const duracaoReuniao = reuniao?.duracao_minutos || 30;
-  
-  // Intervalo efetivo para geração de horários
-  const intervaloMinutos = mostrarHorarios15min ? 15 : duracaoReuniao;
-
-  // Calcular horários disponíveis para o profissional selecionado
-  const horariosDisponiveis = useMemo(() => {
-    if (!dataWatch || !profissionalWatch) return [];
-    
-    const diaSemana = dataWatch.getDay();
-    const dataStr = format(dataWatch, 'yyyy-MM-dd');
-    
-    // Verificar escalas do profissional
-    const escalasProfissional = escalas?.filter(
-      e => e.profissional_id === profissionalWatch && e.dia_semana === diaSemana && e.ativo
-    ) || [];
-    
-    // Verificar ausências
-    const ausenciasProfissional = ausencias?.filter(a => a.profissional_id === profissionalWatch) || [];
-    const estaAusente = ausenciasProfissional.some(aus => {
-      return dataStr >= aus.data_inicio && dataStr <= aus.data_fim;
-    });
-    
-    if (estaAusente || escalasProfissional.length === 0) return [];
-    
-    const windows: TimeRange[] = escalasProfissional.map((e) => ({
-      start: e.hora_inicio,
-      end: e.hora_fim,
+  // Build member list
+  const allMembers = useMemo(() => {
+    return membros.map(m => ({
+      id: m.id,
+      nome: m.nome,
+      cargo: m.cargo,
+      isAdmin: false,
+      escalas: allEscalas.filter(e => e.membro_id === m.id),
+      ausencias: allAusencias.filter(a => a.membro_id === m.id),
+      authUserId: (m as any).auth_user_id as string | null,
     }));
+  }, [membros, allEscalas, allAusencias]);
 
-    // slots candidatos respeitam o fim da escala e a duração da reunião
-    const candidatos = buildCandidateStartTimes(windows, intervaloMinutos, duracaoReuniao);
+  // Compute slots per member
+  const memberSlots = useMemo(() => {
+    if (!selectedDate) return {};
+    const map: Record<string, string[]> = {};
+    for (const m of allMembers) {
+      const memberUserId = m.authUserId || user?.id;
+      // Exclude the current meeting from conflict calculation
+      const memberMeetings = (memberUserId ? (meetingsByUser[memberUserId] || []) : [])
+        .filter(mt => mt.id !== reuniao?.id);
 
-    const busy: MinuteRange[] = [];
+      if (m.escalas.length > 0) {
+        map[m.id] = computeSlots(m.escalas, m.ausencias, memberMeetings, selectedDate, duration, stepInterval);
+      } else {
+        map[m.id] = [];
+      }
+    }
+    return map;
+  }, [allMembers, selectedDate, meetingsByUser, duration, stepInterval, user?.id, reuniao?.id]);
 
-    // Agendamentos existentes
-    todosAgendamentos
-      ?.filter((ag) => {
-        if (ag.profissional_id !== profissionalWatch) return false;
-        if (ag.status === "cancelado") return false;
-        const agData = formatInTimeZone(ag.data_agendamento as any, "America/Sao_Paulo", "yyyy-MM-dd");
-        return agData === dataStr;
-      })
-      .forEach((ag) => {
-        const startStr = formatInTimeZone(ag.data_agendamento as any, "America/Sao_Paulo", "HH:mm");
-        const startMin = timeToMinutes(startStr);
-        const procDuracao =
-          procedimentos?.find((p) => p.id === ag.procedimento_id)?.tempo_atendimento_minutos ||
-          procedimentos?.find((p) => p.id === ag.procedimento_id)?.duracao_minutos ||
-          60;
-        busy.push({ startMin, endMin: startMin + procDuracao });
-      });
+  // Check time conflict for members without escala (manual input)
+  const hasTimeConflict = (memberId: string, time: string): boolean => {
+    const member = allMembers.find(m => m.id === memberId);
+    if (!member || !time || !selectedDate) return false;
+    const memberUserId = member.authUserId || user?.id;
+    const meetings = (memberUserId ? (meetingsByUser[memberUserId] || []) : [])
+      .filter(mt => mt.id !== reuniao?.id);
+    const slotStart = timeToMinutes(time);
+    const slotEnd = slotStart + duration;
+    return meetings.some(m => {
+      const mDate = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "yyyy-MM-dd");
+      if (mDate !== selectedDate) return false;
+      const mTime = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "HH:mm");
+      const mS = timeToMinutes(mTime);
+      const mE = mS + (m.duracao_minutos || 60);
+      return rangesOverlap({ startMin: slotStart, endMin: slotEnd }, { startMin: mS, endMin: mE });
+    });
+  };
 
-    // Reuniões existentes (exceto a própria)
-    todasReunioes
-      ?.filter((r) => {
-        if (r.profissional_id !== profissionalWatch) return false;
-        if (reuniao && r.id === reuniao.id) return false;
-        const rData = formatInTimeZone(r.data_reuniao as any, "America/Sao_Paulo", "yyyy-MM-dd");
-        return rData === dataStr;
-      })
-      .forEach((r) => {
-        const startStr = formatInTimeZone(r.data_reuniao as any, "America/Sao_Paulo", "HH:mm");
-        const startMin = timeToMinutes(startStr);
-        const dur = r.duracao_minutos || 30;
-        busy.push({ startMin, endMin: startMin + dur });
-      });
+  const handleSelectSlot = (memberId: string, time: string) => {
+    setSelectedMemberId(memberId);
+    setSelectedTime(time);
+  };
 
-    return candidatos
-      .filter((hhmm) => {
-        const startMin = timeToMinutes(hhmm);
-        const candidateRange: MinuteRange = { startMin, endMin: startMin + duracaoReuniao };
-        return !busy.some((b) => rangesOverlap(candidateRange, b));
-      })
-      .sort();
-  }, [dataWatch, profissionalWatch, escalas, ausencias, todosAgendamentos, procedimentos, todasReunioes, reuniao, intervaloMinutos]);
+  const handleSubmit = async () => {
+    if (!reuniao || !selectedDate || !selectedTime || !selectedMemberId) return;
+    if (hasTimeConflict(selectedMemberId, selectedTime)) return;
 
-  const reagendarMutation = useMutation({
-    mutationFn: async (data: ReagendamentoFormData) => {
-      if (!reuniao) throw new Error("Dados incompletos");
-
-      const [hours, minutes] = data.hora.split(":").map(Number);
-      const newDate = new Date(data.data_reuniao);
+    setIsSubmitting(true);
+    try {
+      const [hours, minutes] = selectedTime.split(":").map(Number);
+      const newDate = new Date(selectedDate + "T00:00:00");
       newDate.setHours(hours, minutes, 0, 0);
 
       const { data: session } = await supabase.auth.getSession();
@@ -230,42 +207,36 @@ export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: Reagenda
         headers: {
           Authorization: `Bearer ${session.session.access_token}`,
         },
-        body: { 
+        body: {
           reuniaoId: reuniao.id,
           novaDataHora: newDate.toISOString(),
-          profissionalId: data.profissional_id || null,
+          profissionalId: selectedMemberId || null,
         },
       });
 
       if (error) throw error;
       if (result?.error) throw new Error(result.error);
-      
-      return result;
-    },
-    onSuccess: (data) => {
+
       queryClient.invalidateQueries({ queryKey: ["reunioes"] });
-      if (data?.warning) {
-        toast.warning(data.warning);
+      if (result?.warning) {
+        toast.warning(result.warning);
       } else {
         toast.success("Reunião reagendada com sucesso!");
       }
       onOpenChange(false);
-    },
-    onError: (error) => {
+    } catch (error) {
       console.error("Erro ao reagendar:", error);
       toast.error(error instanceof Error ? error.message : "Erro ao reagendar reunião");
-    },
-  });
-
-  const onSubmit = (data: ReagendamentoFormData) => {
-    reagendarMutation.mutate(data);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!reuniao) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Reagendar Reunião</DialogTitle>
           <p className="text-sm text-muted-foreground">
@@ -273,152 +244,117 @@ export function ReagendarReuniaoDialog({ reuniao, open, onOpenChange }: Reagenda
           </p>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="profissional_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Profissional</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o profissional" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {profissionais?.filter(p => p.ativo).map((prof) => (
-                        <SelectItem key={prof.id} value={prof.id}>
-                          {prof.nome}
-                          {prof.especialidade && ` (${prof.especialidade})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+          {/* Date & interval options */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Nova Data</Label>
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={e => { setSelectedDate(e.target.value); setSelectedTime(""); setSelectedMemberId(""); }}
+                min={new Date().toISOString().split("T")[0]}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Duração</Label>
+              <Input type="text" value={`${duration} min`} disabled className="bg-muted" />
+            </div>
+          </div>
 
-            <FormField
-              control={form.control}
-              name="data_reuniao"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Data</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "dd/MM/yyyy")
-                          ) : (
-                            <span>Selecione a data</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="use15-reagendar"
+              checked={use15min}
+              onCheckedChange={(c) => { setUse15min(!!c); setSelectedTime(""); }}
             />
+            <label htmlFor="use15-reagendar" className="text-xs text-muted-foreground cursor-pointer">Intervalos de 15 min</label>
+          </div>
 
-            {/* Mostrar horários disponíveis */}
-            {dataWatch && profissionalWatch && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FormLabel className="mb-0">Horário</FormLabel>
-                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={mostrarHorarios15min}
-                        onChange={(e) => setMostrarHorarios15min(e.target.checked)}
-                        className="w-3 h-3 rounded border-muted-foreground/50"
-                      />
-                      15 min
-                    </label>
-                  </div>
-                  {form.watch("hora") && (
-                    <span className="text-xs text-primary font-medium">
-                      ✓ {form.watch("hora")} selecionado
-                    </span>
+          {/* Members with time slots */}
+          {selectedDate && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                Selecione Profissional e Horário
+              </Label>
+
+              <ScrollArea className="max-h-[300px]">
+                <div className="space-y-3">
+                  {allMembers.map(member => {
+                    const slots = memberSlots[member.id] || [];
+                    const hasEscala = member.escalas.length > 0;
+
+                    return (
+                      <div key={member.id} className="border rounded-lg p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-primary shrink-0" />
+                          <span className="text-sm font-medium">{member.nome}</span>
+                          {member.cargo && <span className="text-xs text-muted-foreground">({member.cargo})</span>}
+                        </div>
+
+                        {hasEscala && slots.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {slots.map(t => (
+                              <Button
+                                key={t}
+                                variant={selectedMemberId === member.id && selectedTime === t ? "default" : "outline"}
+                                size="sm"
+                                className="text-xs h-7 px-2.5"
+                                onClick={() => handleSelectSlot(member.id, t)}
+                              >
+                                {t}
+                              </Button>
+                            ))}
+                          </div>
+                        ) : hasEscala && slots.length === 0 ? (
+                          <p className="text-xs text-muted-foreground italic">Sem horários disponíveis nesta data</p>
+                        ) : (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground italic mb-1.5">Sem escala configurada — horário livre</p>
+                            <Input
+                              type="time"
+                              className="w-28 h-7 text-xs"
+                              value={selectedMemberId === member.id ? selectedTime : "08:00"}
+                              onChange={e => handleSelectSlot(member.id, e.target.value)}
+                            />
+                            {selectedMemberId === member.id && selectedTime && hasTimeConflict(member.id, selectedTime) && (
+                              <p className="text-xs text-destructive font-medium">⚠ Já existe uma reunião neste horário</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {allMembers.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nenhum membro da equipe cadastrado
+                    </p>
                   )}
                 </div>
-                
-                {horariosDisponiveis.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg bg-muted/20">
-                    Sem disponibilidade nesta data para este profissional
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-2 border rounded-lg p-3 bg-muted/20 max-h-[200px] overflow-y-auto">
-                    {horariosDisponiveis.map((horario) => {
-                      const isSelected = form.watch("hora") === horario;
-                      
-                      return (
-                        <Button
-                          key={horario}
-                          type="button"
-                          size="sm"
-                          variant={isSelected ? "default" : "outline"}
-                          className="h-8 px-3"
-                          onClick={() => form.setValue("hora", horario)}
-                        >
-                          {horario}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Campo oculto para hora */}
-            <FormField
-              control={form.control}
-              name="hora"
-              render={({ field }) => (
-                <FormItem className="hidden">
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <div className="flex gap-2 justify-end pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={reagendarMutation.isPending}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={reagendarMutation.isPending}>
-                {reagendarMutation.isPending ? "Reagendando..." : "Reagendar"}
-              </Button>
+              </ScrollArea>
             </div>
-          </form>
-        </Form>
+          )}
+        </div>
+
+        <div className="flex gap-2 justify-end pt-4 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !selectedDate || !selectedTime || !selectedMemberId || hasTimeConflict(selectedMemberId, selectedTime)}
+            className="gap-1.5"
+          >
+            <Video className="h-4 w-4" />
+            {isSubmitting ? "Reagendando..." : "Reagendar"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
