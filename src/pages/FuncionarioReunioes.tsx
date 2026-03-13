@@ -148,6 +148,21 @@ export default function FuncionarioReunioes() {
     enabled: !!ownerId,
   });
 
+  // Fetch owner profile name
+  const { data: ownerProfile } = useQuery({
+    queryKey: ["owner-profile", ownerId],
+    queryFn: async () => {
+      if (!ownerId) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .eq("id", ownerId)
+        .single();
+      return data as any;
+    },
+    enabled: !!ownerId,
+  });
+
   // Fetch ALL reuniões (RLS returns owner's workspace data)
   const { data: allReunioes, isLoading } = useQuery({
     queryKey: ["funcionario-reunioes", user?.id],
