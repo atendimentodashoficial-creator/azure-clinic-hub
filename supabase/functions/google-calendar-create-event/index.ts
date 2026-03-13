@@ -57,15 +57,28 @@ serve(async (req) => {
       );
     }
 
-    // Get Google Calendar config
-    const { data: config, error: configError } = await supabase
+    // Get Google Calendar config - try user first, then any available
+    let { data: config } = await supabase
       .from("google_calendar_config")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
-    if (configError || !config || !config.access_token) {
-      console.error("Config error:", configError);
+    if (!config?.access_token) {
+      console.log("No GCal config for user, searching globally...");
+      const { data: anyConfig } = await supabase
+        .from("google_calendar_config")
+        .select("*")
+        .not("access_token", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (anyConfig?.access_token) {
+        config = anyConfig;
+        console.log("Using global GCal config from user:", config.user_id);
+      }
+    }
+
+    if (!config || !config.access_token) {
       return new Response(
         JSON.stringify({ success: false, error: "Google Calendar não está conectado" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -109,7 +122,7 @@ serve(async (req) => {
           token_expires_at: expiresAt,
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", user.id);
+        .eq("user_id", config.user_id);
     }
 
     // Calculate start and end times
