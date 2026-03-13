@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTarefasMembros, type TarefaMembro } from "@/hooks/useTarefasMembros";
 import { useMembroAtual } from "@/hooks/useMembroAtual";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useEscalasMembros,
   useCreateEscalaMembro,
@@ -25,6 +27,7 @@ import { toast } from "sonner";
 import { format, parseISO, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 const DIAS_SEMANA = [
   { value: 0, label: "Domingo" },
@@ -41,8 +44,29 @@ interface EscalaMembrosTabProps {
 }
 
 export function EscalaMembrosTab({ membroIdFixo }: EscalaMembrosTabProps) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { membros: membrosAdmin, isLoading: loadingMembros } = useTarefasMembros();
   const { membro: membroAtual } = useMembroAtual();
+
+  // Auto-create admin member record if not exists
+  useEffect(() => {
+    if (membroIdFixo || !user || loadingMembros) return;
+    const adminEmail = user.email;
+    if (!adminEmail) return;
+    const exists = membrosAdmin.some(m => m.email === adminEmail);
+    if (!exists) {
+      const adminName = user.user_metadata?.full_name || adminEmail;
+      supabase
+        .from("tarefas_membros" as any)
+        .insert({ nome: adminName, email: adminEmail, cargo: "Administrador", user_id: user.id } as any)
+        .then(({ error }) => {
+          if (!error) {
+            queryClient.invalidateQueries({ queryKey: ["tarefas-membros"] });
+          }
+        });
+    }
+  }, [membroIdFixo, user, membrosAdmin, loadingMembros, queryClient]);
 
   // When locked (funcionario), use their own membro record; otherwise use admin's list
   const membros: TarefaMembro[] = useMemo(() => {
