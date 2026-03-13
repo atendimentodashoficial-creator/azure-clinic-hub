@@ -110,13 +110,20 @@ export function MockupPreview({ slides, perfilNome = "perfil", perfilCategoria =
         )}
       </div>
 
-      {/* Caption */}
-      {slide.legenda && (
-        <div className="px-3 pb-3 pt-1">
-          <p className="text-xs text-foreground">
-            <span className="font-semibold mr-1">{perfilNome}</span>
-            {slide.legenda}
-          </p>
+      {/* Caption + CTA */}
+      {(slide.legenda || slide.cta) && (
+        <div className="px-3 pb-3 pt-1 space-y-1.5">
+          {slide.legenda && (
+            <p className="text-xs text-foreground">
+              <span className="font-semibold mr-1">{perfilNome}</span>
+              {slide.legenda}
+            </p>
+          )}
+          {slide.cta && (
+            <p className="text-xs text-muted-foreground border-l-2 border-primary pl-2">
+              👉 {slide.cta}
+            </p>
+          )}
         </div>
       )}
     </div>
