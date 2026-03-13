@@ -31,7 +31,6 @@ export function useTarefasMembros() {
       const { data, error } = await supabase
         .from("tarefas_membros" as any)
         .select("*")
-        .eq("user_id", user.id)
         .order("nome");
       if (error) throw error;
       return data as unknown as TarefaMembro[];
