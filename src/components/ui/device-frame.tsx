@@ -44,18 +44,20 @@ function MonitorFrame({ children, className }: DeviceFrameProps) {
 
 function IPhoneFrame({ children, className }: DeviceFrameProps) {
   return (
-    <div className={cn("flex justify-center", className)}>
-      <div className="relative w-[320px] rounded-[2.5rem] border-[4px] border-foreground/25 bg-foreground/5 p-1.5 shadow-xl">
+    <div className={cn("flex justify-center py-4", className)}>
+      <div className="relative flex-shrink-0" style={{ width: 320, height: "calc(70vh + 24px)" }}>
+        {/* Phone shell - fixed frame */}
+        <div className="absolute inset-0 rounded-[2.5rem] border-[4px] border-foreground/25 bg-foreground/5 shadow-xl pointer-events-none z-10" />
         {/* Notch / Dynamic Island */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-5 bg-foreground/20 rounded-full z-10" />
-        {/* Screen */}
-        <div className="rounded-[2rem] overflow-hidden bg-background border border-border">
-          <div className="w-full" style={{ height: "70vh" }}>
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-5 bg-foreground/20 rounded-full z-20" />
+        {/* Bottom bar */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-1 bg-foreground/20 rounded-full z-20" />
+        {/* Screen area */}
+        <div className="absolute inset-[6px] rounded-[2rem] overflow-hidden bg-background">
+          <div className="w-full h-full overflow-auto">
             {children}
           </div>
         </div>
-        {/* Bottom bar */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-1 bg-foreground/20 rounded-full" />
       </div>
     </div>
   );
