@@ -219,6 +219,8 @@ export function AvisosReuniaoTab() {
     setFormTipoGatilho("dias_antes");
     setFormAudioUrl(null);
     setFormAudioPosicao("antes");
+    setFormLinkCalendarioAtivo(false);
+    setFormLinkCalendarioTexto("📅 Adicionar ao meu calendário");
     setEditingAviso(null);
   };
 
