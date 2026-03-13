@@ -469,6 +469,7 @@ export default function Tarefas() {
                 tarefa={activeTarefa}
                 colunas={colunas}
                 clientes={clientes}
+                membrosNomes={membrosNomes}
               />
             </div>
           )}
