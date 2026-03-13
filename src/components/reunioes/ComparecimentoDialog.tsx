@@ -48,7 +48,7 @@ async function moveKanbanCard(userId: string, telefone: string, columnId: string
   if (!last8) return;
 
   const { data: chats } = await supabase
-    .from("disparos_chats")
+    .from("whatsapp_chats")
     .select("id")
     .eq("user_id", userId)
     .like("normalized_number", `%${last8}`)
@@ -57,12 +57,22 @@ async function moveKanbanCard(userId: string, telefone: string, columnId: string
   if (!chats || chats.length === 0) return;
 
   for (const chat of chats) {
-    await supabase
-      .from("disparos_chat_kanban")
-      .upsert(
-        { chat_id: chat.id, column_id: columnId, user_id: userId },
-        { onConflict: "chat_id" }
-      );
+    const { data: existing } = await supabase
+      .from("whatsapp_chat_kanban")
+      .select("id")
+      .eq("chat_id", chat.id)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from("whatsapp_chat_kanban")
+        .update({ column_id: columnId })
+        .eq("chat_id", chat.id);
+    } else {
+      await supabase
+        .from("whatsapp_chat_kanban")
+        .insert({ chat_id: chat.id, column_id: columnId, user_id: userId });
+    }
   }
 }
 
@@ -86,10 +96,10 @@ export function ComparecimentoDialog({
   const comprovanteRef = useRef<HTMLInputElement>(null);
 
   const { data: columns, isLoading } = useQuery({
-    queryKey: ["disparos-kanban-columns", user?.id],
+    queryKey: ["whatsapp-kanban-columns", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("disparos_kanban_columns")
+        .from("whatsapp_kanban_columns")
         .select("id, nome, cor")
         .eq("user_id", user!.id)
         .eq("ativo", true)
@@ -168,7 +178,8 @@ export function ComparecimentoDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reunioes"] });
-      queryClient.invalidateQueries({ queryKey: ["disparos-chat-kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-chat-kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-kanban"] });
       queryClient.invalidateQueries({ queryKey: ["fatura-pagamentos"] });
       toast.success(
         tipo === "compareceu"
@@ -216,7 +227,7 @@ export function ComparecimentoDialog({
             {isCompareceu ? "Compareceu" : "Não Compareceu"}
           </DialogTitle>
           <DialogDescription>
-            Selecione para qual coluna do Kanban de Disparos o card do cliente deve ser movido.
+            Selecione para qual coluna do Kanban do WhatsApp o card do cliente deve ser movido.
           </DialogDescription>
         </DialogHeader>
 
@@ -258,7 +269,7 @@ export function ComparecimentoDialog({
             <div className="text-center py-6 text-sm text-muted-foreground">
               <Columns3 className="w-8 h-8 mx-auto mb-2 opacity-40" />
               <p>Nenhuma coluna do Kanban encontrada.</p>
-              <p className="text-xs mt-1">Configure as colunas na aba Disparos.</p>
+              <p className="text-xs mt-1">Configure as colunas na aba WhatsApp.</p>
             </div>
           )}
 
