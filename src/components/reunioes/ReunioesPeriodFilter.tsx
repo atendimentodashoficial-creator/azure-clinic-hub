@@ -58,12 +58,12 @@ export function ReunioesPeriodFilter({
           key={opt.value}
           variant={value === opt.value ? "default" : "outline"}
           size="sm"
-          className="h-8 text-xs px-3 rounded-full"
+          className="h-8 text-xs px-3 rounded-md"
           onClick={() => onChange(opt.value)}
         >
           {opt.label}
           {value === opt.value && opt.value === "hoje" && count !== undefined && (
-            <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px] rounded-full">
+            <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px] rounded-md">
               {count}
             </Badge>
           )}
