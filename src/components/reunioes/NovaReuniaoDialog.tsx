@@ -114,6 +114,7 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
       setClienteNome("");
       setClienteTelefone("");
       setClienteSearch("");
+      setSelectedTipoId("");
       setShowLeadsList(false);
     }
   }, [open]);
