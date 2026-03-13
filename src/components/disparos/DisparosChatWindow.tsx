@@ -198,8 +198,9 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [messagesOffset, setMessagesOffset] = useState(0);
   const MESSAGES_PAGE_SIZE = 50;
-  const [agendamentoDialogOpen, setAgendamentoDialogOpen] = useState(false);
-  const [clienteData, setClienteData] = useState<ClienteData | null>(null);
+  const [produtoDialogOpen, setProdutoDialogOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<ProdutoTemplate | null>(null);
+  const { data: produtoTemplates = [] } = useProdutoTemplates();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [mensagensPredefindasOpen, setMensagensPredefindasOpen] = useState(false);
   const [leadStatus, setLeadStatus] = useState<string | null>(null);
