@@ -317,7 +317,11 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   };
 
   return (
-    <Card className="p-3 bg-card border-l-4 hover:bg-accent/30 transition-colors group" style={{ borderLeftColor: colunas.find(c => c.id === tarefa.coluna_id)?.cor || '#f59e0b' }}>
+    <Card
+      className={cn("p-3 bg-card border-l-4 hover:bg-accent/30 transition-colors group", isClickable && "cursor-pointer")}
+      style={{ borderLeftColor: colunas.find(c => c.id === tarefa.coluna_id)?.cor || '#f59e0b' }}
+      onClick={isClickable ? () => onClick(tarefa) : undefined}
+    >
       <div className="flex items-start gap-2">
         <div {...dragHandleProps} className="mt-1 shrink-0 cursor-grab active:cursor-grabbing touch-none">
           <GripVertical className="h-4 w-4 text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity" />
