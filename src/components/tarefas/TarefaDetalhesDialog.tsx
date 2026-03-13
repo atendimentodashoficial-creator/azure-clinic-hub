@@ -49,10 +49,12 @@ interface TarefaDetalhesDialogProps {
 export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, open, onOpenChange }: TarefaDetalhesDialogProps) {
   const { tipos } = useTiposTarefas();
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
+  const { links: savedLinks, saveLinks } = useTarefaLinks(tarefa?.id || null);
   const [resubmitting, setResubmitting] = useState(false);
   const [posts, setPosts] = useState<PostGroup[]>([
     { postIndex: 0, slides: [{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }] },
   ]);
+  const [taskLinks, setTaskLinks] = useState<{ url: string; titulo: string }[]>([]);
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
