@@ -51,12 +51,13 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
   const tipoTarefa = tarefa?.tipo_tarefa_id ? tipos.find(t => t.id === tarefa.tipo_tarefa_id) : null;
   const hasMockup = tipoTarefa?.tipos_arquivo_permitidos?.includes("mockup");
+  const mockupLimit = tipoTarefa?.limite_arquivos?.mockup || 0; // 0 = unlimited
   const cliente = tarefa?.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
   const reuniao = tarefa?.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
   const prio = PRIORIDADES.find(p => p.value === tarefa?.prioridade) || PRIORIDADES[1];
   const coluna = tarefa ? colunas.find(c => c.id === tarefa.coluna_id) : null;
 
-  // Load existing mockups
+  // Load existing mockups or initialize with required count
   useEffect(() => {
     if (mockups.length > 0) {
       setMockupSlides(mockups.map(m => ({
@@ -68,9 +69,12 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         cta: m.cta || "",
       })));
     } else {
-      setMockupSlides([{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }]);
+      const count = mockupLimit > 0 ? mockupLimit : 1;
+      setMockupSlides(
+        Array.from({ length: count }, (_, i) => ({ ordem: i, subtitulo: "", titulo: "", legenda: "", cta: "" }))
+      );
     }
-  }, [mockups]);
+  }, [mockups, mockupLimit]);
 
   const handleSaveMockups = async () => {
     try {
@@ -195,6 +199,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   onChange={setMockupSlides}
                   perfilNome={cliente?.nome || "perfil"}
                   perfilCategoria={cliente?.empresa || ""}
+                  maxSlides={mockupLimit}
                 />
                 <Button onClick={handleSaveMockups} disabled={saveMockups.isPending} className="w-full gap-2">
                   <Save className="h-4 w-4" />
