@@ -35,17 +35,22 @@ const DIAS_SEMANA = [
   { value: 6, label: "Sábado" },
 ];
 
-export function EscalaMembrosTab() {
+interface EscalaMembrosTabProps {
+  membroIdFixo?: string;
+}
+
+export function EscalaMembrosTab({ membroIdFixo }: EscalaMembrosTabProps) {
   const { membros, isLoading: loadingMembros } = useTarefasMembros();
-  const { data: todasEscalas = [] } = useEscalasMembros();
-  const { data: todasAusencias = [] } = useAusenciasMembros();
+  const { data: todasEscalas = [] } = useEscalasMembros(membroIdFixo);
+  const { data: todasAusencias = [] } = useAusenciasMembros(membroIdFixo);
   const criarEscala = useCreateEscalaMembro();
   const updateEscala = useUpdateEscalaMembro();
   const deletarEscala = useDeleteEscalaMembro();
   const criarAusencia = useCreateAusenciaMembro();
   const deletarAusencia = useDeleteAusenciaMembro();
 
-  const [membroSelecionado, setMembroSelecionado] = useState<string>("todos");
+  const isLocked = !!membroIdFixo;
+  const [membroSelecionado, setMembroSelecionado] = useState<string>(membroIdFixo || "todos");
   const [membrosExpandidos, setMembrosExpandidos] = useState<Set<string>>(new Set());
   const [diasExpandidos, setDiasExpandidos] = useState<Set<string>>(new Set());
   const [horariosRascunho, setHorariosRascunho] = useState<Record<string, Array<{ tempId: string; inicio: string; fim: string }>>>({});
