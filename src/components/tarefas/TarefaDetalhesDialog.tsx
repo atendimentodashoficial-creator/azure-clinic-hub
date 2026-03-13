@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTiposTarefas, TipoTarefa } from "@/hooks/useTiposTarefas";
 import { useTarefaMockups } from "@/hooks/useTarefaMockups";
-import { MockupEditor } from "./MockupEditor";
+import { MockupPostsManager, PostGroup } from "./MockupPostsManager";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
 import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History } from "lucide-react";
@@ -47,8 +47,8 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const { tipos } = useTiposTarefas();
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
   const [resubmitting, setResubmitting] = useState(false);
-  const [mockupSlides, setMockupSlides] = useState<MockupSlide[]>([
-    { ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" },
+  const [posts, setPosts] = useState<PostGroup[]>([
+    { postIndex: 0, slides: [{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }] },
   ]);
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -80,18 +80,31 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const mockupsKey = mockups.map(m => m.id).join(",");
   useEffect(() => {
     if (mockups.length > 0) {
-      setMockupSlides(mockups.map(m => ({
-        id: m.id,
-        ordem: m.ordem,
-        subtitulo: m.subtitulo || "",
-        titulo: m.titulo || "",
-        legenda: m.legenda || "",
-        cta: m.cta || "",
-      })));
+      // Group mockups by post_index
+      const grouped = new Map<number, MockupSlide[]>();
+      mockups.forEach(m => {
+        const pi = m.post_index ?? 0;
+        if (!grouped.has(pi)) grouped.set(pi, []);
+        grouped.get(pi)!.push({
+          id: m.id,
+          ordem: m.ordem,
+          subtitulo: m.subtitulo || "",
+          titulo: m.titulo || "",
+          legenda: m.legenda || "",
+          cta: m.cta || "",
+        });
+      });
+      const postGroups: PostGroup[] = Array.from(grouped.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([postIndex, slides]) => ({ postIndex, slides }));
+      setPosts(postGroups);
     } else if (hasMockup) {
       const count = mockupLimit > 0 ? mockupLimit : 1;
-      setMockupSlides(
-        Array.from({ length: count }, (_, i) => ({ ordem: i, subtitulo: "", titulo: "", legenda: "", cta: "" }))
+      setPosts(
+        Array.from({ length: count }, (_, i) => ({
+          postIndex: i,
+          slides: [{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }],
+        }))
       );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -99,10 +112,14 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
   const handleSaveMockups = async () => {
     try {
-      await saveMockups.mutateAsync(mockupSlides);
-      toast.success("Mockup salvo com sucesso!");
+      // Flatten posts into slides with post_index
+      const allSlides = posts.flatMap(post =>
+        post.slides.map(s => ({ ...s, post_index: post.postIndex }))
+      );
+      await saveMockups.mutateAsync(allSlides);
+      toast.success("Mockups salvos com sucesso!");
     } catch {
-      toast.error("Erro ao salvar mockup");
+      toast.error("Erro ao salvar mockups");
     }
   };
 
@@ -260,12 +277,12 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
             <>
               <Separator />
               <div className="space-y-3">
-                <MockupEditor
-                  slides={mockupSlides}
-                  onChange={setMockupSlides}
+                <MockupPostsManager
+                  posts={posts}
+                  onChange={setPosts}
+                  maxPosts={mockupLimit}
                   perfilNome={cliente?.nome || "perfil"}
                   perfilCategoria={cliente?.empresa || ""}
-                  maxSlides={mockupLimit}
                 />
                 <Button onClick={handleSaveMockups} disabled={saveMockups.isPending} className="w-full gap-2">
                   <Save className="h-4 w-4" />

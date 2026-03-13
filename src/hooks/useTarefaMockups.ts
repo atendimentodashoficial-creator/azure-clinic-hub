@@ -8,6 +8,7 @@ export interface TarefaMockup {
   tarefa_id: string;
   user_id: string;
   ordem: number;
+  post_index: number;
   subtitulo: string | null;
   titulo: string | null;
   legenda: string | null;
@@ -32,6 +33,7 @@ export function useTarefaMockups(tarefaId: string | null) {
         .from("tarefa_mockups")
         .select("*")
         .eq("tarefa_id", tarefaId)
+        .order("post_index")
         .order("ordem");
       if (error) throw error;
       return data as TarefaMockup[];
@@ -42,7 +44,7 @@ export function useTarefaMockups(tarefaId: string | null) {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["tarefa-mockups", tarefaId] });
 
   const saveMockups = useMutation({
-    mutationFn: async (slides: { id?: string; subtitulo: string; titulo: string; legenda: string; cta: string; ordem: number }[]) => {
+    mutationFn: async (slides: { id?: string; subtitulo: string; titulo: string; legenda: string; cta: string; ordem: number; post_index: number }[]) => {
       if (!tarefaId || !effectiveUserId) throw new Error("Não autenticado");
       
       // Separate slides that have existing IDs (update) vs new ones (insert)
@@ -71,6 +73,7 @@ export function useTarefaMockups(tarefaId: string | null) {
           legenda: slide.legenda,
           cta: slide.cta,
           ordem: slide.ordem,
+          post_index: slide.post_index,
           updated_at: new Date().toISOString(),
         };
         // If content changed on an approved mockup, keep approved status
@@ -93,6 +96,7 @@ export function useTarefaMockups(tarefaId: string | null) {
             legenda: s.legenda,
             cta: s.cta,
             ordem: s.ordem,
+            post_index: s.post_index,
           }))
         );
         if (error) throw error;
