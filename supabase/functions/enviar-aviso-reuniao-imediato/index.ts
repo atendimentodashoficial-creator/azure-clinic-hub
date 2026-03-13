@@ -520,8 +520,16 @@ serve(async (req) => {
 
         const audioPosicao = (aviso as any).audio_posicao || "depois";
 
-        // Send WhatsApp message (UAZapi padrão usado em Disparos)
-        const sendUrl = `${avisoBaseUrl}/send/text`;
+        // Determine if calendar button should be sent
+        const linkCalendarioAtivo = (aviso as any).link_calendario_ativo === true;
+        const linkCalendarioTexto = (aviso as any).link_calendario_texto || "📅 Adicionar ao meu calendário";
+        const calendarUrl = linkCalendarioAtivo ? buildGoogleCalendarUrl(reuniao) : null;
+
+        // Remove {link_calendario} from message text (it's handled by button)
+        let finalMensagem = mensagem.replace(/\{link_calendario\}/gi, "").trim();
+
+        // Choose send endpoint based on whether we need buttons
+        const sendUrl = calendarUrl ? `${avisoBaseUrl}/send/menu` : `${avisoBaseUrl}/send/text`;
 
         let deliveredTo: string | null = null;
         let lastError: string | null = null;
@@ -530,8 +538,20 @@ serve(async (req) => {
           // Send audio BEFORE text if configured
           if ((aviso as any).audio_url && audioPosicao === "antes") {
             await sendAudio(candidate);
-            await sleep(2000); // small delay between audio and text
+            await sleep(2000);
           }
+
+          const sendBody = calendarUrl
+            ? {
+                number: candidate,
+                type: "button",
+                text: finalMensagem,
+                choices: [`${linkCalendarioTexto}|${calendarUrl}`],
+              }
+            : {
+                number: candidate,
+                text: finalMensagem,
+              };
 
           const sendResponse = await fetch(sendUrl, {
             method: "POST",
@@ -540,10 +560,7 @@ serve(async (req) => {
               "Content-Type": "application/json",
               token: avisoApiKey,
             },
-            body: JSON.stringify({
-              number: candidate,
-              text: mensagem,
-            }),
+            body: JSON.stringify(sendBody),
           });
 
           const responseText = await sendResponse.text();
