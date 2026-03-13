@@ -130,6 +130,7 @@ export function AvisosReuniaoTab() {
   const audioInputRef = useRef<HTMLInputElement>(null);
 
   const { data: procedimentos } = useProcedimentos();
+  const { data: tiposReuniao } = useTiposReuniao();
 
   // Próximas reuniões (próximos 7 dias)
   const proximasReunioes = useMemo(() => {
