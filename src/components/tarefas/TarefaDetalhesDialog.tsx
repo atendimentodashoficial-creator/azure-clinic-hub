@@ -569,6 +569,101 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
               </div>
             </>
           )}
+
+          {/* Link-only approval section (no mockups) */}
+          {!hasMockup && hasLinks && savedLinks.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                {tarefa.approval_token ? (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Link de aprovação</Label>
+                    <div className="flex gap-2">
+                      <code className="flex-1 text-xs bg-muted px-3 py-2 rounded truncate">
+                        {`${window.location.origin}/aprovacao/${tarefa.approval_token}`}
+                      </code>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/aprovacao/${tarefa.approval_token}`);
+                          toast.success("Link copiado!");
+                        }}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
+                    {/* Approval status */}
+                    {tarefa.approval_status && (
+                      <Badge
+                        variant="outline"
+                        className={cn("text-[10px]",
+                          tarefa.approval_status === "concluido" ? "border-emerald-500 text-emerald-400" :
+                          tarefa.approval_status === "em_revisao" ? "border-red-500 text-red-400" :
+                          "border-amber-500 text-amber-400"
+                        )}
+                      >
+                        {tarefa.approval_status === "concluido" ? "Aprovado" :
+                         tarefa.approval_status === "em_revisao" ? "Mudança solicitada" :
+                         "Aguardando aprovação"}
+                      </Badge>
+                    )}
+
+                    {/* Revision history for link approvals */}
+                    {revisoes.length > 0 && (
+                      <div className="mt-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full gap-1.5 text-xs text-muted-foreground"
+                          onClick={() => setShowHistory(prev => !prev)}
+                        >
+                          <History className="h-3.5 w-3.5" />
+                          Histórico de revisões ({revisoes.length})
+                        </Button>
+                        {showHistory && (
+                          <div className="mt-2 space-y-2 max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+                            {revisoes.map(r => (
+                              <div key={r.id} className="text-[11px] border rounded px-2.5 py-1.5 space-y-0.5">
+                                <div className="flex items-center justify-between">
+                                  <Badge
+                                    variant="outline"
+                                    className={cn("text-[10px] border-0 px-0",
+                                      r.status === "aprovado" ? "text-emerald-400" :
+                                      r.status === "reprovado" ? "text-red-400" :
+                                      "text-muted-foreground"
+                                    )}
+                                  >
+                                    {r.status === "aprovado" ? "Aprovado" : "Mudança solicitada"}
+                                  </Badge>
+                                  <span className="text-muted-foreground">
+                                    {format(new Date(r.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                                  </span>
+                                </div>
+                                {r.feedback && (
+                                  <p className="text-muted-foreground">💬 {r.feedback}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={handleSendForApproval}
+                  >
+                    <Send className="h-4 w-4" />
+                    Enviar para Aprovação
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
