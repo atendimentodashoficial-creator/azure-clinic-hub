@@ -4702,6 +4702,47 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefa_links: {
+        Row: {
+          created_at: string
+          id: string
+          ordem: number
+          tarefa_id: string
+          titulo: string | null
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ordem?: number
+          tarefa_id: string
+          titulo?: string | null
+          updated_at?: string
+          url?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ordem?: number
+          tarefa_id?: string
+          titulo?: string | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_links_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefa_mockups: {
         Row: {
           created_at: string
