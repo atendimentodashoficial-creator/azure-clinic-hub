@@ -1536,68 +1536,6 @@ export default function Conexoes() {
         </Card>
       </Collapsible>
 
-      {/* Fireflies Card */}
-      <Collapsible open={firefliesOpen} onOpenChange={setFirefliesOpen}>
-        <Card>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 dark:bg-orange-950 rounded-lg">
-                    <Mic className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Fireflies.ai</CardTitle>
-                    <CardDescription>
-                      Configure a API Key do Fireflies para transcrição e resumos de reuniões
-                    </CardDescription>
-                  </div>
-                </div>
-                {firefliesOpen ? <ChevronDown className="h-5 w-5 text-muted-foreground" /> : <ChevronRight className="h-5 w-5 text-muted-foreground" />}
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="space-y-4">
-          <div className="space-y-4">
-            <div>
-              <Label>API Key</Label>
-              <div className="flex gap-2 mt-1">
-                <Input type={showFirefliesKey ? "text" : "password"} value={firefliesApiKey} onChange={e => setFirefliesApiKey(e.target.value)} placeholder="" className="font-mono text-sm" />
-                <Button variant="outline" size="icon" onClick={() => setShowFirefliesKey(!showFirefliesKey)}>
-                  {showFirefliesKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Obtenha sua API Key em <a href="https://fireflies.ai/integrations" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">fireflies.ai/integrations</a>
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={testFirefliesConnection} disabled={testingFireflies}>
-                {testingFireflies ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                Testar Conexão
-              </Button>
-              <Button onClick={saveFirefliesConfig} disabled={savingFireflies}>
-                {savingFireflies ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
-              </Button>
-            </div>
-
-            {firefliesTestResult && <div className={`p-3 rounded-lg border ${firefliesTestResult.success ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'}`}>
-                <div className="flex items-center gap-2">
-                  {firefliesTestResult.success ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <XCircle className="h-4 w-4 text-red-600" />}
-                  <span className={`text-sm ${firefliesTestResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
-                    {firefliesTestResult.message}
-                  </span>
-                </div>
-              </div>}
-          </div>
-          </CardContent>
-        </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
-      {/* Google Calendar Card */}
       <GoogleCalendarConfig defaultOpen={googleCalendarOpen} />
 
       {/* Meta Pixel Card */}
