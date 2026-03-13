@@ -149,15 +149,27 @@ export default function AprovacaoMockup() {
     );
   }
 
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="p-10 text-center max-w-md space-y-3">
+          <div className="text-4xl">🎉</div>
+          <h2 className="text-xl font-bold text-foreground">Obrigado!</h2>
+          <p className="text-sm text-muted-foreground">
+            Suas respostas foram enviadas com sucesso. A equipe já foi notificada e dará continuidade ao processo.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   if (error || mockups.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="p-8 text-center max-w-md">
-          <h2 className="text-lg font-semibold text-foreground mb-2">
-            {submitted ? "Respostas enviadas!" : "Nenhum item pendente"}
-          </h2>
+          <h2 className="text-lg font-semibold text-foreground mb-2">Nenhum item pendente</h2>
           <p className="text-sm text-muted-foreground">
-            {error || (submitted ? "Suas respostas foram registradas com sucesso. Obrigado!" : "Todos os mockups já foram aprovados ou não há itens para revisar.")}
+            {error || "Todos os mockups já foram aprovados ou não há itens para revisar."}
           </p>
         </Card>
       </div>
