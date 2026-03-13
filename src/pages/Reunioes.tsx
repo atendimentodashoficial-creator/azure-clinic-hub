@@ -393,7 +393,7 @@ export default function Reunioes() {
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
                   <SelectItem value="meus">Minhas reuniões</SelectItem>
-                  {membros.map(m => (
+                  {membros.filter(m => m.auth_user_id !== user?.id).map(m => (
                     <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
                   ))}
                 </SelectContent>
