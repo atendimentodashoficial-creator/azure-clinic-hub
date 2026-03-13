@@ -26,7 +26,6 @@ export function useTiposAgendamento() {
       const { data, error } = await supabase
         .from("tipo_agendamento_custom")
         .select("*")
-        .eq("user_id", user.id)
         .order("ordem", { ascending: true });
 
       if (error) throw error;
