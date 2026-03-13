@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTiposTarefas, TipoTarefa } from "@/hooks/useTiposTarefas";
 import { useTarefaMockups } from "@/hooks/useTarefaMockups";
@@ -13,7 +14,7 @@ import { useTarefaLinks } from "@/hooks/useTarefaLinks";
 import { MockupPostsManager, PostGroup } from "./MockupPostsManager";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
-import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History, Plus, Trash2, ExternalLink } from "lucide-react";
+import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History, Plus, Trash2, ExternalLink, Globe, Instagram, Phone, Mail, FileText, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -57,6 +58,22 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const [taskLinks, setTaskLinks] = useState<{ url: string; titulo: string }[]>([]);
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showClienteSheet, setShowClienteSheet] = useState(false);
+
+  const { data: clienteCompleto } = useQuery({
+    queryKey: ["tarefa-cliente-detalhes", tarefa?.cliente_id],
+    queryFn: async () => {
+      if (!tarefa?.cliente_id) return null;
+      const { data, error } = await supabase
+        .from("tarefas_clientes")
+        .select("*")
+        .eq("id", tarefa.cliente_id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tarefa?.cliente_id && showClienteSheet,
+  });
 
   const { data: revisoes = [] } = useQuery({
     queryKey: ["tarefa-revisoes", tarefa?.id],
@@ -228,6 +245,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const requiredFileTypes = tipoTarefa?.tipos_arquivo_permitidos?.filter(t => t !== "mockup" && t !== "qualquer" && t !== "links") || [];
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
@@ -276,9 +294,13 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
               {cliente && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Cliente</Label>
-                  <p className="text-sm mt-0.5 flex items-center gap-1">
+                  <button
+                    onClick={() => setShowClienteSheet(true)}
+                    className="text-sm mt-0.5 flex items-center gap-1 text-primary hover:underline cursor-pointer"
+                  >
                     <Building2 className="h-3 w-3" /> {cliente.nome}
-                  </p>
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
                 </div>
               )}
             </div>
@@ -549,5 +571,110 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Cliente details sheet */}
+    <Sheet open={showClienteSheet} onOpenChange={setShowClienteSheet}>
+      <SheetContent className="overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            {clienteCompleto?.nome || cliente?.nome || "Cliente"}
+          </SheetTitle>
+        </SheetHeader>
+        {clienteCompleto && (
+          <div className="space-y-4 mt-6">
+            {clienteCompleto.empresa && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Empresa</Label>
+                <p className="text-sm mt-0.5">{clienteCompleto.empresa}</p>
+              </div>
+            )}
+            {clienteCompleto.cnpj && (
+              <div>
+                <Label className="text-xs text-muted-foreground">CNPJ</Label>
+                <p className="text-sm mt-0.5">{clienteCompleto.cnpj}</p>
+              </div>
+            )}
+            {clienteCompleto.email && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Email</Label>
+                <p className="text-sm mt-0.5 flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                  <a href={`mailto:${clienteCompleto.email}`} className="text-primary hover:underline">{clienteCompleto.email}</a>
+                </p>
+              </div>
+            )}
+            {clienteCompleto.telefone && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Telefone</Label>
+                <p className="text-sm mt-0.5 flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  {clienteCompleto.telefone}
+                </p>
+              </div>
+            )}
+
+            <Separator />
+
+            {clienteCompleto.site && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Site</Label>
+                <p className="text-sm mt-0.5 flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                  <a href={clienteCompleto.site.startsWith("http") ? clienteCompleto.site : `https://${clienteCompleto.site}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{clienteCompleto.site}</a>
+                </p>
+              </div>
+            )}
+            {clienteCompleto.instagram && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Instagram</Label>
+                <p className="text-sm mt-0.5 flex items-center gap-1.5">
+                  <Instagram className="h-3.5 w-3.5 text-muted-foreground" />
+                  <a href={`https://instagram.com/${clienteCompleto.instagram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{clienteCompleto.instagram}</a>
+                </p>
+              </div>
+            )}
+            {clienteCompleto.linktree && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Linktree</Label>
+                <p className="text-sm mt-0.5 flex items-center gap-1.5">
+                  <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  <a href={clienteCompleto.linktree.startsWith("http") ? clienteCompleto.linktree : `https://${clienteCompleto.linktree}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{clienteCompleto.linktree}</a>
+                </p>
+              </div>
+            )}
+            {clienteCompleto.google_meu_negocio && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Google Meu Negócio</Label>
+                <p className="text-sm mt-0.5 flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                  <a href={clienteCompleto.google_meu_negocio.startsWith("http") ? clienteCompleto.google_meu_negocio : `https://${clienteCompleto.google_meu_negocio}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{clienteCompleto.google_meu_negocio}</a>
+                </p>
+              </div>
+            )}
+            {clienteCompleto.grupo_whatsapp && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Grupo WhatsApp</Label>
+                <p className="text-sm mt-0.5 flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  <a href={clienteCompleto.grupo_whatsapp} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Abrir grupo</a>
+                </p>
+              </div>
+            )}
+
+            {clienteCompleto.observacoes && (
+              <>
+                <Separator />
+                <div>
+                  <Label className="text-xs text-muted-foreground">Observações</Label>
+                  <p className="text-sm mt-0.5 whitespace-pre-wrap">{clienteCompleto.observacoes}</p>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+    </>
   );
 }
