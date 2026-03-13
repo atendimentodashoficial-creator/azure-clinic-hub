@@ -27,6 +27,7 @@ import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Buildin
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TarefaTimer } from "@/components/tarefas/TarefaTimer";
+import { TarefaDetalhesDialog } from "@/components/tarefas/TarefaDetalhesDialog";
 
 const PRIORIDADES = [
   { value: "baixa", label: "Baixa", color: "bg-emerald-500/20 text-emerald-400" },
@@ -233,7 +234,7 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   );
 }
 
-function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer }: {
+function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer, onClick }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
@@ -242,6 +243,7 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioes
   isFuncionario: boolean;
   onDelete: (id: string) => void;
   onStartTimer: (id: string) => void;
+  onClick?: (tarefa: Tarefa) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tarefa.id,
@@ -265,13 +267,14 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioes
         isFuncionario={isFuncionario}
         onDelete={onDelete}
         onStartTimer={onStartTimer}
+        onClick={onClick}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
   );
 }
 
-function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer, dragHandleProps }: {
+function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer, onClick, dragHandleProps }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
@@ -280,6 +283,7 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   isFuncionario?: boolean;
   onDelete?: (id: string) => void;
   onStartTimer?: (id: string) => void;
+  onClick?: (tarefa: Tarefa) => void;
   dragHandleProps?: Record<string, any>;
 }) {
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
@@ -291,6 +295,9 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   const hideDetails = isFuncionario && colOrdem === 0;
   // In "Em Revisão" (ordem 3) with pausado_revisao, employee needs to start timer to see details
   const needsManualStart = isFuncionario && colOrdem === 3 && tarefa.timer_status === "pausado_revisao";
+
+  // Task is clickable when not in "A Fazer" and not needing manual start
+  const isClickable = !hideDetails && !needsManualStart && onClick && colOrdem >= 1;
 
   const renderResponsaveis = () => {
     if (!tarefa.responsavel_nome) return null;
@@ -310,7 +317,11 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   };
 
   return (
-    <Card className="p-3 bg-card border-l-4 hover:bg-accent/30 transition-colors group" style={{ borderLeftColor: colunas.find(c => c.id === tarefa.coluna_id)?.cor || '#f59e0b' }}>
+    <Card
+      className={cn("p-3 bg-card border-l-4 hover:bg-accent/30 transition-colors group", isClickable && "cursor-pointer")}
+      style={{ borderLeftColor: colunas.find(c => c.id === tarefa.coluna_id)?.cor || '#f59e0b' }}
+      onClick={isClickable ? () => onClick(tarefa) : undefined}
+    >
       <div className="flex items-start gap-2">
         <div {...dragHandleProps} className="mt-1 shrink-0 cursor-grab active:cursor-grabbing touch-none">
           <GripVertical className="h-4 w-4 text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -411,6 +422,7 @@ export default function Tarefas() {
   const { role } = useUserRole();
   const { ownerId } = useOwnerId();
   const [activeTarefa, setActiveTarefa] = useState<Tarefa | null>(null);
+  const [detalheTarefa, setDetalheTarefa] = useState<Tarefa | null>(null);
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
 
@@ -617,6 +629,7 @@ export default function Tarefas() {
                         isFuncionario={isFuncionario}
                         onDelete={handleExcluir}
                         onStartTimer={handleStartTimer}
+                        onClick={setDetalheTarefa}
                       />
                     ))}
                   </DroppableColumn>
@@ -647,6 +660,15 @@ export default function Tarefas() {
           )}
         </DragOverlay>
       </DndContext>
+
+      <TarefaDetalhesDialog
+        tarefa={detalheTarefa}
+        colunas={colunas}
+        clientes={clientes}
+        reunioesMap={reunioesMap}
+        open={!!detalheTarefa}
+        onOpenChange={(open) => { if (!open) setDetalheTarefa(null); }}
+      />
     </div>
   );
 }
