@@ -164,6 +164,43 @@ export default function FuncionarioReunioes() {
     enabled: !!user?.id,
   });
 
+  const { data: googleCalendarConfig } = useQuery({
+    queryKey: ["google-calendar-config", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("google_calendar_config" as any)
+        .select("access_token, refresh_token")
+        .single();
+      if (error && error.code !== "PGRST116") throw error;
+      return data as any;
+    },
+    enabled: !!user?.id,
+  });
+
+  const hasGoogleCalendar = !!googleCalendarConfig?.access_token;
+
+  const handleSync = async () => {
+    if (!hasGoogleCalendar) {
+      toast.error("Conecte o Google Calendar em Configurações > Conexões primeiro");
+      return;
+    }
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-google-transcripts", {
+        body: { userId: user?.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`${data.synced || 0} transcrições sincronizadas`);
+      queryClient.invalidateQueries({ queryKey: ["funcionario-reunioes"] });
+    } catch (error: any) {
+      console.error("Sync error:", error);
+      toast.error(error.message || "Erro ao sincronizar transcrições");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   // Map user_id → member name
   const memberNameByUserId = useMemo(() => {
     const map = new Map<string, string>();
