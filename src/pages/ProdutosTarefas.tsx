@@ -90,6 +90,7 @@ function tarefaDbToLocal(t: ProdutoTemplateTarefa): TarefaLocal {
     colunaId: meta.coluna_id || "",
     dependencias: meta.dependencias || [],
     comissao: meta.comissao || 0,
+    tipoTarefaId: meta.tipo_tarefa_id || "",
   };
 }
 
