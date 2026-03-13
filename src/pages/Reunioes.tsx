@@ -160,16 +160,18 @@ export default function Reunioes() {
     enabled: !!user?.id,
   });
 
-  // Filter by selected member
+  // Filter by selected member then by period
   const reunioes = useMemo(() => {
     if (!allReunioes) return [];
-    if (selectedMemberId === "todos") return allReunioes;
-    if (selectedMemberId === "meus") return allReunioes.filter(r => r.user_id === user?.id);
-    // Find the member's auth_user_id
-    const membro = membros.find(m => m.id === selectedMemberId);
-    if (!membro?.auth_user_id) return [];
-    return allReunioes.filter(r => r.user_id === membro.auth_user_id);
-  }, [allReunioes, selectedMemberId, membros, user?.id]);
+    let filtered = allReunioes;
+    if (selectedMemberId === "meus") filtered = filtered.filter(r => r.user_id === user?.id);
+    else if (selectedMemberId !== "todos") {
+      const membro = membros.find(m => m.id === selectedMemberId);
+      if (!membro?.auth_user_id) return [];
+      filtered = filtered.filter(r => r.user_id === membro.auth_user_id);
+    }
+    return periodFilter.filterReunioes(filtered);
+  }, [allReunioes, selectedMemberId, membros, user?.id, periodFilter]);
 
   const { data: googleCalendarConfig } = useQuery({
     queryKey: ["google-calendar-config", user?.id],
