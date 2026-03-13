@@ -349,7 +349,26 @@ export default function Tarefas() {
     moverTarefa.mutate(
       { id: tarefaId, coluna_id: targetColunaId, ordem: targetTarefas.length },
       {
-        onSuccess: () => toast.success("Tarefa movida!"),
+        onSuccess: async () => {
+          toast.success("Tarefa movida!");
+          // Auto-create commission when moved to last column (Concluído) and has commission
+          const targetColuna = colunas.find(c => c.id === targetColunaId);
+          const lastColuna = colunas[colunas.length - 1];
+          if (tarefa.comissao && tarefa.comissao > 0 && targetColuna?.id === lastColuna?.id && tarefa.responsavel_nome && ownerId) {
+            const responsaveis = tarefa.responsavel_nome.split(",").map(n => n.trim());
+            const comissaoPorPessoa = tarefa.comissao / responsaveis.length;
+            for (const nome of responsaveis) {
+              await supabase.from("comissoes").insert({
+                tarefa_id: tarefa.id,
+                user_id: ownerId,
+                membro_nome: nome,
+                valor: comissaoPorPessoa,
+                status: "pendente",
+              });
+            }
+            toast.info("Comissão criada! Aguardando aprovação.");
+          }
+        },
         onError: (e: any) => toast.error(e.message),
       }
     );
