@@ -30,7 +30,7 @@ function MonitorFrame({ children, className }: DeviceFrameProps) {
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/60" />
           </div>
           {/* Screen content */}
-          <div className="w-full" style={{ height: "75vh" }}>
+          <div className="w-full" style={{ aspectRatio: "16 / 10", maxHeight: "70vh" }}>
             {children}
           </div>
         </div>
