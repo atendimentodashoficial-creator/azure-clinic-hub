@@ -84,7 +84,7 @@ export function SelectClientStep({
 function computeSlots(
   escalas: EscalaMembro[],
   ausencias: AusenciaMembro[],
-  existingMeetings: Array<{ data_reuniao: string; duracao_minutos: number }>,
+  memberMeetings: Array<{ data_reuniao: string; duracao_minutos: number }>,
   date: string,
   durationMin: number,
   stepMin: number = 30,
@@ -116,7 +116,7 @@ function computeSlots(
         return rangesOverlap(slotRange, { startMin: aS, endMin: aE });
       });
       if (absConflict) continue;
-      const meetConflict = existingMeetings.some(m => {
+      const meetConflict = memberMeetings.some(m => {
         const mDate = m.data_reuniao.substring(0, 10);
         if (mDate !== date) return false;
         const mTime = m.data_reuniao.substring(11, 16);
