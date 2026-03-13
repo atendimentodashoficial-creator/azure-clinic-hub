@@ -70,7 +70,7 @@ export function useProdutoTemplateMutations() {
   };
 
   const criarTemplate = useMutation({
-    mutationFn: async (data: { nome: string; descricao?: string; requer_reuniao?: boolean }) => {
+    mutationFn: async (data: { nome: string; descricao?: string; requer_reuniao?: boolean; duracao_reuniao?: number }) => {
       if (!user?.id) throw new Error("Não autenticado");
       const { data: created, error } = await supabase
         .from("produto_templates" as any)
