@@ -91,10 +91,10 @@ export function TiposReuniaoConfig() {
     try {
       let tipoId: string;
       if (editando) {
-        await atualizarTipo.mutateAsync({ id: editando.id, nome: nome.trim(), descricao: descricao.trim() || null });
+        await atualizarTipo.mutateAsync({ id: editando.id, nome: nome.trim(), descricao: descricao.trim() || null, duracao_minutos: duracaoMinutos });
         tipoId = editando.id;
       } else {
-        const created = await criarTipo.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined });
+        const created = await criarTipo.mutateAsync({ nome: nome.trim(), descricao: descricao.trim() || undefined, duracao_minutos: duracaoMinutos });
         tipoId = created.id;
       }
       await setMembros.mutateAsync({ tipoId, membroIds: selectedMembros });
