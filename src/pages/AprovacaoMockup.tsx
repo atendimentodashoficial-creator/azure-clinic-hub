@@ -41,6 +41,7 @@ function derivePostStatus(mockups: MockupData[]): string {
 export default function AprovacaoMockup() {
   const { token } = useParams<{ token: string }>();
   const [mockups, setMockups] = useState<MockupData[]>([]);
+  const [taskLinks, setTaskLinks] = useState<{ url: string; titulo: string | null; ordem: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPostIdx, setCurrentPostIdx] = useState(0);
