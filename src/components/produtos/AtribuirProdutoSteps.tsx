@@ -87,6 +87,7 @@ function computeSlots(
   existingMeetings: Array<{ data_reuniao: string; duracao_minutos: number }>,
   date: string,
   durationMin: number,
+  stepMin: number = 30,
 ): string[] {
   const d = new Date(date + "T00:00:00");
   const dow = getDay(d);
