@@ -225,7 +225,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   if (!tarefa) return null;
 
   // Determine which file types this task type requires (excluding mockup)
-  const requiredFileTypes = tipoTarefa?.tipos_arquivo_permitidos?.filter(t => t !== "mockup" && t !== "qualquer") || [];
+  const requiredFileTypes = tipoTarefa?.tipos_arquivo_permitidos?.filter(t => t !== "mockup" && t !== "qualquer" && t !== "links") || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
