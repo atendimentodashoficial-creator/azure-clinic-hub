@@ -499,9 +499,6 @@ function LinkOnlyApproval({
           </p>
         </div>
 
-        <Badge className={cn("border-0 mx-auto block w-fit", statusColor(linkApprovalStatus))}>
-          {statusLabel(linkApprovalStatus)}
-        </Badge>
 
         {/* Embedded link previews */}
         <div className="space-y-4">
@@ -509,16 +506,21 @@ function LinkOnlyApproval({
             const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
             return (
               <Card key={i} className="overflow-hidden">
-                <div className="flex items-center gap-2 p-3 border-b bg-muted/50">
-                  <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline truncate"
-                  >
-                    {link.titulo || link.url}
-                  </a>
+                <div className="flex items-center justify-between gap-2 p-3 border-b bg-muted/50">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline truncate"
+                    >
+                      {link.titulo || link.url}
+                    </a>
+                  </div>
+                  <Badge className={cn("border-0 flex-shrink-0", statusColor(linkApprovalStatus))}>
+                    {statusLabel(linkApprovalStatus)}
+                  </Badge>
                 </div>
                 <div className="w-full bg-muted" style={{ height: "80vh" }}>
                   <iframe
