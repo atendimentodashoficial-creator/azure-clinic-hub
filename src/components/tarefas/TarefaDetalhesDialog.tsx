@@ -277,12 +277,12 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
             <>
               <Separator />
               <div className="space-y-3">
-                <MockupEditor
-                  slides={mockupSlides}
-                  onChange={setMockupSlides}
+                <MockupPostsManager
+                  posts={posts}
+                  onChange={setPosts}
+                  maxPosts={mockupLimit}
                   perfilNome={cliente?.nome || "perfil"}
                   perfilCategoria={cliente?.empresa || ""}
-                  maxSlides={mockupLimit}
                 />
                 <Button onClick={handleSaveMockups} disabled={saveMockups.isPending} className="w-full gap-2">
                   <Save className="h-4 w-4" />
