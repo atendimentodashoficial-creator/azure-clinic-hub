@@ -66,6 +66,23 @@ export const useCreateEscalaMembro = () => {
   });
 };
 
+export const useUpdateEscalaMembro = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...escala }: Partial<EscalaMembro> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("escalas_membros" as any)
+        .update(escala as any)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["escalas-membros"] }),
+  });
+};
+
 export const useDeleteEscalaMembro = () => {
   const queryClient = useQueryClient();
   return useMutation({
