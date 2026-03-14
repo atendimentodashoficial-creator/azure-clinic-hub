@@ -1113,7 +1113,9 @@ function LinkOnlyApproval({
   const tarefaTitulo = taskInfo?.tarefa_titulo || "Tarefa";
   const clienteNome = taskInfo?.cliente_nome || "";
   const decided = linkApprovalStatus === "aprovado" || linkApprovalStatus === "reprovado";
-  const [deviceView, setDeviceView] = useState<"mobile" | "desktop">(isEmbedded ? "mobile" : "desktop");
+  const isMobile = useIsMobile();
+  const [deviceView, setDeviceView] = useState<"mobile" | "desktop">(isEmbedded ? "mobile" : isMobile ? "mobile" : "desktop");
+  const showDeviceToggle = isEmbedded; // Only show toggle in client panel
 
   const statusColor = (s: string) => {
     if (s === "aprovado") return "bg-emerald-500/20 text-emerald-400";
@@ -1138,25 +1140,27 @@ function LinkOnlyApproval({
           </div>
         )}
 
-        {/* Device view toggle */}
-        <div className="flex gap-2 justify-center">
-          <Button
-            variant={deviceView === "mobile" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setDeviceView("mobile")}
-            className="gap-1.5"
-          >
-            📱 Mobile
-          </Button>
-          <Button
-            variant={deviceView === "desktop" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setDeviceView("desktop")}
-            className="gap-1.5"
-          >
-            🖥️ Desktop
-          </Button>
-        </div>
+        {/* Device view toggle — only in client panel */}
+        {showDeviceToggle && (
+          <div className="flex gap-2 justify-center">
+            <Button
+              variant={deviceView === "mobile" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDeviceView("mobile")}
+              className="gap-1.5"
+            >
+              📱 Mobile
+            </Button>
+            <Button
+              variant={deviceView === "desktop" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDeviceView("desktop")}
+              className="gap-1.5"
+            >
+              🖥️ Desktop
+            </Button>
+          </div>
+        )}
 
         {/* Embedded link previews */}
         <div className="space-y-8">
