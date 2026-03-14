@@ -35,9 +35,9 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(1.15);
   const [wrapperH, setWrapperH] = useState<string>('auto');
-  const maxScaleRef = useRef(1);
+  const maxScaleRef = useRef(1.15);
 
   const recalc = useCallback(() => {
     if (isMobile || !containerRef.current || !innerRef.current) return;
@@ -46,26 +46,29 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
     const rightPanel = parent.querySelector('[data-grid-right]') as HTMLElement;
     if (!rightPanel) return;
 
-    // Temporarily reset to measure natural height
     innerRef.current.style.transform = 'scale(1)';
     const naturalH = innerRef.current.offsetHeight;
     const rightH = Math.max(rightPanel.offsetHeight, 900);
 
     if (naturalH > 0 && rightH > 0) {
       const s = Math.max(1.15, Math.min(rightH / naturalH, 1.5));
-      // Never shrink below the max scale we've ever reached
       maxScaleRef.current = Math.max(maxScaleRef.current, s);
       const finalScale = maxScaleRef.current;
       setScale(finalScale);
       setWrapperH(`${naturalH * finalScale}px`);
       innerRef.current.style.transform = `scale(${finalScale})`;
     } else {
-      innerRef.current.style.transform = 'scale(1)';
+      innerRef.current.style.transform = `scale(${maxScaleRef.current})`;
     }
   }, [isMobile]);
 
+  // Run immediately on mount to avoid flash at small size
+  useLayoutEffect(() => {
+    recalc();
+  }, [recalc]);
+
   useEffect(() => {
-    const t = setTimeout(recalc, 300);
+    const t = setTimeout(recalc, 100);
     return () => clearTimeout(t);
   }, [recalc]);
 
