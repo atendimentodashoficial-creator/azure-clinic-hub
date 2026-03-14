@@ -115,7 +115,11 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const mockupLimit = tipoTarefa?.limite_arquivos?.mockup || 0;
   const linksLimit = tipoTarefa?.limite_arquivos?.links || 0;
   const requiresApproval = hasMockup || hasLinks || hasGrid;
+  const exigeAprovacaoInterna = tipoTarefa?.exige_aprovacao_interna ?? false;
+  const exigeAprovacaoCliente = tipoTarefa?.exige_aprovacao ?? false;
   const cliente = tarefa?.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
+  const clienteCompleto2 = tarefa?.cliente_id ? clientesCompletos.find(c => c.id === tarefa.cliente_id) : null;
+  const gestorMembro = clienteCompleto2?.gestor_id ? membros.find(m => m.id === clienteCompleto2.gestor_id) : null;
   const reuniao = tarefa?.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
   const prio = PRIORIDADES.find(p => p.value === tarefa?.prioridade) || PRIORIDADES[1];
   const coluna = tarefa ? colunas.find(c => c.id === tarefa.coluna_id) : null;
