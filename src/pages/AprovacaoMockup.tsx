@@ -37,6 +37,7 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
   const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [wrapperH, setWrapperH] = useState<string>('auto');
+  const maxScaleRef = useRef(1);
 
   const recalc = useCallback(() => {
     if (isMobile || !containerRef.current || !innerRef.current) return;
@@ -52,9 +53,12 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
 
     if (naturalH > 0 && rightH > 0) {
       const s = Math.max(1, Math.min(rightH / naturalH, 1.5));
-      setScale(s);
-      setWrapperH(`${naturalH * s}px`);
-      innerRef.current.style.transform = `scale(${s})`;
+      // Never shrink below the max scale we've ever reached
+      maxScaleRef.current = Math.max(maxScaleRef.current, s);
+      const finalScale = maxScaleRef.current;
+      setScale(finalScale);
+      setWrapperH(`${naturalH * finalScale}px`);
+      innerRef.current.style.transform = `scale(${finalScale})`;
     } else {
       innerRef.current.style.transform = 'scale(1)';
     }
