@@ -11,6 +11,8 @@ import { Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTiposTarefas, TipoTarefa } from "@/hooks/useTiposTarefas";
 import { useTarefaMockups } from "@/hooks/useTarefaMockups";
 import { useTarefaLinks } from "@/hooks/useTarefaLinks";
+import { useTarefaGrid } from "@/hooks/useTarefaGrid";
+import { GridPostsManager } from "./GridPostsManager";
 import { MockupPostsManager, PostGroup } from "./MockupPostsManager";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
