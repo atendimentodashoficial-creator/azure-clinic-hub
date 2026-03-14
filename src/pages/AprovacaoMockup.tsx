@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MockupPreview, MockupSlide } from "@/components/tarefas/MockupPreview";
 import { InstagramGridPreview } from "@/components/tarefas/InstagramGridPreview";
@@ -158,6 +158,7 @@ function derivePostStatus(mockups: MockupData[]): string {
 
 export default function AprovacaoMockup() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const [mockups, setMockups] = useState<MockupData[]>([]);
   const [taskLinks, setTaskLinks] = useState<TaskLink[]>([]);
   const [gridPosts, setGridPosts] = useState<GridPostData[]>([]);
@@ -176,7 +177,15 @@ export default function AprovacaoMockup() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [linkApprovalStatus, setLinkApprovalStatus] = useState<string>("pendente");
-  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">("pendentes");
+  
+  const filterParam = searchParams.get("filter") as "pendentes" | "aprovadas" | "reprovadas" | null;
+  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">(filterParam || "pendentes");
+  const hideFilterTabs = searchParams.get("hideFilter") === "1";
+
+  // Sync filter from parent via search params changes
+  useEffect(() => {
+    if (filterParam) setApprovalFilter(filterParam);
+  }, [filterParam]);
 
   const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
   const isGridMode = gridPosts.length > 0;
@@ -680,7 +689,7 @@ export default function AprovacaoMockup() {
             {/* Right: Approval controls */}
             <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6 lg:min-h-[700px]">
               {/* Filter: Pendentes / Aprovadas */}
-              <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />
+              {!hideFilterTabs && <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />}
 
               {/* Tab switch: Posts / Destaques */}
               {hasHighlights && (
@@ -973,7 +982,7 @@ export default function AprovacaoMockup() {
           </Card>
         )}
 
-        <ApprovalFilterTabs pendingCount={pendingMockupPosts.length} approvedCount={approvedMockupPosts.length} rejectedCount={rejectedMockupPosts.length} />
+        {!hideFilterTabs && <ApprovalFilterTabs pendingCount={pendingMockupPosts.length} approvedCount={approvedMockupPosts.length} rejectedCount={rejectedMockupPosts.length} />}
 
         {filteredPosts.length === 0 ? (
           <Card className="p-6 text-center">

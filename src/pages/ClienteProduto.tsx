@@ -211,6 +211,8 @@ export default function ClienteProduto() {
 /* ─── Task Detail View ─── */
 
 function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTarefa; produtoNome: string; onBack: () => void }) {
+  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">("pendentes");
+  const iframeRef = useState<HTMLIFrameElement | null>(null);
   const { data: gridPosts = [] } = useQuery({
     queryKey: ["cliente-grid", tarefa.id],
     queryFn: async () => {
@@ -310,13 +312,34 @@ function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTar
       </div>
 
       {tarefa.approval_token ? (
-        <div className="rounded-lg border overflow-hidden bg-background" style={{ minHeight: '70vh' }}>
-          <iframe
-            src={`/aprovacao/${tarefa.approval_token}`}
-            className="w-full border-0"
-            style={{ height: '80vh' }}
-            title="Aprovação da entrega"
-          />
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            {(["pendentes", "aprovadas", "reprovadas"] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setApprovalFilter(f)}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-medium rounded-md border transition-all",
+                  f === "pendentes" && "border-amber-500/60 text-amber-600 bg-amber-500/10",
+                  f === "aprovadas" && "border-emerald-500/60 text-emerald-600 bg-emerald-500/10",
+                  f === "reprovadas" && "border-red-500/60 text-red-600 bg-red-500/10",
+                  approvalFilter === f && f === "pendentes" && "ring-2 ring-amber-500/30 bg-amber-500/20",
+                  approvalFilter === f && f === "aprovadas" && "ring-2 ring-emerald-500/30 bg-emerald-500/20",
+                  approvalFilter === f && f === "reprovadas" && "ring-2 ring-red-500/30 bg-red-500/20",
+                )}
+              >
+                {f === "pendentes" ? "Pendentes" : f === "aprovadas" ? "Aprovadas" : "Reprovadas"}
+              </button>
+            ))}
+          </div>
+          <div className="rounded-lg border overflow-hidden bg-background" style={{ minHeight: '70vh' }}>
+            <iframe
+              src={`/aprovacao/${tarefa.approval_token}?filter=${approvalFilter}&hideFilter=1`}
+              className="w-full border-0"
+              style={{ height: '80vh' }}
+              title="Aprovação da entrega"
+            />
+          </div>
         </div>
       ) : !hasDeliverables ? (
         <Card className="p-8 text-center">
