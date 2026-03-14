@@ -494,7 +494,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
     }
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_grid_highlight_approval", {
+      const { error: err } = await supabase.rpc(isInternal ? "update_grid_highlight_approval_internal" : "update_grid_highlight_approval", {
         p_token: token!,
         p_highlight_id: currentHighlight.highlight_id,
         p_status: "reprovado",
