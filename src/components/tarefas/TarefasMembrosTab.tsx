@@ -47,6 +47,8 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
   const [fotoUrl, setFotoUrl] = useState(membroEditando?.foto_url || "");
   const [fotoPreview, setFotoPreview] = useState(membroEditando?.foto_url || "");
   const [uploading, setUploading] = useState(false);
+  const [whatsappAvisoPessoal, setWhatsappAvisoPessoal] = useState(membroEditando?.whatsapp_aviso_pessoal || "");
+  const [whatsappAvisoGrupo, setWhatsappAvisoGrupo] = useState(membroEditando?.whatsapp_aviso_grupo || "");
 
   const resetForm = () => {
     setNome(""); setEmail(""); setTelefone(""); setCountryCode("55");

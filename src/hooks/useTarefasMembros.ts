@@ -17,6 +17,8 @@ export interface TarefaMembro {
   dia_pagamento: number | null;
   foto_url: string | null;
   auth_user_id: string | null;
+  whatsapp_aviso_pessoal: string | null;
+  whatsapp_aviso_grupo: string | null;
   created_at: string;
 }
 
