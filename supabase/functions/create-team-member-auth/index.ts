@@ -14,7 +14,7 @@ serve(async (req) => {
   try {
     // Verify caller is authenticated
     const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
         JSON.stringify({ error: 'Não autorizado' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -27,13 +27,13 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Verify the caller's JWT
+    // Verify the caller's JWT using getClaims (works with ES256 signing)
+    const token = authHeader.replace('Bearer ', '');
     const anonClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      auth: { autoRefreshToken: false, persistSession: false },
       global: { headers: { Authorization: authHeader } }
     });
-    const { data: { user: caller }, error: callerError } = await anonClient.auth.getUser();
-    if (callerError || !caller) {
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
       return new Response(
         JSON.stringify({ error: 'Não autorizado' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
