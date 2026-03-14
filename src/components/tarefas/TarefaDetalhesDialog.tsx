@@ -55,6 +55,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const { tipos } = useTiposTarefas();
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
   const { links: savedLinks, saveLinks } = useTarefaLinks(tarefa?.id || null);
+  const { gridPosts, uploadImage, removeImage, resubmitRejected: resubmitGridRejected } = useTarefaGrid(tarefa?.id || null);
   const [resubmitting, setResubmitting] = useState(false);
   const [posts, setPosts] = useState<PostGroup[]>([
     { postIndex: 0, slides: [{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }] },
