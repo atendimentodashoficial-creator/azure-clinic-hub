@@ -414,6 +414,34 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
                   {format(new Date(reuniao.data_reuniao), "dd/MM/yyyy 'às' HH:mm")}
                 </p>
               )}
+              {colType === 'internal_approval' && (tarefa as any).internal_approval_token && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const link = `${window.location.origin}/aprovacao-interna/${(tarefa as any).internal_approval_token}`;
+                      navigator.clipboard.writeText(link);
+                      toast.success("Link copiado!");
+                    }}
+                  >
+                    <Copy className="h-3 w-3" /> Copiar link
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(`/aprovacao-interna/${(tarefa as any).internal_approval_token}`, "_blank");
+                    }}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
             </>
           )}
 
