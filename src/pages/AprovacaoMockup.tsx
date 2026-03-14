@@ -437,9 +437,14 @@ export default function AprovacaoMockup() {
         p_feedback: feedback,
       });
       if (err) throw err;
-      setGridHighlights(prev =>
-        prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h)
-      );
+      setGridHighlights(prev => {
+        const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h);
+        if (gridPosts.some(g => g.status === "pendente") && !updated.some(h => h.status === "pendente")) {
+          setGridApprovalTab("posts");
+          setCurrentGridIdx(0);
+        }
+        return updated;
+      });
       toast.success("Destaque reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
