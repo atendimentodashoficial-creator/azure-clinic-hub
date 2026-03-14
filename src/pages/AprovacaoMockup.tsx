@@ -437,7 +437,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
         return updated;
       });
       toast.success("Post reprovado com feedback.");
-      checkAndNotifyRejection(token!, feedback);
+      checkAndNotifyRejection(token!, feedback, isInternal);
     } catch {
       toast.error("Erro ao reprovar");
     } finally {
