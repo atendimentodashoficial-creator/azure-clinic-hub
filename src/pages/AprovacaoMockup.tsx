@@ -35,9 +35,8 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.95);
+  const [scale, setScale] = useState(1);
   const [wrapperH, setWrapperH] = useState<string>('auto');
-  const maxScaleRef = useRef(0.95);
 
   const recalc = useCallback(() => {
     if (isMobile || !containerRef.current || !innerRef.current) return;
@@ -48,27 +47,22 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
 
     innerRef.current.style.transform = 'scale(1)';
     const naturalH = innerRef.current.offsetHeight;
-    const rightH = Math.max(rightPanel.offsetHeight, 700);
+    const rightH = rightPanel.offsetHeight;
 
     if (naturalH > 0 && rightH > 0) {
-      const s = Math.max(0.85, Math.min(rightH / naturalH, 1.15));
-      maxScaleRef.current = Math.max(maxScaleRef.current, s);
-      const finalScale = maxScaleRef.current;
-      setScale(finalScale);
-      setWrapperH(`${naturalH * finalScale}px`);
-      innerRef.current.style.transform = `scale(${finalScale})`;
-    } else {
-      innerRef.current.style.transform = `scale(${maxScaleRef.current})`;
+      const s = rightH / naturalH;
+      setScale(s);
+      setWrapperH(`${rightH}px`);
+      innerRef.current.style.transform = `scale(${s})`;
     }
   }, [isMobile]);
 
-  // Run immediately on mount to avoid flash at small size
   useLayoutEffect(() => {
     recalc();
   }, [recalc]);
 
   useEffect(() => {
-    const t = setTimeout(recalc, 100);
+    const t = setTimeout(recalc, 150);
     return () => clearTimeout(t);
   }, [recalc]);
 
@@ -77,10 +71,15 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [recalc]);
 
+  useEffect(() => {
+    window.addEventListener('resize', recalc);
+    return () => window.removeEventListener('resize', recalc);
+  }, [recalc]);
+
   if (isMobile) return <>{children}</>;
 
   return (
-    <div ref={containerRef} style={{ height: wrapperH }}>
+    <div ref={containerRef} style={{ height: wrapperH, overflow: 'hidden' }}>
       <div
         ref={innerRef}
         style={{
