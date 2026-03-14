@@ -595,7 +595,7 @@ export default function AprovacaoMockup() {
 
           <div data-grid-layout className={cn("flex flex-col lg:flex-row lg:items-start lg:justify-center", isEmbedded ? "lg:gap-6 xl:gap-10" : "lg:gap-10 xl:gap-16")}>
             {/* Left: Instagram grid mockup — visual reference */}
-            <div className={cn("order-2 lg:order-1 lg:sticky lg:top-4 w-full mx-auto lg:mx-0 flex-shrink-0", isEmbedded ? "max-w-[280px]" : "max-w-[340px]")}>
+            <div className={cn("order-2 lg:order-1 lg:sticky lg:top-4 w-full mx-auto lg:mx-0 flex-shrink-0", isEmbedded ? "max-w-[360px]" : "max-w-[400px]")}>
               <GridMockupScaler>
                 <IPhoneFrame>
                   <InstagramGridPreview
@@ -624,7 +624,7 @@ export default function AprovacaoMockup() {
             </div>
 
             {/* Right: Approval controls */}
-            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6 lg:min-h-[700px]">
+            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-md mx-auto lg:mx-0 space-y-6">
               {/* Filter: Pendentes / Aprovadas */}
               {!hideFilterTabs && <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />}
 
