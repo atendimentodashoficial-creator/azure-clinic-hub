@@ -361,7 +361,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
         )
       );
       toast.success("Post reprovado com feedback.");
-      checkAndNotifyRejection(token!, feedbacks[currentPost.postIndex]);
+      checkAndNotifyRejection(token!, feedbacks[currentPost.postIndex], isInternal);
     } catch {
       toast.error("Erro ao reprovar");
     } finally {
