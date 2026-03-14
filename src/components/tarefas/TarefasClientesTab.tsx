@@ -97,6 +97,7 @@ export default function TarefasClientesTab() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
+                        <AvatarImage src={cliente.foto_perfil_url || undefined} />
                         <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                           {getInitials(cliente.nome)}
                         </AvatarFallback>
