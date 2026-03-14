@@ -220,6 +220,8 @@ export default function TiposTarefas() {
 
   return (
     <>
+      <div className="space-y-4">
+      <TarefasNotificacaoInstanciaConfig />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
           <CardTitle className="text-lg font-semibold">Tipos de Tarefas</CardTitle>
