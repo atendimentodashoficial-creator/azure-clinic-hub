@@ -201,6 +201,8 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [linkApprovalStatus, setLinkApprovalStatus] = useState<string>("pendente");
+  // Track pending advance after rejection — stores the callback to advance
+  const [pendingAdvance, setPendingAdvance] = useState<(() => void) | null>(null);
   
   const isEmbedded = searchParams.get("hideFilter") === "1";
   const filterParam = searchParams.get("filter") as "pendentes" | "aprovadas" | "reprovadas" | null;
@@ -360,6 +362,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
             : m
         )
       );
+      setPendingAdvance(() => () => {});
       toast.success("Post reprovado com feedback.");
       checkAndNotifyRejection(token!, feedbacks[currentPost.postIndex], isInternal);
     } catch {
@@ -428,11 +431,13 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
         const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g);
         const allPostsDecided = !updated.some(g => g.status === "pendente");
         const allHighlightsDecided = !gridHighlights.some(h => h.status === "pendente");
+        // Defer navigation — show "Próximo" button first
         if (allPostsDecided && allHighlightsDecided) {
-          setGridApprovalTab("grade");
+          setPendingAdvance(() => () => setGridApprovalTab("grade"));
         } else if (allPostsDecided && !allHighlightsDecided) {
-          setGridApprovalTab("highlights");
-          setCurrentHighlightIdx(0);
+          setPendingAdvance(() => () => { setGridApprovalTab("highlights"); setCurrentHighlightIdx(0); });
+        } else {
+          setPendingAdvance(() => () => {});
         }
         return updated;
       });
@@ -509,15 +514,19 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
         const remainingPending = updated.filter(h => h.status === "pendente");
         const allHighlightsDecided = remainingPending.length === 0;
         const allPostsDecided = !gridPosts.some(g => g.status === "pendente");
+        // Defer navigation — show "Próximo" button first
         if (allHighlightsDecided && allPostsDecided) {
-          setGridApprovalTab("grade");
+          setPendingAdvance(() => () => setGridApprovalTab("grade"));
         } else if (allHighlightsDecided && !allPostsDecided) {
-          setGridApprovalTab("posts");
-          setCurrentGridIdx(0);
+          setPendingAdvance(() => () => { setGridApprovalTab("posts"); setCurrentGridIdx(0); });
         } else {
           const sortedUpdated = [...updated].sort((a, b) => a.ordem - b.ordem);
           const nextIdx = sortedUpdated.findIndex((h, i) => i > clampedHighlightIdx && h.status === "pendente");
-          if (nextIdx >= 0) setCurrentHighlightIdx(nextIdx);
+          if (nextIdx >= 0) {
+            setPendingAdvance(() => () => setCurrentHighlightIdx(nextIdx));
+          } else {
+            setPendingAdvance(() => () => {});
+          }
         }
         return updated;
       });
@@ -846,16 +855,22 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
                             onChange={e => setGridFeedbacks(prev => ({ ...prev, [currentFilteredGridPost.grid_post_id]: e.target.value }))}
                             rows={2}
                           />
-                          <div className="flex gap-2">
-                            <Button onClick={handleApproveGridPost} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredGridPost.status === "aprovado" ? "secondary" : "default"}>
-                              <Check className="w-4 h-4" />
-                              {currentFilteredGridPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                          {pendingAdvance ? (
+                            <Button onClick={() => { pendingAdvance(); setPendingAdvance(null); }} className="w-full gap-1.5">
+                              Próximo <ChevronRight className="w-4 h-4" />
                             </Button>
-                            <Button onClick={handleRejectGridPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
-                              <X className="w-4 h-4" />
-                              {currentFilteredGridPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
-                            </Button>
-                          </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button onClick={handleApproveGridPost} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredGridPost.status === "aprovado" ? "secondary" : "default"}>
+                                <Check className="w-4 h-4" />
+                                {currentFilteredGridPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                              </Button>
+                              <Button onClick={handleRejectGridPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
+                                <X className="w-4 h-4" />
+                                {currentFilteredGridPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                              </Button>
+                            </div>
+                          )}
                         </Card>
 
                         {currentFilteredGridPost.status === "reprovado" && currentFilteredGridPost.feedback && (
@@ -930,16 +945,22 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
                             onChange={e => setHighlightFeedbacks(prev => ({ ...prev, [currentFilteredHighlight.highlight_id]: e.target.value }))}
                             rows={2}
                           />
-                          <div className="flex gap-2">
-                            <Button onClick={handleApproveHighlight} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredHighlight.status === "aprovado" ? "secondary" : "default"}>
-                              <Check className="w-4 h-4" />
-                              {currentFilteredHighlight.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                          {pendingAdvance ? (
+                            <Button onClick={() => { pendingAdvance(); setPendingAdvance(null); }} className="w-full gap-1.5">
+                              Próximo <ChevronRight className="w-4 h-4" />
                             </Button>
-                            <Button onClick={handleRejectHighlight} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
-                              <X className="w-4 h-4" />
-                              {currentFilteredHighlight.status === "reprovado" ? "Reprovado" : "Reprovar"}
-                            </Button>
-                          </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button onClick={handleApproveHighlight} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredHighlight.status === "aprovado" ? "secondary" : "default"}>
+                                <Check className="w-4 h-4" />
+                                {currentFilteredHighlight.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                              </Button>
+                              <Button onClick={handleRejectHighlight} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
+                                <X className="w-4 h-4" />
+                                {currentFilteredHighlight.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                              </Button>
+                            </div>
+                          )}
                         </Card>
 
                         {currentFilteredHighlight.status === "reprovado" && currentFilteredHighlight.feedback && (
@@ -1118,16 +1139,22 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
                       onChange={e => setFeedbacks(prev => ({ ...prev, [currentPost.postIndex]: e.target.value }))}
                       rows={2}
                     />
-                    <div className="flex gap-2">
-                      <Button onClick={handleApprovePost} disabled={submitting} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
-                        <Check className="w-4 h-4" />
-                        {currentPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                    {pendingAdvance ? (
+                      <Button onClick={() => { pendingAdvance(); setPendingAdvance(null); }} className="w-full gap-1.5">
+                        Próximo <ChevronRight className="w-4 h-4" />
                       </Button>
-                      <Button onClick={handleRejectPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
-                        <X className="w-4 h-4" />
-                        {currentPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
-                      </Button>
-                    </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button onClick={handleApprovePost} disabled={submitting} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
+                          <Check className="w-4 h-4" />
+                          {currentPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                        </Button>
+                        <Button onClick={handleRejectPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
+                          <X className="w-4 h-4" />
+                          {currentPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                        </Button>
+                      </div>
+                    )}
                   </Card>
               </div>
             )}
