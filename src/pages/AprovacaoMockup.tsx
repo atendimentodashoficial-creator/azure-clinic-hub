@@ -30,6 +30,20 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+// Fire-and-forget notification when task is fully approved/rejected via public page
+async function notifyTaskEvent(tarefaId: string, evento: string, feedback?: string) {
+  try {
+    // Get task user_id first
+    const { data: tarefa } = await supabase.from("tarefas").select("user_id").eq("id", tarefaId).maybeSingle();
+    if (!tarefa?.user_id) return;
+    await supabase.functions.invoke("enviar-aviso-tarefa", {
+      body: { evento, tarefa_id: tarefaId, user_id: tarefa.user_id, feedback },
+    });
+  } catch (e) {
+    console.error("Notification error:", e);
+  }
+}
+
 
 
 interface MockupData {
