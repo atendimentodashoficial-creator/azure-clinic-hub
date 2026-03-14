@@ -30,6 +30,19 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+// Fire-and-forget notification when task is fully approved/rejected via public page
+async function notifyTaskEvent(tarefaId: string, evento: string, feedback?: string) {
+  try {
+    const { data: tarefa } = await supabase.from("tarefas").select("user_id").eq("id", tarefaId).maybeSingle();
+    if (!tarefa?.user_id) return;
+    await supabase.functions.invoke("enviar-aviso-tarefa", {
+      body: { evento, tarefa_id: tarefaId, user_id: tarefa.user_id, feedback },
+    });
+  } catch (e) {
+    console.error("Notification error:", e);
+  }
+}
+
 // Check if task became fully approved after an action and send notification
 async function checkAndNotifyCompletion(token: string) {
   try {
@@ -40,11 +53,11 @@ async function checkAndNotifyCompletion(token: string) {
   } catch {}
 }
 
-// Check if any item was rejected and send notification
+// Send rejection notification
 async function checkAndNotifyRejection(token: string, feedback?: string) {
   try {
     const { data } = await supabase.rpc("get_task_by_approval_token", { p_token: token });
-    if (data?.[0]?.approval_status === "em_revisao" || data?.[0]?.tarefa_id) {
+    if (data?.[0]?.tarefa_id) {
       notifyTaskEvent(data[0].tarefa_id, "reprovada_cliente", feedback);
     }
   } catch {}
