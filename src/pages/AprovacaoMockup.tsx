@@ -959,7 +959,7 @@ export default function AprovacaoMockup() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
         {!isEmbedded && (
           <div className="text-center space-y-1">
             <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
