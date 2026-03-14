@@ -99,7 +99,7 @@ function FileLimitCounter({ label, value, onChange }: { label: string; value: nu
 
 // --- Main Page ---
 export default function TiposTarefas() {
-  const { tipos, isLoading, createTipo, updateTipo, deleteTipo } = useTiposTarefas();
+  const { tipos, isLoading, error, createTipo, updateTipo, deleteTipo } = useTiposTarefas();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTipo, setEditingTipo] = useState<TipoTarefa | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -191,6 +191,19 @@ export default function TiposTarefas() {
     return (
       <Card><CardHeader><CardTitle className="text-lg font-semibold">Tipos de Tarefas</CardTitle></CardHeader>
         <CardContent className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full" />)}</CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Tipos de Tarefas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-destructive">Erro ao carregar tipos de tarefas. Atualize a página.</p>
+        </CardContent>
       </Card>
     );
   }
