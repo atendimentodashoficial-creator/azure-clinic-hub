@@ -176,7 +176,7 @@ export default function AprovacaoMockup() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [linkApprovalStatus, setLinkApprovalStatus] = useState<string>("pendente");
-  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas">("pendentes");
+  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">("pendentes");
 
   const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
   const isGridMode = gridPosts.length > 0;
