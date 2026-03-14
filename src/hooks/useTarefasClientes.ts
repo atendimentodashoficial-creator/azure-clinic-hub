@@ -122,13 +122,16 @@ export function useTarefasClientes() {
         Object.entries(updates).filter(([, value]) => value !== undefined)
       ) as Partial<TarefaCliente>;
 
-      const clienteAtual = clientes.find((c) => c.id === id);
-      const clienteComposto: Partial<TarefaCliente> = {
-        ...clienteAtual,
-        ...sanitizedUpdates,
-      };
-
-      await ensureClienteInternoAuth(clienteComposto);
+      // Only sync auth if tipo/email/senha are being changed
+      const needsAuthSync = 'tipo' in sanitizedUpdates || 'email' in sanitizedUpdates || 'senha_acesso' in sanitizedUpdates;
+      if (needsAuthSync) {
+        const clienteAtual = clientes.find((c) => c.id === id);
+        const clienteComposto: Partial<TarefaCliente> = {
+          ...clienteAtual,
+          ...sanitizedUpdates,
+        };
+        await ensureClienteInternoAuth(clienteComposto);
+      }
 
       const { error } = await supabase
         .from("tarefas_clientes")
