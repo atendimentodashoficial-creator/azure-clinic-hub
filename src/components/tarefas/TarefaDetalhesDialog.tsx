@@ -351,7 +351,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     try {
       await resubmitRejected.mutateAsync();
 
-      const approvalColumnId = await findAguardandoAprovacaoColumnId();
+      const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
       if (approvalColumnId) {
         const { error } = await supabase
           .from("tarefas")
