@@ -554,7 +554,7 @@ export default function Tarefas() {
         .from("tarefa_revisoes")
         .select("tarefa_id, status")
         .in("tarefa_id", tarefaIds)
-        .or("status.eq.reprovado,status.eq.interna_reprovado,status.ilike.interna_%reprovado%");
+        .or("status.eq.reprovado,status.eq.interna_reprovado");
       if (error) throw error;
       return data || [];
     },
