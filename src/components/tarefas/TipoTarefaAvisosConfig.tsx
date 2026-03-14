@@ -14,6 +14,7 @@ export interface AvisoConfig {
     grupo_membro?: boolean;
     pessoal_membro?: boolean;
     pessoal_gestor?: boolean;
+    pessoal_cliente?: boolean;
   };
 }
 
@@ -31,6 +32,7 @@ const DESTINOS = [
   { key: "grupo_membro" as const, label: "Grupo do Membro" },
   { key: "pessoal_membro" as const, label: "Particular do Membro" },
   { key: "pessoal_gestor" as const, label: "Particular do Gestor" },
+  { key: "pessoal_cliente" as const, label: "Particular do Cliente" },
 ];
 
 const AVISO_TYPES: { key: keyof AvisosMap; label: string; description: string; defaultMsg: string }[] = [
