@@ -175,17 +175,20 @@ All colors MUST be HSL.
   /* Subtle thin scrollbar */
   .scrollbar-subtle {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--foreground) / 0.1) transparent;
+    scrollbar-color: hsl(var(--foreground) / 0.06) transparent;
   }
   .scrollbar-subtle::-webkit-scrollbar {
-    width: 4px;
+    width: 3px;
   }
   .scrollbar-subtle::-webkit-scrollbar-track {
     background: transparent;
   }
   .scrollbar-subtle::-webkit-scrollbar-thumb {
-    background: hsl(var(--foreground) / 0.1);
+    background: hsl(var(--foreground) / 0.06);
     border-radius: 9999px;
+  }
+  .scrollbar-subtle::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground) / 0.12);
   }
 
   /* Make native color input swatch fill the whole control */
