@@ -180,7 +180,7 @@ export default function AprovacaoMockup() {
   
   const isEmbedded = searchParams.get("hideFilter") === "1";
   const filterParam = searchParams.get("filter") as "pendentes" | "aprovadas" | "reprovadas" | null;
-  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">(isEmbedded && filterParam ? filterParam : "pendentes");
+  const [approvalFilter, setApprovalFilter] = useState<"all" | "pendentes" | "aprovadas" | "reprovadas">(isEmbedded && filterParam ? filterParam : "all");
   const hideFilterTabs = true; // Always hide — parent (client panel) controls externally
 
   // Sync filter from parent via search params changes
