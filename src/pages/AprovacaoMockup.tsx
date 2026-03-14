@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect, type ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MockupPreview, MockupSlide } from "@/components/tarefas/MockupPreview";
@@ -93,6 +93,43 @@ interface PostForApproval {
   postIndex: number;
   mockups: MockupData[];
   status: string;
+}
+
+/** Scales the IPhoneFrame mockup to fill the parent width while keeping internal proportions */
+function GradeScaledMockup({ children }: { children: ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>();
+
+  useLayoutEffect(() => {
+    const sync = () => {
+      const container = containerRef.current;
+      const inner = innerRef.current;
+      if (!container || !inner) return;
+      // Reset scale to measure natural size
+      inner.style.transform = 'none';
+      const naturalW = inner.scrollWidth;
+      const naturalH = inner.scrollHeight;
+      const containerW = container.clientWidth;
+      if (naturalW <= 0) return;
+      const scale = containerW / naturalW;
+      inner.style.transform = `scale(${scale})`;
+      inner.style.transformOrigin = 'top left';
+      setHeight(naturalH * scale);
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [children]);
+
+  return (
+    <div ref={containerRef} className="w-full overflow-hidden" style={{ height }}>
+      <div ref={innerRef} className="w-max">
+        {children}
+      </div>
+    </div>
+  );
 }
 
 function derivePostStatus(mockups: MockupData[]): string {
@@ -627,33 +664,31 @@ export default function AprovacaoMockup() {
 
             {/* Grade (mockup) tab */}
             {gridApprovalTab === "grade" && (
-              <div className="flex justify-center">
-                <div className="w-full">
-                  <IPhoneFrame className="[&_.iphone-shell]:max-w-full">
-                    <InstagramGridPreview
-                      posts={gridPosts.map(g => ({
-                        id: g.grid_post_id,
-                        posicao: g.posicao,
-                        image_url: g.image_url,
-                        status: g.status,
-                        feedback: g.feedback,
-                      }))}
-                      highlights={gridHighlights.map(h => ({
-                        id: h.highlight_id,
-                        ordem: h.ordem,
-                        titulo: h.titulo,
-                        image_url: h.image_url,
-                        status: h.status,
-                        feedback: h.feedback,
-                      }))}
-                      perfilNome={gridCliente}
-                      perfilCategoria={gridEmpresa}
-                      perfilFotoUrl={taskInfo?.cliente_foto_perfil_url}
-                      approvalMode={false}
-                    />
-                  </IPhoneFrame>
-                </div>
-              </div>
+              <GradeScaledMockup>
+                <IPhoneFrame>
+                  <InstagramGridPreview
+                    posts={gridPosts.map(g => ({
+                      id: g.grid_post_id,
+                      posicao: g.posicao,
+                      image_url: g.image_url,
+                      status: g.status,
+                      feedback: g.feedback,
+                    }))}
+                    highlights={gridHighlights.map(h => ({
+                      id: h.highlight_id,
+                      ordem: h.ordem,
+                      titulo: h.titulo,
+                      image_url: h.image_url,
+                      status: h.status,
+                      feedback: h.feedback,
+                    }))}
+                    perfilNome={gridCliente}
+                    perfilCategoria={gridEmpresa}
+                    perfilFotoUrl={taskInfo?.cliente_foto_perfil_url}
+                    approvalMode={false}
+                  />
+                </IPhoneFrame>
+              </GradeScaledMockup>
             )}
 
             {/* Posts approval */}
