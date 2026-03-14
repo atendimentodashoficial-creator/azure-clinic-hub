@@ -390,6 +390,17 @@ export default function AprovacaoMockup() {
     const gridEmpresa = gridPosts[0]?.cliente_empresa || taskInfo?.cliente_empresa || "";
     const allGridDecided = gridPosts.every(g => g.status === "aprovado" || g.status === "reprovado");
 
+    const gridStatusColor = (s: string) => {
+      if (s === "aprovado") return "bg-emerald-500/20 text-emerald-400";
+      if (s === "reprovado") return "bg-red-500/20 text-red-400";
+      return "bg-amber-500/20 text-amber-400";
+    };
+    const gridStatusLabel = (s: string) => {
+      if (s === "aprovado") return "Aprovado";
+      if (s === "reprovado") return "Reprovado";
+      return "Pendente";
+    };
+
     return (
       <div className="min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -398,6 +409,7 @@ export default function AprovacaoMockup() {
             <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
           </div>
 
+          {/* Instagram grid mockup — visual reference only */}
           <IPhoneFrame>
             <InstagramGridPreview
               posts={gridPosts.map(g => ({
@@ -409,14 +421,79 @@ export default function AprovacaoMockup() {
               }))}
               perfilNome={gridCliente}
               perfilCategoria={gridEmpresa}
-              approvalMode={!allGridDecided}
-              onApprove={handleApproveGridPost}
-              onReject={handleRejectGridPost}
-              feedbacks={gridFeedbacks}
-              onFeedbackChange={(id, fb) => setGridFeedbacks(prev => ({ ...prev, [id]: fb }))}
-              submitting={submitting}
+              approvalMode={false}
             />
           </IPhoneFrame>
+
+          {/* Sequential post-by-post approval (same pattern as mockups) */}
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {sortedGridPosts.map((g, i) => (
+              <button
+                key={g.grid_post_id}
+                onClick={() => setCurrentGridIdx(i)}
+                className={cn(
+                  "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
+                  i === currentGridIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                  g.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
+                  g.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
+                  "bg-muted border-muted-foreground/30 text-muted-foreground"
+                )}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+
+          {currentGridPost && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Button variant="ghost" size="sm" disabled={currentGridIdx === 0} onClick={() => setCurrentGridIdx(i => i - 1)}>
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+                </Button>
+                <Badge className={cn("border-0", gridStatusColor(currentGridPost.status))}>
+                  {gridStatusLabel(currentGridPost.status)}
+                </Badge>
+                <Button variant="ghost" size="sm" disabled={currentGridIdx === sortedGridPosts.length - 1} onClick={() => setCurrentGridIdx(i => i + 1)}>
+                  Próximo <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+
+              <div className="w-full max-w-md mx-auto">
+                <img
+                  src={currentGridPost.image_url}
+                  alt={`Post ${currentGridPost.posicao + 1}`}
+                  className="w-full aspect-square object-cover rounded-lg border border-border"
+                />
+              </div>
+
+              {!allGridDecided && (
+                <Card className="p-4 space-y-3">
+                  <Textarea
+                    placeholder="Feedback para este post (obrigatório para reprovar)..."
+                    value={gridFeedbacks[currentGridPost.grid_post_id] || ""}
+                    onChange={e => setGridFeedbacks(prev => ({ ...prev, [currentGridPost.grid_post_id]: e.target.value }))}
+                    rows={2}
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleApproveGridPost} disabled={submitting || currentGridPost.status === "aprovado"} className="flex-1 gap-1.5" variant={currentGridPost.status === "aprovado" ? "secondary" : "default"}>
+                      <Check className="w-4 h-4" />
+                      {currentGridPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                    </Button>
+                    <Button onClick={handleRejectGridPost} disabled={submitting || currentGridPost.status === "reprovado"} variant="destructive" className="flex-1 gap-1.5">
+                      <X className="w-4 h-4" />
+                      {currentGridPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
+              {currentGridPost.status === "reprovado" && currentGridPost.feedback && (
+                <p className="text-xs text-red-400 bg-red-500/10 rounded px-3 py-2">
+                  💬 {currentGridPost.feedback}
+                </p>
+              )}
+            </div>
+          )}
 
           {allGridDecided && (
             <Card className="p-5 space-y-4 text-center border-primary/30">
