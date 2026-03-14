@@ -245,7 +245,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
           .eq("id", tarefa.id);
         if (error) throw error;
         // Send notification
-        sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: tarefa.user_id });
+        await sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: tarefa.user_id });
         toast.success("Tarefa enviada para aprovação interna do gestor!");
         window.location.reload();
         return;
@@ -270,7 +270,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
       const link = `${window.location.origin}/aprovacao/${token}`;
       // Send notification with approval link
-      sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
+      await sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
       await navigator.clipboard.writeText(link);
       toast.success("Link de aprovação copiado para a área de transferência!");
       window.location.reload();
@@ -305,7 +305,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
           if (error) throw error;
 
           const link = `${window.location.origin}/aprovacao/${token}`;
-          sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
+          await sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
           await navigator.clipboard.writeText(link);
           toast.success("Aprovação interna concluída! Link de aprovação do cliente copiado.");
         } else {
@@ -348,7 +348,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         }
         const { error } = await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
         if (error) throw error;
-        sendTaskNotification({ evento: "reprovada_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, feedback: internaFeedback });
+        await sendTaskNotification({ evento: "reprovada_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, feedback: internaFeedback });
         toast.success("Tarefa reprovada internamente e enviada para revisão.");
       }
 
@@ -384,7 +384,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         }
       }
 
-      sendTaskNotification({ evento: "ajustada", tarefa_id: tarefa.id, user_id: tarefa.user_id });
+      await sendTaskNotification({ evento: "ajustada", tarefa_id: tarefa.id, user_id: tarefa.user_id });
       toast.success("Itens revisados reenviados para aprovação!");
       window.location.reload();
     } catch {
