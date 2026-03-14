@@ -845,6 +845,7 @@ export default function Tarefas() {
                         onStartTimer={handleStartTimer}
                         onClick={setDetalheTarefa}
                         onAdvance={handleAdvance}
+                        revisoesCounts={revisoesByTarefa[tarefa.id]}
                       />
                     ))}
                   </DroppableColumn>
