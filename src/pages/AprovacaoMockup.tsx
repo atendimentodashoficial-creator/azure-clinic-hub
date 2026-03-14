@@ -48,6 +48,7 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
 
     // Temporarily reset to measure natural height
     innerRef.current.style.transform = 'scale(1)';
+    const naturalH = innerRef.current.offsetHeight;
     const rightH = Math.max(rightPanel.offsetHeight, 900);
 
     if (naturalH > 0 && rightH > 0) {
