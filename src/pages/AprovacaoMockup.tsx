@@ -76,6 +76,7 @@ export default function AprovacaoMockup() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPostIdx, setCurrentPostIdx] = useState(0);
+  const [currentGridIdx, setCurrentGridIdx] = useState(0);
   const [feedbacks, setFeedbacks] = useState<Record<number, string>>({});
   const [gridFeedbacks, setGridFeedbacks] = useState<Record<string, string>>({});
   const [linkFeedback, setLinkFeedback] = useState("");
