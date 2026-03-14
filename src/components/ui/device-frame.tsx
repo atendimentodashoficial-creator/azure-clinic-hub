@@ -27,8 +27,9 @@ export function DeviceFrame({ children, className }: DeviceFrameProps) {
   return <MonitorFrame className={className}>{children}</MonitorFrame>;
 }
 
-export function DeviceFrameWithFallback({ href, title, className }: DeviceFrameWithFallbackProps) {
-  const isMobile = useIsMobile();
+export function DeviceFrameWithFallback({ href, title, className, deviceType }: DeviceFrameWithFallbackProps) {
+  const autoMobile = useIsMobile();
+  const isMobile = deviceType ? deviceType === "mobile" : autoMobile;
   const [iframeBlocked, setIframeBlocked] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 

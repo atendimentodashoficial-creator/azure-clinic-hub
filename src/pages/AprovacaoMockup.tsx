@@ -1095,6 +1095,7 @@ function LinkOnlyApproval({
   onApprove,
   onReject,
   onSubmit,
+  isEmbedded,
 }: {
   taskInfo: TaskInfo | null;
   taskLinks: TaskLink[];
@@ -1106,10 +1107,12 @@ function LinkOnlyApproval({
   onApprove: () => void;
   onReject: () => void;
   onSubmit: () => void;
+  isEmbedded?: boolean;
 }) {
   const tarefaTitulo = taskInfo?.tarefa_titulo || "Tarefa";
   const clienteNome = taskInfo?.cliente_nome || "";
   const decided = linkApprovalStatus === "aprovado" || linkApprovalStatus === "reprovado";
+  const [deviceView, setDeviceView] = useState<"mobile" | "desktop">(isEmbedded ? "mobile" : "desktop");
 
   const statusColor = (s: string) => {
     if (s === "aprovado") return "bg-emerald-500/20 text-emerald-400";
@@ -1124,14 +1127,35 @@ function LinkOnlyApproval({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-        <div className="text-center space-y-1">
-          <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
-          <p className="text-sm text-muted-foreground">
-            Aprovação de Entrega{clienteNome ? ` • ${clienteNome}` : ""}
-          </p>
-        </div>
+      <div className={cn("mx-auto px-4 py-8 space-y-6", deviceView === "mobile" ? "max-w-xl" : "max-w-6xl")}>
+        {!isEmbedded && (
+          <div className="text-center space-y-1">
+            <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
+            <p className="text-sm text-muted-foreground">
+              Aprovação de Entrega{clienteNome ? ` • ${clienteNome}` : ""}
+            </p>
+          </div>
+        )}
 
+        {/* Device view toggle */}
+        <div className="flex gap-2 justify-center">
+          <Button
+            variant={deviceView === "mobile" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDeviceView("mobile")}
+            className="gap-1.5"
+          >
+            📱 Mobile
+          </Button>
+          <Button
+            variant={deviceView === "desktop" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDeviceView("desktop")}
+            className="gap-1.5"
+          >
+            🖥️ Desktop
+          </Button>
+        </div>
 
         {/* Embedded link previews */}
         <div className="space-y-8">
@@ -1155,7 +1179,15 @@ function LinkOnlyApproval({
                     {statusLabel(linkApprovalStatus)}
                   </Badge>
                 </div>
-                <DeviceFrameWithFallback href={href} title={link.titulo || link.url} />
+                {deviceView === "mobile" ? (
+                  <GradeScaledMockup>
+                    <IPhoneFrame noScroll={false}>
+                      <LinkIframeContent href={href} title={link.titulo || link.url} isMobile={true} />
+                    </IPhoneFrame>
+                  </GradeScaledMockup>
+                ) : (
+                  <DeviceFrameWithFallback href={href} title={link.titulo || link.url} deviceType="desktop" />
+                )}
               </div>
             );
           })}
@@ -1207,5 +1239,53 @@ function LinkOnlyApproval({
         )}
       </div>
     </div>
+  );
+}
+
+/** Helper: renders iframe or screenshot fallback for link content */
+function LinkIframeContent({ href, title, isMobile }: { href: string; title: string; isMobile: boolean }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [blocked, setBlocked] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const iframe = iframeRef.current;
+        if (iframe) {
+          const doc = iframe.contentDocument || iframe.contentWindow?.document;
+          if (!doc || doc.URL === "about:blank") setBlocked(true);
+        }
+      } catch {
+        setBlocked(false);
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [href]);
+
+  const screenshotWidth = isMobile ? 390 : 1280;
+  const screenshotUrl = `https://image.thum.io/get/width/${screenshotWidth}/crop/900/noanimate/${href}`;
+
+  if (blocked) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-start overflow-y-auto bg-muted/30">
+        <img src={screenshotUrl} alt={title} className="w-full object-cover object-top" loading="lazy" />
+        <div className="sticky bottom-0 w-full p-3 bg-background/90 backdrop-blur border-t border-border">
+          <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => window.open(href, "_blank")}>
+            <ExternalLink className="h-3.5 w-3.5" />
+            Abrir site em nova aba
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <iframe
+      ref={iframeRef}
+      src={href}
+      className="block w-full h-full min-w-0 max-w-full border-0 touch-pan-y"
+      sandbox="allow-scripts allow-same-origin allow-popups"
+      title={title}
+    />
   );
 }
