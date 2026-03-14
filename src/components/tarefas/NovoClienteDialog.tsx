@@ -152,6 +152,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
       observacoes: observacoes.trim() || null,
       grupo_whatsapp: grupoWhatsapp.trim() || null,
       foto_perfil_url: fotoPerfilUrl || null,
+      gestor_id: gestorId && gestorId !== "none" ? gestorId : null,
       tipo,
     });
     resetForm();
