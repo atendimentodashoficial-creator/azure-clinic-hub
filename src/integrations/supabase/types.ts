@@ -4948,6 +4948,7 @@ export type Database = {
           id: string
           ordem: number
           prioridade: string
+          produto_template_id: string | null
           responsavel_nome: string | null
           reuniao_id: string | null
           subtarefas_concluidas: number
@@ -4973,6 +4974,7 @@ export type Database = {
           id?: string
           ordem?: number
           prioridade?: string
+          produto_template_id?: string | null
           responsavel_nome?: string | null
           reuniao_id?: string | null
           subtarefas_concluidas?: number
@@ -4998,6 +5000,7 @@ export type Database = {
           id?: string
           ordem?: number
           prioridade?: string
+          produto_template_id?: string | null
           responsavel_nome?: string | null
           reuniao_id?: string | null
           subtarefas_concluidas?: number
@@ -5024,6 +5027,13 @@ export type Database = {
             columns: ["coluna_id"]
             isOneToOne: false
             referencedRelation: "tarefas_colunas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_produto_template_id_fkey"
+            columns: ["produto_template_id"]
+            isOneToOne: false
+            referencedRelation: "produto_templates"
             referencedColumns: ["id"]
           },
           {
