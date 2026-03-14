@@ -772,7 +772,7 @@ export default function AprovacaoMockup() {
                       {currentFilteredHighlight && (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <Button variant="ghost" size="sm" disabled={currentHighlightIdx === 0} onClick={() => setCurrentHighlightIdx(i => i - 1)}>
+                            <Button variant="ghost" size="sm" disabled={Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) === 0} onClick={() => setCurrentHighlightIdx(i => Math.max(0, i - 1))}>
                               <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
                             </Button>
                             <Badge className={cn("border-0", itemStatusColor(currentFilteredHighlight.status))}>
