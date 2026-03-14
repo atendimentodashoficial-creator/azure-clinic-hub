@@ -778,7 +778,7 @@ export default function AprovacaoMockup() {
                             <Badge className={cn("border-0", itemStatusColor(currentFilteredHighlight.status))}>
                               {itemStatusLabel(currentFilteredHighlight.status)}
                             </Badge>
-                            <Button variant="ghost" size="sm" disabled={currentHighlightIdx === filteredSortedHighlights.length - 1} onClick={() => setCurrentHighlightIdx(i => i + 1)}>
+                            <Button variant="ghost" size="sm" disabled={Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) === filteredSortedHighlights.length - 1} onClick={() => setCurrentHighlightIdx(i => i + 1)}>
                               Próximo <ChevronRight className="w-4 h-4 ml-1" />
                             </Button>
                           </div>
