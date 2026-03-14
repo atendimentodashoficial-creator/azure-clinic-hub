@@ -414,7 +414,7 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
                   {format(new Date(reuniao.data_reuniao), "dd/MM/yyyy 'às' HH:mm")}
                 </p>
               )}
-              {colType === 'internal_approval' && (tarefa as any).internal_approval_token && (
+              {(tarefa as any).internal_approval_token && (
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Button
                     variant="outline"
@@ -585,11 +585,16 @@ export default function Tarefas() {
     const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
 
     // Apply move + timer in a single update
+    // Generate internal_approval_token if moving to internal_approval
+    const needsInternalToken = targetColType === 'internal_approval' && !tarefa.internal_approval_token;
+    const internalToken = needsInternalToken ? crypto.randomUUID() : undefined;
+
     const updatePayload: any = {
       coluna_id: nextCol.id,
       ordem: targetTarefas.length,
       ...timerUpdates,
       updated_at: new Date().toISOString(),
+      ...(needsInternalToken && { internal_approval_token: internalToken, aprovacao_interna_status: "pendente" }),
     };
 
     atualizarTarefa.mutate(
@@ -598,6 +603,12 @@ export default function Tarefas() {
         onSuccess: async () => {
           toast.success(`Tarefa movida para "${nextCol.nome}"`);
 
+          // Send notification for internal approval with link
+          if (targetColType === 'internal_approval' && ownerId) {
+            const token = internalToken || tarefa.internal_approval_token;
+            const link = token ? `${window.location.origin}/aprovacao-interna/${token}` : undefined;
+            await sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: ownerId, link_aprovacao: link });
+          }
 
           // Auto-create commission when moved to Concluído
           if (targetColType === 'done' && tarefa.comissao && tarefa.comissao > 0 && tarefa.responsavel_nome && ownerId) {

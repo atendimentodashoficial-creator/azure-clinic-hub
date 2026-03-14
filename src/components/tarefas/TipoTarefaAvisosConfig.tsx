@@ -37,7 +37,7 @@ const DESTINOS = [
 
 const AVISO_TYPES: { key: keyof AvisosMap; label: string; description: string; defaultMsg: string }[] = [
   { key: "atribuida", label: "Tarefa atribuída", description: "Quando a tarefa é atribuída a um membro", defaultMsg: "Olá! A tarefa *{tarefa}* foi atribuída a você no projeto *{cliente}*." },
-  { key: "aprovacao_interna", label: "Enviada para aprovação interna", description: "Quando a tarefa é enviada para o gestor revisar", defaultMsg: "A tarefa *{tarefa}* do projeto *{cliente}* está aguardando sua aprovação interna." },
+  { key: "aprovacao_interna", label: "Enviada para aprovação interna", description: "Quando a tarefa é enviada para o gestor revisar", defaultMsg: "A tarefa *{tarefa}* do projeto *{cliente}* está aguardando sua aprovação interna.\n\nAcesse: {link_aprovacao}" },
   { key: "aprovacao_cliente", label: "Enviada para aprovação do cliente", description: "Quando a tarefa é enviada para aprovação do cliente", defaultMsg: "Olá *{cliente}*! A tarefa *{tarefa}* está pronta para sua aprovação.\n\nAcesse: {link_aprovacao}" },
   { key: "reprovada_cliente", label: "Reprovada pelo cliente", description: "Quando o cliente reprova a tarefa", defaultMsg: "A tarefa *{tarefa}* do projeto *{cliente}* foi reprovada pelo cliente.\n\nFeedback: {feedback}" },
   { key: "ajustada", label: "Tarefa ajustada (revisada)", description: "Quando a tarefa é reenviada após revisão", defaultMsg: "A tarefa *{tarefa}* do projeto *{cliente}* foi ajustada e reenviada." },
@@ -85,7 +85,7 @@ export function TipoTarefaAvisosConfig({ avisos, onChange }: Props) {
         <Label className="text-sm font-medium">Avisos por WhatsApp</Label>
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Configure quais notificações serão enviadas via WhatsApp. Variáveis: {"{tarefa}"}, {"{cliente}"}, {"{empresa}"}, {"{membro}"}, {"{gestor}"}, {"{tipo}"}, {"{link_aprovacao}"}, {"{feedback}"}, {"{data}"}
+        Configure quais notificações serão enviadas via WhatsApp. Variáveis: {"{tarefa}"}, {"{cliente}"}, {"{empresa}"}, {"{membro}"}, {"{gestor}"}, {"{tipo}"}, {"{link_aprovacao}"}, {"{feedback}"}, {"{data}"}. Use {"{link_aprovacao}"} no aviso de aprovação interna para incluir o link do gestor.
       </p>
       <div className="space-y-1">
         {AVISO_TYPES.map(aviso => {
