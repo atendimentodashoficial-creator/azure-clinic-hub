@@ -18,6 +18,7 @@ export interface TarefaCliente {
   google_meu_negocio: string | null;
   observacoes: string | null;
   grupo_whatsapp: string | null;
+  foto_perfil_url: string | null;
   tipo: string;
   created_at: string;
 }
