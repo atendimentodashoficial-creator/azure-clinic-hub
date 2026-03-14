@@ -235,6 +235,22 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     return data?.find(c => matcher(c.nome))?.id ?? null;
   };
 
+  const getAccumulatedSeconds = () => {
+    if (!tarefa) return 0;
+    const base = Number(tarefa.tempo_acumulado_segundos ?? 0);
+    if (tarefa.timer_status === "rodando" && tarefa.timer_inicio) {
+      const diff = Math.floor((Date.now() - new Date(tarefa.timer_inicio).getTime()) / 1000);
+      return base + Math.max(0, diff);
+    }
+    return base;
+  };
+
+  const getPausedTimerFields = () => ({
+    timer_inicio: null,
+    timer_status: "pausado",
+    tempo_acumulado_segundos: getAccumulatedSeconds(),
+  });
+
   const handleSendForApproval = async () => {
     if (!tarefa) return;
     try {
@@ -245,6 +261,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         const updateData: Record<string, any> = {
           aprovacao_interna_status: "pendente",
           internal_approval_token: internaToken,
+          ...getPausedTimerFields(),
           updated_at: new Date().toISOString(),
         };
         if (internaColumnId) {
@@ -389,6 +406,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
           aprovacao_interna_status: "pendente",
           aprovacao_interna_feedback: null,
           internal_approval_token: internaToken,
+          ...getPausedTimerFields(),
           updated_at: new Date().toISOString(),
         };
         if (internaColumnId) updateData.coluna_id = internaColumnId;
