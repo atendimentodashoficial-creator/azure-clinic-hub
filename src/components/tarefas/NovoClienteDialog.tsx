@@ -194,6 +194,46 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
                   </div>
                 </RadioGroup>
               </div>
+              {/* Profile photo */}
+              <div className="space-y-2">
+                <Label>Foto de Perfil</Label>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Avatar className="h-14 w-14">
+                      <AvatarImage src={fotoPerfilUrl || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                        {nome ? nome.slice(0, 2).toUpperCase() : <Camera className="h-5 w-5" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    {fotoPerfilUrl && (
+                      <button
+                        type="button"
+                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                        onClick={() => setFotoPerfilUrl("")}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploadingFoto}
+                    onClick={() => fotoInputRef.current?.click()}
+                  >
+                    <Camera className="h-4 w-4 mr-1.5" />
+                    {uploadingFoto ? "Enviando..." : fotoPerfilUrl ? "Trocar" : "Enviar foto"}
+                  </Button>
+                  <input
+                    ref={fotoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFotoUpload}
+                  />
+                </div>
+              </div>
               <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} /></div>
               <div className="space-y-2">
                 <Label>Telefone</Label>
