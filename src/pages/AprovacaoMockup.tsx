@@ -31,28 +31,33 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 // Scales the IPhoneFrame proportionally to match the right panel height on desktop
-// Wrapper that makes both sides match height by constraining the right panel via max-height
-// The mockup keeps its natural size; the layout uses align-items-stretch approach
+// Wrapper that forces the right panel to always have the exact same height as the mockup (left)
+// Only the right side is resized; the mockup keeps its natural size
 function GridLayoutSyncer({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const layoutRef = useRef<HTMLDivElement>(null);
 
   const sync = useCallback(() => {
-    if (isMobile || !layoutRef.current) return;
+    if (!layoutRef.current) return;
     const left = layoutRef.current.querySelector('[data-grid-left]') as HTMLElement;
     const right = layoutRef.current.querySelector('[data-grid-right]') as HTMLElement;
     if (!left || !right) return;
 
-    // Reset right panel constraints
-    right.style.maxHeight = '';
-    right.style.overflow = '';
+    // Reset on mobile
+    if (isMobile) {
+      right.style.height = '';
+      right.style.maxHeight = '';
+      right.style.overflowY = '';
+      right.style.overflowX = '';
+      return;
+    }
 
-    const leftH = left.offsetHeight;
-    const rightH = right.offsetHeight;
-
-    if (leftH > 0 && rightH > leftH) {
+    const leftH = Math.ceil(left.getBoundingClientRect().height);
+    if (leftH > 0) {
+      right.style.height = `${leftH}px`;
       right.style.maxHeight = `${leftH}px`;
-      right.style.overflow = 'auto';
+      right.style.overflowY = 'auto';
+      right.style.overflowX = 'hidden';
     }
   }, [isMobile]);
 
