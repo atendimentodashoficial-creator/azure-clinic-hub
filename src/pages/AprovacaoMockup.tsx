@@ -579,10 +579,25 @@ export default function AprovacaoMockup() {
     const gridTitulo = gridPosts[0]?.tarefa_titulo || taskInfo?.tarefa_titulo || "Tarefa";
     const gridCliente = extractInstagramUsername(taskInfo?.cliente_instagram) || gridPosts[0]?.cliente_nome || taskInfo?.cliente_nome || "perfil";
     const gridEmpresa = gridPosts[0]?.cliente_empresa || taskInfo?.cliente_empresa || "";
+    
+    const pendingGridPosts = gridPosts.filter(g => g.status !== "aprovado");
+    const approvedGridPosts = gridPosts.filter(g => g.status === "aprovado");
+    const pendingHighlights = gridHighlights.filter(h => h.status !== "aprovado");
+    const approvedHighlights = gridHighlights.filter(h => h.status === "aprovado");
+    
+    const filteredGridPosts = approvalFilter === "pendentes" ? pendingGridPosts : approvedGridPosts;
+    const filteredHighlights = approvalFilter === "pendentes" ? pendingHighlights : approvedHighlights;
+    const filteredSortedGridPosts = [...filteredGridPosts].sort((a, b) => a.posicao - b.posicao);
+    const filteredSortedHighlights = [...filteredHighlights].sort((a, b) => a.ordem - b.ordem);
+    const currentFilteredGridPost = filteredSortedGridPosts[currentGridIdx];
+    const currentFilteredHighlight = filteredSortedHighlights[currentHighlightIdx];
+    
     const allGridPostsDecided = gridPosts.every(g => g.status === "aprovado" || g.status === "reprovado");
     const allHighlightsDecided = gridHighlights.length === 0 || gridHighlights.every(h => h.status === "aprovado" || h.status === "reprovado");
     const allGridDecided = allGridPostsDecided && allHighlightsDecided;
     const hasHighlights = gridHighlights.length > 0;
+    const totalPending = pendingGridPosts.length + pendingHighlights.length;
+    const totalApproved = approvedGridPosts.length + approvedHighlights.length;
 
     const itemStatusColor = (s: string) => {
       if (s === "aprovado") return "bg-emerald-500/20 text-emerald-400";
