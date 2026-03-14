@@ -103,11 +103,11 @@ export function InstagramGridPreview({
 
         {/* Highlights */}
         {sortedHighlights.length > 0 && (
-          <div className="flex gap-3 px-4 pb-3 overflow-x-auto scrollbar-none">
+          <div className="flex gap-2 px-4 pb-3 justify-center">
             {sortedHighlights.map(h => (
-              <div key={h.id} className="flex flex-col items-center gap-1 flex-shrink-0">
+              <div key={h.id} className="flex flex-col items-center gap-1 min-w-0 flex-shrink">
                 <div className={cn(
-                  "w-14 h-14 rounded-full p-[2px] bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500",
+                  "w-14 h-14 max-w-full aspect-square rounded-full p-[2px] bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500",
                   h.status === "aprovado" && "from-emerald-400 to-emerald-600",
                   h.status === "reprovado" && "from-red-400 to-red-600"
                 )}>
@@ -119,8 +119,8 @@ export function InstagramGridPreview({
               </div>
             ))}
             {/* "Add" placeholder */}
-            <div className="flex flex-col items-center gap-1 flex-shrink-0">
-              <div className="w-14 h-14 rounded-full border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-1 min-w-0 flex-shrink">
+              <div className="w-14 h-14 max-w-full aspect-square rounded-full border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
                 <span className="text-lg text-muted-foreground/40">+</span>
               </div>
               <span className="text-[10px] text-muted-foreground">Novo</span>
