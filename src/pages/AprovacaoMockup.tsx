@@ -185,8 +185,8 @@ export default function AprovacaoMockup() {
 
   // Sync filter from parent via search params changes
   useEffect(() => {
-    if (filterParam) setApprovalFilter(filterParam);
-  }, [filterParam]);
+    if (isEmbedded && filterParam) setApprovalFilter(filterParam);
+  }, [isEmbedded, filterParam]);
 
   const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
   const isGridMode = gridPosts.length > 0;
