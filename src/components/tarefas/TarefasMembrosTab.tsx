@@ -109,6 +109,8 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
       data_contratacao: dataContratacao ? format(dataContratacao, "yyyy-MM-dd") : null,
       dia_pagamento: diaPagamento ? parseInt(diaPagamento) : null,
       foto_url: fotoUrl || null,
+      whatsapp_aviso_pessoal: whatsappAvisoPessoal.trim() || null,
+      whatsapp_aviso_grupo: whatsappAvisoGrupo.trim() || null,
     });
     resetForm();
     setOpen(false);
