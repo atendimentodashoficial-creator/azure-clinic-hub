@@ -191,6 +191,15 @@ All colors MUST be HSL.
     background: hsl(var(--foreground) / 0.12);
   }
 
+  /* Hide scrollbar on iframes inside iPhone mockup */
+  .iphone-shell iframe {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .iphone-shell iframe::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Make native color input swatch fill the whole control */
   input[type="color"].color-swatch-full {
     -webkit-appearance: none;
