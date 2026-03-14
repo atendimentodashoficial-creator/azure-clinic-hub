@@ -243,11 +243,11 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
     try {
       setLoading(true);
       const [mockupRes, linksRes, taskRes, gridRes, highlightsRes] = await Promise.all([
-        supabase.rpc("get_mockups_by_approval_token", { p_token: token! }),
-        supabase.rpc("get_links_by_approval_token", { p_token: token! }),
-        supabase.rpc("get_task_by_approval_token", { p_token: token! }),
-        supabase.rpc("get_grid_posts_by_approval_token", { p_token: token! }),
-        supabase.rpc("get_grid_highlights_by_approval_token", { p_token: token! }),
+        supabase.rpc(isInternal ? "get_mockups_by_internal_token" : "get_mockups_by_approval_token", { p_token: token! }),
+        supabase.rpc(isInternal ? "get_links_by_internal_token" : "get_links_by_approval_token", { p_token: token! }),
+        supabase.rpc(isInternal ? "get_task_by_internal_approval_token" : "get_task_by_approval_token", { p_token: token! }),
+        supabase.rpc(isInternal ? "get_grid_posts_by_internal_token" : "get_grid_posts_by_approval_token", { p_token: token! }),
+        supabase.rpc(isInternal ? "get_grid_highlights_by_internal_token" : "get_grid_highlights_by_approval_token", { p_token: token! }),
       ]);
 
       if (mockupRes.error) throw mockupRes.error;
