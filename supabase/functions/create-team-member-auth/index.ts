@@ -40,40 +40,72 @@ serve(async (req) => {
       );
     }
 
-    const { action, email, password, fullName, userId, role: requestedRole } = await req.json();
+    const body = await req.json();
+    const { action, email, password, fullName, userId, role: requestedRole } = body;
 
-    if (action === 'create') {
+    const assignRole = requestedRole === 'cliente' ? 'cliente' : 'funcionario';
+
+    const ensureRole = async (targetUserId: string, role: 'cliente' | 'funcionario') => {
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .upsert({ user_id: targetUserId, role }, { onConflict: 'user_id,role', ignoreDuplicates: true });
+
+      if (roleError) throw roleError;
+    };
+
+    const ensureUserByEmail = async () => {
       if (!email || !password) {
-        return new Response(
-          JSON.stringify({ error: 'Email e senha são obrigatórios para criar login do membro' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        throw new Error('Email e senha são obrigatórios para criar login do membro');
       }
 
-      // Determine role - default to 'funcionario' for backwards compatibility
-      const assignRole = requestedRole === 'cliente' ? 'cliente' : 'funcionario';
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const { data: usersData, error: listError } = await supabase.auth.admin.listUsers();
+      if (listError) throw listError;
 
-      // Create auth user
+      const existingUser = usersData.users.find((u) => (u.email || '').toLowerCase() === normalizedEmail);
+
+      if (existingUser) {
+        const { error: updateError } = await supabase.auth.admin.updateUserById(existingUser.id, {
+          password,
+          email_confirm: true,
+          user_metadata: {
+            ...(existingUser.user_metadata || {}),
+            full_name: fullName || existingUser.user_metadata?.full_name || normalizedEmail,
+          },
+        });
+
+        if (updateError) throw updateError;
+
+        await ensureRole(existingUser.id, assignRole);
+        return { authUserId: existingUser.id, created: false };
+      }
+
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email,
+        email: normalizedEmail,
         password,
         email_confirm: true,
-        user_metadata: { full_name: fullName || email }
+        user_metadata: { full_name: fullName || normalizedEmail },
       });
 
       if (createError) throw createError;
 
-      // Assign role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({ user_id: newUser.user.id, role: assignRole });
+      await ensureRole(newUser.user.id, assignRole);
+      return { authUserId: newUser.user.id, created: true };
+    };
 
-      if (roleError) throw roleError;
-
-      return new Response(
-        JSON.stringify({ success: true, authUserId: newUser.user.id }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (action === 'create' || action === 'ensure_cliente_auth') {
+      try {
+        const result = await ensureUserByEmail();
+        return new Response(
+          JSON.stringify({ success: true, ...result }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        return new Response(
+          JSON.stringify({ error: (error as Error).message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     if (action === 'delete') {
