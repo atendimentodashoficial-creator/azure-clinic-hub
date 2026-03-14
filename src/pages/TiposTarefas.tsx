@@ -26,6 +26,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Minus, Plus as PlusIcon, X } from "lucide-react";
+import { TipoTarefaAvisosConfig, AvisosMap } from "@/components/tarefas/TipoTarefaAvisosConfig";
+import { TarefasNotificacaoInstanciaConfig } from "@/components/tarefas/TarefasNotificacaoInstanciaConfig";
 
 const FILE_TYPES = [
   { key: "imagens", label: "Imagens" },
@@ -109,6 +111,7 @@ export default function TiposTarefas() {
   const [formLimites, setFormLimites] = useState<Record<string, number>>({});
   const [formExigeAprovacao, setFormExigeAprovacao] = useState(false);
   const [formExigeAprovacaoInterna, setFormExigeAprovacaoInterna] = useState(false);
+  const [formAvisos, setFormAvisos] = useState<AvisosMap>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -123,6 +126,7 @@ export default function TiposTarefas() {
     setFormLimites({});
     setFormExigeAprovacao(false);
     setFormExigeAprovacaoInterna(false);
+    setFormAvisos({});
     setIsDialogOpen(true);
   };
 
@@ -134,6 +138,7 @@ export default function TiposTarefas() {
     setFormLimites(tipo.limite_arquivos);
     setFormExigeAprovacao(tipo.exige_aprovacao);
     setFormExigeAprovacaoInterna(tipo.exige_aprovacao_interna);
+    setFormAvisos(tipo.avisos as AvisosMap || {});
     setIsDialogOpen(true);
   };
 
@@ -157,6 +162,7 @@ export default function TiposTarefas() {
       limite_arquivos: formLimites,
       exige_aprovacao: formExigeAprovacao,
       exige_aprovacao_interna: formExigeAprovacaoInterna,
+      avisos: formAvisos,
     };
     if (editingTipo) {
       await updateTipo.mutateAsync({ id: editingTipo.id, ...payload });
@@ -214,6 +220,8 @@ export default function TiposTarefas() {
 
   return (
     <>
+      <div className="space-y-4">
+      <TarefasNotificacaoInstanciaConfig />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
           <CardTitle className="text-lg font-semibold">Tipos de Tarefas</CardTitle>
@@ -238,6 +246,7 @@ export default function TiposTarefas() {
           )}
         </CardContent>
       </Card>
+      </div>
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -316,6 +325,9 @@ export default function TiposTarefas() {
                 </div>
               </div>
             )}
+
+            {/* Avisos WhatsApp */}
+            <TipoTarefaAvisosConfig avisos={formAvisos} onChange={setFormAvisos} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>

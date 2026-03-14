@@ -5225,6 +5225,38 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefas_notificacao_config: {
+        Row: {
+          created_at: string | null
+          id: string
+          instancia_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instancia_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instancia_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_notificacao_config_instancia_id_fkey"
+            columns: ["instancia_id"]
+            isOneToOne: false
+            referencedRelation: "disparos_instancias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tipo_agendamento_custom: {
         Row: {
           ativo: boolean | null
@@ -5330,6 +5362,7 @@ export type Database = {
       tipos_tarefas: {
         Row: {
           ativo: boolean
+          avisos: Json | null
           created_at: string
           descricao: string | null
           exige_aprovacao: boolean
@@ -5344,6 +5377,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          avisos?: Json | null
           created_at?: string
           descricao?: string | null
           exige_aprovacao?: boolean
@@ -5358,6 +5392,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          avisos?: Json | null
           created_at?: string
           descricao?: string | null
           exige_aprovacao?: boolean

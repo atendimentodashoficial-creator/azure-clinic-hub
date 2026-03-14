@@ -12,6 +12,7 @@ export interface TipoTarefa {
   limite_arquivos: Record<string, number>;
   exige_aprovacao: boolean;
   exige_aprovacao_interna: boolean;
+  avisos: Record<string, any>;
   ativo: boolean;
   ordem: number;
   created_at: string;
@@ -38,6 +39,7 @@ export function useTiposTarefas() {
         ...d,
         tipos_arquivo_permitidos: d.tipos_arquivo_permitidos || [],
         limite_arquivos: d.limite_arquivos || {},
+        avisos: d.avisos || {},
       })) as TipoTarefa[];
     },
     enabled: !!effectiveUserId,
