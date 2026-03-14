@@ -154,8 +154,7 @@ export function useTarefas() {
     mutationFn: async ({ id, ...updates }: Partial<Tarefa> & { id: string }) => {
       const currentTask = tarefas.find((t) => t.id === id);
       const targetColumn = updates.coluna_id ? colunas.find((c) => c.id === updates.coluna_id) : null;
-      const movedBetweenColumns = !!targetColumn && currentTask?.coluna_id !== updates.coluna_id;
-      const notificationEvent = movedBetweenColumns
+      const notificationEvent = targetColumn && currentTask?.coluna_id !== updates.coluna_id
         ? getNotificationEventForColumnMove(targetColumn.nome)
         : null;
 
