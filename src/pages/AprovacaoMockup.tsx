@@ -758,7 +758,7 @@ export default function AprovacaoMockup() {
                             onClick={() => setCurrentHighlightIdx(i)}
                             className={cn(
                               "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
-                              i === currentHighlightIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                              i === Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
                               h.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
                               h.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
                               "bg-muted border-muted-foreground/30 text-muted-foreground"
