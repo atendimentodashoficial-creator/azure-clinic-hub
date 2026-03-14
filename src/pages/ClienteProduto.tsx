@@ -335,7 +335,7 @@ function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTar
               </button>
             ))}
           </div>
-          <div className="rounded-lg border overflow-hidden bg-background" style={{ minHeight: '70vh' }}>
+          <div className="overflow-hidden" style={{ minHeight: '70vh' }}>
             <iframe
               src={`/aprovacao/${tarefa.approval_token}?filter=${approvalFilter}&hideFilter=1`}
               className="w-full border-0"
