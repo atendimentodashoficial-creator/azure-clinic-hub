@@ -351,13 +351,21 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     try {
       await resubmitRejected.mutateAsync();
 
-      const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
-      if (approvalColumnId) {
-        const { error } = await supabase
-          .from("tarefas")
-          .update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() })
-          .eq("id", tarefa.id);
-        if (error) throw error;
+      // Reset internal approval if needed
+      if (exigeAprovacaoInterna) {
+        const internaColumnId = await findColumnByMatcherAsync(isAprovacaoInternaColumn);
+        const updateData: Record<string, any> = {
+          aprovacao_interna_status: "pendente",
+          aprovacao_interna_feedback: null,
+          updated_at: new Date().toISOString(),
+        };
+        if (internaColumnId) updateData.coluna_id = internaColumnId;
+        await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
+      } else {
+        const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
+        if (approvalColumnId) {
+          await supabase.from("tarefas").update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() }).eq("id", tarefa.id);
+        }
       }
 
       toast.success("Itens revisados reenviados para aprovação!");
