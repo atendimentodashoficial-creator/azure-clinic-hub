@@ -44,7 +44,7 @@ export function MockupPreview({ slides, perfilNome = "perfil", perfilCategoria =
       </div>
 
       {/* Image area - simulated post */}
-      <div className="relative aspect-square bg-gradient-to-b from-zinc-800 to-zinc-900 flex flex-col items-center justify-center p-8 text-center">
+      <div className="relative aspect-[4/5] bg-gradient-to-b from-zinc-800 to-zinc-900 flex flex-col items-center justify-center p-8 text-center">
         {slide.titulo && (
           <h2 className="text-xl font-bold text-white leading-tight max-w-[90%]">{slide.titulo}</h2>
         )}
