@@ -553,19 +553,26 @@ export default function Tarefas() {
     }
 
     const timerUpdates = computeTimerUpdates(tarefa, colunas, nextCol.id);
-    const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
+    const advanceTargetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
 
-    moverTarefa.mutate(
-      { id: tarefa.id, coluna_id: nextCol.id, ordem: targetTarefas.length },
+    // Apply move + timer in a single update
+    const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
+    const updatePayload: any = {
+      coluna_id: nextCol.id,
+      ordem: advanceTargetTarefas.length,
+      ...timerUpdates,
+      updated_at: new Date().toISOString(),
+    };
+
+    atualizarTarefa.mutate(
+      { id: tarefa.id, ...updatePayload },
       {
         onSuccess: async () => {
           toast.success(`Tarefa movida para "${nextCol.nome}"`);
 
-          if (Object.keys(timerUpdates).length > 0) {
-            await supabase.from("tarefas").update({
-              ...timerUpdates,
-              updated_at: new Date().toISOString(),
-            } as any).eq("id", tarefa.id);
+          // Send notification for completed task
+          if (targetColType === 'done' && tarefa.user_id) {
+            sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
           }
 
           // Auto-create commission when moved to Concluído
@@ -641,28 +648,29 @@ export default function Tarefas() {
 
     // Compute timer updates
     const timerUpdates = computeTimerUpdates(tarefa, colunas, targetColunaId);
-
     const targetTarefas = tarefas.filter(t => t.coluna_id === targetColunaId);
 
-    // First move the task
-    moverTarefa.mutate(
-      { id: tarefaId, coluna_id: targetColunaId, ordem: targetTarefas.length },
+    // Move + timer in a single update
+    const dragUpdatePayload: any = {
+      coluna_id: targetColunaId,
+      ordem: targetTarefas.length,
+      ...timerUpdates,
+      updated_at: new Date().toISOString(),
+    };
+
+    atualizarTarefa.mutate(
+      { id: tarefaId, ...dragUpdatePayload },
       {
         onSuccess: async () => {
           toast.success("Tarefa movida!");
 
-          // Apply timer updates
-          if (Object.keys(timerUpdates).length > 0) {
-            await supabase.from("tarefas").update({
-              ...timerUpdates,
-              updated_at: new Date().toISOString(),
-            } as any).eq("id", tarefaId);
+          // Send notification for completed task
+          if (targetColType === 'done' && tarefa.user_id) {
+            sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
           }
 
-          // Auto-create commission when moved to last column (Concluído) and has commission
-          const targetColuna = colunas.find(c => c.id === targetColunaId);
-          const lastColuna = colunas[colunas.length - 1];
-          if (tarefa.comissao && tarefa.comissao > 0 && targetColuna?.id === lastColuna?.id && tarefa.responsavel_nome && ownerId) {
+          // Auto-create commission when moved to Concluído
+          if (targetColType === 'done' && tarefa.comissao && tarefa.comissao > 0 && tarefa.responsavel_nome && ownerId) {
             const responsaveis = tarefa.responsavel_nome.split(",").map(n => n.trim());
             const comissaoPorPessoa = tarefa.comissao / responsaveis.length;
             for (const nome of responsaveis) {
