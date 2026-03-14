@@ -95,6 +95,43 @@ interface PostForApproval {
   status: string;
 }
 
+/** Scales the IPhoneFrame mockup to fill the parent width while keeping internal proportions */
+function GradeScaledMockup({ children }: { children: ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>();
+
+  useLayoutEffect(() => {
+    const sync = () => {
+      const container = containerRef.current;
+      const inner = innerRef.current;
+      if (!container || !inner) return;
+      // Reset scale to measure natural size
+      inner.style.transform = 'none';
+      const naturalW = inner.scrollWidth;
+      const naturalH = inner.scrollHeight;
+      const containerW = container.clientWidth;
+      if (naturalW <= 0) return;
+      const scale = containerW / naturalW;
+      inner.style.transform = `scale(${scale})`;
+      inner.style.transformOrigin = 'top left';
+      setHeight(naturalH * scale);
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [children]);
+
+  return (
+    <div ref={containerRef} className="w-full overflow-hidden" style={{ height }}>
+      <div ref={innerRef} className="w-max">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function derivePostStatus(mockups: MockupData[]): string {
   const statuses = new Set(mockups.map(m => m.status));
   if (statuses.size === 1) return mockups[0].status;
