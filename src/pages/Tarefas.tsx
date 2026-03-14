@@ -36,44 +36,46 @@ const PRIORIDADES = [
   { value: "urgente", label: "Urgente", color: "bg-red-700/20 text-red-300" },
 ];
 
-// Helper to get column index (ordem) for a given coluna_id
-function getColOrdem(colunas: TarefaColuna[], colunaId: string): number {
+// Normalize column name for matching
+function normalizeColName(name: string) {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+// Identify column type by name
+function getColType(colName: string): string {
+  const n = normalizeColName(colName);
+  if (n === 'a fazer') return 'todo';
+  if (n === 'em progresso') return 'in_progress';
+  if (n.includes('aprovacao') && n.includes('interna')) return 'internal_approval';
+  if ((n.includes('aguardando') && n.includes('aprovacao')) || (n.includes('aprovacao') && n.includes('cliente'))) return 'client_approval';
+  if (n.includes('revisao')) return 'review';
+  if (n.includes('concluido')) return 'done';
+  return 'unknown';
+}
+
+function getColTypeById(colunas: TarefaColuna[], colunaId: string): string {
   const col = colunas.find(c => c.id === colunaId);
-  return col?.ordem ?? -1;
+  return col ? getColType(col.nome) : 'unknown';
 }
 
 // Compute timer updates when moving between columns
 function computeTimerUpdates(
   tarefa: Tarefa,
-  fromOrdem: number,
-  toOrdem: number,
-  lastColOrdem: number
+  colunas: TarefaColuna[],
+  targetColunaId: string
 ): Partial<Tarefa> {
-  const now = new Date().toISOString();
+  const colType = getColTypeById(colunas, targetColunaId);
   const acumulado = calcAccumulated(tarefa);
 
-  // Moving to column 1 (Em Progresso) — auto-start
-  if (toOrdem === 1) {
-    return { timer_inicio: now, timer_status: "rodando", tempo_acumulado_segundos: acumulado };
+  switch (colType) {
+    case 'todo': return { timer_inicio: null, timer_status: "parado", tempo_acumulado_segundos: acumulado };
+    case 'in_progress': return { timer_inicio: new Date().toISOString(), timer_status: "rodando", tempo_acumulado_segundos: acumulado };
+    case 'internal_approval':
+    case 'client_approval': return { timer_inicio: null, timer_status: "pausado", tempo_acumulado_segundos: acumulado };
+    case 'review': return { timer_inicio: null, timer_status: "pausado_revisao", tempo_acumulado_segundos: acumulado };
+    case 'done': return { timer_inicio: null, timer_status: "concluido", tempo_acumulado_segundos: acumulado };
+    default: return {};
   }
-  // Moving to column 2 (Aguardando Aprovação) — auto-pause
-  if (toOrdem === 2) {
-    return { timer_inicio: null, timer_status: "pausado", tempo_acumulado_segundos: acumulado };
-  }
-  // Moving to column 3 (Em Revisão) — pause, needs manual start
-  if (toOrdem === 3) {
-    return { timer_inicio: null, timer_status: "pausado_revisao", tempo_acumulado_segundos: acumulado };
-  }
-  // Moving to last column (Concluído) — finalize
-  if (toOrdem === lastColOrdem) {
-    return { timer_inicio: null, timer_status: "concluido", tempo_acumulado_segundos: acumulado };
-  }
-  // Moving back to A Fazer (ordem 0) — reset
-  if (toOrdem === 0) {
-    return { timer_inicio: null, timer_status: "parado", tempo_acumulado_segundos: acumulado };
-  }
-
-  return {};
 }
 
 function calcAccumulated(tarefa: Tarefa): number {
