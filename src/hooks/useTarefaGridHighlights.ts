@@ -133,6 +133,25 @@ export function useTarefaGridHighlights(tarefaId: string | null) {
     onSuccess: invalidate,
   });
 
+  const reorderHighlights = useMutation({
+    mutationFn: async (newOrder: { id: string; ordem: number }[]) => {
+      // Use temp values first to avoid unique constraint conflicts
+      for (let i = 0; i < newOrder.length; i++) {
+        await supabase
+          .from("tarefa_grid_highlights")
+          .update({ ordem: 100 + i, updated_at: new Date().toISOString() })
+          .eq("id", newOrder[i].id);
+      }
+      for (const item of newOrder) {
+        await supabase
+          .from("tarefa_grid_highlights")
+          .update({ ordem: item.ordem, updated_at: new Date().toISOString() })
+          .eq("id", item.id);
+      }
+    },
+    onSuccess: invalidate,
+  });
+
   const resubmitRejected = useMutation({
     mutationFn: async () => {
       if (!tarefaId) throw new Error("Sem tarefa");
@@ -146,5 +165,5 @@ export function useTarefaGridHighlights(tarefaId: string | null) {
     onSuccess: invalidate,
   });
 
-  return { highlights, isLoading, addHighlight, addBatch, removeHighlight, updateTitle, resubmitRejected };
+  return { highlights, isLoading, addHighlight, addBatch, removeHighlight, updateTitle, reorderHighlights, resubmitRejected };
 }

@@ -82,7 +82,6 @@ export function useTarefaGrid(tarefaId: string | null) {
     mutationFn: async (files: File[]) => {
       if (!tarefaId || !effectiveUserId) throw new Error("Não autenticado");
 
-      // Find available positions (0-8)
       const usedPositions = new Set(gridPosts.map(g => g.posicao));
       const availablePositions: number[] = [];
       for (let i = 0; i < 9; i++) {
@@ -124,23 +123,21 @@ export function useTarefaGrid(tarefaId: string | null) {
     onSuccess: invalidate,
   });
 
-  const swapPositions = useMutation({
-    mutationFn: async ({ from, to }: { from: number; to: number }) => {
-      if (!tarefaId) throw new Error("Sem tarefa");
-      const postA = gridPosts.find(g => g.posicao === from);
-      const postB = gridPosts.find(g => g.posicao === to);
-
-      // Use a temp position to avoid unique constraint conflicts
-      const tempPos = 99;
-
-      if (postA && postB) {
-        // Swap both
-        await supabase.from("tarefa_grid_posts").update({ posicao: tempPos }).eq("id", postA.id);
-        await supabase.from("tarefa_grid_posts").update({ posicao: from }).eq("id", postB.id);
-        await supabase.from("tarefa_grid_posts").update({ posicao: to }).eq("id", postA.id);
-      } else if (postA) {
-        // Move A to empty slot
-        await supabase.from("tarefa_grid_posts").update({ posicao: to }).eq("id", postA.id);
+  const reorderPosts = useMutation({
+    mutationFn: async (newOrder: { id: string; posicao: number }[]) => {
+      // Use temp positions (100+) first to avoid unique constraint conflicts
+      for (let i = 0; i < newOrder.length; i++) {
+        await supabase
+          .from("tarefa_grid_posts")
+          .update({ posicao: 100 + i, updated_at: new Date().toISOString() })
+          .eq("id", newOrder[i].id);
+      }
+      // Then set final positions
+      for (const item of newOrder) {
+        await supabase
+          .from("tarefa_grid_posts")
+          .update({ posicao: item.posicao, updated_at: new Date().toISOString() })
+          .eq("id", item.id);
       }
     },
     onSuccess: invalidate,
@@ -172,5 +169,5 @@ export function useTarefaGrid(tarefaId: string | null) {
     onSuccess: invalidate,
   });
 
-  return { gridPosts, isLoading, uploadImage, uploadBatch, removeImage, swapPositions, resubmitRejected };
+  return { gridPosts, isLoading, uploadImage, uploadBatch, removeImage, reorderPosts, resubmitRejected };
 }

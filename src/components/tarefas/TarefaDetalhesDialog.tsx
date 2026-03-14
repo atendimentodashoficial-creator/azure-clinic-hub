@@ -57,8 +57,8 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const { tipos } = useTiposTarefas();
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
   const { links: savedLinks, saveLinks } = useTarefaLinks(tarefa?.id || null);
-  const { gridPosts, uploadImage, uploadBatch, removeImage, swapPositions, resubmitRejected: resubmitGridRejected } = useTarefaGrid(tarefa?.id || null);
-  const { highlights: gridHighlights, addHighlight, addBatch: addHighlightBatch, removeHighlight, updateTitle: updateHighlightTitle, resubmitRejected: resubmitHighlightsRejected } = useTarefaGridHighlights(tarefa?.id || null);
+  const { gridPosts, uploadImage, uploadBatch, removeImage, reorderPosts, resubmitRejected: resubmitGridRejected } = useTarefaGrid(tarefa?.id || null);
+  const { highlights: gridHighlights, addHighlight, addBatch: addHighlightBatch, removeHighlight, updateTitle: updateHighlightTitle, reorderHighlights, resubmitRejected: resubmitHighlightsRejected } = useTarefaGridHighlights(tarefa?.id || null);
   const [resubmitting, setResubmitting] = useState(false);
   const [posts, setPosts] = useState<PostGroup[]>([
     { postIndex: 0, slides: [{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }] },
@@ -595,8 +595,8 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   onRemove={async (posicao) => {
                     await removeImage.mutateAsync(posicao);
                   }}
-                  onSwap={async (from, to) => {
-                    await swapPositions.mutateAsync({ from, to });
+                  onReorder={async (newOrder) => {
+                    await reorderPosts.mutateAsync(newOrder);
                   }}
                   uploading={uploadImage.isPending || uploadBatch.isPending}
                 />
@@ -616,6 +616,9 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   }}
                   onUpdateTitle={async (id, titulo) => {
                     await updateHighlightTitle.mutateAsync({ id, titulo });
+                  }}
+                  onReorder={async (newOrder) => {
+                    await reorderHighlights.mutateAsync(newOrder);
                   }}
                   uploading={addHighlight.isPending || addHighlightBatch.isPending}
                 />
