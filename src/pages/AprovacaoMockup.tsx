@@ -48,17 +48,22 @@ function GridLayoutSyncer({ children }: { children: React.ReactNode }) {
     right.style.maxHeight = '';
     right.style.overflow = '';
     rightInner.style.transform = 'scale(1)';
-    rightInner.style.transformOrigin = '';
-    rightInner.style.width = '100%';
+    rightInner.style.transformOrigin = 'top center';
+    rightInner.style.width = '';
     rightInner.style.margin = '';
 
     if (isMobile) return;
 
     const leftH = Math.ceil(left.getBoundingClientRect().height);
+    const rightAvailableW = Math.ceil(right.getBoundingClientRect().width);
     const rightNaturalH = Math.ceil(rightInner.getBoundingClientRect().height);
-    if (leftH <= 0 || rightNaturalH <= 0) return;
+    const rightNaturalW = Math.ceil(rightInner.getBoundingClientRect().width);
 
-    const scale = Math.min(1, leftH / rightNaturalH);
+    if (leftH <= 0 || rightAvailableW <= 0 || rightNaturalH <= 0 || rightNaturalW <= 0) return;
+
+    const scaleByHeight = leftH / rightNaturalH;
+    const scaleByWidth = rightAvailableW / rightNaturalW;
+    const scale = Math.min(1, scaleByHeight, scaleByWidth);
 
     right.style.height = `${leftH}px`;
     right.style.maxHeight = `${leftH}px`;
@@ -66,8 +71,6 @@ function GridLayoutSyncer({ children }: { children: React.ReactNode }) {
 
     rightInner.style.transform = `scale(${scale})`;
     rightInner.style.transformOrigin = 'top center';
-    rightInner.style.width = `${100 / scale}%`;
-    rightInner.style.margin = '0 auto';
   }, [isMobile]);
 
   useLayoutEffect(() => { sync(); }, [sync, children]);
