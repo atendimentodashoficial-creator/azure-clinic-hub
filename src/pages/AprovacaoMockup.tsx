@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MockupPreview, MockupSlide } from "@/components/tarefas/MockupPreview";
