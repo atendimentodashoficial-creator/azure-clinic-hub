@@ -248,7 +248,7 @@ export default function AprovacaoMockup() {
 
   // === MOCKUP APPROVAL HANDLERS ===
   const posts = groupByPost(mockups);
-  const filteredPosts = posts.filter(p => approvalFilter === "pendentes" ? p.status !== "aprovado" : p.status === "aprovado");
+  const filteredPosts = posts.filter(p => approvalFilter === "pendentes" ? p.status === "pendente" : approvalFilter === "aprovadas" ? p.status === "aprovado" : p.status === "reprovado");
   const currentPost = filteredPosts[currentPostIdx];
 
   const handleApprovePost = async () => {
