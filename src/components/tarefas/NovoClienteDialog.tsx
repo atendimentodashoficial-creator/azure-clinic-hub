@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { TarefaCliente } from "@/hooks/useTarefasClientes";
+import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
 import { extractCountryCode, formatPhoneByCountry, getPhonePlaceholder, normalizePhone, stripCountryCode } from "@/utils/phoneFormat";
@@ -32,6 +34,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
   const [open, setOpen] = useState(false);
   const isEditing = !!clienteEditando;
   const [formTab, setFormTab] = useState("info");
+  const { membros: todosMembros } = useTarefasMembros();
 
   const initialPhoneData = clienteEditando?.telefone
     ? extractCountryCode(clienteEditando.telefone)
@@ -60,6 +63,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
   const [grupoWhatsapp, setGrupoWhatsapp] = useState(clienteEditando?.grupo_whatsapp || "");
   const [tipo, setTipo] = useState(clienteEditando?.tipo || defaultTipo || "interno");
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(clienteEditando?.foto_perfil_url || "");
+  const [gestorId, setGestorId] = useState(clienteEditando?.gestor_id || "");
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const fotoInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,6 +71,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
     setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("55"); setEmpresa("");
     setCnpj(""); setDocTipo("cnpj"); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
     setObservacoes(""); setGrupoWhatsapp(""); setTipo(defaultTipo || "interno"); setFormTab("info"); setFotoPerfilUrl("");
+    setGestorId("");
   };
 
   // Pre-fill when opened externally with initialData
@@ -147,6 +152,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
       observacoes: observacoes.trim() || null,
       grupo_whatsapp: grupoWhatsapp.trim() || null,
       foto_perfil_url: fotoPerfilUrl || null,
+      gestor_id: gestorId && gestorId !== "none" ? gestorId : null,
       tipo,
     });
     resetForm();
@@ -247,10 +253,25 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
               </div>
               <div className="space-y-2"><Label>Email {tipo === "interno" ? "*" : ""}</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
               {tipo === "interno" && (
-                <div className="space-y-2">
-                  <Label>Senha de Acesso {!isEditing && "*"}</Label>
-                  <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label>Senha de Acesso {!isEditing && "*"}</Label>
+                    <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Gestor do Projeto</Label>
+                    <Select value={gestorId} onValueChange={setGestorId}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o gestor (opcional)" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {todosMembros.map(m => (
+                          <SelectItem key={m.id} value={m.id}>{m.nome} {m.cargo ? `(${m.cargo})` : ""}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Responsável pela aprovação interna das tarefas</p>
+                  </div>
+                </>
               )}
               <div className="space-y-2"><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
               <div className="space-y-2">

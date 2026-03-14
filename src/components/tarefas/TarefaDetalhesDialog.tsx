@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTiposTarefas, TipoTarefa } from "@/hooks/useTiposTarefas";
@@ -13,12 +14,16 @@ import { useTarefaMockups } from "@/hooks/useTarefaMockups";
 import { useTarefaLinks } from "@/hooks/useTarefaLinks";
 import { useTarefaGrid } from "@/hooks/useTarefaGrid";
 import { useTarefaGridHighlights } from "@/hooks/useTarefaGridHighlights";
+import { useTarefasClientes } from "@/hooks/useTarefasClientes";
+import { useTarefasMembros } from "@/hooks/useTarefasMembros";
+import { useMembroAtual } from "@/hooks/useMembroAtual";
+import { useUserRole } from "@/hooks/useUserRole";
 import { GridPostsManager } from "./GridPostsManager";
 import { GridHighlightsManager } from "./GridHighlightsManager";
 import { MockupPostsManager, PostGroup } from "./MockupPostsManager";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
-import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History, Plus, Trash2, ExternalLink, Globe, Instagram, Phone, Mail, FileText, ChevronRight } from "lucide-react";
+import { Building2, Calendar, Video, Upload, Save, Send, Link2, Copy, History, Plus, Trash2, ExternalLink, Globe, Instagram, Phone, Mail, FileText, ChevronRight, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { formatPhoneDisplay } from "@/utils/phoneFormat";
@@ -55,6 +60,10 @@ interface TarefaDetalhesDialogProps {
 
 export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, open, onOpenChange }: TarefaDetalhesDialogProps) {
   const { tipos } = useTiposTarefas();
+  const { clientes: clientesCompletos } = useTarefasClientes();
+  const { membros } = useTarefasMembros();
+  const { membro: membroAtual } = useMembroAtual();
+  const { role } = useUserRole();
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
   const { links: savedLinks, saveLinks } = useTarefaLinks(tarefa?.id || null);
   const { gridPosts, uploadImage, uploadBatch, removeImage, reorderPosts, resubmitRejected: resubmitGridRejected } = useTarefaGrid(tarefa?.id || null);
@@ -67,6 +76,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showClienteSheet, setShowClienteSheet] = useState(false);
+  const [internaFeedback, setInternaFeedback] = useState("");
 
   const { data: clienteCompleto } = useQuery({
     queryKey: ["tarefa-cliente-detalhes", tarefa?.cliente_id],
@@ -105,7 +115,11 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const mockupLimit = tipoTarefa?.limite_arquivos?.mockup || 0;
   const linksLimit = tipoTarefa?.limite_arquivos?.links || 0;
   const requiresApproval = hasMockup || hasLinks || hasGrid;
+  const exigeAprovacaoInterna = tipoTarefa?.exige_aprovacao_interna ?? false;
+  const exigeAprovacaoCliente = tipoTarefa?.exige_aprovacao ?? false;
   const cliente = tarefa?.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
+  const clienteCompleto2 = tarefa?.cliente_id ? clientesCompletos.find(c => c.id === tarefa.cliente_id) : null;
+  const gestorMembro = clienteCompleto2?.gestor_id ? membros.find(m => m.id === clienteCompleto2.gestor_id) : null;
   const reuniao = tarefa?.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
   const prio = PRIORIDADES.find(p => p.value === tarefa?.prioridade) || PRIORIDADES[1];
   const coluna = tarefa ? colunas.find(c => c.id === tarefa.coluna_id) : null;
@@ -176,14 +190,29 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       .toLowerCase()
       .trim();
 
-  const isAguardandoAprovacaoColumn = (name: string) => {
+  const isAprovacaoClienteColumn = (name: string) => {
     const normalized = normalizeColumnName(name);
-    return normalized.includes("aguardando") && normalized.includes("aprovacao");
+    return (normalized.includes("aguardando") && normalized.includes("aprovacao")) ||
+           (normalized.includes("aprovacao") && normalized.includes("cliente"));
   };
 
-  const findAguardandoAprovacaoColumnId = async () => {
-    const fromProps = colunas.find(c => isAguardandoAprovacaoColumn(c.nome));
-    if (fromProps) return fromProps.id;
+  const isAprovacaoInternaColumn = (name: string) => {
+    const normalized = normalizeColumnName(name);
+    return normalized.includes("aprovacao") && normalized.includes("interna");
+  };
+
+  const isConcluido = (name: string) => normalizeColumnName(name).includes("concluido");
+
+  const isEmRevisao = (name: string) => normalizeColumnName(name).includes("revisao");
+
+  const findColumnByMatcher = (matcher: (name: string) => boolean) => {
+    const fromProps = colunas.find(c => matcher(c.nome));
+    return fromProps?.id ?? null;
+  };
+
+  const findColumnByMatcherAsync = async (matcher: (name: string) => boolean) => {
+    const fromProps = findColumnByMatcher(matcher);
+    if (fromProps) return fromProps;
     if (!tarefa?.user_id) return null;
 
     const { data, error } = await supabase
@@ -193,15 +222,35 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       .order("ordem", { ascending: true });
 
     if (error) throw error;
-
-    return data?.find(c => isAguardandoAprovacaoColumn(c.nome))?.id ?? null;
+    return data?.find(c => matcher(c.nome))?.id ?? null;
   };
 
   const handleSendForApproval = async () => {
     if (!tarefa) return;
     try {
-      const token = crypto.randomUUID();
-      const approvalColumnId = await findAguardandoAprovacaoColumnId();
+      // If internal approval is required and not yet approved, send to internal approval first
+      if (exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== "aprovado") {
+        const internaColumnId = await findColumnByMatcherAsync(isAprovacaoInternaColumn);
+        const updateData: Record<string, any> = {
+          aprovacao_interna_status: "pendente",
+          updated_at: new Date().toISOString(),
+        };
+        if (internaColumnId) {
+          updateData.coluna_id = internaColumnId;
+        }
+        const { error } = await supabase
+          .from("tarefas")
+          .update(updateData)
+          .eq("id", tarefa.id);
+        if (error) throw error;
+        toast.success("Tarefa enviada para aprovação interna do gestor!");
+        window.location.reload();
+        return;
+      }
+
+      // Normal client approval flow
+      const token = tarefa.approval_token || crypto.randomUUID();
+      const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
       const updateData: Record<string, any> = {
         approval_token: token,
         approval_status: "aguardando",
@@ -225,19 +274,98 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     }
   };
 
+  const handleInternalApproval = async (status: "aprovado" | "reprovado") => {
+    if (!tarefa) return;
+    setResubmitting(true);
+    try {
+      const gestorNome = gestorMembro?.nome || membroAtual?.nome || "Gestor";
+
+      if (status === "aprovado") {
+        // If client approval is also needed, move to Aprovação Cliente
+        if (exigeAprovacaoCliente) {
+          const token = tarefa.approval_token || crypto.randomUUID();
+          const clienteColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
+          const updateData: Record<string, any> = {
+            aprovacao_interna_status: "aprovado",
+            aprovacao_interna_por: gestorNome,
+            aprovacao_interna_feedback: internaFeedback || null,
+            approval_token: token,
+            approval_status: "aguardando",
+            updated_at: new Date().toISOString(),
+          };
+          if (clienteColumnId) {
+            updateData.coluna_id = clienteColumnId;
+          }
+          const { error } = await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
+          if (error) throw error;
+
+          const link = `${window.location.origin}/aprovacao/${token}`;
+          await navigator.clipboard.writeText(link);
+          toast.success("Aprovação interna concluída! Link de aprovação do cliente copiado.");
+        } else {
+          // No client approval, move to Concluído
+          const concluidoColumnId = await findColumnByMatcherAsync(isConcluido);
+          const updateData: Record<string, any> = {
+            aprovacao_interna_status: "aprovado",
+            aprovacao_interna_por: gestorNome,
+            aprovacao_interna_feedback: internaFeedback || null,
+            approval_status: "concluido",
+            updated_at: new Date().toISOString(),
+          };
+          if (concluidoColumnId) {
+            updateData.coluna_id = concluidoColumnId;
+          }
+          const { error } = await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
+          if (error) throw error;
+          toast.success("Aprovação interna concluída! Tarefa finalizada.");
+        }
+      } else {
+        // Reprovado - move to Em Revisão
+        const revisaoColumnId = await findColumnByMatcherAsync(isEmRevisao);
+        const updateData: Record<string, any> = {
+          aprovacao_interna_status: "reprovado",
+          aprovacao_interna_por: gestorNome,
+          aprovacao_interna_feedback: internaFeedback || null,
+          updated_at: new Date().toISOString(),
+        };
+        if (revisaoColumnId) {
+          updateData.coluna_id = revisaoColumnId;
+        }
+        const { error } = await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
+        if (error) throw error;
+        toast.success("Tarefa reprovada internamente e enviada para revisão.");
+      }
+
+      setInternaFeedback("");
+      window.location.reload();
+    } catch {
+      toast.error("Erro ao processar aprovação interna");
+    } finally {
+      setResubmitting(false);
+    }
+  };
+
   const handleResubmitRejected = async () => {
     if (!tarefa) return;
     setResubmitting(true);
     try {
       await resubmitRejected.mutateAsync();
 
-      const approvalColumnId = await findAguardandoAprovacaoColumnId();
-      if (approvalColumnId) {
-        const { error } = await supabase
-          .from("tarefas")
-          .update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() })
-          .eq("id", tarefa.id);
-        if (error) throw error;
+      // Reset internal approval if needed
+      if (exigeAprovacaoInterna) {
+        const internaColumnId = await findColumnByMatcherAsync(isAprovacaoInternaColumn);
+        const updateData: Record<string, any> = {
+          aprovacao_interna_status: "pendente",
+          aprovacao_interna_feedback: null,
+          updated_at: new Date().toISOString(),
+        };
+        if (internaColumnId) updateData.coluna_id = internaColumnId;
+        await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
+      } else {
+        const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
+        if (approvalColumnId) {
+          await supabase.from("tarefas").update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() }).eq("id", tarefa.id);
+        }
       }
 
       toast.success("Itens revisados reenviados para aprovação!");
@@ -334,7 +462,89 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
             )}
           </div>
 
-          {/* File upload requirements */}
+          {/* Internal Approval Section */}
+          {exigeAprovacaoInterna && tarefa.aprovacao_interna_status && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4" /> Aprovação Interna
+                </Label>
+
+                {tarefa.aprovacao_interna_status === "pendente" && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Badge variant="outline" className="border-amber-500 text-amber-400 text-[10px]">
+                        Aguardando aprovação
+                      </Badge>
+                      {gestorMembro && (
+                        <span className="text-xs text-muted-foreground">
+                          Gestor: <strong>{gestorMembro.nome}</strong>
+                        </span>
+                      )}
+                    </div>
+                    <Textarea
+                      placeholder="Feedback da aprovação interna (opcional)..."
+                      value={internaFeedback}
+                      onChange={e => setInternaFeedback(e.target.value)}
+                      className="text-sm"
+                      rows={2}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 gap-1.5 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                        onClick={() => handleInternalApproval("aprovado")}
+                        disabled={resubmitting}
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        {resubmitting ? "Processando..." : "Aprovar"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 gap-1.5 border-red-500/50 text-red-400 hover:bg-red-500/10"
+                        onClick={() => handleInternalApproval("reprovado")}
+                        disabled={resubmitting}
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Reprovar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {tarefa.aprovacao_interna_status === "aprovado" && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="border-emerald-500 text-emerald-400 text-[10px]">
+                      Aprovado internamente
+                    </Badge>
+                    {tarefa.aprovacao_interna_por && (
+                      <span className="text-xs text-muted-foreground">por {tarefa.aprovacao_interna_por}</span>
+                    )}
+                  </div>
+                )}
+
+                {tarefa.aprovacao_interna_status === "reprovado" && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="border-red-500 text-red-400 text-[10px]">
+                        Reprovado internamente
+                      </Badge>
+                      {tarefa.aprovacao_interna_por && (
+                        <span className="text-xs text-muted-foreground">por {tarefa.aprovacao_interna_por}</span>
+                      )}
+                    </div>
+                    {tarefa.aprovacao_interna_feedback && (
+                      <p className="text-[11px] text-red-400 bg-red-500/10 rounded px-2 py-1">
+                        💬 {tarefa.aprovacao_interna_feedback}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           {requiredFileTypes.length > 0 && (
             <>
               <Separator />
@@ -571,7 +781,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                         onClick={handleSendForApproval}
                       >
                         <Send className="h-4 w-4" />
-                        Enviar para Aprovação
+                        {exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== "aprovado" ? "Enviar para Aprovação Interna" : "Enviar para Aprovação"}
                       </Button>
                     )}
                   </div>
@@ -697,7 +907,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                               try {
                                 await resubmitGridRejected.mutateAsync();
                                 await resubmitHighlightsRejected.mutateAsync();
-                                const approvalColumnId = await findAguardandoAprovacaoColumnId();
+                                const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
                                 if (approvalColumnId) {
                                   await supabase.from("tarefas").update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() }).eq("id", tarefa.id);
                                 }
@@ -723,7 +933,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                         onClick={handleSendForApproval}
                       >
                         <Send className="h-4 w-4" />
-                        Enviar para Aprovação
+                        {exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== "aprovado" ? "Enviar para Aprovação Interna" : "Enviar para Aprovação"}
                       </Button>
                     )}
                   </div>
@@ -780,7 +990,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                         onClick={async () => {
                           setResubmitting(true);
                           try {
-                            const approvalColumnId = await findAguardandoAprovacaoColumnId();
+                            const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
                             const updateData: Record<string, any> = {
                               approval_status: "aguardando",
                               updated_at: new Date().toISOString(),
@@ -856,7 +1066,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                     onClick={handleSendForApproval}
                   >
                     <Send className="h-4 w-4" />
-                    Enviar para Aprovação
+                    {exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== "aprovado" ? "Enviar para Aprovação Interna" : "Enviar para Aprovação"}
                   </Button>
                 )}
               </div>

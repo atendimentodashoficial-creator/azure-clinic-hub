@@ -108,6 +108,7 @@ export default function TiposTarefas() {
   const [formArquivos, setFormArquivos] = useState<string[]>([]);
   const [formLimites, setFormLimites] = useState<Record<string, number>>({});
   const [formExigeAprovacao, setFormExigeAprovacao] = useState(false);
+  const [formExigeAprovacaoInterna, setFormExigeAprovacaoInterna] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -121,6 +122,7 @@ export default function TiposTarefas() {
     setFormArquivos([]);
     setFormLimites({});
     setFormExigeAprovacao(false);
+    setFormExigeAprovacaoInterna(false);
     setIsDialogOpen(true);
   };
 
@@ -131,6 +133,7 @@ export default function TiposTarefas() {
     setFormArquivos(tipo.tipos_arquivo_permitidos);
     setFormLimites(tipo.limite_arquivos);
     setFormExigeAprovacao(tipo.exige_aprovacao);
+    setFormExigeAprovacaoInterna(tipo.exige_aprovacao_interna);
     setIsDialogOpen(true);
   };
 
@@ -153,6 +156,7 @@ export default function TiposTarefas() {
       tipos_arquivo_permitidos: formArquivos,
       limite_arquivos: formLimites,
       exige_aprovacao: formExigeAprovacao,
+      exige_aprovacao_interna: formExigeAprovacaoInterna,
     };
     if (editingTipo) {
       await updateTipo.mutateAsync({ id: editingTipo.id, ...payload });
@@ -251,13 +255,22 @@ export default function TiposTarefas() {
               <Input value={formDescricao} onChange={e => setFormDescricao(e.target.value)} placeholder="Descrição do tipo..." />
             </div>
 
-            {/* Exige aprovação */}
+            {/* Exige aprovação do cliente */}
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <Label className="text-sm font-medium">Exige aprovação do cliente</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">A tarefa só poderá ser concluída após aprovação</p>
+                <p className="text-xs text-muted-foreground mt-0.5">A tarefa só poderá ser concluída após aprovação do cliente</p>
               </div>
               <Switch checked={formExigeAprovacao} onCheckedChange={setFormExigeAprovacao} />
+            </div>
+
+            {/* Exige aprovação interna */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label className="text-sm font-medium">Exige aprovação interna (gestor)</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">A tarefa passará por revisão do gestor do projeto antes da aprovação do cliente</p>
+              </div>
+              <Switch checked={formExigeAprovacaoInterna} onCheckedChange={setFormExigeAprovacaoInterna} />
             </div>
 
             {/* File types */}

@@ -36,44 +36,46 @@ const PRIORIDADES = [
   { value: "urgente", label: "Urgente", color: "bg-red-700/20 text-red-300" },
 ];
 
-// Helper to get column index (ordem) for a given coluna_id
-function getColOrdem(colunas: TarefaColuna[], colunaId: string): number {
+// Normalize column name for matching
+function normalizeColName(name: string) {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+// Identify column type by name
+function getColType(colName: string): string {
+  const n = normalizeColName(colName);
+  if (n === 'a fazer') return 'todo';
+  if (n === 'em progresso') return 'in_progress';
+  if (n.includes('aprovacao') && n.includes('interna')) return 'internal_approval';
+  if ((n.includes('aguardando') && n.includes('aprovacao')) || (n.includes('aprovacao') && n.includes('cliente'))) return 'client_approval';
+  if (n.includes('revisao')) return 'review';
+  if (n.includes('concluido')) return 'done';
+  return 'unknown';
+}
+
+function getColTypeById(colunas: TarefaColuna[], colunaId: string): string {
   const col = colunas.find(c => c.id === colunaId);
-  return col?.ordem ?? -1;
+  return col ? getColType(col.nome) : 'unknown';
 }
 
 // Compute timer updates when moving between columns
 function computeTimerUpdates(
   tarefa: Tarefa,
-  fromOrdem: number,
-  toOrdem: number,
-  lastColOrdem: number
+  colunas: TarefaColuna[],
+  targetColunaId: string
 ): Partial<Tarefa> {
-  const now = new Date().toISOString();
+  const colType = getColTypeById(colunas, targetColunaId);
   const acumulado = calcAccumulated(tarefa);
 
-  // Moving to column 1 (Em Progresso) — auto-start
-  if (toOrdem === 1) {
-    return { timer_inicio: now, timer_status: "rodando", tempo_acumulado_segundos: acumulado };
+  switch (colType) {
+    case 'todo': return { timer_inicio: null, timer_status: "parado", tempo_acumulado_segundos: acumulado };
+    case 'in_progress': return { timer_inicio: new Date().toISOString(), timer_status: "rodando", tempo_acumulado_segundos: acumulado };
+    case 'internal_approval':
+    case 'client_approval': return { timer_inicio: null, timer_status: "pausado", tempo_acumulado_segundos: acumulado };
+    case 'review': return { timer_inicio: null, timer_status: "pausado_revisao", tempo_acumulado_segundos: acumulado };
+    case 'done': return { timer_inicio: null, timer_status: "concluido", tempo_acumulado_segundos: acumulado };
+    default: return {};
   }
-  // Moving to column 2 (Aguardando Aprovação) — auto-pause
-  if (toOrdem === 2) {
-    return { timer_inicio: null, timer_status: "pausado", tempo_acumulado_segundos: acumulado };
-  }
-  // Moving to column 3 (Em Revisão) — pause, needs manual start
-  if (toOrdem === 3) {
-    return { timer_inicio: null, timer_status: "pausado_revisao", tempo_acumulado_segundos: acumulado };
-  }
-  // Moving to last column (Concluído) — finalize
-  if (toOrdem === lastColOrdem) {
-    return { timer_inicio: null, timer_status: "concluido", tempo_acumulado_segundos: acumulado };
-  }
-  // Moving back to A Fazer (ordem 0) — reset
-  if (toOrdem === 0) {
-    return { timer_inicio: null, timer_status: "parado", tempo_acumulado_segundos: acumulado };
-  }
-
-  return {};
 }
 
 function calcAccumulated(tarefa: Tarefa): number {
@@ -289,15 +291,15 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
   const cliente = tarefa.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
   const reuniao = tarefa.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
-  const colOrdem = getColOrdem(colunas, tarefa.coluna_id);
+  const colType = getColTypeById(colunas, tarefa.coluna_id);
 
-  // Employees can't see details when task is in "A Fazer" (ordem 0)
-  const hideDetails = isFuncionario && colOrdem === 0;
-  // In "Em Revisão" (ordem 3) with pausado_revisao, employee needs to start timer to see details
-  const needsManualStart = isFuncionario && colOrdem === 3 && tarefa.timer_status === "pausado_revisao";
+  // Employees can't see details when task is in "A Fazer"
+  const hideDetails = isFuncionario && colType === 'todo';
+  // In "Em Revisão" with pausado_revisao, employee needs to start timer to see details
+  const needsManualStart = isFuncionario && colType === 'review' && tarefa.timer_status === "pausado_revisao";
 
   // Task is clickable when not in "A Fazer" and not needing manual start
-  const isClickable = !hideDetails && !needsManualStart && onClick && colOrdem >= 1;
+  const isClickable = !hideDetails && !needsManualStart && onClick && colType !== 'todo';
 
   const renderResponsaveis = () => {
     if (!tarefa.responsavel_nome) return null;
@@ -427,7 +429,7 @@ export default function Tarefas() {
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
 
-  const lastColOrdem = colunas.length > 0 ? colunas[colunas.length - 1].ordem : 4;
+  // lastColOrdem removed - using name-based column detection now
 
   // Fetch reunioes for tasks that have reuniao_id
   const reuniaoIds = tarefas.filter(t => t.reuniao_id).map(t => t.reuniao_id!);
@@ -512,20 +514,21 @@ export default function Tarefas() {
     if (!tarefa || tarefa.coluna_id === targetColunaId) return;
 
     // Block move to last column (Concluído) if task type requires approval and it's not approved
-    const lastColuna = colunas[colunas.length - 1];
-    if (targetColunaId === lastColuna?.id) {
+    const targetColType = getColTypeById(colunas, targetColunaId);
+    if (targetColType === 'done') {
       const tipoTarefa = tarefa.tipo_tarefa_id ? tiposTarefas.find(t => t.id === tarefa.tipo_tarefa_id) : null;
       if (tipoTarefa?.exige_aprovacao && tarefa.approval_status !== "concluido") {
         toast.error("Esta tarefa exige aprovação do cliente antes de ser concluída.");
         return;
       }
+      if (tipoTarefa?.exige_aprovacao_interna && tarefa.aprovacao_interna_status !== "aprovado") {
+        toast.error("Esta tarefa exige aprovação interna antes de ser concluída.");
+        return;
+      }
     }
 
-    const fromOrdem = getColOrdem(colunas, tarefa.coluna_id);
-    const toOrdem = getColOrdem(colunas, targetColunaId);
-
     // Compute timer updates
-    const timerUpdates = computeTimerUpdates(tarefa, fromOrdem, toOrdem, lastColOrdem);
+    const timerUpdates = computeTimerUpdates(tarefa, colunas, targetColunaId);
 
     const targetTarefas = tarefas.filter(t => t.coluna_id === targetColunaId);
 
