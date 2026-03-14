@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play, ChevronRight, ShieldCheck, Copy, ExternalLink } from "lucide-react";
+import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play, ChevronRight, ShieldCheck, Copy, ExternalLink, RotateCcw } from "lucide-react";
 import { TipoTarefa } from "@/hooks/useTiposTarefas";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -267,7 +267,7 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   );
 }
 
-function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, tiposTarefas, isFuncionario, onDelete, onStartTimer, onClick, onAdvance }: {
+function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, tiposTarefas, isFuncionario, onDelete, onStartTimer, onClick, onAdvance, revisoesCounts }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
@@ -279,6 +279,7 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioes
   onStartTimer: (id: string) => void;
   onClick?: (tarefa: Tarefa) => void;
   onAdvance?: (tarefa: Tarefa) => void;
+  revisoesCounts?: { interna: number; cliente: number };
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tarefa.id,
@@ -306,12 +307,13 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioes
         onClick={onClick}
         onAdvance={onAdvance}
         dragHandleProps={{ ...attributes, ...listeners }}
+        revisoesCounts={revisoesCounts}
       />
     </div>
   );
 }
 
-function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, tiposTarefas, isFuncionario, onDelete, onStartTimer, onClick, onAdvance, dragHandleProps }: {
+function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, tiposTarefas, isFuncionario, onDelete, onStartTimer, onClick, onAdvance, dragHandleProps, revisoesCounts }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
@@ -324,6 +326,7 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   onClick?: (tarefa: Tarefa) => void;
   onAdvance?: (tarefa: Tarefa) => void;
   dragHandleProps?: Record<string, any>;
+  revisoesCounts?: { interna: number; cliente: number };
 }) {
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
   const cliente = tarefa.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
@@ -445,6 +448,24 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
             </>
           )}
 
+          {/* Revision count badges */}
+          {revisoesCounts && (revisoesCounts.interna > 0 || revisoesCounts.cliente > 0) && !hideDetails && !needsManualStart && (
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              {revisoesCounts.interna > 0 && (
+                <span className="text-[10px] flex items-center gap-0.5 bg-amber-500/15 text-amber-400 rounded px-1.5 py-0.5">
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Interna ×{revisoesCounts.interna}
+                </span>
+              )}
+              {revisoesCounts.cliente > 0 && (
+                <span className="text-[10px] flex items-center gap-0.5 bg-red-500/15 text-red-400 rounded px-1.5 py-0.5">
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Cliente ×{revisoesCounts.cliente}
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-2 mt-2">
             <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0">
               <Badge className={cn("text-xs border-0", prio.color)}>{prio.label}</Badge>
@@ -528,6 +549,33 @@ export default function Tarefas() {
 
   const reunioesMap: Record<string, { data_reuniao: string; status: string }> = {};
   (reunioesData || []).forEach((r: any) => { reunioesMap[r.id] = r; });
+
+  // Fetch revision counts per task
+  const tarefaIds = tarefas.map(t => t.id);
+  const { data: revisoesData } = useQuery({
+    queryKey: ["tarefas-revisoes-counts", tarefaIds.sort().join(",")],
+    queryFn: async () => {
+      if (tarefaIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("tarefa_revisoes")
+        .select("tarefa_id, status")
+        .in("tarefa_id", tarefaIds)
+        .or("status.eq.reprovado,status.eq.interna_reprovado,status.ilike.interna_%reprovado%");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: tarefaIds.length > 0,
+  });
+
+  const revisoesByTarefa: Record<string, { interna: number; cliente: number }> = {};
+  (revisoesData || []).forEach((r: any) => {
+    if (!revisoesByTarefa[r.tarefa_id]) revisoesByTarefa[r.tarefa_id] = { interna: 0, cliente: 0 };
+    if (r.status?.startsWith("interna_")) {
+      revisoesByTarefa[r.tarefa_id].interna++;
+    } else {
+      revisoesByTarefa[r.tarefa_id].cliente++;
+    }
+  });
 
   // Filter tasks for employee "minhas" view
   const tarefasFiltradas = filtro === "minhas" && membro
@@ -797,6 +845,7 @@ export default function Tarefas() {
                         onStartTimer={handleStartTimer}
                         onClick={setDetalheTarefa}
                         onAdvance={handleAdvance}
+                        revisoesCounts={revisoesByTarefa[tarefa.id]}
                       />
                     ))}
                   </DroppableColumn>
@@ -823,6 +872,7 @@ export default function Tarefas() {
                 reunioesMap={reunioesMap}
                 tiposTarefas={tiposTarefas}
                 isFuncionario={isFuncionario}
+                revisoesCounts={revisoesByTarefa[activeTarefa.id]}
               />
             </div>
           )}
