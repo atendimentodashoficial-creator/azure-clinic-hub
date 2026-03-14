@@ -561,7 +561,7 @@ export default function AprovacaoMockup() {
             <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
           </div>
 
-          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-8">
+          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-16">
             {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
             <div className="lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
               <GridMockupScaler>
