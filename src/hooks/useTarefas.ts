@@ -33,6 +33,9 @@ export interface Tarefa {
   timer_status: string;
   approval_token: string | null;
   approval_status: string | null;
+  aprovacao_interna_status: string | null;
+  aprovacao_interna_por: string | null;
+  aprovacao_interna_feedback: string | null;
   created_at: string;
 }
 
