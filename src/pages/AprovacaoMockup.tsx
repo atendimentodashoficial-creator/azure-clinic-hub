@@ -141,6 +141,7 @@ interface TaskInfo {
   cliente_empresa: string;
   approval_status: string;
   cliente_instagram: string;
+  cliente_foto_perfil_url: string | null;
 }
 
 interface PostForApproval {
