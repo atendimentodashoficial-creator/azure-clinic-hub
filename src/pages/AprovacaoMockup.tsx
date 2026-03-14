@@ -595,7 +595,7 @@ export default function AprovacaoMockup() {
                         <img
                           src={currentGridPost.image_url}
                           alt={`Post ${currentGridPost.posicao + 1}`}
-                          className="w-full aspect-square object-cover rounded-lg border border-border"
+                          className="w-full aspect-[4/5] object-cover rounded-lg border border-border"
                         />
                       </div>
 
