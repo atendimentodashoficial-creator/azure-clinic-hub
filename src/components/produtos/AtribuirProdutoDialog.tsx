@@ -154,6 +154,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
             duracao: data.duracao,
             clienteNome: selectedClient.nome,
             clienteTelefone: selectedClient.telefone || null,
+            tipoReuniaoId: (template as any).tipo_reuniao_id || null,
           },
         }
       );
