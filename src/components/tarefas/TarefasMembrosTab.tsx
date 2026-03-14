@@ -55,6 +55,7 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
     setCargo(""); setObservacoes(""); setSenha(""); setSalario("");
     setDataContratacao(undefined); setDiaPagamento("");
     setFotoUrl(""); setFotoPreview("");
+    setWhatsappAvisoPessoal(""); setWhatsappAvisoGrupo("");
   };
 
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
