@@ -59,7 +59,7 @@ export function InstagramGridPreview({
   return (
     <div className="space-y-4">
       {/* Instagram profile mockup */}
-      <div className="w-full max-w-[470px] mx-auto bg-background border rounded-xl overflow-hidden shadow-lg">
+      <div className="w-full bg-background overflow-hidden">
         {/* Profile header */}
         <div className="flex items-center gap-4 p-4">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 p-[2px] flex-shrink-0">
