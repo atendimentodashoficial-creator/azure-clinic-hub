@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Trash2, Edit, Mail, Phone, Building2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function TarefasClientesTab() {
   const { clientes, isLoading, criarCliente, atualizarCliente, excluirCliente } = useTarefasClientes();
@@ -23,11 +24,43 @@ export default function TarefasClientesTab() {
     c.tipo === subTab
   );
 
-  const handleCriar = (data: any) => {
-    criarCliente.mutate(data, {
-      onSuccess: () => toast.success("Cliente criado!"),
-      onError: (e: any) => toast.error(e.message),
-    });
+  const createOrUpdateAuthUser = async (data: any, existingCliente?: TarefaCliente | null) => {
+    if (data.tipo !== "interno" || !data.email || !data.senha_acesso) return;
+
+    const isNewAuth = !existingCliente?.senha_acesso || existingCliente?.email !== data.email;
+
+    try {
+      if (isNewAuth) {
+        // Create new auth user with 'cliente' role
+        const { data: result, error } = await supabase.functions.invoke("create-team-member-auth", {
+          body: { action: "create", email: data.email, password: data.senha_acesso, fullName: data.nome, role: "cliente" },
+        });
+        if (error) throw error;
+        if (result?.error) throw new Error(result.error);
+      } else if (existingCliente) {
+        // Just update password if email didn't change
+        // We need the auth user id - look it up or just skip if no password change
+        // For simplicity, we don't update password on edit unless we track auth_user_id
+      }
+    } catch (err: any) {
+      console.error("Erro ao criar login do cliente:", err);
+      toast.error(`Erro ao criar login: ${err.message}`);
+      throw err;
+    }
+  };
+
+  const handleCriar = async (data: any) => {
+    try {
+      if (data.tipo === "interno" && data.email && data.senha_acesso) {
+        await createOrUpdateAuthUser(data);
+      }
+      criarCliente.mutate(data, {
+        onSuccess: () => toast.success("Cliente criado!"),
+        onError: (e: any) => toast.error(e.message),
+      });
+    } catch {
+      // Auth creation failed, don't create the client record
+    }
   };
 
   const handleAtualizar = (data: any) => {
