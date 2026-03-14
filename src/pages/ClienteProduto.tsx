@@ -211,6 +211,8 @@ export default function ClienteProduto() {
 /* ─── Task Detail View ─── */
 
 function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTarefa; produtoNome: string; onBack: () => void }) {
+  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">("pendentes");
+  const iframeRef = useState<HTMLIFrameElement | null>(null);
   const { data: gridPosts = [] } = useQuery({
     queryKey: ["cliente-grid", tarefa.id],
     queryFn: async () => {
