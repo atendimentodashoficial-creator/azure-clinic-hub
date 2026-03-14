@@ -93,7 +93,11 @@ export function useTarefas() {
         .eq("user_id", effectiveUserId)
         .order("ordem");
       if (error) throw error;
-      return data as Tarefa[];
+      return ((data as any[]) || []).map((d) => ({
+        ...d,
+        tempo_acumulado_segundos: Number(d.tempo_acumulado_segundos ?? 0),
+        timer_status: d.timer_status || "parado",
+      })) as Tarefa[];
     },
     enabled: !!effectiveUserId,
   });
