@@ -559,7 +559,7 @@ export default function AprovacaoMockup() {
               {/* Posts approval */}
               {gridApprovalTab === "posts" && (
                 <>
-                  <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
                     {sortedGridPosts.map((g, i) => (
                       <button
                         key={g.grid_post_id}
