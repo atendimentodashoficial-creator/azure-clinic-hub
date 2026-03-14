@@ -178,14 +178,15 @@ export default function AprovacaoMockup() {
   const [submitted, setSubmitted] = useState(false);
   const [linkApprovalStatus, setLinkApprovalStatus] = useState<string>("pendente");
   
+  const isEmbedded = searchParams.get("hideFilter") === "1";
   const filterParam = searchParams.get("filter") as "pendentes" | "aprovadas" | "reprovadas" | null;
-  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">(filterParam || "pendentes");
-  const hideFilterTabs = searchParams.get("hideFilter") === "1";
+  const [approvalFilter, setApprovalFilter] = useState<"all" | "pendentes" | "aprovadas" | "reprovadas">(isEmbedded && filterParam ? filterParam : "all");
+  const hideFilterTabs = true; // Always hide — parent (client panel) controls externally
 
   // Sync filter from parent via search params changes
   useEffect(() => {
-    if (filterParam) setApprovalFilter(filterParam);
-  }, [filterParam]);
+    if (isEmbedded && filterParam) setApprovalFilter(filterParam);
+  }, [isEmbedded, filterParam]);
 
   const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
   const isGridMode = gridPosts.length > 0;
@@ -257,7 +258,7 @@ export default function AprovacaoMockup() {
 
   // === MOCKUP APPROVAL HANDLERS ===
   const posts = groupByPost(mockups);
-  const filteredPosts = posts.filter(p => approvalFilter === "pendentes" ? p.status === "pendente" : approvalFilter === "aprovadas" ? p.status === "aprovado" : p.status === "reprovado");
+  const filteredPosts = approvalFilter === "all" ? posts : posts.filter(p => approvalFilter === "pendentes" ? p.status === "pendente" : approvalFilter === "aprovadas" ? p.status === "aprovado" : p.status === "reprovado");
   const clampedPostIdx = Math.min(currentPostIdx, Math.max(0, filteredPosts.length - 1));
   const currentPost = filteredPosts[clampedPostIdx];
 
@@ -323,7 +324,7 @@ export default function AprovacaoMockup() {
 
   // === GRID APPROVAL HANDLERS ===
   const sortedGridPosts = [...gridPosts].sort((a, b) => a.posicao - b.posicao);
-  const filterStatus = (s: string) => approvalFilter === "pendentes" ? s === "pendente" : approvalFilter === "aprovadas" ? s === "aprovado" : s === "reprovado";
+  const filterStatus = (s: string) => approvalFilter === "all" ? true : approvalFilter === "pendentes" ? s === "pendente" : approvalFilter === "aprovadas" ? s === "aprovado" : s === "reprovado";
   const filteredSortedGridPostsForHandler = sortedGridPosts.filter(g => filterStatus(g.status));
   const clampedGridIdx = Math.min(currentGridIdx, Math.max(0, filteredSortedGridPostsForHandler.length - 1));
   const currentGridPost = filteredSortedGridPostsForHandler[clampedGridIdx];
@@ -563,6 +564,7 @@ export default function AprovacaoMockup() {
     const rejectedHighlights = gridHighlights.filter(h => h.status === "reprovado");
     
     const filterFn = (status: string) => 
+      approvalFilter === "all" ? true :
       approvalFilter === "pendentes" ? status === "pendente" :
       approvalFilter === "aprovadas" ? status === "aprovado" : status === "reprovado";
     const filteredGridPosts = gridPosts.filter(g => filterFn(g.status));
