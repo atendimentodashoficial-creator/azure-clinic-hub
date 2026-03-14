@@ -64,6 +64,16 @@ function getColType(colName: string): string {
   return "unknown";
 }
 
+type ColumnNotificationEvent = "aprovacao_interna" | "aprovacao_cliente" | "aprovada_concluida";
+
+function getNotificationEventForColumnMove(targetColumnName: string): ColumnNotificationEvent | null {
+  const targetType = getColType(targetColumnName);
+  if (targetType === "internal_approval") return "aprovacao_interna";
+  if (targetType === "client_approval") return "aprovacao_cliente";
+  if (targetType === "done") return "aprovada_concluida";
+  return null;
+}
+
 export function useTarefas() {
   const { user } = useAuth();
   const { ownerId } = useOwnerId();
