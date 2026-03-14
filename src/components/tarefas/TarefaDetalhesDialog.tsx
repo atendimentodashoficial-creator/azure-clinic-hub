@@ -251,6 +251,16 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     tempo_acumulado_segundos: getAccumulatedSeconds(),
   });
 
+  const copyApprovalLink = async (link: string, copiedMessage: string) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success(copiedMessage);
+    } catch {
+      toast.success("Link de aprovação gerado com sucesso.");
+      toast.info("Não foi possível copiar automaticamente. Use o botão de copiar no card da tarefa.");
+    }
+  };
+
   const handleSendForApproval = async () => {
     if (!tarefa) return;
     try {
