@@ -126,6 +126,7 @@ export default function TiposTarefas() {
     setFormLimites({});
     setFormExigeAprovacao(false);
     setFormExigeAprovacaoInterna(false);
+    setFormAvisos({});
     setIsDialogOpen(true);
   };
 
