@@ -60,6 +60,10 @@ interface TarefaDetalhesDialogProps {
 
 export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, open, onOpenChange }: TarefaDetalhesDialogProps) {
   const { tipos } = useTiposTarefas();
+  const { clientes: clientesCompletos } = useTarefasClientes();
+  const { membros } = useTarefasMembros();
+  const { membro: membroAtual } = useMembroAtual();
+  const { role } = useUserRole();
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
   const { links: savedLinks, saveLinks } = useTarefaLinks(tarefa?.id || null);
   const { gridPosts, uploadImage, uploadBatch, removeImage, reorderPosts, resubmitRejected: resubmitGridRejected } = useTarefaGrid(tarefa?.id || null);
@@ -72,6 +76,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showClienteSheet, setShowClienteSheet] = useState(false);
+  const [internaFeedback, setInternaFeedback] = useState("");
 
   const { data: clienteCompleto } = useQuery({
     queryKey: ["tarefa-cliente-detalhes", tarefa?.cliente_id],
