@@ -130,6 +130,7 @@ const App = () => (
             <Route path="tarefas" element={<ClienteTarefas />} />
             <Route path="agendamentos" element={<ClienteDashboard />} />
             <Route path="aprovacoes" element={<ClienteAprovacoes />} />
+            <Route path="produto/:produtoId" element={<ClienteProduto />} />
           </Route>
 
           {/* Funcionario Panel */}
