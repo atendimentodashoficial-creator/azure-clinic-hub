@@ -458,9 +458,18 @@ export default function AprovacaoMockup() {
       if (err) throw err;
       setGridHighlights(prev => {
         const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h);
-        if (gridPosts.some(g => g.status === "pendente") && !updated.some(h => h.status === "pendente")) {
+        const remainingPending = updated.filter(h => h.status === "pendente");
+        const allHighlightsDecided = remainingPending.length === 0;
+        const allPostsDecided = !gridPosts.some(g => g.status === "pendente");
+        if (allHighlightsDecided && allPostsDecided) {
+          setGridApprovalTab("grade");
+        } else if (allHighlightsDecided && !allPostsDecided) {
           setGridApprovalTab("posts");
           setCurrentGridIdx(0);
+        } else {
+          const sortedUpdated = [...updated].sort((a, b) => a.ordem - b.ordem);
+          const nextIdx = sortedUpdated.findIndex((h, i) => i > clampedHighlightIdx && h.status === "pendente");
+          if (nextIdx >= 0) setCurrentHighlightIdx(nextIdx);
         }
         return updated;
       });
