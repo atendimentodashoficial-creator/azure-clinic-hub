@@ -382,17 +382,6 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
               <span className="font-medium text-sm truncate">{tarefa.titulo}</span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              {needsManualStart && onStartTimer && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-primary hover:text-primary"
-                  onClick={() => onStartTimer(tarefa.id)}
-                  title="Iniciar revisão"
-                >
-                  <Play className="h-3 w-3" />
-                </Button>
-              )}
               {onDelete && (
                 <Button
                   variant="ghost"
