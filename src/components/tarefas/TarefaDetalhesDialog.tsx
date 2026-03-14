@@ -335,6 +335,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
             aprovacao_interna_feedback: internaFeedback || null,
             approval_token: token,
             approval_status: "aguardando",
+            ...getPausedTimerFields(),
             updated_at: new Date().toISOString(),
           };
           if (clienteColumnId) {
@@ -345,8 +346,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
           const link = `${window.location.origin}/aprovacao/${token}`;
           await sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
-          await navigator.clipboard.writeText(link);
-          toast.success("Aprovação interna concluída! Link de aprovação do cliente copiado.");
+          await copyApprovalLink(link, "Aprovação interna concluída! Link de aprovação do cliente copiado.");
         } else {
           // No client approval, move to Concluído
           const concluidoColumnId = await findColumnByMatcherAsync(isConcluido);
