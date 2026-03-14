@@ -110,6 +110,7 @@ export function MockupPostsManager({ posts, onChange, maxPosts, perfilNome, perf
                     onChange={slides => updatePostSlides(idx, slides)}
                     perfilNome={perfilNome}
                     perfilCategoria={perfilCategoria}
+                    perfilFotoUrl={perfilFotoUrl}
                   />
                 </div>
               )}

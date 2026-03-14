@@ -100,7 +100,7 @@ export function MockupEditor({ slides, onChange, perfilNome, perfilCategoria, pe
       </div>
 
       {showPreview ? (
-        <MockupPreview slides={slides} perfilNome={perfilNome} perfilCategoria={perfilCategoria} />
+        <MockupPreview slides={slides} perfilNome={perfilNome} perfilCategoria={perfilCategoria} perfilFotoUrl={perfilFotoUrl} />
       ) : (
         <Tabs value={activeSlide} onValueChange={setActiveSlide}>
           {slides.length > 1 && (
