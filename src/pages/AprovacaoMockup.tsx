@@ -49,10 +49,10 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
     // Temporarily reset to measure natural height
     innerRef.current.style.transform = 'scale(1)';
     const naturalH = innerRef.current.offsetHeight;
-    const rightH = rightPanel.offsetHeight;
+    const rightH = Math.max(rightPanel.offsetHeight, 900);
 
     if (naturalH > 0 && rightH > 0) {
-      const s = Math.max(1, Math.min(rightH / naturalH, 1.5));
+      const s = Math.max(1.15, Math.min(rightH / naturalH, 1.5));
       // Never shrink below the max scale we've ever reached
       maxScaleRef.current = Math.max(maxScaleRef.current, s);
       const finalScale = maxScaleRef.current;
@@ -195,26 +195,26 @@ export default function AprovacaoMockup() {
   const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
   const isGridMode = gridPosts.length > 0;
 
-  // Auto-select the tab that has items for the current filter
+  // Auto-select tab based on current filter results (prioritize posts)
   useEffect(() => {
     if (!isGridMode) return;
     const statusMatch = approvalFilter === "pendentes" ? "pendente" : approvalFilter === "aprovadas" ? "aprovado" : approvalFilter === "reprovadas" ? "reprovado" : null;
-    if (!statusMatch) return; // "all" → no auto-switch
+    if (!statusMatch) return; // "all" → keep current tab
+
     const matchingPosts = gridPosts.filter(g => g.status === statusMatch);
-    const matchingHL = gridHighlights.filter(h => h.status === statusMatch);
-    // If current tab has no items but other tab does, switch
-    if (gridApprovalTab === "posts" && matchingPosts.length === 0 && matchingHL.length > 0) {
-      setGridApprovalTab("highlights");
-      setCurrentHighlightIdx(0);
-    } else if (gridApprovalTab === "highlights" && matchingHL.length === 0 && matchingPosts.length > 0) {
+    const matchingHighlights = gridHighlights.filter(h => h.status === statusMatch);
+
+    if (matchingPosts.length > 0) {
       setGridApprovalTab("posts");
       setCurrentGridIdx(0);
+      return;
     }
-    // If both have items, prioritize posts
-    else if (gridApprovalTab === "highlights" && matchingPosts.length > 0 && matchingHL.length > 0) {
-      // Don't force switch — user manually chose highlights
+
+    if (matchingHighlights.length > 0) {
+      setGridApprovalTab("highlights");
+      setCurrentHighlightIdx(0);
     }
-  }, [isGridMode, gridPosts, gridHighlights, gridApprovalTab, approvalFilter]);
+  }, [isGridMode, gridPosts, gridHighlights, approvalFilter]);
 
   useEffect(() => {
     if (!token) return;
