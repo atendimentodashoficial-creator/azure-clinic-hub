@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MockupPreview, MockupSlide } from "@/components/tarefas/MockupPreview";
+import { InstagramGridPreview } from "@/components/tarefas/InstagramGridPreview";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,18 @@ interface TaskLink {
   ordem: number;
 }
 
+interface GridPostData {
+  grid_post_id: string;
+  tarefa_id: string;
+  posicao: number;
+  image_url: string;
+  status: string;
+  feedback: string | null;
+  tarefa_titulo: string;
+  cliente_nome: string;
+  cliente_empresa: string;
+}
+
 interface TaskInfo {
   tarefa_id: string;
   tarefa_titulo: string;
@@ -57,17 +70,20 @@ export default function AprovacaoMockup() {
   const { token } = useParams<{ token: string }>();
   const [mockups, setMockups] = useState<MockupData[]>([]);
   const [taskLinks, setTaskLinks] = useState<TaskLink[]>([]);
+  const [gridPosts, setGridPosts] = useState<GridPostData[]>([]);
   const [taskInfo, setTaskInfo] = useState<TaskInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPostIdx, setCurrentPostIdx] = useState(0);
   const [feedbacks, setFeedbacks] = useState<Record<number, string>>({});
+  const [gridFeedbacks, setGridFeedbacks] = useState<Record<string, string>>({});
   const [linkFeedback, setLinkFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [linkApprovalStatus, setLinkApprovalStatus] = useState<string>("pendente");
 
-  const isLinkOnlyMode = mockups.length === 0 && taskLinks.length > 0;
+  const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
+  const isGridMode = gridPosts.length > 0;
 
   useEffect(() => {
     if (!token) return;
@@ -78,10 +94,11 @@ export default function AprovacaoMockup() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [mockupRes, linksRes, taskRes] = await Promise.all([
+      const [mockupRes, linksRes, taskRes, gridRes] = await Promise.all([
         supabase.rpc("get_mockups_by_approval_token", { p_token: token! }),
         supabase.rpc("get_links_by_approval_token", { p_token: token! }),
         supabase.rpc("get_task_by_approval_token", { p_token: token! }),
+        supabase.rpc("get_grid_posts_by_approval_token", { p_token: token! }),
       ]);
 
       if (mockupRes.error) throw mockupRes.error;
@@ -89,6 +106,7 @@ export default function AprovacaoMockup() {
       const withPostIndex = raw.map(m => ({ ...m, post_index: (m as any).post_index ?? 0 }));
       setMockups(withPostIndex);
       setTaskLinks((linksRes.data || []) as TaskLink[]);
+      setGridPosts((gridRes.data || []) as GridPostData[]);
 
       const taskData = (taskRes.data || []) as TaskInfo[];
       if (taskData.length > 0) {
@@ -214,7 +232,49 @@ export default function AprovacaoMockup() {
     }
   };
 
-  // === LINK-ONLY APPROVAL HANDLERS ===
+  // === GRID APPROVAL HANDLERS ===
+  const handleApproveGridPost = async (postId: string) => {
+    setSubmitting(true);
+    try {
+      const { error: err } = await supabase.rpc("update_grid_post_approval", {
+        p_token: token!,
+        p_grid_post_id: postId,
+        p_status: "aprovado",
+        p_feedback: gridFeedbacks[postId] || null,
+      });
+      if (err) throw err;
+      setGridPosts(prev => prev.map(g => g.grid_post_id === postId ? { ...g, status: "aprovado", feedback: gridFeedbacks[postId] || null } : g));
+      toast.success("Post aprovado!");
+    } catch {
+      toast.error("Erro ao aprovar");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectGridPost = async (postId: string, feedback: string) => {
+    if (!feedback.trim()) {
+      toast.error("Adicione um feedback antes de reprovar.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error: err } = await supabase.rpc("update_grid_post_approval", {
+        p_token: token!,
+        p_grid_post_id: postId,
+        p_status: "reprovado",
+        p_feedback: feedback,
+      });
+      if (err) throw err;
+      setGridPosts(prev => prev.map(g => g.grid_post_id === postId ? { ...g, status: "reprovado", feedback } : g));
+      toast.success("Post reprovado com feedback.");
+    } catch {
+      toast.error("Erro ao reprovar");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleApproveLinks = async () => {
     setSubmitting(true);
     try {
@@ -278,7 +338,7 @@ export default function AprovacaoMockup() {
     );
   }
 
-  if (error || (!isLinkOnlyMode && posts.length === 0)) {
+  if (error || (!isLinkOnlyMode && !isGridMode && posts.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="p-8 text-center max-w-md">
@@ -287,6 +347,58 @@ export default function AprovacaoMockup() {
             {error || "Todos os itens já foram aprovados ou não há itens para revisar."}
           </p>
         </Card>
+      </div>
+    );
+  }
+
+  // Grid approval mode
+  if (isGridMode) {
+    const gridTitulo = gridPosts[0]?.tarefa_titulo || taskInfo?.tarefa_titulo || "Tarefa";
+    const gridCliente = gridPosts[0]?.cliente_nome || taskInfo?.cliente_nome || "perfil";
+    const gridEmpresa = gridPosts[0]?.cliente_empresa || taskInfo?.cliente_empresa || "";
+    const allGridDecided = gridPosts.every(g => g.status === "aprovado" || g.status === "reprovado");
+
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+          <div className="text-center space-y-1">
+            <h1 className="text-xl font-bold text-foreground">{gridTitulo}</h1>
+            <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
+          </div>
+
+          <InstagramGridPreview
+            posts={gridPosts.map(g => ({
+              id: g.grid_post_id,
+              posicao: g.posicao,
+              image_url: g.image_url,
+              status: g.status,
+              feedback: g.feedback,
+            }))}
+            perfilNome={gridCliente}
+            perfilCategoria={gridEmpresa}
+            approvalMode={!allGridDecided}
+            onApprove={handleApproveGridPost}
+            onReject={handleRejectGridPost}
+            feedbacks={gridFeedbacks}
+            onFeedbackChange={(id, fb) => setGridFeedbacks(prev => ({ ...prev, [id]: fb }))}
+            submitting={submitting}
+          />
+
+          {allGridDecided && (
+            <Card className="p-5 space-y-4 text-center border-primary/30">
+              <p className="text-sm font-medium text-foreground">Todos os posts foram revisados!</p>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-xs text-muted-foreground">
+                  {gridPosts.filter(g => g.status === "aprovado").length} aprovado(s) • {gridPosts.filter(g => g.status === "reprovado").length} reprovado(s)
+                </p>
+                <Button onClick={() => setSubmitted(true)} className="gap-2" size="lg">
+                  <Send className="w-4 h-4" />
+                  Enviar respostas
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
     );
   }
