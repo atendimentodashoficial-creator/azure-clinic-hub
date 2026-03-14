@@ -244,6 +244,8 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
           .update(updateData)
           .eq("id", tarefa.id);
         if (error) throw error;
+        // Send notification
+        sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: tarefa.user_id });
         toast.success("Tarefa enviada para aprovação interna do gestor!");
         window.location.reload();
         return;
