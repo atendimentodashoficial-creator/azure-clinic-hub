@@ -31,64 +31,39 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 // Scales the IPhoneFrame proportionally to match the right panel height on desktop
-function GridMockupScaler({ children }: { children: React.ReactNode }) {
+// Wrapper that makes both sides match height by constraining the right panel via max-height
+// The mockup keeps its natural size; the layout uses align-items-stretch approach
+function GridLayoutSyncer({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  const [wrapperH, setWrapperH] = useState<string>('auto');
+  const layoutRef = useRef<HTMLDivElement>(null);
 
-  const recalc = useCallback(() => {
-    if (isMobile || !containerRef.current || !innerRef.current) return;
-    const parent = containerRef.current.closest('[data-grid-layout]');
-    if (!parent) return;
-    const rightPanel = parent.querySelector('[data-grid-right]') as HTMLElement;
-    if (!rightPanel) return;
+  const sync = useCallback(() => {
+    if (isMobile || !layoutRef.current) return;
+    const left = layoutRef.current.querySelector('[data-grid-left]') as HTMLElement;
+    const right = layoutRef.current.querySelector('[data-grid-right]') as HTMLElement;
+    if (!left || !right) return;
 
-    innerRef.current.style.transform = 'scale(1)';
-    const naturalH = innerRef.current.offsetHeight;
-    const rightH = rightPanel.offsetHeight;
+    // Reset right panel constraints
+    right.style.maxHeight = '';
+    right.style.overflow = '';
 
-    if (naturalH > 0 && rightH > 0) {
-      const s = rightH / naturalH;
-      setScale(s);
-      setWrapperH(`${rightH}px`);
-      innerRef.current.style.transform = `scale(${s})`;
+    const leftH = left.offsetHeight;
+    const rightH = right.offsetHeight;
+
+    if (leftH > 0 && rightH > leftH) {
+      right.style.maxHeight = `${leftH}px`;
+      right.style.overflow = 'auto';
     }
   }, [isMobile]);
 
-  useLayoutEffect(() => {
-    recalc();
-  }, [recalc]);
-
-  useEffect(() => {
-    const t = setTimeout(recalc, 150);
-    return () => clearTimeout(t);
-  }, [recalc]);
-
-  useEffect(() => {
-    const interval = setInterval(recalc, 1000);
-    return () => clearInterval(interval);
-  }, [recalc]);
-
-  useEffect(() => {
-    window.addEventListener('resize', recalc);
-    return () => window.removeEventListener('resize', recalc);
-  }, [recalc]);
-
-  if (isMobile) return <>{children}</>;
+  useLayoutEffect(() => { sync(); }, [sync]);
+  useEffect(() => { const t = setTimeout(sync, 200); return () => clearTimeout(t); }, [sync]);
+  useEffect(() => { const i = setInterval(sync, 1000); return () => clearInterval(i); }, [sync]);
+  useEffect(() => { window.addEventListener('resize', sync); return () => window.removeEventListener('resize', sync); }, [sync]);
 
   return (
-    <div ref={containerRef} style={{ height: wrapperH, overflow: 'hidden' }}>
-      <div
-        ref={innerRef}
-        style={{
-          transform: `scale(${scale})`,
-          transformOrigin: 'top center',
-        }}
-      >
-        {children}
-      </div>
+    <div ref={layoutRef}>
+      {children}
     </div>
   );
 }
@@ -651,10 +626,10 @@ export default function AprovacaoMockup() {
             </div>
           )}
 
+          <GridLayoutSyncer>
           <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-20">
-            {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
-            <div className="order-2 lg:order-1 lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
-              <GridMockupScaler>
+            {/* Left: Instagram grid mockup — natural size */}
+            <div data-grid-left className="order-2 lg:order-1 lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
                 <IPhoneFrame>
                   <InstagramGridPreview
                     posts={gridPosts.map(g => ({
@@ -678,10 +653,9 @@ export default function AprovacaoMockup() {
                     approvalMode={false}
                   />
                 </IPhoneFrame>
-              </GridMockupScaler>
             </div>
 
-            {/* Right: Approval controls */}
+            {/* Right: Approval controls — constrained to mockup height */}
             <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6">
               {/* Filter: Pendentes / Aprovadas */}
               {!hideFilterTabs && <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />}
@@ -892,6 +866,7 @@ export default function AprovacaoMockup() {
               )}
             </div>
           </div>
+          </GridLayoutSyncer>
         </div>
       </div>
     );
