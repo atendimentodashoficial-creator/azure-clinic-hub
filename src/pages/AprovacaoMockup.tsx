@@ -70,17 +70,20 @@ export default function AprovacaoMockup() {
   const { token } = useParams<{ token: string }>();
   const [mockups, setMockups] = useState<MockupData[]>([]);
   const [taskLinks, setTaskLinks] = useState<TaskLink[]>([]);
+  const [gridPosts, setGridPosts] = useState<GridPostData[]>([]);
   const [taskInfo, setTaskInfo] = useState<TaskInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPostIdx, setCurrentPostIdx] = useState(0);
   const [feedbacks, setFeedbacks] = useState<Record<number, string>>({});
+  const [gridFeedbacks, setGridFeedbacks] = useState<Record<string, string>>({});
   const [linkFeedback, setLinkFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [linkApprovalStatus, setLinkApprovalStatus] = useState<string>("pendente");
 
-  const isLinkOnlyMode = mockups.length === 0 && taskLinks.length > 0;
+  const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
+  const isGridMode = gridPosts.length > 0;
 
   useEffect(() => {
     if (!token) return;
