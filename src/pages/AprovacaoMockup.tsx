@@ -956,7 +956,7 @@ export default function AprovacaoMockup() {
             {currentPost && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Button variant="ghost" size="sm" disabled={currentPostIdx === 0} onClick={() => setCurrentPostIdx(i => i - 1)}>
+                  <Button variant="ghost" size="sm" disabled={clampedPostIdx === 0} onClick={() => setCurrentPostIdx(i => Math.max(0, i - 1))}>
                     <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
                   </Button>
                   <div className="flex items-center gap-2">
