@@ -564,6 +564,7 @@ export default function AprovacaoMockup() {
     const rejectedHighlights = gridHighlights.filter(h => h.status === "reprovado");
     
     const filterFn = (status: string) => 
+      approvalFilter === "all" ? true :
       approvalFilter === "pendentes" ? status === "pendente" :
       approvalFilter === "aprovadas" ? status === "aprovado" : status === "reprovado";
     const filteredGridPosts = gridPosts.filter(g => filterFn(g.status));
