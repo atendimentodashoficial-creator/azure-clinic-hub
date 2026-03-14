@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { getLast8Digits } from "@/utils/phoneFormat";
+import { sendTaskNotification } from "@/utils/taskNotifications";
 import {
   Dialog,
   DialogContent,
@@ -87,7 +88,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
       }
       const prazo = meta.prazo ? meta.prazo : null;
       const dataLimite = prazo ? new Date(Date.now() + prazo * 86400000).toISOString() : null;
-      await criarTarefa.mutateAsync({
+      const result = await criarTarefa.mutateAsync({
         titulo: tt.titulo,
         descricao: meta.texto || undefined,
         responsavel_nome: meta.responsavel || undefined,
@@ -99,6 +100,10 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
         tipo_tarefa_id: meta.tipo_tarefa_id || undefined,
         produto_template_id: template.id,
       });
+      // Send "atribuida" notification if task has a responsável
+      if (result?.id && meta.responsavel) {
+        sendTaskNotification({ evento: "atribuida", tarefa_id: result.id, user_id: result.user_id });
+      }
     }
   };
 
@@ -149,6 +154,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
             duracao: data.duracao,
             clienteNome: selectedClient.nome,
             clienteTelefone: selectedClient.telefone || null,
+            tipoReuniaoId: (template as any).tipo_reuniao_id || null,
           },
         }
       );
@@ -171,7 +177,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
           }
           const prazo = meta.prazo ? meta.prazo : null;
           const dataLimite = prazo ? new Date(Date.now() + prazo * 86400000).toISOString() : null;
-          await criarTarefa.mutateAsync({
+          const result = await criarTarefa.mutateAsync({
             titulo: tt.titulo,
             descricao: meta.texto || undefined,
             responsavel_nome: meta.responsavel || undefined,
@@ -184,6 +190,10 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
             produto_template_id: template.id,
             reuniao_id: reuniaoId,
           });
+          // Send "atribuida" notification if task has a responsável
+          if (result?.id && meta.responsavel) {
+            sendTaskNotification({ evento: "atribuida", tarefa_id: result.id, user_id: result.user_id });
+          }
         }
       }
 
