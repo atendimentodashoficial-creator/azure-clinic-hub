@@ -15,10 +15,11 @@ interface MockupEditorProps {
   onChange: (slides: MockupSlide[]) => void;
   perfilNome?: string;
   perfilCategoria?: string;
+  perfilFotoUrl?: string | null;
   maxSlides?: number; // 0 = unlimited
 }
 
-export function MockupEditor({ slides, onChange, perfilNome, perfilCategoria, maxSlides = 0 }: MockupEditorProps) {
+export function MockupEditor({ slides, onChange, perfilNome, perfilCategoria, perfilFotoUrl, maxSlides = 0 }: MockupEditorProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [activeSlide, setActiveSlide] = useState("0");
   const [isCarousel, setIsCarousel] = useState(slides.length > 1);
