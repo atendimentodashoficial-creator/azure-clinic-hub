@@ -14,6 +14,7 @@ export interface AvisoConfig {
     grupo_membro?: boolean;
     pessoal_membro?: boolean;
     pessoal_gestor?: boolean;
+    pessoal_cliente?: boolean;
   };
 }
 
