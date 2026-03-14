@@ -593,9 +593,9 @@ export default function AprovacaoMockup() {
             </div>
           )}
 
-          <div data-grid-layout className={cn("flex flex-col lg:flex-row lg:items-start lg:justify-center", isEmbedded ? "lg:gap-8 xl:gap-16" : "lg:gap-32")}>
-            {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
-            <div className={cn("order-2 lg:order-1 lg:sticky lg:top-8 w-full mx-auto lg:mx-0 flex-shrink-0", isEmbedded ? "max-w-[320px]" : "max-w-[400px]")}>
+          <div data-grid-layout className={cn("flex flex-col lg:flex-row lg:items-start lg:justify-center", isEmbedded ? "lg:gap-6 xl:gap-10" : "lg:gap-10 xl:gap-16")}>
+            {/* Left: Instagram grid mockup — visual reference */}
+            <div className={cn("order-2 lg:order-1 lg:sticky lg:top-4 w-full mx-auto lg:mx-0 flex-shrink-0", isEmbedded ? "max-w-[280px]" : "max-w-[340px]")}>
               <GridMockupScaler>
                 <IPhoneFrame>
                   <InstagramGridPreview
