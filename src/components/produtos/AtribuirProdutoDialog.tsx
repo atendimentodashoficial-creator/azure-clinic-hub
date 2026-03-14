@@ -43,6 +43,18 @@ function parseTarefaMeta(descricao: string | null): any {
 
 type Step = "select-client" | "schedule-meeting" | "auto-matched";
 
+function normalizeColName(name: string) {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+function getColumnNotificationEvent(colName?: string): "atribuida" | "aprovacao_interna" | "aprovacao_cliente" | "aprovada_concluida" {
+  const n = normalizeColName(colName || "");
+  if (n.includes("aprovacao") && n.includes("interna")) return "aprovacao_interna";
+  if ((n.includes("aguardando") && n.includes("aprovacao")) || (n.includes("aprovacao") && n.includes("cliente"))) return "aprovacao_cliente";
+  if (n.includes("concluido") || n.includes("concluida")) return "aprovada_concluida";
+  return "atribuida";
+}
+
 export function AtribuirProdutoDialog({ template, open, onClose, initialContactData }: AtribuirProdutoDialogProps) {
   
   const { clientes, criarCliente } = useTarefasClientes();
