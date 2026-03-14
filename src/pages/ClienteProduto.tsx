@@ -167,9 +167,6 @@ export default function ClienteProduto() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-semibold text-foreground truncate">{t.titulo}</h3>
-                    {t.tipo_tarefa_nome && (
-                      <Badge variant="secondary" className="text-[10px] shrink-0">{t.tipo_tarefa_nome}</Badge>
-                    )}
                   </div>
                   <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
                     {t.responsavel_nome && <span>👤 {t.responsavel_nome}</span>}
