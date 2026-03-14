@@ -696,7 +696,7 @@ export default function AprovacaoMockup() {
                             <Badge className={cn("border-0", itemStatusColor(currentFilteredGridPost.status))}>
                               {itemStatusLabel(currentFilteredGridPost.status)}
                             </Badge>
-                            <Button variant="ghost" size="sm" disabled={currentGridIdx === filteredSortedGridPosts.length - 1} onClick={() => setCurrentGridIdx(i => i + 1)}>
+                            <Button variant="ghost" size="sm" disabled={Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) === filteredSortedGridPosts.length - 1} onClick={() => setCurrentGridIdx(i => i + 1)}>
                               Próximo <ChevronRight className="w-4 h-4 ml-1" />
                             </Button>
                           </div>
