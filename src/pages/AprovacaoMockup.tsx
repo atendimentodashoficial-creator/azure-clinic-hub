@@ -398,7 +398,7 @@ export default function AprovacaoMockup() {
     }
   };
 
-
+  const handleApproveLinks = async () => {
     setSubmitting(true);
     try {
       const { error: err } = await supabase.rpc("update_task_approval_by_token", {
