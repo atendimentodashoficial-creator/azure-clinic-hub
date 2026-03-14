@@ -430,11 +430,13 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
         const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g);
         const allPostsDecided = !updated.some(g => g.status === "pendente");
         const allHighlightsDecided = !gridHighlights.some(h => h.status === "pendente");
+        // Defer navigation — show "Próximo" button first
         if (allPostsDecided && allHighlightsDecided) {
-          setGridApprovalTab("grade");
+          setPendingAdvance(() => () => setGridApprovalTab("grade"));
         } else if (allPostsDecided && !allHighlightsDecided) {
-          setGridApprovalTab("highlights");
-          setCurrentHighlightIdx(0);
+          setPendingAdvance(() => () => { setGridApprovalTab("highlights"); setCurrentHighlightIdx(0); });
+        } else {
+          setPendingAdvance(() => () => {});
         }
         return updated;
       });
