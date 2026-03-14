@@ -982,7 +982,7 @@ export default function AprovacaoMockup() {
           </Card>
         )}
 
-        <ApprovalFilterTabs pendingCount={pendingMockupPosts.length} approvedCount={approvedMockupPosts.length} rejectedCount={rejectedMockupPosts.length} />
+        {!hideFilterTabs && <ApprovalFilterTabs pendingCount={pendingMockupPosts.length} approvedCount={approvedMockupPosts.length} rejectedCount={rejectedMockupPosts.length} />}
 
         {filteredPosts.length === 0 ? (
           <Card className="p-6 text-center">
