@@ -362,6 +362,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
             : m
         )
       );
+      setPendingAdvance(() => () => {});
       toast.success("Post reprovado com feedback.");
       checkAndNotifyRejection(token!, feedbacks[currentPost.postIndex], isInternal);
     } catch {
