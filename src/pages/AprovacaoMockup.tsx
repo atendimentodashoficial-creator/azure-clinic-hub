@@ -969,6 +969,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
       onReject={handleRejectLinks}
       onSubmit={() => setSubmitted(true)}
       isEmbedded={isEmbedded}
+      isInternal={isInternal}
     />;
   }
 
