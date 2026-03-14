@@ -422,7 +422,14 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       } else {
         const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
         if (approvalColumnId) {
-          await supabase.from("tarefas").update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() }).eq("id", tarefa.id);
+          await supabase
+            .from("tarefas")
+            .update({
+              coluna_id: approvalColumnId,
+              ...getPausedTimerFields(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", tarefa.id);
         }
       }
 
