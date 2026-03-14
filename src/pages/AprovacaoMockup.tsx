@@ -405,9 +405,14 @@ export default function AprovacaoMockup() {
         p_feedback: highlightFeedbacks[currentHighlight.highlight_id] || null,
       });
       if (err) throw err;
-      setGridHighlights(prev =>
-        prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "aprovado", feedback: highlightFeedbacks[currentHighlight.highlight_id] || null } : h)
-      );
+      setGridHighlights(prev => {
+        const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "aprovado", feedback: highlightFeedbacks[currentHighlight.highlight_id] || null } : h);
+        if (gridPosts.some(g => g.status === "pendente") && !updated.some(h => h.status === "pendente")) {
+          setGridApprovalTab("posts");
+          setCurrentGridIdx(0);
+        }
+        return updated;
+      });
       toast.success("Destaque aprovado!");
     } catch {
       toast.error("Erro ao aprovar");
