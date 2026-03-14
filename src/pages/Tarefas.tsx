@@ -550,6 +550,33 @@ export default function Tarefas() {
   const reunioesMap: Record<string, { data_reuniao: string; status: string }> = {};
   (reunioesData || []).forEach((r: any) => { reunioesMap[r.id] = r; });
 
+  // Fetch revision counts per task
+  const tarefaIds = tarefas.map(t => t.id);
+  const { data: revisoesData } = useQuery({
+    queryKey: ["tarefas-revisoes-counts", tarefaIds.sort().join(",")],
+    queryFn: async () => {
+      if (tarefaIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("tarefa_revisoes")
+        .select("tarefa_id, status")
+        .in("tarefa_id", tarefaIds)
+        .or("status.eq.reprovado,status.eq.interna_reprovado,status.ilike.interna_%reprovado%");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: tarefaIds.length > 0,
+  });
+
+  const revisoesByTarefa: Record<string, { interna: number; cliente: number }> = {};
+  (revisoesData || []).forEach((r: any) => {
+    if (!revisoesByTarefa[r.tarefa_id]) revisoesByTarefa[r.tarefa_id] = { interna: 0, cliente: 0 };
+    if (r.status?.startsWith("interna_")) {
+      revisoesByTarefa[r.tarefa_id].interna++;
+    } else {
+      revisoesByTarefa[r.tarefa_id].cliente++;
+    }
+  });
+
   // Filter tasks for employee "minhas" view
   const tarefasFiltradas = filtro === "minhas" && membro
     ? tarefas.filter(t => {
