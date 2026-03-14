@@ -60,6 +60,34 @@ function getColTypeById(colunas: TarefaColuna[], colunaId: string): string {
   return col ? getColType(col.nome) : 'unknown';
 }
 
+// Find column ID by type
+function findColByType(colunas: TarefaColuna[], type: string): TarefaColuna | undefined {
+  return colunas.find(c => getColType(c.nome) === type);
+}
+
+// Compute the next column for a task based on its type configuration
+function getNextColumn(tarefa: Tarefa, colunas: TarefaColuna[], tiposTarefas: TipoTarefa[]): TarefaColuna | null {
+  const currentType = getColTypeById(colunas, tarefa.coluna_id);
+  const tipoTarefa = tarefa.tipo_tarefa_id ? tiposTarefas.find(t => t.id === tarefa.tipo_tarefa_id) : null;
+
+  const hasInternalApproval = tipoTarefa?.exige_aprovacao_interna ?? false;
+  const hasClientApproval = tipoTarefa?.exige_aprovacao ?? false;
+  const hasAnyApproval = hasInternalApproval || hasClientApproval;
+
+  // Build the ordered flow based on config
+  const flow: string[] = ['todo', 'in_progress'];
+  if (hasInternalApproval) flow.push('internal_approval');
+  if (hasClientApproval) flow.push('client_approval');
+  if (hasAnyApproval) flow.push('review');
+  flow.push('done');
+
+  const currentIndex = flow.indexOf(currentType);
+  if (currentIndex === -1 || currentIndex >= flow.length - 1) return null;
+
+  const nextType = flow[currentIndex + 1];
+  return findColByType(colunas, nextType) || null;
+}
+
 // Compute timer updates when moving between columns
 function computeTimerUpdates(
   tarefa: Tarefa,
