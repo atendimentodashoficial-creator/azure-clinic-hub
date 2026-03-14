@@ -4939,6 +4939,9 @@ export type Database = {
         Row: {
           approval_status: string | null
           approval_token: string | null
+          aprovacao_interna_feedback: string | null
+          aprovacao_interna_por: string | null
+          aprovacao_interna_status: string | null
           cliente_id: string | null
           coluna_id: string
           comissao: number | null
@@ -4965,6 +4968,9 @@ export type Database = {
         Insert: {
           approval_status?: string | null
           approval_token?: string | null
+          aprovacao_interna_feedback?: string | null
+          aprovacao_interna_por?: string | null
+          aprovacao_interna_status?: string | null
           cliente_id?: string | null
           coluna_id: string
           comissao?: number | null
@@ -4991,6 +4997,9 @@ export type Database = {
         Update: {
           approval_status?: string | null
           approval_token?: string | null
+          aprovacao_interna_feedback?: string | null
+          aprovacao_interna_por?: string | null
+          aprovacao_interna_status?: string | null
           cliente_id?: string | null
           coluna_id?: string
           comissao?: number | null
@@ -5058,6 +5067,7 @@ export type Database = {
           created_at: string
           email: string | null
           empresa: string | null
+          gestor_id: string | null
           google_meu_negocio: string | null
           grupo_whatsapp: string | null
           id: string
@@ -5077,6 +5087,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           empresa?: string | null
+          gestor_id?: string | null
           google_meu_negocio?: string | null
           grupo_whatsapp?: string | null
           id?: string
@@ -5096,6 +5107,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           empresa?: string | null
+          gestor_id?: string | null
           google_meu_negocio?: string | null
           grupo_whatsapp?: string | null
           id?: string
@@ -5110,7 +5122,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_clientes_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_membros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tarefas_colunas: {
         Row: {
@@ -5313,6 +5333,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           exige_aprovacao: boolean
+          exige_aprovacao_interna: boolean | null
           id: string
           limite_arquivos: Json
           nome: string
@@ -5326,6 +5347,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           exige_aprovacao?: boolean
+          exige_aprovacao_interna?: boolean | null
           id?: string
           limite_arquivos?: Json
           nome: string
@@ -5339,6 +5361,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           exige_aprovacao?: boolean
+          exige_aprovacao_interna?: boolean | null
           id?: string
           limite_arquivos?: Json
           nome?: string
