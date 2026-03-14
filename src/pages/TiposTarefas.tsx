@@ -195,6 +195,19 @@ export default function TiposTarefas() {
     );
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Tipos de Tarefas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-destructive">Erro ao carregar tipos de tarefas. Atualize a página.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <>
       <Card>

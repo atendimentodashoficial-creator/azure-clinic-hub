@@ -74,5 +74,5 @@ export function useTiposTarefas() {
     onSuccess: invalidate,
   });
 
-  return { tipos, isLoading, createTipo, updateTipo, deleteTipo };
+  return { tipos, isLoading, error, createTipo, updateTipo, deleteTipo };
 }
