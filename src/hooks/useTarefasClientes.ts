@@ -19,6 +19,7 @@ export interface TarefaCliente {
   observacoes: string | null;
   grupo_whatsapp: string | null;
   foto_perfil_url: string | null;
+  gestor_id: string | null;
   tipo: string;
   created_at: string;
 }
