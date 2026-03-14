@@ -167,13 +167,13 @@ serve(async (req) => {
     if (tarefa.cliente_id) {
       const { data: cliente } = await supabase
         .from("tarefas_clientes")
-        .select("nome, empresa, whatsapp_grupo")
+        .select("nome, empresa, grupo_whatsapp")
         .eq("id", tarefa.cliente_id)
         .maybeSingle();
       if (cliente) {
         clienteNome = cliente.nome || "";
         clienteEmpresa = cliente.empresa || "";
-        clienteGrupo = cliente.whatsapp_grupo || "";
+        clienteGrupo = cliente.grupo_whatsapp || "";
       }
     }
 
