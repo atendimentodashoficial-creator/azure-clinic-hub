@@ -536,7 +536,7 @@ export default function AprovacaoMockup() {
   // Grid approval mode
   if (isGridMode) {
     const gridTitulo = gridPosts[0]?.tarefa_titulo || taskInfo?.tarefa_titulo || "Tarefa";
-    const gridCliente = gridPosts[0]?.cliente_nome || taskInfo?.cliente_nome || "perfil";
+    const gridCliente = taskInfo?.cliente_instagram || gridPosts[0]?.cliente_nome || taskInfo?.cliente_nome || "perfil";
     const gridEmpresa = gridPosts[0]?.cliente_empresa || taskInfo?.cliente_empresa || "";
     const allGridPostsDecided = gridPosts.every(g => g.status === "aprovado" || g.status === "reprovado");
     const allHighlightsDecided = gridHighlights.length === 0 || gridHighlights.every(h => h.status === "aprovado" || h.status === "reprovado");
