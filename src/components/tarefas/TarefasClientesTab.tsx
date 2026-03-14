@@ -7,14 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { extractCountryCode, formatPhoneByCountry } from "@/utils/phoneFormat";
 import { toast } from "sonner";
 import { Trash2, Edit, Mail, Phone, Building2 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
+import { ClienteTarefasDialog } from "@/components/tarefas/ClienteTarefasDialog";
 
 export default function TarefasClientesTab() {
   const { clientes, isLoading, criarCliente, atualizarCliente, excluirCliente } = useTarefasClientes();
   const [editando, setEditando] = useState<TarefaCliente | null>(null);
   const [busca, setBusca] = useState("");
   const [subTab, setSubTab] = useState("interno");
+  const [clienteDetalhe, setClienteDetalhe] = useState<TarefaCliente | null>(null);
 
   const filtrados = clientes.filter(c =>
     (c.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -91,10 +93,11 @@ export default function TarefasClientesTab() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtrados.map(cliente => (
-                <Card key={cliente.id} className="p-4 flex flex-col gap-3">
+                <Card key={cliente.id} className="p-4 flex flex-col gap-3 cursor-pointer hover:border-primary/40 transition-colors" onClick={() => setClienteDetalhe(cliente)}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
+                        <AvatarImage src={cliente.foto_perfil_url || undefined} />
                         <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                           {getInitials(cliente.nome)}
                         </AvatarFallback>
@@ -109,10 +112,10 @@ export default function TarefasClientesTab() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditando(cliente)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setEditando(cliente); }}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleExcluir(cliente.id)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleExcluir(cliente.id); }}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -135,6 +138,12 @@ export default function TarefasClientesTab() {
           )}
         </TabsContent>
       </Tabs>
+
+      <ClienteTarefasDialog
+        cliente={clienteDetalhe}
+        open={!!clienteDetalhe}
+        onClose={() => setClienteDetalhe(null)}
+      />
     </div>
   );
 }
