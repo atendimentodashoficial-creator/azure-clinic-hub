@@ -377,7 +377,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
     if (!currentGridPost) return;
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_grid_post_approval", {
+      const { error: err } = await supabase.rpc(isInternal ? "update_grid_post_approval_internal" : "update_grid_post_approval", {
         p_token: token!,
         p_grid_post_id: currentGridPost.grid_post_id,
         p_status: "aprovado",
