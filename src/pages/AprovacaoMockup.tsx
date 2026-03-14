@@ -561,9 +561,9 @@ export default function AprovacaoMockup() {
             <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
           </div>
 
-          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-24">
+          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-32">
             {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
-            <div className="lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
+            <div className="order-2 lg:order-1 lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
               <GridMockupScaler>
                 <IPhoneFrame>
                   <InstagramGridPreview
@@ -591,7 +591,7 @@ export default function AprovacaoMockup() {
             </div>
 
             {/* Right: Approval controls */}
-            <div data-grid-right className="flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6">
+            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6">
               {/* Tab switch: Posts / Destaques */}
               {hasHighlights && (
                 <div className="flex gap-2 justify-center">
