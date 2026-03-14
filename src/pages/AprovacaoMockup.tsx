@@ -541,7 +541,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
       if (err) throw err;
       setLinkApprovalStatus("aprovado");
       toast.success("Aprovado com sucesso!");
-      checkAndNotifyCompletion(token!);
+      checkAndNotifyCompletion(token!, isInternal);
     } catch {
       toast.error("Erro ao aprovar");
     } finally {
