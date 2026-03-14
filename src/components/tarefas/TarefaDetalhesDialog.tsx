@@ -305,6 +305,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
           if (error) throw error;
 
           const link = `${window.location.origin}/aprovacao/${token}`;
+          sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
           await navigator.clipboard.writeText(link);
           toast.success("Aprovação interna concluída! Link de aprovação do cliente copiado.");
         } else {
