@@ -30,61 +30,56 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Keeps mockup untouched and scales only right-side content to fit mockup height
+// Scales the entire two-column layout proportionally to fill the container
+// Both sides maintain exact proportions on any monitor size
 function GridLayoutSyncer({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
-  const layoutRef = useRef<HTMLDivElement>(null);
-  const minScaleRef = useRef<number>(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const minScaleRef = useRef<number>(Infinity);
 
   const sync = useCallback(() => {
-    if (!layoutRef.current) return;
+    if (!containerRef.current || !innerRef.current) return;
 
-    const left = layoutRef.current.querySelector('[data-grid-left]') as HTMLElement;
-    const right = layoutRef.current.querySelector('[data-grid-right]') as HTMLElement;
-    const rightInner = layoutRef.current.querySelector('[data-grid-right-inner]') as HTMLElement;
-    if (!left || !right || !rightInner) return;
+    // Reset before measuring
+    innerRef.current.style.transform = 'scale(1)';
+    innerRef.current.style.transformOrigin = 'top center';
 
-    // reset styles before measuring
-    right.style.height = '';
-    right.style.maxHeight = '';
-    right.style.overflow = '';
-    rightInner.style.transform = 'scale(1)';
-    rightInner.style.transformOrigin = 'top center';
-    rightInner.style.width = '';
-    rightInner.style.margin = '';
+    if (isMobile) {
+      containerRef.current.style.height = '';
+      return;
+    }
 
-    if (isMobile) return;
+    const containerW = containerRef.current.offsetWidth;
+    const naturalW = innerRef.current.scrollWidth;
+    const naturalH = innerRef.current.scrollHeight;
 
-    const leftH = Math.ceil(left.getBoundingClientRect().height);
-    const rightAvailableW = Math.ceil(right.getBoundingClientRect().width);
-    const rightNaturalH = Math.ceil(rightInner.getBoundingClientRect().height);
-    const rightNaturalW = Math.ceil(rightInner.getBoundingClientRect().width);
+    if (containerW <= 0 || naturalW <= 0 || naturalH <= 0) return;
 
-    if (leftH <= 0 || rightAvailableW <= 0 || rightNaturalH <= 0 || rightNaturalW <= 0) return;
+    const scale = containerW / naturalW;
 
-    const scaleByHeight = leftH / rightNaturalH;
-    const scaleByWidth = rightAvailableW / rightNaturalW;
-    let scale = Math.min(1, scaleByHeight, scaleByWidth);
-
-    // Keep the smallest scale ever seen so switching tabs doesn't enlarge
+    // Track minimum scale to keep consistent across tab switches
     if (scale < minScaleRef.current) {
       minScaleRef.current = scale;
     }
-    scale = minScaleRef.current;
+    const finalScale = minScaleRef.current;
 
-    right.style.height = `${leftH}px`;
-    right.style.maxHeight = `${leftH}px`;
-    right.style.overflow = 'hidden';
-
-    rightInner.style.transform = `scale(${scale})`;
-    rightInner.style.transformOrigin = 'top center';
+    innerRef.current.style.transform = `scale(${finalScale})`;
+    innerRef.current.style.transformOrigin = 'top center';
+    containerRef.current.style.height = `${naturalH * finalScale}px`;
   }, [isMobile]);
 
   useLayoutEffect(() => { sync(); }, [sync, children]);
-  useEffect(() => { const t = setTimeout(sync, 80); return () => clearTimeout(t); }, [sync, children]);
-  useEffect(() => { window.addEventListener('resize', sync); return () => window.removeEventListener('resize', sync); }, [sync]);
+  useEffect(() => { const t = setTimeout(sync, 100); return () => clearTimeout(t); }, [sync, children]);
+  useEffect(() => { window.addEventListener('resize', () => { minScaleRef.current = Infinity; sync(); }); return () => window.removeEventListener('resize', sync); }, [sync]);
 
-  return <div ref={layoutRef}>{children}</div>;
+  return (
+    <div ref={containerRef} className="overflow-hidden">
+      <div ref={innerRef}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 interface MockupData {
@@ -675,8 +670,8 @@ export default function AprovacaoMockup() {
             </div>
 
             {/* Right: Approval controls — scaled down to fit mockup height */}
-            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 overflow-hidden">
-              <div data-grid-right-inner className="space-y-6">
+            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0">
+              <div className="space-y-6">
                 {/* Filter: Pendentes / Aprovadas */}
                 {!hideFilterTabs && <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />}
 
