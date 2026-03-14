@@ -296,7 +296,7 @@ function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTar
           >
             {etapaLabel(tarefa.coluna_nome)}
           </Badge>
-          {tarefa.tipo_tarefa_nome && <Badge variant="secondary" className="text-xs">{tarefa.tipo_tarefa_nome}</Badge>}
+          
           {tarefa.responsavel_nome && <span className="text-xs text-muted-foreground">👤 {tarefa.responsavel_nome}</span>}
           {tarefa.data_limite && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
