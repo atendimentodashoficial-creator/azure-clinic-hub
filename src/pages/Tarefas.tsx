@@ -109,11 +109,12 @@ function computeTimerUpdates(
 }
 
 function calcAccumulated(tarefa: Tarefa): number {
+  const base = Number(tarefa.tempo_acumulado_segundos ?? 0);
   if (tarefa.timer_status === "rodando" && tarefa.timer_inicio) {
     const diff = Math.floor((Date.now() - new Date(tarefa.timer_inicio).getTime()) / 1000);
-    return tarefa.tempo_acumulado_segundos + Math.max(0, diff);
+    return base + Math.max(0, diff);
   }
-  return tarefa.tempo_acumulado_segundos;
+  return base;
 }
 
 function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSubmit: (data: any) => void }) {
