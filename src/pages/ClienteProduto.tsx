@@ -311,7 +311,13 @@ function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTar
         {tarefa.descricao && <p className="text-sm text-muted-foreground mt-3">{tarefa.descricao}</p>}
       </div>
 
-      {tarefa.approval_token ? (
+      {tarefa.approval_token ? (() => {
+        const allItems = [...gridPosts, ...highlights, ...mockups];
+        const countPendentes = allItems.filter((i: any) => i.status === "pendente").length;
+        const countAprovadas = allItems.filter((i: any) => i.status === "aprovado").length;
+        const countReprovadas = allItems.filter((i: any) => i.status === "reprovado").length;
+        const counts = { pendentes: countPendentes, aprovadas: countAprovadas, reprovadas: countReprovadas };
+        return (
         <div className="space-y-4">
           <div className="flex gap-2">
             {(["pendentes", "aprovadas", "reprovadas"] as const).map(f => (
@@ -328,7 +334,7 @@ function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTar
                   approvalFilter === f && f === "reprovadas" && "ring-2 ring-red-500/30 bg-red-500/20",
                 )}
               >
-                {f === "pendentes" ? "Pendentes" : f === "aprovadas" ? "Aprovadas" : "Reprovadas"}
+                {f === "pendentes" ? "Pendentes" : f === "aprovadas" ? "Aprovadas" : "Reprovadas"} ({counts[f]})
               </button>
             ))}
           </div>
@@ -341,7 +347,8 @@ function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTar
             />
           </div>
         </div>
-      ) : !hasDeliverables ? (
+        );
+      })() : !hasDeliverables ? (
         <Card className="p-8 text-center">
           <ClipboardList className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
           <p className="text-sm text-muted-foreground">Nenhum conteúdo entregue ainda para esta tarefa.</p>
