@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 interface DeviceFrameProps {
   children: React.ReactNode;
   className?: string;
+  noScroll?: boolean;
 }
 
 interface DeviceFrameWithFallbackProps {
@@ -120,10 +121,10 @@ function MonitorFrame({ children, className }: DeviceFrameProps) {
   );
 }
 
-export function IPhoneFrame({ children, className }: DeviceFrameProps) {
+export function IPhoneFrame({ children, className, noScroll }: DeviceFrameProps) {
   return (
     <div className={cn("flex justify-center py-4 w-full overflow-x-hidden", className)}>
-      <div className="iphone-shell relative flex-shrink-0 w-full max-w-[380px] aspect-[9/16] overflow-hidden">
+      <div className={cn("iphone-shell relative flex-shrink-0 w-full max-w-[380px] overflow-hidden", noScroll ? "" : "aspect-[9/16]")}>
         {/* Phone shell - fixed frame */}
         <div className="absolute inset-0 rounded-[2.5rem] border-[4px] border-foreground/25 bg-foreground/5 pointer-events-none z-10" />
         {/* Notch / Dynamic Island */}
@@ -131,8 +132,8 @@ export function IPhoneFrame({ children, className }: DeviceFrameProps) {
         {/* Bottom bar */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-1 bg-foreground/20 rounded-full z-20" />
         {/* Screen area */}
-        <div className="absolute inset-[6px] rounded-[2rem] overflow-hidden bg-background">
-          <div className="w-full h-full max-w-full overflow-y-auto overflow-x-hidden touch-pan-y overscroll-x-none [overscroll-behavior-inline:none]">
+        <div className={cn("rounded-[2rem] overflow-hidden bg-background", noScroll ? "relative" : "absolute inset-[6px]")}>
+          <div className={cn("w-full max-w-full", noScroll ? "overflow-hidden" : "h-full overflow-y-auto overflow-x-hidden touch-pan-y overscroll-x-none [overscroll-behavior-inline:none]")}>
             {children}
           </div>
         </div>
