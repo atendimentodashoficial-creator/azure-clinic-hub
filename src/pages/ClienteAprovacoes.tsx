@@ -275,20 +275,18 @@ export default function ClienteAprovacoes() {
                   </div>
 
                   {/* MockupPreview — full width like other mockups */}
-                  <div className="flex justify-center">
-                    <MockupPreview
-                      slides={currentPost.mockups.map(m => ({
-                        ordem: m.ordem,
-                        subtitulo: m.subtitulo || "",
-                        titulo: m.titulo || "",
-                        legenda: m.legenda || "",
-                        cta: m.cta || "",
-                      }))}
-                      perfilNome={activeTarefa.cliente_nome}
-                      perfilCategoria={activeTarefa.cliente_empresa || ""}
-                      className="w-full max-w-none"
-                    />
-                  </div>
+                  <MockupPreview
+                    slides={currentPost.mockups.map(m => ({
+                      ordem: m.ordem,
+                      subtitulo: m.subtitulo || "",
+                      titulo: m.titulo || "",
+                      legenda: m.legenda || "",
+                      cta: m.cta || "",
+                    }))}
+                    perfilNome={activeTarefa.cliente_nome}
+                    perfilCategoria={activeTarefa.cliente_empresa || ""}
+                    className="max-w-none"
+                  />
 
                   {/* Feedback + actions card */}
                   <Card className="p-4 space-y-3">
