@@ -373,9 +373,14 @@ export default function AprovacaoMockup() {
         p_feedback: feedback,
       });
       if (err) throw err;
-      setGridPosts(prev =>
-        prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g)
-      );
+      setGridPosts(prev => {
+        const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g);
+        if (gridHighlights.some(h => h.status === "pendente") && !updated.some(g => g.status === "pendente")) {
+          setGridApprovalTab("highlights");
+          setCurrentHighlightIdx(0);
+        }
+        return updated;
+      });
       toast.success("Post reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
