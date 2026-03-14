@@ -946,15 +946,22 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
                             rows={2}
                           />
                           <div className="flex gap-2">
-                            <Button onClick={handleApproveHighlight} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredHighlight.status === "aprovado" ? "secondary" : "default"}>
-                              <Check className="w-4 h-4" />
-                              {currentFilteredHighlight.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                          {pendingAdvance ? (
+                            <Button onClick={() => { pendingAdvance(); setPendingAdvance(null); }} className="w-full gap-1.5">
+                              Próximo <ChevronRight className="w-4 h-4" />
                             </Button>
-                            <Button onClick={handleRejectHighlight} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
-                              <X className="w-4 h-4" />
-                              {currentFilteredHighlight.status === "reprovado" ? "Reprovado" : "Reprovar"}
-                            </Button>
-                          </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button onClick={handleApproveHighlight} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredHighlight.status === "aprovado" ? "secondary" : "default"}>
+                                <Check className="w-4 h-4" />
+                                {currentFilteredHighlight.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                              </Button>
+                              <Button onClick={handleRejectHighlight} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
+                                <X className="w-4 h-4" />
+                                {currentFilteredHighlight.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                              </Button>
+                            </div>
+                          )}
                         </Card>
 
                         {currentFilteredHighlight.status === "reprovado" && currentFilteredHighlight.feedback && (
