@@ -177,7 +177,7 @@ function derivePostStatus(mockups: MockupData[]): string {
   return "pendente";
 }
 
-export default function AprovacaoMockup() {
+export default function AprovacaoMockup({ isInternal = false }: { isInternal?: boolean } = {}) {
   const { token } = useParams<{ token: string }>();
   const [searchParams] = useSearchParams();
   const [mockups, setMockups] = useState<MockupData[]>([]);
