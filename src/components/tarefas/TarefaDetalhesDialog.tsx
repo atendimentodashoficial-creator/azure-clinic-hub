@@ -873,28 +873,35 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                             </Button>
                             {showHistory && (
                               <div className="mt-2 space-y-2 max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-1">
-                                {revisoes.map(r => (
-                                  <div key={r.id} className="text-[11px] border rounded px-2.5 py-1.5 space-y-0.5">
-                                    <div className="flex items-center justify-between">
-                                      <Badge
-                                        variant="outline"
-                                        className={cn("text-[10px] border-0 px-0",
-                                          r.status === "aprovado" ? "text-emerald-400" :
-                                          r.status === "reprovado" ? "text-red-400" :
-                                          "text-muted-foreground"
-                                        )}
-                                      >
-                                        Slide {(r.slide_ordem ?? 0) + 1} — {r.status === "aprovado" ? "Aprovado" : "Reprovado"}
-                                      </Badge>
-                                      <span className="text-muted-foreground">
-                                        {format(new Date(r.created_at), "dd/MM/yyyy 'às' HH:mm")}
-                                      </span>
+                                {revisoes.map(r => {
+                                  const isInterna = r.status?.startsWith("interna_");
+                                  const isAprovado = r.status?.includes("aprovado");
+                                  const isReprovado = r.status?.includes("reprovado");
+                                  const origem = isInterna ? "Interna" : "Cliente";
+                                  const statusLabel = isAprovado ? "Aprovado" : "Reprovado";
+                                  return (
+                                    <div key={r.id} className="text-[11px] border rounded px-2.5 py-1.5 space-y-0.5">
+                                      <div className="flex items-center justify-between">
+                                        <Badge
+                                          variant="outline"
+                                          className={cn("text-[10px] border-0 px-0",
+                                            isAprovado ? "text-emerald-400" :
+                                            isReprovado ? (isInterna ? "text-amber-400" : "text-red-400") :
+                                            "text-muted-foreground"
+                                          )}
+                                        >
+                                          {r.slide_ordem != null ? `Slide ${r.slide_ordem + 1} — ` : ""}{origem}: {statusLabel}
+                                        </Badge>
+                                        <span className="text-muted-foreground">
+                                          {format(new Date(r.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                                        </span>
+                                      </div>
+                                      {r.feedback && (
+                                        <p className="text-muted-foreground">💬 {r.feedback}</p>
+                                      )}
                                     </div>
-                                    {r.feedback && (
-                                      <p className="text-muted-foreground">💬 {r.feedback}</p>
-                                    )}
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
