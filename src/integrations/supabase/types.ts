@@ -6191,6 +6191,10 @@ export type Database = {
         }
         Returns: number
       }
+      is_client_task: {
+        Args: { _tarefa_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_own_membro: {
         Args: { _membro_id: string; _user_id: string }
         Returns: boolean
