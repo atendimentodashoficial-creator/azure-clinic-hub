@@ -679,7 +679,7 @@ export default function AprovacaoMockup() {
             {/* Right: Approval controls */}
             <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6 lg:min-h-[700px]">
               {/* Filter: Pendentes / Aprovadas */}
-              <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} />
+              <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />
 
               {/* Tab switch: Posts / Destaques */}
               {hasHighlights && (
