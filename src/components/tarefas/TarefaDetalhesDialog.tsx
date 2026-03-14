@@ -190,14 +190,29 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       .toLowerCase()
       .trim();
 
-  const isAguardandoAprovacaoColumn = (name: string) => {
+  const isAprovacaoClienteColumn = (name: string) => {
     const normalized = normalizeColumnName(name);
-    return normalized.includes("aguardando") && normalized.includes("aprovacao");
+    return (normalized.includes("aguardando") && normalized.includes("aprovacao")) ||
+           (normalized.includes("aprovacao") && normalized.includes("cliente"));
   };
 
-  const findAguardandoAprovacaoColumnId = async () => {
-    const fromProps = colunas.find(c => isAguardandoAprovacaoColumn(c.nome));
-    if (fromProps) return fromProps.id;
+  const isAprovacaoInternaColumn = (name: string) => {
+    const normalized = normalizeColumnName(name);
+    return normalized.includes("aprovacao") && normalized.includes("interna");
+  };
+
+  const isConcluido = (name: string) => normalizeColumnName(name).includes("concluido");
+
+  const isEmRevisao = (name: string) => normalizeColumnName(name).includes("revisao");
+
+  const findColumnByMatcher = (matcher: (name: string) => boolean) => {
+    const fromProps = colunas.find(c => matcher(c.nome));
+    return fromProps?.id ?? null;
+  };
+
+  const findColumnByMatcherAsync = async (matcher: (name: string) => boolean) => {
+    const fromProps = findColumnByMatcher(matcher);
+    if (fromProps) return fromProps;
     if (!tarefa?.user_id) return null;
 
     const { data, error } = await supabase
@@ -207,15 +222,35 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       .order("ordem", { ascending: true });
 
     if (error) throw error;
-
-    return data?.find(c => isAguardandoAprovacaoColumn(c.nome))?.id ?? null;
+    return data?.find(c => matcher(c.nome))?.id ?? null;
   };
 
   const handleSendForApproval = async () => {
     if (!tarefa) return;
     try {
-      const token = crypto.randomUUID();
-      const approvalColumnId = await findAguardandoAprovacaoColumnId();
+      // If internal approval is required and not yet approved, send to internal approval first
+      if (exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== "aprovado") {
+        const internaColumnId = await findColumnByMatcherAsync(isAprovacaoInternaColumn);
+        const updateData: Record<string, any> = {
+          aprovacao_interna_status: "pendente",
+          updated_at: new Date().toISOString(),
+        };
+        if (internaColumnId) {
+          updateData.coluna_id = internaColumnId;
+        }
+        const { error } = await supabase
+          .from("tarefas")
+          .update(updateData)
+          .eq("id", tarefa.id);
+        if (error) throw error;
+        toast.success("Tarefa enviada para aprovação interna do gestor!");
+        window.location.reload();
+        return;
+      }
+
+      // Normal client approval flow
+      const token = tarefa.approval_token || crypto.randomUUID();
+      const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
       const updateData: Record<string, any> = {
         approval_token: token,
         approval_status: "aguardando",
@@ -236,6 +271,77 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       window.location.reload();
     } catch {
       toast.error("Erro ao gerar link de aprovação");
+    }
+  };
+
+  const handleInternalApproval = async (status: "aprovado" | "reprovado") => {
+    if (!tarefa) return;
+    setResubmitting(true);
+    try {
+      const gestorNome = gestorMembro?.nome || membroAtual?.nome || "Gestor";
+
+      if (status === "aprovado") {
+        // If client approval is also needed, move to Aprovação Cliente
+        if (exigeAprovacaoCliente) {
+          const token = tarefa.approval_token || crypto.randomUUID();
+          const clienteColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
+          const updateData: Record<string, any> = {
+            aprovacao_interna_status: "aprovado",
+            aprovacao_interna_por: gestorNome,
+            aprovacao_interna_feedback: internaFeedback || null,
+            approval_token: token,
+            approval_status: "aguardando",
+            updated_at: new Date().toISOString(),
+          };
+          if (clienteColumnId) {
+            updateData.coluna_id = clienteColumnId;
+          }
+          const { error } = await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
+          if (error) throw error;
+
+          const link = `${window.location.origin}/aprovacao/${token}`;
+          await navigator.clipboard.writeText(link);
+          toast.success("Aprovação interna concluída! Link de aprovação do cliente copiado.");
+        } else {
+          // No client approval, move to Concluído
+          const concluidoColumnId = await findColumnByMatcherAsync(isConcluido);
+          const updateData: Record<string, any> = {
+            aprovacao_interna_status: "aprovado",
+            aprovacao_interna_por: gestorNome,
+            aprovacao_interna_feedback: internaFeedback || null,
+            approval_status: "concluido",
+            updated_at: new Date().toISOString(),
+          };
+          if (concluidoColumnId) {
+            updateData.coluna_id = concluidoColumnId;
+          }
+          const { error } = await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
+          if (error) throw error;
+          toast.success("Aprovação interna concluída! Tarefa finalizada.");
+        }
+      } else {
+        // Reprovado - move to Em Revisão
+        const revisaoColumnId = await findColumnByMatcherAsync(isEmRevisao);
+        const updateData: Record<string, any> = {
+          aprovacao_interna_status: "reprovado",
+          aprovacao_interna_por: gestorNome,
+          aprovacao_interna_feedback: internaFeedback || null,
+          updated_at: new Date().toISOString(),
+        };
+        if (revisaoColumnId) {
+          updateData.coluna_id = revisaoColumnId;
+        }
+        const { error } = await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
+        if (error) throw error;
+        toast.success("Tarefa reprovada internamente e enviada para revisão.");
+      }
+
+      setInternaFeedback("");
+      window.location.reload();
+    } catch {
+      toast.error("Erro ao processar aprovação interna");
+    } finally {
+      setResubmitting(false);
     }
   };
 
