@@ -44,21 +44,24 @@ async function notifyTaskEvent(tarefaId: string, evento: string, feedback?: stri
 }
 
 // Check if task became fully approved after an action and send notification
-async function checkAndNotifyCompletion(token: string) {
+async function checkAndNotifyCompletion(token: string, internal = false) {
   try {
-    const { data } = await supabase.rpc("get_task_by_approval_token", { p_token: token });
-    if (data?.[0]?.approval_status === "concluido") {
-      notifyTaskEvent(data[0].tarefa_id, "aprovada_concluida");
+    const rpc = internal ? "get_task_by_internal_approval_token" : "get_task_by_approval_token";
+    const { data } = await supabase.rpc(rpc, { p_token: token });
+    const status = internal ? data?.[0]?.aprovacao_interna_status : data?.[0]?.approval_status;
+    if (status === (internal ? "aprovado" : "concluido")) {
+      notifyTaskEvent(data[0].tarefa_id, internal ? "aprovada_concluida" : "aprovada_concluida");
     }
   } catch {}
 }
 
 // Send rejection notification
-async function checkAndNotifyRejection(token: string, feedback?: string) {
+async function checkAndNotifyRejection(token: string, feedback?: string, internal = false) {
   try {
-    const { data } = await supabase.rpc("get_task_by_approval_token", { p_token: token });
+    const rpc = internal ? "get_task_by_internal_approval_token" : "get_task_by_approval_token";
+    const { data } = await supabase.rpc(rpc, { p_token: token });
     if (data?.[0]?.tarefa_id) {
-      notifyTaskEvent(data[0].tarefa_id, "reprovada_cliente", feedback);
+      notifyTaskEvent(data[0].tarefa_id, internal ? "reprovada_cliente" : "reprovada_cliente", feedback);
     }
   } catch {}
 }
