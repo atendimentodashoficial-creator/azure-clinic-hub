@@ -325,24 +325,44 @@ function TarefaDetalheView({ tarefa, onBack }: { tarefa: ClienteTarefa; onBack: 
         )}
       </div>
 
-      {tarefa.approval_token && tarefa.coluna_nome === "Aguardando Aprovação" && (
-        <Card className="p-4 border-primary/30 bg-primary/5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Entrega disponível para aprovação</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Revise os itens e aprove ou solicite alterações</p>
-            </div>
-            <Button size="sm" className="gap-1.5" asChild>
-              <a href={`/aprovacao/${tarefa.approval_token}`} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-3.5 h-3.5" />
-                Revisar entrega
-              </a>
-            </Button>
+      {tarefa.approval_token && tarefa.coluna_nome === "Aguardando Aprovação" ? (
+        <div className="space-y-4">
+          <div className="flex gap-2 justify-center flex-wrap">
+            {(["pendentes", "aprovadas", "reprovadas"] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setApprovalFilter(f)}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-medium rounded-md border transition-all",
+                  f === "pendentes" && "border-amber-500/60 text-amber-600 bg-amber-500/10",
+                  f === "aprovadas" && "border-emerald-500/60 text-emerald-600 bg-emerald-500/10",
+                  f === "reprovadas" && "border-red-500/60 text-red-600 bg-red-500/10",
+                  approvalFilter === f && f === "pendentes" && "ring-2 ring-amber-500/30 bg-amber-500/20",
+                  approvalFilter === f && f === "aprovadas" && "ring-2 ring-emerald-500/30 bg-emerald-500/20",
+                  approvalFilter === f && f === "reprovadas" && "ring-2 ring-red-500/30 bg-red-500/20",
+                )}
+              >
+                {f === "pendentes" ? "Pendentes" : f === "aprovadas" ? "Aprovadas" : "Reprovadas"}
+              </button>
+            ))}
           </div>
-        </Card>
-      )}
-
-      {!hasDeliverables ? (
+          <div>
+            <iframe
+              src={`/aprovacao/${tarefa.approval_token}?filter=${approvalFilter}&hideFilter=1`}
+              className="w-full border-0"
+              style={{ height: '4000px' }}
+              title="Aprovação da entrega"
+              onLoad={(e) => {
+                const iframe = e.currentTarget;
+                try {
+                  const h = iframe.contentDocument?.documentElement?.scrollHeight;
+                  if (h) iframe.style.height = `${h}px`;
+                } catch {}
+              }}
+            />
+          </div>
+        </div>
+      ) : !hasDeliverables ? (
         <Card className="p-8 text-center">
           <ClipboardList className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
           <p className="text-sm text-muted-foreground">Nenhum conteúdo entregue ainda para esta tarefa.</p>
