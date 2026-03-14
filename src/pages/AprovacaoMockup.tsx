@@ -351,8 +351,11 @@ export default function AprovacaoMockup() {
       if (err) throw err;
       setGridPosts(prev => {
         const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "aprovado", feedback: gridFeedbacks[currentGridPost.grid_post_id] || null } : g);
-        // Auto-switch to highlights if no more pending grid posts
-        if (gridHighlights.some(h => h.status === "pendente") && !updated.some(g => g.status === "pendente")) {
+        const allPostsDecided = !updated.some(g => g.status === "pendente");
+        const allHighlightsDecided = !gridHighlights.some(h => h.status === "pendente");
+        if (allPostsDecided && allHighlightsDecided) {
+          setGridApprovalTab("grade");
+        } else if (allPostsDecided && !allHighlightsDecided) {
           setGridApprovalTab("highlights");
           setCurrentHighlightIdx(0);
         }
@@ -384,7 +387,11 @@ export default function AprovacaoMockup() {
       if (err) throw err;
       setGridPosts(prev => {
         const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g);
-        if (gridHighlights.some(h => h.status === "pendente") && !updated.some(g => g.status === "pendente")) {
+        const allPostsDecided = !updated.some(g => g.status === "pendente");
+        const allHighlightsDecided = !gridHighlights.some(h => h.status === "pendente");
+        if (allPostsDecided && allHighlightsDecided) {
+          setGridApprovalTab("grade");
+        } else if (allPostsDecided && !allHighlightsDecided) {
           setGridApprovalTab("highlights");
           setCurrentHighlightIdx(0);
         }
@@ -416,9 +423,19 @@ export default function AprovacaoMockup() {
       if (err) throw err;
       setGridHighlights(prev => {
         const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "aprovado", feedback: highlightFeedbacks[currentHighlight.highlight_id] || null } : h);
-        if (gridPosts.some(g => g.status === "pendente") && !updated.some(h => h.status === "pendente")) {
+        const remainingPending = updated.filter(h => h.status === "pendente");
+        const allHighlightsDecided = remainingPending.length === 0;
+        const allPostsDecided = !gridPosts.some(g => g.status === "pendente");
+        if (allHighlightsDecided && allPostsDecided) {
+          setGridApprovalTab("grade");
+        } else if (allHighlightsDecided && !allPostsDecided) {
           setGridApprovalTab("posts");
           setCurrentGridIdx(0);
+        } else {
+          // Move to next pending highlight
+          const sortedUpdated = [...updated].sort((a, b) => a.ordem - b.ordem);
+          const nextIdx = sortedUpdated.findIndex((h, i) => i > clampedHighlightIdx && h.status === "pendente");
+          if (nextIdx >= 0) setCurrentHighlightIdx(nextIdx);
         }
         return updated;
       });
@@ -448,9 +465,18 @@ export default function AprovacaoMockup() {
       if (err) throw err;
       setGridHighlights(prev => {
         const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h);
-        if (gridPosts.some(g => g.status === "pendente") && !updated.some(h => h.status === "pendente")) {
+        const remainingPending = updated.filter(h => h.status === "pendente");
+        const allHighlightsDecided = remainingPending.length === 0;
+        const allPostsDecided = !gridPosts.some(g => g.status === "pendente");
+        if (allHighlightsDecided && allPostsDecided) {
+          setGridApprovalTab("grade");
+        } else if (allHighlightsDecided && !allPostsDecided) {
           setGridApprovalTab("posts");
           setCurrentGridIdx(0);
+        } else {
+          const sortedUpdated = [...updated].sort((a, b) => a.ordem - b.ordem);
+          const nextIdx = sortedUpdated.findIndex((h, i) => i > clampedHighlightIdx && h.status === "pendente");
+          if (nextIdx >= 0) setCurrentHighlightIdx(nextIdx);
         }
         return updated;
       });
