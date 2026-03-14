@@ -124,6 +124,43 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const reuniao = tarefa?.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
   const prio = PRIORIDADES.find(p => p.value === tarefa?.prioridade) || PRIORIDADES[1];
   const coluna = tarefa ? colunas.find(c => c.id === tarefa.coluna_id) : null;
+  const currentColType = coluna ? (() => {
+    const n = normalizeColumnName(coluna.nome);
+    if (n.includes('aprovacao') && n.includes('interna')) return 'internal_approval';
+    if ((n.includes('aguardando') && n.includes('aprovacao')) || (n.includes('aprovacao') && n.includes('cliente'))) return 'client_approval';
+    if (n.includes('revisao')) return 'review';
+    if (n.includes('concluido')) return 'done';
+    if (n === 'em progresso') return 'in_progress';
+    return 'todo';
+  })() : 'unknown';
+
+  // Determine the correct send button label and visibility
+  const getSendButtonConfig = (): { label: string; visible: boolean; action: () => Promise<void> } | null => {
+    if (!tarefa) return null;
+
+    // If already in internal approval column and pending, don't show send button
+    if (currentColType === 'internal_approval' && tarefa.aprovacao_interna_status === 'pendente') {
+      return null;
+    }
+
+    // If internal approval is required but not yet approved
+    if (exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== 'aprovado') {
+      // If reprovado, the resubmit flow handles it
+      if (tarefa.aprovacao_interna_status === 'reprovado' && currentColType === 'internal_approval') {
+        return null;
+      }
+      return { label: "Enviar para Aprovação Interna", visible: true, action: handleSendForApproval };
+    }
+
+    // Internal already approved or not required → send to client
+    if (exigeAprovacaoCliente) {
+      return { label: "Enviar para Aprovação Cliente", visible: true, action: handleSendForApproval };
+    }
+
+    return { label: "Enviar para Aprovação", visible: true, action: handleSendForApproval };
+  };
+
+  const sendButtonConfig = getSendButtonConfig();
 
   // Load existing mockups or initialize with required count
   const mockupsKey = mockups.map(m => m.id).join(",");
