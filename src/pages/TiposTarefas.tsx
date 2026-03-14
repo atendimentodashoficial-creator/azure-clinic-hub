@@ -325,6 +325,9 @@ export default function TiposTarefas() {
                 </div>
               </div>
             )}
+
+            {/* Avisos WhatsApp */}
+            <TipoTarefaAvisosConfig avisos={formAvisos} onChange={setFormAvisos} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
