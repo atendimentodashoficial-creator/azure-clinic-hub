@@ -35,9 +35,9 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1.15);
+  const [scale, setScale] = useState(1);
   const [wrapperH, setWrapperH] = useState<string>('auto');
-  const maxScaleRef = useRef(1.15);
+  const maxScaleRef = useRef(1);
 
   const recalc = useCallback(() => {
     if (isMobile || !containerRef.current || !innerRef.current) return;
@@ -51,7 +51,7 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
     const rightH = Math.max(rightPanel.offsetHeight, 900);
 
     if (naturalH > 0 && rightH > 0) {
-      const s = Math.max(1.15, Math.min(rightH / naturalH, 1.5));
+      const s = Math.max(1, Math.min(rightH / naturalH, 1.5));
       maxScaleRef.current = Math.max(maxScaleRef.current, s);
       const finalScale = maxScaleRef.current;
       setScale(finalScale);
@@ -643,8 +643,8 @@ export default function AprovacaoMockup() {
     };
 
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <div className={cn("bg-background", isEmbedded ? "" : "min-h-screen")}>
+        <div className={cn("mx-auto px-4 space-y-6", isEmbedded ? "max-w-full py-2" : "max-w-7xl py-8")}>
           {!isEmbedded && (
             <div className="text-center space-y-1">
               <h1 className="text-xl font-bold text-foreground">{gridTitulo}</h1>
@@ -652,9 +652,9 @@ export default function AprovacaoMockup() {
             </div>
           )}
 
-          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-32">
+          <div data-grid-layout className={cn("flex flex-col lg:flex-row lg:items-start lg:justify-center", isEmbedded ? "lg:gap-8 xl:gap-16" : "lg:gap-32")}>
             {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
-            <div className="order-2 lg:order-1 lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
+            <div className={cn("order-2 lg:order-1 lg:sticky lg:top-8 w-full mx-auto lg:mx-0 flex-shrink-0", isEmbedded ? "max-w-[320px]" : "max-w-[400px]")}>
               <GridMockupScaler>
                 <IPhoneFrame>
                   <InstagramGridPreview
@@ -683,7 +683,7 @@ export default function AprovacaoMockup() {
             </div>
 
             {/* Right: Approval controls */}
-            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6 lg:min-h-[850px]">
+            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6 lg:min-h-[700px]">
               {/* Filter: Pendentes / Aprovadas */}
               {!hideFilterTabs && <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />}
 
