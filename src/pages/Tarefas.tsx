@@ -49,7 +49,7 @@ function getColType(colName: string): string {
   if (n === 'a fazer') return 'todo';
   if (n === 'em progresso') return 'in_progress';
   if (n.includes('aprovacao') && n.includes('interna')) return 'internal_approval';
-  if ((n.includes('aguardando') && n.includes('aprovacao')) || (n.includes('aprovacao') && n.includes('cliente'))) return 'client_approval';
+  if (n.includes('aprovacao')) return 'client_approval';
   if (n.includes('revisao')) return 'review';
   if (n.includes('concluido')) return 'done';
   return 'unknown';

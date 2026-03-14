@@ -251,6 +251,16 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     tempo_acumulado_segundos: getAccumulatedSeconds(),
   });
 
+  const copyApprovalLink = async (link: string, copiedMessage: string) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success(copiedMessage);
+    } catch {
+      toast.success("Link de aprovação gerado com sucesso.");
+      toast.info("Não foi possível copiar automaticamente. Use o botão de copiar no card da tarefa.");
+    }
+  };
+
   const handleSendForApproval = async () => {
     if (!tarefa) return;
     try {
@@ -274,10 +284,8 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         if (error) throw error;
 
         const link = `${window.location.origin}/aprovacao-interna/${internaToken}`;
-        // Send notification with internal approval link
         await sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
-        await navigator.clipboard.writeText(link);
-        toast.success("Link de aprovação interna copiado para a área de transferência!");
+        await copyApprovalLink(link, "Link de aprovação interna copiado para a área de transferência!");
         window.location.reload();
         return;
       }
@@ -288,6 +296,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       const updateData: Record<string, any> = {
         approval_token: token,
         approval_status: "aguardando",
+        ...getPausedTimerFields(),
         updated_at: new Date().toISOString(),
       };
       if (approvalColumnId) {
@@ -300,12 +309,11 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       if (error) throw error;
 
       const link = `${window.location.origin}/aprovacao/${token}`;
-      // Send notification with approval link
       await sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
-      await navigator.clipboard.writeText(link);
-      toast.success("Link de aprovação copiado para a área de transferência!");
+      await copyApprovalLink(link, "Link de aprovação copiado para a área de transferência!");
       window.location.reload();
-    } catch {
+    } catch (error) {
+      console.error("Erro ao gerar link de aprovação:", error);
       toast.error("Erro ao gerar link de aprovação");
     }
   };
@@ -327,6 +335,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
             aprovacao_interna_feedback: internaFeedback || null,
             approval_token: token,
             approval_status: "aguardando",
+            ...getPausedTimerFields(),
             updated_at: new Date().toISOString(),
           };
           if (clienteColumnId) {
@@ -337,8 +346,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
           const link = `${window.location.origin}/aprovacao/${token}`;
           await sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
-          await navigator.clipboard.writeText(link);
-          toast.success("Aprovação interna concluída! Link de aprovação do cliente copiado.");
+          await copyApprovalLink(link, "Aprovação interna concluída! Link de aprovação do cliente copiado.");
         } else {
           // No client approval, move to Concluído
           const concluidoColumnId = await findColumnByMatcherAsync(isConcluido);
@@ -414,7 +422,14 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       } else {
         const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
         if (approvalColumnId) {
-          await supabase.from("tarefas").update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() }).eq("id", tarefa.id);
+          await supabase
+            .from("tarefas")
+            .update({
+              coluna_id: approvalColumnId,
+              ...getPausedTimerFields(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", tarefa.id);
         }
       }
 
