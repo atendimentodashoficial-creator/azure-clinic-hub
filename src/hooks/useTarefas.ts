@@ -49,7 +49,6 @@ export function useTarefas() {
   const qc = useQueryClient();
 
   const effectiveUserId = ownerId || user?.id;
-  console.log("[useTarefas] effectiveUserId:", effectiveUserId, "ownerId:", ownerId, "user?.id:", user?.id);
 
   // Fetch columns
   const { data: colunas = [], isLoading: loadingColunas } = useQuery({
