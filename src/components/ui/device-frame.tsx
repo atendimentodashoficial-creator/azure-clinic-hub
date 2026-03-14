@@ -14,6 +14,7 @@ interface DeviceFrameWithFallbackProps {
   href: string;
   title?: string;
   className?: string;
+  deviceType?: "mobile" | "desktop";
 }
 
 export function DeviceFrame({ children, className }: DeviceFrameProps) {
