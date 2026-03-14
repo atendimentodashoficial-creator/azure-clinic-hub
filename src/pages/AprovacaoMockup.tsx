@@ -8,6 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+
+/** Extract just the username from an Instagram URL or return as-is if already a username */
+function extractInstagramUsername(value: string | null | undefined): string {
+  if (!value) return "";
+  // Remove trailing slashes
+  const trimmed = value.replace(/\/+$/, "").trim();
+  // If it looks like a URL, extract the last path segment
+  try {
+    const url = new URL(trimmed);
+    const segments = url.pathname.split("/").filter(Boolean);
+    return segments[segments.length - 1] || trimmed;
+  } catch {
+    // Not a URL, might already be a username — strip leading @
+    return trimmed.replace(/^@/, "");
+  }
+}
 import { DeviceFrame, DeviceFrameWithFallback } from "@/components/ui/device-frame";
 import { Check, X, ChevronLeft, ChevronRight, Send, ExternalLink, Link2 } from "lucide-react";
 import { toast } from "sonner";
