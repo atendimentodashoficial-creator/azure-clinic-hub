@@ -558,22 +558,41 @@ export default function AprovacaoMockup() {
     );
   }
 
-  const ApprovalFilterTabs = ({ pendingCount, approvedCount }: { pendingCount: number; approvedCount: number }) => (
+  const ApprovalFilterTabs = ({ pendingCount, approvedCount, rejectedCount }: { pendingCount: number; approvedCount: number; rejectedCount: number }) => (
     <div className="flex gap-2 justify-center">
-      <Button
-        variant={approvalFilter === "pendentes" ? "default" : "outline"}
-        size="sm"
+      <button
         onClick={() => { setApprovalFilter("pendentes"); setCurrentPostIdx(0); setCurrentGridIdx(0); setCurrentHighlightIdx(0); }}
+        className={cn(
+          "px-3 py-1.5 text-sm font-medium rounded-md border transition-all",
+          approvalFilter === "pendentes"
+            ? "bg-amber-500/20 border-amber-500 text-amber-600 ring-2 ring-amber-500/30"
+            : "border-border text-muted-foreground hover:bg-muted"
+        )}
       >
         Pendentes ({pendingCount})
-      </Button>
-      <Button
-        variant={approvalFilter === "aprovadas" ? "default" : "outline"}
-        size="sm"
+      </button>
+      <button
         onClick={() => { setApprovalFilter("aprovadas"); setCurrentPostIdx(0); setCurrentGridIdx(0); setCurrentHighlightIdx(0); }}
+        className={cn(
+          "px-3 py-1.5 text-sm font-medium rounded-md border transition-all",
+          approvalFilter === "aprovadas"
+            ? "bg-emerald-500/20 border-emerald-500 text-emerald-600 ring-2 ring-emerald-500/30"
+            : "border-border text-muted-foreground hover:bg-muted"
+        )}
       >
         Aprovadas ({approvedCount})
-      </Button>
+      </button>
+      <button
+        onClick={() => { setApprovalFilter("reprovadas"); setCurrentPostIdx(0); setCurrentGridIdx(0); setCurrentHighlightIdx(0); }}
+        className={cn(
+          "px-3 py-1.5 text-sm font-medium rounded-md border transition-all",
+          approvalFilter === "reprovadas"
+            ? "bg-red-500/20 border-red-500 text-red-600 ring-2 ring-red-500/30"
+            : "border-border text-muted-foreground hover:bg-muted"
+        )}
+      >
+        Reprovadas ({rejectedCount})
+      </button>
     </div>
   );
 
