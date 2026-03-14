@@ -49,6 +49,21 @@ const DEFAULT_COLUMNS = [
   { nome: "Concluído", cor: "#22c55e", ordem: 5 },
 ];
 
+function normalizeColName(name: string) {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+function getColType(colName: string): string {
+  const n = normalizeColName(colName);
+  if (n === "a fazer") return "todo";
+  if (n === "em progresso") return "in_progress";
+  if (n.includes("aprovacao") && n.includes("interna")) return "internal_approval";
+  if ((n.includes("aguardando") && n.includes("aprovacao")) || (n.includes("aprovacao") && n.includes("cliente"))) return "client_approval";
+  if (n.includes("revisao")) return "review";
+  if (n.includes("concluido") || n.includes("concluida")) return "done";
+  return "unknown";
+}
+
 export function useTarefas() {
   const { user } = useAuth();
   const { ownerId } = useOwnerId();
