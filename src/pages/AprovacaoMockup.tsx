@@ -624,7 +624,7 @@ export default function AprovacaoMockup() {
             </div>
 
             {/* Right: Approval controls */}
-            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-md mx-auto lg:mx-0 space-y-6">
+            <div data-grid-right className={cn("order-1 lg:order-2 min-w-0 mx-auto lg:mx-0 space-y-6 w-full", isEmbedded ? "max-w-[380px]" : "max-w-[420px]")}>
               {/* Filter: Pendentes / Aprovadas */}
               {!hideFilterTabs && <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />}
 
