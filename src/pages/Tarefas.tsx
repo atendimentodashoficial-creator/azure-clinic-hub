@@ -448,6 +448,24 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
             </>
           )}
 
+          {/* Revision count badges */}
+          {revisoesCounts && (revisoesCounts.interna > 0 || revisoesCounts.cliente > 0) && !hideDetails && !needsManualStart && (
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              {revisoesCounts.interna > 0 && (
+                <span className="text-[10px] flex items-center gap-0.5 bg-amber-500/15 text-amber-400 rounded px-1.5 py-0.5">
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Interna ×{revisoesCounts.interna}
+                </span>
+              )}
+              {revisoesCounts.cliente > 0 && (
+                <span className="text-[10px] flex items-center gap-0.5 bg-red-500/15 text-red-400 rounded px-1.5 py-0.5">
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Cliente ×{revisoesCounts.cliente}
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-2 mt-2">
             <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0">
               <Badge className={cn("text-xs border-0", prio.color)}>{prio.label}</Badge>
