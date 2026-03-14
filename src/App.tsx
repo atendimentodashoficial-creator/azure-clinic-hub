@@ -52,6 +52,7 @@ import AdminFinanceiro from "./pages/AdminFinanceiro";
 import FuncionarioFinanceiro from "./pages/FuncionarioFinanceiro";
 import TiposTarefas from "./pages/TiposTarefas";
 import AprovacaoMockup from "./pages/AprovacaoMockup";
+import AprovacaoInterna from "./pages/AprovacaoInterna";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
           <Route path="/formularioig/:formSlug" element={<FormularioCaptura />} />
           <Route path="/cliente-form/:clienteId" element={<FormularioCliente />} />
           <Route path="/aprovacao/:token" element={<AprovacaoMockup />} />
+          <Route path="/aprovacao-interna/:token" element={<AprovacaoInterna />} />
 
           {/* Root: redirect based on role */}
           <Route

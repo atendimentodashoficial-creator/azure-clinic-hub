@@ -231,9 +231,11 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     try {
       // If internal approval is required and not yet approved, send to internal approval first
       if (exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== "aprovado") {
+        const internaToken = tarefa.internal_approval_token || crypto.randomUUID();
         const internaColumnId = await findColumnByMatcherAsync(isAprovacaoInternaColumn);
         const updateData: Record<string, any> = {
           aprovacao_interna_status: "pendente",
+          internal_approval_token: internaToken,
           updated_at: new Date().toISOString(),
         };
         if (internaColumnId) {
@@ -244,9 +246,12 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
           .update(updateData)
           .eq("id", tarefa.id);
         if (error) throw error;
-        // Send notification
-        await sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: tarefa.user_id });
-        toast.success("Tarefa enviada para aprovação interna do gestor!");
+
+        const link = `${window.location.origin}/aprovacao-interna/${internaToken}`;
+        // Send notification with internal approval link
+        await sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
+        await navigator.clipboard.writeText(link);
+        toast.success("Link de aprovação interna copiado para a área de transferência!");
         window.location.reload();
         return;
       }
@@ -369,10 +374,12 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
       // Reset internal approval if needed
       if (exigeAprovacaoInterna) {
+        const internaToken = tarefa.internal_approval_token || crypto.randomUUID();
         const internaColumnId = await findColumnByMatcherAsync(isAprovacaoInternaColumn);
         const updateData: Record<string, any> = {
           aprovacao_interna_status: "pendente",
           aprovacao_interna_feedback: null,
+          internal_approval_token: internaToken,
           updated_at: new Date().toISOString(),
         };
         if (internaColumnId) updateData.coluna_id = internaColumnId;
@@ -490,7 +497,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
                 {tarefa.aprovacao_interna_status === "pendente" && (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-sm flex-wrap">
                       <Badge variant="outline" className="border-amber-500 text-amber-400 text-[10px]">
                         Aguardando aprovação
                       </Badge>
@@ -500,6 +507,32 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                         </span>
                       )}
                     </div>
+                    {tarefa.internal_approval_token && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs"
+                          onClick={() => {
+                            const link = `${window.location.origin}/aprovacao-interna/${tarefa.internal_approval_token}`;
+                            navigator.clipboard.writeText(link);
+                            toast.success("Link de aprovação interna copiado!");
+                          }}
+                        >
+                          <Copy className="h-3 w-3" /> Copiar link
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs"
+                          onClick={() => {
+                            window.open(`/aprovacao-interna/${tarefa.internal_approval_token}`, "_blank");
+                          }}
+                        >
+                          <ExternalLink className="h-3 w-3" /> Abrir
+                        </Button>
+                      </div>
+                    )}
                     <Textarea
                       placeholder="Feedback da aprovação interna (opcional)..."
                       value={internaFeedback}
