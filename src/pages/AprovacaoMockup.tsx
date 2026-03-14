@@ -325,8 +325,80 @@ export default function AprovacaoMockup() {
       setSubmitting(false);
     }
   };
+  // === HIGHLIGHT APPROVAL HANDLERS ===
+  const sortedHighlights = [...gridHighlights].sort((a, b) => a.ordem - b.ordem);
+  const currentHighlight = sortedHighlights[currentHighlightIdx];
 
-  const handleApproveLinks = async () => {
+  const handleApproveHighlight = async () => {
+    if (!currentHighlight) return;
+    setSubmitting(true);
+    try {
+      const { error: err } = await supabase.rpc("update_grid_highlight_approval", {
+        p_token: token!,
+        p_highlight_id: currentHighlight.highlight_id,
+        p_status: "aprovado",
+        p_feedback: highlightFeedbacks[currentHighlight.highlight_id] || null,
+      });
+      if (err) throw err;
+      setGridHighlights(prev => {
+        const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "aprovado", feedback: highlightFeedbacks[currentHighlight.highlight_id] || null } : h);
+        setTimeout(() => {
+          const sorted = [...updated].sort((a, b) => a.ordem - b.ordem);
+          const next = sorted.findIndex((h, i) => i > currentHighlightIdx && h.status === "pendente");
+          if (next !== -1) setCurrentHighlightIdx(next);
+          else {
+            const first = sorted.findIndex(h => h.status === "pendente");
+            if (first !== -1) setCurrentHighlightIdx(first);
+          }
+        }, 300);
+        return updated;
+      });
+      toast.success("Destaque aprovado!");
+    } catch {
+      toast.error("Erro ao aprovar");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectHighlight = async () => {
+    if (!currentHighlight) return;
+    const feedback = highlightFeedbacks[currentHighlight.highlight_id] || "";
+    if (!feedback.trim()) {
+      toast.error("Adicione um feedback antes de reprovar.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error: err } = await supabase.rpc("update_grid_highlight_approval", {
+        p_token: token!,
+        p_highlight_id: currentHighlight.highlight_id,
+        p_status: "reprovado",
+        p_feedback: feedback,
+      });
+      if (err) throw err;
+      setGridHighlights(prev => {
+        const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h);
+        setTimeout(() => {
+          const sorted = [...updated].sort((a, b) => a.ordem - b.ordem);
+          const next = sorted.findIndex((h, i) => i > currentHighlightIdx && h.status === "pendente");
+          if (next !== -1) setCurrentHighlightIdx(next);
+          else {
+            const first = sorted.findIndex(h => h.status === "pendente");
+            if (first !== -1) setCurrentHighlightIdx(first);
+          }
+        }, 300);
+        return updated;
+      });
+      toast.success("Destaque reprovado com feedback.");
+    } catch {
+      toast.error("Erro ao reprovar");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+
     setSubmitting(true);
     try {
       const { error: err } = await supabase.rpc("update_task_approval_by_token", {
