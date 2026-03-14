@@ -554,13 +554,12 @@ export default function Tarefas() {
     }
 
     const timerUpdates = computeTimerUpdates(tarefa, colunas, nextCol.id);
-    const advanceTargetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
+    const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
 
     // Apply move + timer in a single update
-    const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
     const updatePayload: any = {
       coluna_id: nextCol.id,
-      ordem: advanceTargetTarefas.length,
+      ordem: targetTarefas.length,
       ...timerUpdates,
       updated_at: new Date().toISOString(),
     };
@@ -573,7 +572,7 @@ export default function Tarefas() {
 
           // Send notification for completed task
           if (targetColType === 'done' && tarefa.user_id) {
-            sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
+            await sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
           }
 
           // Auto-create commission when moved to Concluído
