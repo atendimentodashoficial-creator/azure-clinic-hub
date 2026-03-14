@@ -325,6 +325,7 @@ export default function AprovacaoMockup() {
         )
       );
       toast.success("Post aprovado!");
+      checkAndNotifyCompletion(token!);
     } catch {
       toast.error("Erro ao aprovar");
     } finally {
