@@ -112,9 +112,11 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
         tipo_tarefa_id: meta.tipo_tarefa_id || undefined,
         produto_template_id: template.id,
       });
-      // Send "atribuida" notification if task has a responsável
-      if (result?.id && meta.responsavel) {
-        sendTaskNotification({ evento: "atribuida", tarefa_id: result.id, user_id: result.user_id });
+      // Send notification based on initial column/stage
+      if (result?.id) {
+        const colunaNome = colunas.find((c) => c.id === colunaId)?.nome;
+        const evento = getColumnNotificationEvent(colunaNome);
+        await sendTaskNotification({ evento, tarefa_id: result.id, user_id: result.user_id });
       }
     }
   };
