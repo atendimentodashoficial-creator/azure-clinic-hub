@@ -328,7 +328,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
         )
       );
       toast.success("Post aprovado!");
-      checkAndNotifyCompletion(token!);
+      checkAndNotifyCompletion(token!, isInternal);
     } catch {
       toast.error("Erro ao aprovar");
     } finally {
