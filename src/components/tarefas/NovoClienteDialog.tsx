@@ -253,10 +253,25 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
               </div>
               <div className="space-y-2"><Label>Email {tipo === "interno" ? "*" : ""}</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vantero.co@gmail.com" /></div>
               {tipo === "interno" && (
-                <div className="space-y-2">
-                  <Label>Senha de Acesso {!isEditing && "*"}</Label>
-                  <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label>Senha de Acesso {!isEditing && "*"}</Label>
+                    <Input type="password" value={senhaAcesso} onChange={e => setSenhaAcesso(e.target.value)} placeholder="••••••" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Gestor do Projeto</Label>
+                    <Select value={gestorId} onValueChange={setGestorId}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o gestor (opcional)" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {todosMembros.map(m => (
+                          <SelectItem key={m.id} value={m.id}>{m.nome} {m.cargo ? `(${m.cargo})` : ""}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Responsável pela aprovação interna das tarefas</p>
+                  </div>
+                </>
               )}
               <div className="space-y-2"><Label>Empresa</Label><Input value={empresa} onChange={e => setEmpresa(e.target.value)} /></div>
               <div className="space-y-2">
