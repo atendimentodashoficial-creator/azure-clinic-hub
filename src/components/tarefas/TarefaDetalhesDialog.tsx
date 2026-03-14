@@ -323,6 +323,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
           }
           const { error } = await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
           if (error) throw error;
+          sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
           toast.success("Aprovação interna concluída! Tarefa finalizada.");
         }
       } else {
