@@ -659,8 +659,7 @@ export default function AprovacaoMockup() {
                         />
                       </div>
 
-                      {!allGridPostsDecided && (
-                        <Card className="p-4 space-y-3">
+                      <Card className="p-4 space-y-3">
                           <Textarea
                             placeholder="Feedback para este post (obrigatório para reprovar)..."
                             value={gridFeedbacks[currentGridPost.grid_post_id] || ""}
@@ -668,17 +667,16 @@ export default function AprovacaoMockup() {
                             rows={2}
                           />
                           <div className="flex gap-2">
-                            <Button onClick={handleApproveGridPost} disabled={submitting || currentGridPost.status === "aprovado"} className="flex-1 gap-1.5" variant={currentGridPost.status === "aprovado" ? "secondary" : "default"}>
+                            <Button onClick={handleApproveGridPost} disabled={submitting} className="flex-1 gap-1.5" variant={currentGridPost.status === "aprovado" ? "secondary" : "default"}>
                               <Check className="w-4 h-4" />
                               {currentGridPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
                             </Button>
-                            <Button onClick={handleRejectGridPost} disabled={submitting || currentGridPost.status === "reprovado"} variant="destructive" className="flex-1 gap-1.5">
+                            <Button onClick={handleRejectGridPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
                               <X className="w-4 h-4" />
                               {currentGridPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
                             </Button>
                           </div>
                         </Card>
-                      )}
 
                       {currentGridPost.status === "reprovado" && currentGridPost.feedback && (
                         <p className="text-xs text-red-400 bg-red-500/10 rounded px-3 py-2">
@@ -728,37 +726,32 @@ export default function AprovacaoMockup() {
                         </Button>
                       </div>
 
-                      <div className="w-full max-w-[200px] mx-auto">
-                        <div className="w-full aspect-square rounded-full overflow-hidden border-2 border-border">
-                          <img
-                            src={currentHighlight.image_url}
-                            alt={currentHighlight.titulo}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <p className="text-center text-sm font-medium text-foreground mt-2">{currentHighlight.titulo}</p>
+                      <div className="w-full max-w-md mx-auto">
+                        <img
+                          src={currentHighlight.image_url}
+                          alt={currentHighlight.titulo}
+                          className="w-full aspect-[4/5] object-cover rounded-lg border border-border"
+                        />
                       </div>
 
-                      {!allHighlightsDecided && (
-                        <Card className="p-4 space-y-3">
-                          <Textarea
-                            placeholder="Feedback para este destaque (obrigatório para reprovar)..."
-                            value={highlightFeedbacks[currentHighlight.highlight_id] || ""}
-                            onChange={e => setHighlightFeedbacks(prev => ({ ...prev, [currentHighlight.highlight_id]: e.target.value }))}
-                            rows={2}
-                          />
-                          <div className="flex gap-2">
-                            <Button onClick={handleApproveHighlight} disabled={submitting || currentHighlight.status === "aprovado"} className="flex-1 gap-1.5" variant={currentHighlight.status === "aprovado" ? "secondary" : "default"}>
-                              <Check className="w-4 h-4" />
-                              {currentHighlight.status === "aprovado" ? "Aprovado" : "Aprovar"}
-                            </Button>
-                            <Button onClick={handleRejectHighlight} disabled={submitting || currentHighlight.status === "reprovado"} variant="destructive" className="flex-1 gap-1.5">
-                              <X className="w-4 h-4" />
-                              {currentHighlight.status === "reprovado" ? "Reprovado" : "Reprovar"}
-                            </Button>
-                          </div>
-                        </Card>
-                      )}
+                      <Card className="p-4 space-y-3">
+                        <Textarea
+                          placeholder="Feedback para este destaque (obrigatório para reprovar)..."
+                          value={highlightFeedbacks[currentHighlight.highlight_id] || ""}
+                          onChange={e => setHighlightFeedbacks(prev => ({ ...prev, [currentHighlight.highlight_id]: e.target.value }))}
+                          rows={2}
+                        />
+                        <div className="flex gap-2">
+                          <Button onClick={handleApproveHighlight} disabled={submitting} className="flex-1 gap-1.5" variant={currentHighlight.status === "aprovado" ? "secondary" : "default"}>
+                            <Check className="w-4 h-4" />
+                            {currentHighlight.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                          </Button>
+                          <Button onClick={handleRejectHighlight} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
+                            <X className="w-4 h-4" />
+                            {currentHighlight.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                          </Button>
+                        </div>
+                      </Card>
 
                       {currentHighlight.status === "reprovado" && currentHighlight.feedback && (
                         <p className="text-xs text-red-400 bg-red-500/10 rounded px-3 py-2">
@@ -909,7 +902,6 @@ export default function AprovacaoMockup() {
 
             <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} />
 
-            {!allDecided && (
               <Card className="p-4 space-y-3">
                 <Textarea
                   placeholder="Feedback para este post (obrigatório para reprovar)..."
@@ -918,17 +910,16 @@ export default function AprovacaoMockup() {
                   rows={2}
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleApprovePost} disabled={submitting || currentPost.status === "aprovado"} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
+                  <Button onClick={handleApprovePost} disabled={submitting} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
                     <Check className="w-4 h-4" />
                     {currentPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
                   </Button>
-                  <Button onClick={handleRejectPost} disabled={submitting || currentPost.status === "reprovado"} variant="destructive" className="flex-1 gap-1.5">
+                  <Button onClick={handleRejectPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
                     <X className="w-4 h-4" />
                     {currentPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
                   </Button>
                 </div>
               </Card>
-            )}
           </div>
         )}
 
