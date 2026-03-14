@@ -338,9 +338,11 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   const hideDetails = isFuncionario && colType === 'todo';
   // In "Em Revisão" with pausado_revisao, employee needs to start timer to see details
   const needsManualStart = isFuncionario && colType === 'review' && tarefa.timer_status === "pausado_revisao";
+  // Timer should auto-resume when clicking card in review column
+  const shouldResumeTimerOnClick = colType === 'review' && tarefa.timer_status === "pausado_revisao";
 
-  // Task is clickable when not in "A Fazer" and not needing manual start
-  const isClickable = !hideDetails && !needsManualStart && onClick && colType !== 'todo';
+  // Task is clickable when not in "A Fazer" (employees can now click in review to resume timer)
+  const isClickable = !hideDetails && onClick && colType !== 'todo';
 
   const renderResponsaveis = () => {
     if (!tarefa.responsavel_nome) return null;
@@ -363,7 +365,12 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
     <Card
       className={cn("p-3 bg-card border-l-4 hover:bg-accent/30 transition-colors group", isClickable && "cursor-pointer")}
       style={{ borderLeftColor: colunas.find(c => c.id === tarefa.coluna_id)?.cor || '#f59e0b' }}
-      onClick={isClickable ? () => onClick(tarefa) : undefined}
+      onClick={isClickable ? () => {
+        if (shouldResumeTimerOnClick && onStartTimer) {
+          onStartTimer(tarefa.id);
+        }
+        onClick(tarefa);
+      } : undefined}
     >
       <div className="flex items-start gap-2">
         <div {...dragHandleProps} className="mt-1 shrink-0 cursor-grab active:cursor-grabbing touch-none">
@@ -375,17 +382,6 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
               <span className="font-medium text-sm truncate">{tarefa.titulo}</span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              {needsManualStart && onStartTimer && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-primary hover:text-primary"
-                  onClick={() => onStartTimer(tarefa.id)}
-                  title="Iniciar revisão"
-                >
-                  <Play className="h-3 w-3" />
-                </Button>
-              )}
               {onDelete && (
                 <Button
                   variant="ghost"
@@ -401,8 +397,6 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
 
           {hideDetails ? (
             <p className="text-xs text-muted-foreground mt-1 italic">Detalhes disponíveis ao iniciar</p>
-          ) : needsManualStart ? (
-            <p className="text-xs text-muted-foreground mt-1 italic">Clique ▶ para ver as revisões</p>
           ) : (
             <>
               {renderResponsaveis()}
@@ -449,7 +443,7 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
           )}
 
           {/* Revision count badges */}
-          {revisoesCounts && (revisoesCounts.interna > 0 || revisoesCounts.cliente > 0) && !hideDetails && !needsManualStart && (
+          {revisoesCounts && (revisoesCounts.interna > 0 || revisoesCounts.cliente > 0) && !hideDetails && (
             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
               {revisoesCounts.interna > 0 && (
                 <span className="text-[10px] flex items-center gap-0.5 bg-amber-500/15 text-amber-400 rounded px-1.5 py-0.5">
