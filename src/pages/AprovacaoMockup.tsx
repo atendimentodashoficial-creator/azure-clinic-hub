@@ -726,13 +726,15 @@ export default function AprovacaoMockup() {
                         </Button>
                       </div>
 
-                      <div className="w-full max-w-md mx-auto aspect-[4/5] rounded-lg border border-border bg-muted/20 flex items-center justify-center">
-                        <div className="w-48 h-48 rounded-full overflow-hidden border-2 border-border flex-shrink-0">
-                          <img
-                            src={currentHighlight.image_url}
-                            alt={currentHighlight.titulo}
-                            className="w-full h-full object-cover"
-                          />
+                      <div className="w-full max-w-md mx-auto">
+                        <div className="w-full aspect-[4/5] rounded-lg border border-border bg-muted/20 flex items-center justify-center">
+                          <div className="w-56 h-56 sm:w-64 sm:h-64 rounded-full overflow-hidden border-2 border-border flex-shrink-0">
+                            <img
+                              src={currentHighlight.image_url}
+                              alt={currentHighlight.titulo}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
                         </div>
                       </div>
 
