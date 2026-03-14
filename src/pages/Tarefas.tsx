@@ -559,7 +559,7 @@ export default function Tarefas() {
     const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
     const updatePayload: any = {
       coluna_id: nextCol.id,
-      ordem: targetTarefas.length,
+      ordem: advanceTargetTarefas.length,
       ...timerUpdates,
       updated_at: new Date().toISOString(),
     };
