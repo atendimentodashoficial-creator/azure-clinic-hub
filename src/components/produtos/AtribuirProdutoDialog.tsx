@@ -138,8 +138,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
       });
       // Send notification based on initial column/stage
       if (result?.id) {
-        const colunaNome = colunas.find((c) => c.id === colunaId)?.nome;
-        const evento = getColumnNotificationEvent(colunaNome);
+        const evento = await resolveNotificationEvent(colunaId);
         await sendTaskNotification({ evento, tarefa_id: result.id, user_id: result.user_id });
       }
     }
