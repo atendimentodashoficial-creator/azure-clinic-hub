@@ -513,15 +513,19 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
         const remainingPending = updated.filter(h => h.status === "pendente");
         const allHighlightsDecided = remainingPending.length === 0;
         const allPostsDecided = !gridPosts.some(g => g.status === "pendente");
+        // Defer navigation — show "Próximo" button first
         if (allHighlightsDecided && allPostsDecided) {
-          setGridApprovalTab("grade");
+          setPendingAdvance(() => () => setGridApprovalTab("grade"));
         } else if (allHighlightsDecided && !allPostsDecided) {
-          setGridApprovalTab("posts");
-          setCurrentGridIdx(0);
+          setPendingAdvance(() => () => { setGridApprovalTab("posts"); setCurrentGridIdx(0); });
         } else {
           const sortedUpdated = [...updated].sort((a, b) => a.ordem - b.ordem);
           const nextIdx = sortedUpdated.findIndex((h, i) => i > clampedHighlightIdx && h.status === "pendente");
-          if (nextIdx >= 0) setCurrentHighlightIdx(nextIdx);
+          if (nextIdx >= 0) {
+            setPendingAdvance(() => () => setCurrentHighlightIdx(nextIdx));
+          } else {
+            setPendingAdvance(() => () => {});
+          }
         }
         return updated;
       });
