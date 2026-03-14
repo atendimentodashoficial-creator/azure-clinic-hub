@@ -141,7 +141,7 @@ export function InstagramGridPreview({
 
       {/* Selected post approval controls */}
       {approvalMode && selected && (
-        <Card className="p-4 space-y-3 max-w-[470px] mx-auto animate-in fade-in slide-in-from-top-2">
+        <Card className="p-4 space-y-3 mx-2 mb-4 animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Post {selected.posicao + 1}</span>
             <Badge className={cn("border-0 text-[10px]",
