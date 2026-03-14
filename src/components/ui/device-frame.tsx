@@ -125,7 +125,7 @@ export function IPhoneFrame({ children, className }: DeviceFrameProps) {
     <div className={cn("flex justify-center py-4 w-full overflow-x-hidden", className)}>
       <div className="iphone-shell relative flex-shrink-0 w-full max-w-[380px] aspect-[9/16] overflow-hidden">
         {/* Phone shell - fixed frame */}
-        <div className="absolute inset-0 rounded-[2.5rem] border-[4px] border-foreground/25 bg-foreground/5 shadow-xl pointer-events-none z-10" />
+        <div className="absolute inset-0 rounded-[2.5rem] border-[4px] border-foreground/25 bg-foreground/5 pointer-events-none z-10" />
         {/* Notch / Dynamic Island */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-5 bg-foreground/20 rounded-full z-20" />
         {/* Bottom bar */}
