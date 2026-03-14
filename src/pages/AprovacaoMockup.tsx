@@ -855,16 +855,22 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
                             onChange={e => setGridFeedbacks(prev => ({ ...prev, [currentFilteredGridPost.grid_post_id]: e.target.value }))}
                             rows={2}
                           />
-                          <div className="flex gap-2">
-                            <Button onClick={handleApproveGridPost} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredGridPost.status === "aprovado" ? "secondary" : "default"}>
-                              <Check className="w-4 h-4" />
-                              {currentFilteredGridPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                          {pendingAdvance ? (
+                            <Button onClick={() => { pendingAdvance(); setPendingAdvance(null); }} className="w-full gap-1.5">
+                              Próximo <ChevronRight className="w-4 h-4" />
                             </Button>
-                            <Button onClick={handleRejectGridPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
-                              <X className="w-4 h-4" />
-                              {currentFilteredGridPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
-                            </Button>
-                          </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button onClick={handleApproveGridPost} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredGridPost.status === "aprovado" ? "secondary" : "default"}>
+                                <Check className="w-4 h-4" />
+                                {currentFilteredGridPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                              </Button>
+                              <Button onClick={handleRejectGridPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
+                                <X className="w-4 h-4" />
+                                {currentFilteredGridPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                              </Button>
+                            </div>
+                          )}
                         </Card>
 
                         {currentFilteredGridPost.status === "reprovado" && currentFilteredGridPost.feedback && (
