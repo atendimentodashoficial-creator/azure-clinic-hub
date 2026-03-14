@@ -35,6 +35,7 @@ const FILE_TYPES = [
   { key: "texto", label: "Texto" },
   { key: "links", label: "Links" },
   { key: "mockup", label: "Mockup de Post" },
+  { key: "grade", label: "Grade do Instagram" },
   { key: "qualquer", label: "Qualquer arquivo" },
 ];
 
