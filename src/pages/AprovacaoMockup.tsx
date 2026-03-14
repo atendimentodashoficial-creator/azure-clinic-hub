@@ -866,6 +866,7 @@ export default function AprovacaoMockup() {
               )}
             </div>
           </div>
+          </GridLayoutSyncer>
         </div>
       </div>
     );
