@@ -135,21 +135,10 @@ export function useTarefaGridHighlights(tarefaId: string | null) {
 
   const reorderHighlights = useMutation({
     mutationFn: async (newOrder: { id: string; ordem: number }[]) => {
-      // Move all to temp positions first to avoid unique constraint conflicts
-      for (let i = 0; i < newOrder.length; i++) {
-        const { error } = await supabase
-          .from("tarefa_grid_highlights")
-          .update({ ordem: 100 + i, updated_at: new Date().toISOString() })
-          .eq("id", newOrder[i].id);
-        if (error) throw error;
-      }
-      for (const item of newOrder) {
-        const { error } = await supabase
-          .from("tarefa_grid_highlights")
-          .update({ ordem: item.ordem, updated_at: new Date().toISOString() })
-          .eq("id", item.id);
-        if (error) throw error;
-      }
+      const { error } = await supabase.rpc('reorder_grid_highlights', {
+        p_items: JSON.stringify(newOrder),
+      } as any);
+      if (error) throw error;
     },
     onSuccess: invalidate,
   });

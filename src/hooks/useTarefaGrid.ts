@@ -125,22 +125,10 @@ export function useTarefaGrid(tarefaId: string | null) {
 
   const reorderPosts = useMutation({
     mutationFn: async (newOrder: { id: string; posicao: number }[]) => {
-      // Move all to temp positions first to avoid unique constraint conflicts
-      for (let i = 0; i < newOrder.length; i++) {
-        const { error } = await supabase
-          .from("tarefa_grid_posts")
-          .update({ posicao: 100 + i, updated_at: new Date().toISOString() })
-          .eq("id", newOrder[i].id);
-        if (error) throw error;
-      }
-      // Then set final positions
-      for (const item of newOrder) {
-        const { error } = await supabase
-          .from("tarefa_grid_posts")
-          .update({ posicao: item.posicao, updated_at: new Date().toISOString() })
-          .eq("id", item.id);
-        if (error) throw error;
-      }
+      const { error } = await supabase.rpc('reorder_grid_posts', {
+        p_items: JSON.stringify(newOrder),
+      } as any);
+      if (error) throw error;
     },
     onSuccess: invalidate,
   });
