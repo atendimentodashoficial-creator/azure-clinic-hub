@@ -608,13 +608,16 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   onAdd={async (file, titulo) => {
                     await addHighlight.mutateAsync({ file, titulo });
                   }}
+                  onBatchAdd={async (files) => {
+                    return await addHighlightBatch.mutateAsync(files);
+                  }}
                   onRemove={async (id) => {
                     await removeHighlight.mutateAsync(id);
                   }}
                   onUpdateTitle={async (id, titulo) => {
                     await updateHighlightTitle.mutateAsync({ id, titulo });
                   }}
-                  uploading={addHighlight.isPending}
+                  uploading={addHighlight.isPending || addHighlightBatch.isPending}
                 />
 
 
