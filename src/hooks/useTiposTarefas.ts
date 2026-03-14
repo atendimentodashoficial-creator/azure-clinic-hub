@@ -39,6 +39,7 @@ export function useTiposTarefas() {
         ...d,
         tipos_arquivo_permitidos: d.tipos_arquivo_permitidos || [],
         limite_arquivos: d.limite_arquivos || {},
+        avisos: d.avisos || {},
       })) as TipoTarefa[];
     },
     enabled: !!effectiveUserId,
