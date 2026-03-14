@@ -534,7 +534,7 @@ export default function AprovacaoMockup() {
             <div className="flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6">
               {/* Tab switch: Posts / Destaques */}
               {hasHighlights && (
-                <div className="flex gap-2 justify-center lg:justify-start">
+                <div className="flex gap-2 justify-center">
                   <Button
                     variant={gridApprovalTab === "posts" ? "default" : "outline"}
                     size="sm"
