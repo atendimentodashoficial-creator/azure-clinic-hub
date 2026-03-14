@@ -309,23 +309,16 @@ function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTar
         {tarefa.descricao && <p className="text-sm text-muted-foreground mt-3">{tarefa.descricao}</p>}
       </div>
 
-      {tarefa.approval_token && tarefa.coluna_nome === "Aguardando Aprovação" && (
-        <Card className="p-4 border-primary/30 bg-primary/5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Entrega disponível para aprovação</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Revise os itens e aprove ou solicite alterações</p>
-            </div>
-            <Button size="sm" className="gap-1.5" asChild>
-              <a href={`/aprovacao/${tarefa.approval_token}`} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-3.5 h-3.5" /> Revisar entrega
-              </a>
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {!hasDeliverables ? (
+      {tarefa.approval_token ? (
+        <div className="rounded-lg border overflow-hidden bg-background" style={{ minHeight: '70vh' }}>
+          <iframe
+            src={`/aprovacao/${tarefa.approval_token}`}
+            className="w-full border-0"
+            style={{ height: '80vh' }}
+            title="Aprovação da entrega"
+          />
+        </div>
+      ) : !hasDeliverables ? (
         <Card className="p-8 text-center">
           <ClipboardList className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
           <p className="text-sm text-muted-foreground">Nenhum conteúdo entregue ainda para esta tarefa.</p>
