@@ -619,7 +619,7 @@ export default function AprovacaoMockup() {
               <Button
                 variant={gridApprovalTab === "grade" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setGridApprovalTab("grade" as any)}
+                onClick={() => setGridApprovalTab("grade")}
                 className="gap-1.5"
               >
                 Grade
