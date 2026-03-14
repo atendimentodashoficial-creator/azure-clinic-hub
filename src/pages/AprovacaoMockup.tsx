@@ -902,7 +902,6 @@ export default function AprovacaoMockup() {
 
             <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} />
 
-            {!allDecided && (
               <Card className="p-4 space-y-3">
                 <Textarea
                   placeholder="Feedback para este post (obrigatório para reprovar)..."
@@ -911,17 +910,16 @@ export default function AprovacaoMockup() {
                   rows={2}
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleApprovePost} disabled={submitting || currentPost.status === "aprovado"} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
+                  <Button onClick={handleApprovePost} disabled={submitting} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
                     <Check className="w-4 h-4" />
                     {currentPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
                   </Button>
-                  <Button onClick={handleRejectPost} disabled={submitting || currentPost.status === "reprovado"} variant="destructive" className="flex-1 gap-1.5">
+                  <Button onClick={handleRejectPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
                     <X className="w-4 h-4" />
                     {currentPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
                   </Button>
                 </div>
               </Card>
-            )}
           </div>
         )}
 
