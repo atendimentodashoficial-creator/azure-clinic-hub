@@ -258,7 +258,8 @@ export default function AprovacaoMockup() {
   // === MOCKUP APPROVAL HANDLERS ===
   const posts = groupByPost(mockups);
   const filteredPosts = posts.filter(p => approvalFilter === "pendentes" ? p.status === "pendente" : approvalFilter === "aprovadas" ? p.status === "aprovado" : p.status === "reprovado");
-  const currentPost = filteredPosts[currentPostIdx];
+  const clampedPostIdx = Math.min(currentPostIdx, Math.max(0, filteredPosts.length - 1));
+  const currentPost = filteredPosts[clampedPostIdx];
 
   const handleApprovePost = async () => {
     if (!currentPost) return;
@@ -273,23 +274,13 @@ export default function AprovacaoMockup() {
         });
         if (err) throw err;
       }
-      setMockups(prev => {
-        const updated = prev.map(m =>
+      setMockups(prev =>
+        prev.map(m =>
           currentPost.mockups.some(cm => cm.mockup_id === m.mockup_id)
             ? { ...m, status: "aprovado", feedback: feedbacks[currentPost.postIndex] || null }
             : m
-        );
-        setTimeout(() => {
-          const nextPosts = groupByPost(updated);
-          const nextUndecided = nextPosts.findIndex((p, i) => i > currentPostIdx && p.status === "pendente");
-          if (nextUndecided !== -1) setCurrentPostIdx(nextUndecided);
-          else {
-            const first = nextPosts.findIndex(p => p.status === "pendente");
-            if (first !== -1) setCurrentPostIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+        )
+      );
       toast.success("Post aprovado!");
     } catch {
       toast.error("Erro ao aprovar");
@@ -315,23 +306,13 @@ export default function AprovacaoMockup() {
         });
         if (err) throw err;
       }
-      setMockups(prev => {
-        const updated = prev.map(m =>
+      setMockups(prev =>
+        prev.map(m =>
           currentPost.mockups.some(cm => cm.mockup_id === m.mockup_id)
             ? { ...m, status: "reprovado", feedback: feedbacks[currentPost.postIndex] }
             : m
-        );
-        setTimeout(() => {
-          const nextPosts = groupByPost(updated);
-          const nextUndecided = nextPosts.findIndex((p, i) => i > currentPostIdx && p.status === "pendente");
-          if (nextUndecided !== -1) setCurrentPostIdx(nextUndecided);
-          else {
-            const first = nextPosts.findIndex(p => p.status === "pendente");
-            if (first !== -1) setCurrentPostIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+        )
+      );
       toast.success("Post reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
@@ -344,7 +325,8 @@ export default function AprovacaoMockup() {
   const sortedGridPosts = [...gridPosts].sort((a, b) => a.posicao - b.posicao);
   const filterStatus = (s: string) => approvalFilter === "pendentes" ? s === "pendente" : approvalFilter === "aprovadas" ? s === "aprovado" : s === "reprovado";
   const filteredSortedGridPostsForHandler = sortedGridPosts.filter(g => filterStatus(g.status));
-  const currentGridPost = filteredSortedGridPostsForHandler[currentGridIdx];
+  const clampedGridIdx = Math.min(currentGridIdx, Math.max(0, filteredSortedGridPostsForHandler.length - 1));
+  const currentGridPost = filteredSortedGridPostsForHandler[clampedGridIdx];
 
   const handleApproveGridPost = async () => {
     if (!currentGridPost) return;
@@ -357,19 +339,9 @@ export default function AprovacaoMockup() {
         p_feedback: gridFeedbacks[currentGridPost.grid_post_id] || null,
       });
       if (err) throw err;
-      setGridPosts(prev => {
-        const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "aprovado", feedback: gridFeedbacks[currentGridPost.grid_post_id] || null } : g);
-        setTimeout(() => {
-          const sorted = [...updated].sort((a, b) => a.posicao - b.posicao);
-          const nextUndecided = sorted.findIndex((g, i) => i > currentGridIdx && g.status === "pendente");
-          if (nextUndecided !== -1) setCurrentGridIdx(nextUndecided);
-          else {
-            const first = sorted.findIndex(g => g.status === "pendente");
-            if (first !== -1) setCurrentGridIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+      setGridPosts(prev =>
+        prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "aprovado", feedback: gridFeedbacks[currentGridPost.grid_post_id] || null } : g)
+      );
       toast.success("Post aprovado!");
     } catch {
       toast.error("Erro ao aprovar");
@@ -394,19 +366,9 @@ export default function AprovacaoMockup() {
         p_feedback: feedback,
       });
       if (err) throw err;
-      setGridPosts(prev => {
-        const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g);
-        setTimeout(() => {
-          const sorted = [...updated].sort((a, b) => a.posicao - b.posicao);
-          const nextUndecided = sorted.findIndex((g, i) => i > currentGridIdx && g.status === "pendente");
-          if (nextUndecided !== -1) setCurrentGridIdx(nextUndecided);
-          else {
-            const first = sorted.findIndex(g => g.status === "pendente");
-            if (first !== -1) setCurrentGridIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+      setGridPosts(prev =>
+        prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g)
+      );
       toast.success("Post reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
@@ -417,7 +379,8 @@ export default function AprovacaoMockup() {
   // === HIGHLIGHT APPROVAL HANDLERS ===
   const sortedHighlights = [...gridHighlights].sort((a, b) => a.ordem - b.ordem);
   const filteredSortedHighlightsForHandler = sortedHighlights.filter(h => filterStatus(h.status));
-  const currentHighlight = filteredSortedHighlightsForHandler[currentHighlightIdx];
+  const clampedHighlightIdx = Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlightsForHandler.length - 1));
+  const currentHighlight = filteredSortedHighlightsForHandler[clampedHighlightIdx];
 
   const handleApproveHighlight = async () => {
     if (!currentHighlight) return;
@@ -430,19 +393,9 @@ export default function AprovacaoMockup() {
         p_feedback: highlightFeedbacks[currentHighlight.highlight_id] || null,
       });
       if (err) throw err;
-      setGridHighlights(prev => {
-        const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "aprovado", feedback: highlightFeedbacks[currentHighlight.highlight_id] || null } : h);
-        setTimeout(() => {
-          const sorted = [...updated].sort((a, b) => a.ordem - b.ordem);
-          const next = sorted.findIndex((h, i) => i > currentHighlightIdx && h.status === "pendente");
-          if (next !== -1) setCurrentHighlightIdx(next);
-          else {
-            const first = sorted.findIndex(h => h.status === "pendente");
-            if (first !== -1) setCurrentHighlightIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+      setGridHighlights(prev =>
+        prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "aprovado", feedback: highlightFeedbacks[currentHighlight.highlight_id] || null } : h)
+      );
       toast.success("Destaque aprovado!");
     } catch {
       toast.error("Erro ao aprovar");
@@ -467,19 +420,9 @@ export default function AprovacaoMockup() {
         p_feedback: feedback,
       });
       if (err) throw err;
-      setGridHighlights(prev => {
-        const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h);
-        setTimeout(() => {
-          const sorted = [...updated].sort((a, b) => a.ordem - b.ordem);
-          const next = sorted.findIndex((h, i) => i > currentHighlightIdx && h.status === "pendente");
-          if (next !== -1) setCurrentHighlightIdx(next);
-          else {
-            const first = sorted.findIndex(h => h.status === "pendente");
-            if (first !== -1) setCurrentHighlightIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+      setGridHighlights(prev =>
+        prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h)
+      );
       toast.success("Destaque reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
@@ -626,8 +569,8 @@ export default function AprovacaoMockup() {
     const filteredHighlights = gridHighlights.filter(h => filterFn(h.status));
     const filteredSortedGridPosts = [...filteredGridPosts].sort((a, b) => a.posicao - b.posicao);
     const filteredSortedHighlights = [...filteredHighlights].sort((a, b) => a.ordem - b.ordem);
-    const currentFilteredGridPost = filteredSortedGridPosts[currentGridIdx];
-    const currentFilteredHighlight = filteredSortedHighlights[currentHighlightIdx];
+    const currentFilteredGridPost = filteredSortedGridPosts[Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1))];
+    const currentFilteredHighlight = filteredSortedHighlights[Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1))];
     
     const allGridPostsDecided = gridPosts.every(g => g.status === "aprovado" || g.status === "reprovado");
     const allHighlightsDecided = gridHighlights.length === 0 || gridHighlights.every(h => h.status === "aprovado" || h.status === "reprovado");
@@ -733,7 +676,7 @@ export default function AprovacaoMockup() {
                             onClick={() => setCurrentGridIdx(i)}
                             className={cn(
                               "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
-                              i === currentGridIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                              i === Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
                               g.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
                               g.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
                               "bg-muted border-muted-foreground/30 text-muted-foreground"
@@ -747,13 +690,13 @@ export default function AprovacaoMockup() {
                       {currentFilteredGridPost && (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <Button variant="ghost" size="sm" disabled={currentGridIdx === 0} onClick={() => setCurrentGridIdx(i => i - 1)}>
+                            <Button variant="ghost" size="sm" disabled={Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) === 0} onClick={() => setCurrentGridIdx(i => Math.max(0, i - 1))}>
                               <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
                             </Button>
                             <Badge className={cn("border-0", itemStatusColor(currentFilteredGridPost.status))}>
                               {itemStatusLabel(currentFilteredGridPost.status)}
                             </Badge>
-                            <Button variant="ghost" size="sm" disabled={currentGridIdx === filteredSortedGridPosts.length - 1} onClick={() => setCurrentGridIdx(i => i + 1)}>
+                            <Button variant="ghost" size="sm" disabled={Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) === filteredSortedGridPosts.length - 1} onClick={() => setCurrentGridIdx(i => i + 1)}>
                               Próximo <ChevronRight className="w-4 h-4 ml-1" />
                             </Button>
                           </div>
@@ -815,7 +758,7 @@ export default function AprovacaoMockup() {
                             onClick={() => setCurrentHighlightIdx(i)}
                             className={cn(
                               "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
-                              i === currentHighlightIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                              i === Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
                               h.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
                               h.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
                               "bg-muted border-muted-foreground/30 text-muted-foreground"
@@ -829,13 +772,13 @@ export default function AprovacaoMockup() {
                       {currentFilteredHighlight && (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <Button variant="ghost" size="sm" disabled={currentHighlightIdx === 0} onClick={() => setCurrentHighlightIdx(i => i - 1)}>
+                            <Button variant="ghost" size="sm" disabled={Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) === 0} onClick={() => setCurrentHighlightIdx(i => Math.max(0, i - 1))}>
                               <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
                             </Button>
                             <Badge className={cn("border-0", itemStatusColor(currentFilteredHighlight.status))}>
                               {itemStatusLabel(currentFilteredHighlight.status)}
                             </Badge>
-                            <Button variant="ghost" size="sm" disabled={currentHighlightIdx === filteredSortedHighlights.length - 1} onClick={() => setCurrentHighlightIdx(i => i + 1)}>
+                            <Button variant="ghost" size="sm" disabled={Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) === filteredSortedHighlights.length - 1} onClick={() => setCurrentHighlightIdx(i => i + 1)}>
                               Próximo <ChevronRight className="w-4 h-4 ml-1" />
                             </Button>
                           </div>
@@ -999,7 +942,7 @@ export default function AprovacaoMockup() {
                   onClick={() => setCurrentPostIdx(i)}
                   className={cn(
                     "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
-                    i === currentPostIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                    i === clampedPostIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
                     p.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
                     p.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
                     "bg-muted border-muted-foreground/30 text-muted-foreground"
@@ -1013,7 +956,7 @@ export default function AprovacaoMockup() {
             {currentPost && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Button variant="ghost" size="sm" disabled={currentPostIdx === 0} onClick={() => setCurrentPostIdx(i => i - 1)}>
+                  <Button variant="ghost" size="sm" disabled={clampedPostIdx === 0} onClick={() => setCurrentPostIdx(i => Math.max(0, i - 1))}>
                     <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
                   </Button>
                   <div className="flex items-center gap-2">
@@ -1026,7 +969,7 @@ export default function AprovacaoMockup() {
                       </Badge>
                     )}
                   </div>
-                  <Button variant="ghost" size="sm" disabled={currentPostIdx === filteredPosts.length - 1} onClick={() => setCurrentPostIdx(i => i + 1)}>
+                  <Button variant="ghost" size="sm" disabled={clampedPostIdx === filteredPosts.length - 1} onClick={() => setCurrentPostIdx(i => i + 1)}>
                     Próximo <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>
