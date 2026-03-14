@@ -503,9 +503,9 @@ export default function AprovacaoMockup() {
             <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-start lg:gap-8">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-8">
             {/* Left: Instagram grid mockup — visual reference */}
-            <div className="lg:sticky lg:top-8 flex-shrink-0 mx-auto">
+            <div className="lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
               <IPhoneFrame>
                 <InstagramGridPreview
                   posts={gridPosts.map(g => ({
@@ -534,7 +534,7 @@ export default function AprovacaoMockup() {
             <div className="flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6">
               {/* Tab switch: Posts / Destaques */}
               {hasHighlights && (
-                <div className="flex gap-2 justify-center lg:justify-start">
+                <div className="flex gap-2 justify-center">
                   <Button
                     variant={gridApprovalTab === "posts" ? "default" : "outline"}
                     size="sm"
@@ -559,7 +559,7 @@ export default function AprovacaoMockup() {
               {/* Posts approval */}
               {gridApprovalTab === "posts" && (
                 <>
-                  <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
                     {sortedGridPosts.map((g, i) => (
                       <button
                         key={g.grid_post_id}
@@ -633,7 +633,7 @@ export default function AprovacaoMockup() {
               {/* Highlights approval */}
               {gridApprovalTab === "highlights" && (
                 <>
-                  <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
                     {sortedHighlights.map((h, i) => (
                       <button
                         key={h.highlight_id}
