@@ -30,47 +30,51 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Scales the IPhoneFrame proportionally to match the right panel height on desktop
-// Wrapper that forces the right panel to always have the exact same height as the mockup (left)
-// Only the right side is resized; the mockup keeps its natural size
+// Keeps mockup untouched and scales only right-side content to fit mockup height
 function GridLayoutSyncer({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const layoutRef = useRef<HTMLDivElement>(null);
 
   const sync = useCallback(() => {
     if (!layoutRef.current) return;
+
     const left = layoutRef.current.querySelector('[data-grid-left]') as HTMLElement;
     const right = layoutRef.current.querySelector('[data-grid-right]') as HTMLElement;
-    if (!left || !right) return;
+    const rightInner = layoutRef.current.querySelector('[data-grid-right-inner]') as HTMLElement;
+    if (!left || !right || !rightInner) return;
 
-    // Reset on mobile
-    if (isMobile) {
-      right.style.height = '';
-      right.style.maxHeight = '';
-      right.style.overflowY = '';
-      right.style.overflowX = '';
-      return;
-    }
+    // reset styles before measuring
+    right.style.height = '';
+    right.style.maxHeight = '';
+    right.style.overflow = '';
+    rightInner.style.transform = 'scale(1)';
+    rightInner.style.transformOrigin = '';
+    rightInner.style.width = '100%';
+    rightInner.style.margin = '';
+
+    if (isMobile) return;
 
     const leftH = Math.ceil(left.getBoundingClientRect().height);
-    if (leftH > 0) {
-      right.style.height = `${leftH}px`;
-      right.style.maxHeight = `${leftH}px`;
-      right.style.overflowY = 'auto';
-      right.style.overflowX = 'hidden';
-    }
+    const rightNaturalH = Math.ceil(rightInner.getBoundingClientRect().height);
+    if (leftH <= 0 || rightNaturalH <= 0) return;
+
+    const scale = Math.min(1, leftH / rightNaturalH);
+
+    right.style.height = `${leftH}px`;
+    right.style.maxHeight = `${leftH}px`;
+    right.style.overflow = 'hidden';
+
+    rightInner.style.transform = `scale(${scale})`;
+    rightInner.style.transformOrigin = 'top center';
+    rightInner.style.width = `${100 / scale}%`;
+    rightInner.style.margin = '0 auto';
   }, [isMobile]);
 
-  useLayoutEffect(() => { sync(); }, [sync]);
-  useEffect(() => { const t = setTimeout(sync, 200); return () => clearTimeout(t); }, [sync]);
-  useEffect(() => { const i = setInterval(sync, 1000); return () => clearInterval(i); }, [sync]);
+  useLayoutEffect(() => { sync(); }, [sync, children]);
+  useEffect(() => { const t = setTimeout(sync, 80); return () => clearTimeout(t); }, [sync, children]);
   useEffect(() => { window.addEventListener('resize', sync); return () => window.removeEventListener('resize', sync); }, [sync]);
 
-  return (
-    <div ref={layoutRef}>
-      {children}
-    </div>
-  );
+  return <div ref={layoutRef}>{children}</div>;
 }
 
 interface MockupData {
