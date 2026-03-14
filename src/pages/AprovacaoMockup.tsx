@@ -695,7 +695,7 @@ export default function AprovacaoMockup() {
                             </Button>
                           </div>
 
-                          <div className="w-full max-w-full mx-auto aspect-[4/5] rounded-lg border border-border overflow-hidden">
+                          <div className="w-full mx-auto aspect-square rounded-lg border border-border overflow-hidden">
                             <img
                               src={currentFilteredGridPost.image_url}
                               alt={`Post ${currentFilteredGridPost.posicao + 1}`}
