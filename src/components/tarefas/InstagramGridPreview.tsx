@@ -141,7 +141,7 @@ export function InstagramGridPreview({
             <div
               key={i}
               className={cn(
-                "relative aspect-square bg-muted/30 overflow-hidden",
+                "relative aspect-[4/5] bg-muted/30 overflow-hidden",
                 post && approvalMode && "cursor-pointer hover:opacity-80 transition-opacity",
                 post && statusColor(post.status)
               )}
