@@ -572,6 +572,24 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
     }
   };
 
+  // Auto-detect if all items already decided on load (link was already used)
+  useEffect(() => {
+    if (loading || isEmbedded) return;
+    const hasMockups = mockups.length > 0;
+    const hasGrid = gridPosts.length > 0;
+    const hasLinks = taskLinks.length > 0;
+    const hasContent = hasMockups || hasGrid || hasLinks;
+    if (!hasContent) return;
+
+    const allMockupsDecided = !hasMockups || mockups.every(m => m.status !== "pendente");
+    const allGridDecided = !hasGrid || (gridPosts.every(g => g.status !== "pendente") && gridHighlights.every(h => h.status !== "pendente"));
+    const linkAlreadyDecided = !hasLinks || (!hasMockups && !hasGrid && linkApprovalStatus !== "pendente");
+
+    if (allMockupsDecided && allGridDecided && linkAlreadyDecided) {
+      setSubmitted(true);
+    }
+  }, [loading, isEmbedded, mockups, gridPosts, gridHighlights, taskLinks, linkApprovalStatus]);
+
   // === RENDER ===
   if (loading) {
     return (
