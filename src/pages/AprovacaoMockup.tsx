@@ -726,7 +726,7 @@ export default function AprovacaoMockup() {
                         </Button>
                       </div>
 
-                      <div className="w-full max-w-md mx-auto aspect-[4/5] rounded-lg border border-border bg-muted/20 flex flex-col items-center justify-center gap-3">
+                      <div className="w-full max-w-md mx-auto aspect-[4/5] rounded-lg border border-border bg-muted/20 flex items-center justify-center">
                         <div className="w-48 h-48 rounded-full overflow-hidden border-2 border-border flex-shrink-0">
                           <img
                             src={currentHighlight.image_url}
@@ -734,7 +734,6 @@ export default function AprovacaoMockup() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <p className="text-sm font-medium text-foreground">{currentHighlight.titulo}</p>
                       </div>
 
                       <Card className="p-4 space-y-3">
