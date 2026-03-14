@@ -111,6 +111,7 @@ export default function TiposTarefas() {
   const [formLimites, setFormLimites] = useState<Record<string, number>>({});
   const [formExigeAprovacao, setFormExigeAprovacao] = useState(false);
   const [formExigeAprovacaoInterna, setFormExigeAprovacaoInterna] = useState(false);
+  const [formAvisos, setFormAvisos] = useState<AvisosMap>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor),
