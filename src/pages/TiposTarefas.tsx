@@ -156,6 +156,7 @@ export default function TiposTarefas() {
       tipos_arquivo_permitidos: formArquivos,
       limite_arquivos: formLimites,
       exige_aprovacao: formExigeAprovacao,
+      exige_aprovacao_interna: formExigeAprovacaoInterna,
     };
     if (editingTipo) {
       await updateTipo.mutateAsync({ id: editingTipo.id, ...payload });
