@@ -30,57 +30,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Scales the entire two-column layout proportionally to fill the container
-// Both sides maintain exact proportions on any monitor size
-function GridLayoutSyncer({ children }: { children: React.ReactNode }) {
-  const isMobile = useIsMobile();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const minScaleRef = useRef<number>(Infinity);
-
-  const sync = useCallback(() => {
-    if (!containerRef.current || !innerRef.current) return;
-
-    // Reset before measuring
-    innerRef.current.style.transform = 'scale(1)';
-    innerRef.current.style.transformOrigin = 'top center';
-
-    if (isMobile) {
-      containerRef.current.style.height = '';
-      return;
-    }
-
-    const containerW = containerRef.current.offsetWidth;
-    const naturalW = innerRef.current.scrollWidth;
-    const naturalH = innerRef.current.scrollHeight;
-
-    if (containerW <= 0 || naturalW <= 0 || naturalH <= 0) return;
-
-    const scale = containerW / naturalW;
-
-    // Track minimum scale to keep consistent across tab switches
-    if (scale < minScaleRef.current) {
-      minScaleRef.current = scale;
-    }
-    const finalScale = minScaleRef.current;
-
-    innerRef.current.style.transform = `scale(${finalScale})`;
-    innerRef.current.style.transformOrigin = 'top center';
-    containerRef.current.style.height = `${naturalH * finalScale}px`;
-  }, [isMobile]);
-
-  useLayoutEffect(() => { sync(); }, [sync, children]);
-  useEffect(() => { const t = setTimeout(sync, 100); return () => clearTimeout(t); }, [sync, children]);
-  useEffect(() => { window.addEventListener('resize', () => { minScaleRef.current = Infinity; sync(); }); return () => window.removeEventListener('resize', sync); }, [sync]);
-
-  return (
-    <div ref={containerRef} className="overflow-hidden">
-      <div ref={innerRef}>
-        {children}
-      </div>
-    </div>
-  );
-}
+// GridLayoutSyncer removed — mockup now shown as a "Grade" tab
 
 interface MockupData {
   mockup_id: string;
