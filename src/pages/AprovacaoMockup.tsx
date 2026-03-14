@@ -628,7 +628,7 @@ export default function AprovacaoMockup() {
             {/* Grade (mockup) tab */}
             {gridApprovalTab === "grade" && (
               <div className="flex justify-center">
-                <div className="w-full max-w-[400px]">
+                <div className="w-full">
                   <IPhoneFrame>
                     <InstagramGridPreview
                       posts={gridPosts.map(g => ({
