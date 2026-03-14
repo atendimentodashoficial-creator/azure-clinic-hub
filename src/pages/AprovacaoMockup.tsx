@@ -270,7 +270,9 @@ export default function AprovacaoMockup() {
     }
   };
 
-  const handleRejectGridPost = async (postId: string, feedback: string) => {
+  const handleRejectGridPost = async () => {
+    if (!currentGridPost) return;
+    const feedback = gridFeedbacks[currentGridPost.grid_post_id] || "";
     if (!feedback.trim()) {
       toast.error("Adicione um feedback antes de reprovar.");
       return;
@@ -279,12 +281,24 @@ export default function AprovacaoMockup() {
     try {
       const { error: err } = await supabase.rpc("update_grid_post_approval", {
         p_token: token!,
-        p_grid_post_id: postId,
+        p_grid_post_id: currentGridPost.grid_post_id,
         p_status: "reprovado",
         p_feedback: feedback,
       });
       if (err) throw err;
-      setGridPosts(prev => prev.map(g => g.grid_post_id === postId ? { ...g, status: "reprovado", feedback } : g));
+      setGridPosts(prev => {
+        const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g);
+        setTimeout(() => {
+          const sorted = [...updated].sort((a, b) => a.posicao - b.posicao);
+          const nextUndecided = sorted.findIndex((g, i) => i > currentGridIdx && g.status === "pendente");
+          if (nextUndecided !== -1) setCurrentGridIdx(nextUndecided);
+          else {
+            const first = sorted.findIndex(g => g.status === "pendente");
+            if (first !== -1) setCurrentGridIdx(first);
+          }
+        }, 300);
+        return updated;
+      });
       toast.success("Post reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
