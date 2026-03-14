@@ -603,6 +603,12 @@ export default function Tarefas() {
         onSuccess: async () => {
           toast.success(`Tarefa movida para "${nextCol.nome}"`);
 
+          // Send notification for internal approval with link
+          if (targetColType === 'internal_approval' && ownerId) {
+            const token = internalToken || tarefa.internal_approval_token;
+            const link = token ? `${window.location.origin}/aprovacao-interna/${token}` : undefined;
+            await sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: ownerId, link_aprovacao: link });
+          }
 
           // Auto-create commission when moved to Concluído
           if (targetColType === 'done' && tarefa.comissao && tarefa.comissao > 0 && tarefa.responsavel_nome && ownerId) {
