@@ -270,7 +270,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
       const link = `${window.location.origin}/aprovacao/${token}`;
       // Send notification with approval link
-      sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
+      await sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
       await navigator.clipboard.writeText(link);
       toast.success("Link de aprovação copiado para a área de transferência!");
       window.location.reload();
