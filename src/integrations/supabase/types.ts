@@ -6194,6 +6194,8 @@ export type Database = {
         Returns: boolean
       }
       normalize_br_phone: { Args: { phone: string }; Returns: string }
+      reorder_grid_highlights: { Args: { p_items: Json }; Returns: undefined }
+      reorder_grid_posts: { Args: { p_items: Json }; Returns: undefined }
       soft_delete_lead: { Args: { lead_id: string }; Returns: undefined }
       update_grid_highlight_approval: {
         Args: {
