@@ -531,7 +531,6 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                         </Button>
                       </div>
                     )}
-                    </div>
                     <Textarea
                       placeholder="Feedback da aprovação interna (opcional)..."
                       value={internaFeedback}
