@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOwnerId } from "@/hooks/useOwnerId";
+import { sendTaskNotification } from "@/utils/taskNotifications";
 
 export interface TarefaColuna {
   id: string;
@@ -48,6 +49,21 @@ const DEFAULT_COLUMNS = [
   { nome: "Concluído", cor: "#22c55e", ordem: 5 },
 ];
 
+function normalizeColName(name: string) {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+function getColType(colName: string): string {
+  const n = normalizeColName(colName);
+  if (n === "a fazer") return "todo";
+  if (n === "em progresso") return "in_progress";
+  if (n.includes("aprovacao") && n.includes("interna")) return "internal_approval";
+  if ((n.includes("aguardando") && n.includes("aprovacao")) || (n.includes("aprovacao") && n.includes("cliente"))) return "client_approval";
+  if (n.includes("revisao")) return "review";
+  if (n.includes("concluido") || n.includes("concluida")) return "done";
+  return "unknown";
+}
+
 export function useTarefas() {
   const { user } = useAuth();
   const { ownerId } = useOwnerId();
@@ -93,7 +109,11 @@ export function useTarefas() {
         .eq("user_id", effectiveUserId)
         .order("ordem");
       if (error) throw error;
-      return data as Tarefa[];
+      return ((data as any[]) || []).map((d) => ({
+        ...d,
+        tempo_acumulado_segundos: Number(d.tempo_acumulado_segundos ?? 0),
+        timer_status: d.timer_status || "parado",
+      })) as Tarefa[];
     },
     enabled: !!effectiveUserId,
   });
@@ -122,10 +142,25 @@ export function useTarefas() {
   // Update task
   const atualizarTarefa = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Tarefa> & { id: string }) => {
+      const currentTask = tarefas.find((t) => t.id === id);
+      const targetColumn = updates.coluna_id ? colunas.find((c) => c.id === updates.coluna_id) : null;
+      const movedToDone = !!targetColumn && currentTask?.coluna_id !== updates.coluna_id && getColType(targetColumn.nome) === "done";
+
       const { error } = await supabase.from("tarefas").update({ ...updates, updated_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
+
+      return {
+        movedToDone,
+        tarefaId: id,
+        userId: currentTask?.user_id || effectiveUserId,
+      };
     },
-    onSuccess: invalidate,
+    onSuccess: async (result) => {
+      if (result?.movedToDone && result.userId) {
+        await sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: result.tarefaId, user_id: result.userId });
+      }
+      invalidate();
+    },
   });
 
   // Delete task
@@ -140,10 +175,25 @@ export function useTarefas() {
   // Move task to column
   const moverTarefa = useMutation({
     mutationFn: async ({ id, coluna_id, ordem }: { id: string; coluna_id: string; ordem: number }) => {
+      const currentTask = tarefas.find((t) => t.id === id);
+      const targetColumn = colunas.find((c) => c.id === coluna_id);
+      const movedToDone = !!targetColumn && currentTask?.coluna_id !== coluna_id && getColType(targetColumn.nome) === "done";
+
       const { error } = await supabase.from("tarefas").update({ coluna_id, ordem, updated_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
+
+      return {
+        movedToDone,
+        tarefaId: id,
+        userId: currentTask?.user_id || effectiveUserId,
+      };
     },
-    onSuccess: invalidate,
+    onSuccess: async (result) => {
+      if (result?.movedToDone && result.userId) {
+        await sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: result.tarefaId, user_id: result.userId });
+      }
+      invalidate();
+    },
   });
 
   // Add column

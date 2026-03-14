@@ -109,11 +109,12 @@ function computeTimerUpdates(
 }
 
 function calcAccumulated(tarefa: Tarefa): number {
+  const base = Number(tarefa.tempo_acumulado_segundos ?? 0);
   if (tarefa.timer_status === "rodando" && tarefa.timer_inicio) {
     const diff = Math.floor((Date.now() - new Date(tarefa.timer_inicio).getTime()) / 1000);
-    return tarefa.tempo_acumulado_segundos + Math.max(0, diff);
+    return base + Math.max(0, diff);
   }
-  return tarefa.tempo_acumulado_segundos;
+  return base;
 }
 
 function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSubmit: (data: any) => void }) {
@@ -553,13 +554,12 @@ export default function Tarefas() {
     }
 
     const timerUpdates = computeTimerUpdates(tarefa, colunas, nextCol.id);
-    const advanceTargetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
+    const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
 
     // Apply move + timer in a single update
-    const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
     const updatePayload: any = {
       coluna_id: nextCol.id,
-      ordem: advanceTargetTarefas.length,
+      ordem: targetTarefas.length,
       ...timerUpdates,
       updated_at: new Date().toISOString(),
     };
@@ -570,10 +570,6 @@ export default function Tarefas() {
         onSuccess: async () => {
           toast.success(`Tarefa movida para "${nextCol.nome}"`);
 
-          // Send notification for completed task
-          if (targetColType === 'done' && tarefa.user_id) {
-            sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
-          }
 
           // Auto-create commission when moved to Concluído
           if (targetColType === 'done' && tarefa.comissao && tarefa.comissao > 0 && tarefa.responsavel_nome && ownerId) {
@@ -664,10 +660,6 @@ export default function Tarefas() {
         onSuccess: async () => {
           toast.success("Tarefa movida!");
 
-          // Send notification for completed task
-          if (targetColType === 'done' && tarefa.user_id) {
-            sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
-          }
 
           // Auto-create commission when moved to Concluído
           if (targetColType === 'done' && tarefa.comissao && tarefa.comissao > 0 && tarefa.responsavel_nome && ownerId) {
