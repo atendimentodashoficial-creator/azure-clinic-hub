@@ -697,7 +697,10 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
       <div className="min-h-screen bg-background px-4 py-8">
           {!isEmbedded && (
             <div className="text-center space-y-1 mb-6">
-              <h1 className="text-xl font-bold text-foreground">{gridTitulo}</h1>
+              <div className="flex items-center justify-center gap-2">
+                <h1 className="text-xl font-bold text-foreground">{gridTitulo}</h1>
+                {isInternal && <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs">Aprovação Interna</Badge>}
+              </div>
               <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
             </div>
           )}
