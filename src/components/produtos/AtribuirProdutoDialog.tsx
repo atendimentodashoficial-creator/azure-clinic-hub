@@ -47,7 +47,9 @@ function normalizeColName(name: string) {
   return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
-function getColumnNotificationEvent(colName?: string): "atribuida" | "aprovacao_interna" | "aprovacao_cliente" | "aprovada_concluida" {
+type TaskNotificationEvent = "atribuida" | "aprovacao_interna" | "aprovacao_cliente" | "aprovada_concluida";
+
+function getColumnNotificationEvent(colName?: string): TaskNotificationEvent {
   const n = normalizeColName(colName || "");
   if (n.includes("aprovacao") && n.includes("interna")) return "aprovacao_interna";
   if ((n.includes("aguardando") && n.includes("aprovacao")) || (n.includes("aprovacao") && n.includes("cliente"))) return "aprovacao_cliente";
@@ -90,6 +92,28 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
     c.telefone?.includes(busca)
   );
 
+  const resolveNotificationEvent = async (colunaId?: string): Promise<TaskNotificationEvent> => {
+    if (!colunaId) return "atribuida";
+
+    const colunaNomeLocal = colunas.find((c) => c.id === colunaId)?.nome;
+    if (colunaNomeLocal) {
+      return getColumnNotificationEvent(colunaNomeLocal);
+    }
+
+    const { data, error } = await supabase
+      .from("tarefas_colunas")
+      .select("nome")
+      .eq("id", colunaId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erro ao resolver coluna para notificação:", error);
+      return "atribuida";
+    }
+
+    return getColumnNotificationEvent(data?.nome);
+  };
+
   const criarTarefasDoProduto = async (clienteId: string) => {
     for (const tt of templateTarefas) {
       const meta = parseTarefaMeta(tt.descricao);
@@ -114,8 +138,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
       });
       // Send notification based on initial column/stage
       if (result?.id) {
-        const colunaNome = colunas.find((c) => c.id === colunaId)?.nome;
-        const evento = getColumnNotificationEvent(colunaNome);
+        const evento = await resolveNotificationEvent(colunaId);
         await sendTaskNotification({ evento, tarefa_id: result.id, user_id: result.user_id });
       }
     }
@@ -206,8 +229,7 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
           });
           // Send notification based on initial column/stage
           if (result?.id) {
-            const colunaNome = colunas.find((c) => c.id === colunaId)?.nome;
-            const evento = getColumnNotificationEvent(colunaNome);
+            const evento = await resolveNotificationEvent(colunaId);
             await sendTaskNotification({ evento, tarefa_id: result.id, user_id: result.user_id });
           }
         }
