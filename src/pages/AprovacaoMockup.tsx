@@ -942,7 +942,7 @@ export default function AprovacaoMockup() {
                   onClick={() => setCurrentPostIdx(i)}
                   className={cn(
                     "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
-                    i === currentPostIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                    i === clampedPostIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
                     p.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
                     p.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
                     "bg-muted border-muted-foreground/30 text-muted-foreground"
