@@ -969,7 +969,7 @@ export default function AprovacaoMockup() {
                       </Badge>
                     )}
                   </div>
-                  <Button variant="ghost" size="sm" disabled={currentPostIdx === filteredPosts.length - 1} onClick={() => setCurrentPostIdx(i => i + 1)}>
+                  <Button variant="ghost" size="sm" disabled={clampedPostIdx === filteredPosts.length - 1} onClick={() => setCurrentPostIdx(i => i + 1)}>
                     Próximo <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>
