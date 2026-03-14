@@ -347,7 +347,8 @@ function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTar
             />
           </div>
         </div>
-      ) : !hasDeliverables ? (
+        );
+      })() : !hasDeliverables ? (
         <Card className="p-8 text-center">
           <ClipboardList className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
           <p className="text-sm text-muted-foreground">Nenhum conteúdo entregue ainda para esta tarefa.</p>
