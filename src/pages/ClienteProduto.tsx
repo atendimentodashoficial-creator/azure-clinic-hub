@@ -335,12 +335,19 @@ function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTar
               </button>
             ))}
           </div>
-          <div className="overflow-hidden" style={{ minHeight: '70vh' }}>
+          <div>
             <iframe
               src={`/aprovacao/${tarefa.approval_token}?filter=${approvalFilter}&hideFilter=1`}
               className="w-full border-0"
-              style={{ height: '80vh' }}
+              style={{ height: '4000px' }}
               title="Aprovação da entrega"
+              onLoad={(e) => {
+                const iframe = e.currentTarget;
+                try {
+                  const h = iframe.contentDocument?.documentElement?.scrollHeight;
+                  if (h) iframe.style.height = `${h}px`;
+                } catch {}
+              }}
             />
           </div>
         </div>
