@@ -59,11 +59,14 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
   const [observacoes, setObservacoes] = useState(clienteEditando?.observacoes || "");
   const [grupoWhatsapp, setGrupoWhatsapp] = useState(clienteEditando?.grupo_whatsapp || "");
   const [tipo, setTipo] = useState(clienteEditando?.tipo || defaultTipo || "interno");
+  const [fotoPerfilUrl, setFotoPerfilUrl] = useState(clienteEditando?.foto_perfil_url || "");
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
     setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("55"); setEmpresa("");
     setCnpj(""); setDocTipo("cnpj"); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
-    setObservacoes(""); setGrupoWhatsapp(""); setTipo(defaultTipo || "interno"); setFormTab("info");
+    setObservacoes(""); setGrupoWhatsapp(""); setTipo(defaultTipo || "interno"); setFormTab("info"); setFotoPerfilUrl("");
   };
 
   // Pre-fill when opened externally with initialData
