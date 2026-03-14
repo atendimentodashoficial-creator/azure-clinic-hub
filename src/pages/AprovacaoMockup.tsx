@@ -85,13 +85,17 @@ export default function AprovacaoMockup() {
   const [mockups, setMockups] = useState<MockupData[]>([]);
   const [taskLinks, setTaskLinks] = useState<TaskLink[]>([]);
   const [gridPosts, setGridPosts] = useState<GridPostData[]>([]);
+  const [gridHighlights, setGridHighlights] = useState<HighlightData[]>([]);
   const [taskInfo, setTaskInfo] = useState<TaskInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPostIdx, setCurrentPostIdx] = useState(0);
   const [currentGridIdx, setCurrentGridIdx] = useState(0);
+  const [currentHighlightIdx, setCurrentHighlightIdx] = useState(0);
+  const [gridApprovalTab, setGridApprovalTab] = useState<"posts" | "highlights">("posts");
   const [feedbacks, setFeedbacks] = useState<Record<number, string>>({});
   const [gridFeedbacks, setGridFeedbacks] = useState<Record<string, string>>({});
+  const [highlightFeedbacks, setHighlightFeedbacks] = useState<Record<string, string>>({});
   const [linkFeedback, setLinkFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
