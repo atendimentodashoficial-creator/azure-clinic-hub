@@ -946,66 +946,78 @@ export default function AprovacaoMockup() {
           </Card>
         )}
 
-        <div className="flex items-center justify-center gap-2 flex-wrap">
-          {posts.map((p, i) => (
-            <button
-              key={p.postIndex}
-              onClick={() => setCurrentPostIdx(i)}
-              className={cn(
-                "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
-                i === currentPostIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
-                p.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
-                p.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
-                "bg-muted border-muted-foreground/30 text-muted-foreground"
-              )}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
+        <ApprovalFilterTabs pendingCount={pendingMockupPosts.length} approvedCount={approvedMockupPosts.length} />
 
-        {currentPost && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Button variant="ghost" size="sm" disabled={currentPostIdx === 0} onClick={() => setCurrentPostIdx(i => i - 1)}>
-                <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-              </Button>
-              <div className="flex items-center gap-2">
-                <Badge className={cn("border-0", statusColor(currentPost.status))}>
-                  {statusLabel(currentPost.status)}
-                </Badge>
-                {isCarousel && (
-                  <Badge variant="secondary" className="text-[10px]">
-                    Carrossel ({currentPost.mockups.length} slides)
-                  </Badge>
-                )}
-              </div>
-              <Button variant="ghost" size="sm" disabled={currentPostIdx === posts.length - 1} onClick={() => setCurrentPostIdx(i => i + 1)}>
-                Próximo <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+        {filteredPosts.length === 0 ? (
+          <Card className="p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              {approvalFilter === "pendentes" ? "Nenhum post pendente." : "Nenhum post aprovado."}
+            </p>
+          </Card>
+        ) : (
+          <>
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              {filteredPosts.map((p, i) => (
+                <button
+                  key={p.postIndex}
+                  onClick={() => setCurrentPostIdx(i)}
+                  className={cn(
+                    "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
+                    i === currentPostIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                    p.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
+                    p.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
+                    "bg-muted border-muted-foreground/30 text-muted-foreground"
+                  )}
+                >
+                  {p.postIndex + 1}
+                </button>
+              ))}
             </div>
 
-            <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} perfilFotoUrl={taskInfo?.cliente_foto_perfil_url} />
-
-              <Card className="p-4 space-y-3">
-                <Textarea
-                  placeholder="Feedback para este post (obrigatório para reprovar)..."
-                  value={feedbacks[currentPost.postIndex] || ""}
-                  onChange={e => setFeedbacks(prev => ({ ...prev, [currentPost.postIndex]: e.target.value }))}
-                  rows={2}
-                />
-                <div className="flex gap-2">
-                  <Button onClick={handleApprovePost} disabled={submitting} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
-                    <Check className="w-4 h-4" />
-                    {currentPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+            {currentPost && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Button variant="ghost" size="sm" disabled={currentPostIdx === 0} onClick={() => setCurrentPostIdx(i => i - 1)}>
+                    <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
                   </Button>
-                  <Button onClick={handleRejectPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
-                    <X className="w-4 h-4" />
-                    {currentPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                  <div className="flex items-center gap-2">
+                    <Badge className={cn("border-0", statusColor(currentPost.status))}>
+                      {statusLabel(currentPost.status)}
+                    </Badge>
+                    {isCarousel && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Carrossel ({currentPost.mockups.length} slides)
+                      </Badge>
+                    )}
+                  </div>
+                  <Button variant="ghost" size="sm" disabled={currentPostIdx === filteredPosts.length - 1} onClick={() => setCurrentPostIdx(i => i + 1)}>
+                    Próximo <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>
-              </Card>
-          </div>
+
+                <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} perfilFotoUrl={taskInfo?.cliente_foto_perfil_url} />
+
+                  <Card className="p-4 space-y-3">
+                    <Textarea
+                      placeholder="Feedback para este post (obrigatório para reprovar)..."
+                      value={feedbacks[currentPost.postIndex] || ""}
+                      onChange={e => setFeedbacks(prev => ({ ...prev, [currentPost.postIndex]: e.target.value }))}
+                      rows={2}
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleApprovePost} disabled={submitting} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
+                        <Check className="w-4 h-4" />
+                        {currentPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                      </Button>
+                      <Button onClick={handleRejectPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
+                        <X className="w-4 h-4" />
+                        {currentPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                      </Button>
+                    </div>
+                  </Card>
+              </div>
+            )}
+          </>
         )}
 
         {allDecided && (
