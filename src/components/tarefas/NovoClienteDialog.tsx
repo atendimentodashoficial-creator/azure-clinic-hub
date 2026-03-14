@@ -34,6 +34,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
   const [open, setOpen] = useState(false);
   const isEditing = !!clienteEditando;
   const [formTab, setFormTab] = useState("info");
+  const { membros: todosMembros } = useTarefasMembros();
 
   const initialPhoneData = clienteEditando?.telefone
     ? extractCountryCode(clienteEditando.telefone)
