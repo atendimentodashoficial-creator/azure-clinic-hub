@@ -666,7 +666,7 @@ export default function Tarefas() {
 
           // Send notification for completed task
           if (targetColType === 'done' && tarefa.user_id) {
-            sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
+            await sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
           }
 
           // Auto-create commission when moved to Concluído
