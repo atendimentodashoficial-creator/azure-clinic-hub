@@ -443,7 +443,7 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
           )}
 
           {/* Revision count badges */}
-          {revisoesCounts && (revisoesCounts.interna > 0 || revisoesCounts.cliente > 0) && !hideDetails && !needsManualStart && (
+          {revisoesCounts && (revisoesCounts.interna > 0 || revisoesCounts.cliente > 0) && !hideDetails && (
             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
               {revisoesCounts.interna > 0 && (
                 <span className="text-[10px] flex items-center gap-0.5 bg-amber-500/15 text-amber-400 rounded px-1.5 py-0.5">
