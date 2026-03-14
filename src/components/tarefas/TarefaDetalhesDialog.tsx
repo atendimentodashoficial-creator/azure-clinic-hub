@@ -1011,16 +1011,16 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                           </Button>
                         )}
                       </div>
-                    ) : (
+                    ) : sendButtonConfig ? (
                       <Button
                         variant="outline"
                         className="w-full gap-2"
-                        onClick={handleSendForApproval}
+                        onClick={sendButtonConfig.action}
                       >
                         <Send className="h-4 w-4" />
-                        {exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== "aprovado" ? "Enviar para Aprovação Interna" : "Enviar para Aprovação"}
+                        {sendButtonConfig.label}
                       </Button>
-                    )}
+                    ) : null}
                   </div>
                 )}
               </div>
