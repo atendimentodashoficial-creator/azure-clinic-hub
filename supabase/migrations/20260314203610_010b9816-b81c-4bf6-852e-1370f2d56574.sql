@@ -1,0 +1,1 @@
+ALTER TABLE public.tarefas_clientes ADD COLUMN IF NOT EXISTS foto_perfil_url TEXT;

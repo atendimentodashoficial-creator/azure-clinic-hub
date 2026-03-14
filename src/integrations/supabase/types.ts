@@ -5067,6 +5067,7 @@ export type Database = {
           created_at: string
           email: string | null
           empresa: string | null
+          foto_perfil_url: string | null
           gestor_id: string | null
           google_meu_negocio: string | null
           grupo_whatsapp: string | null
@@ -5088,6 +5089,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           empresa?: string | null
+          foto_perfil_url?: string | null
           gestor_id?: string | null
           google_meu_negocio?: string | null
           grupo_whatsapp?: string | null
@@ -5109,6 +5111,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           empresa?: string | null
+          foto_perfil_url?: string | null
           gestor_id?: string | null
           google_meu_negocio?: string | null
           grupo_whatsapp?: string | null
