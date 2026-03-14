@@ -414,7 +414,7 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
                   {format(new Date(reuniao.data_reuniao), "dd/MM/yyyy 'às' HH:mm")}
                 </p>
               )}
-              {colType === 'internal_approval' && (tarefa as any).internal_approval_token && (
+              {(tarefa as any).internal_approval_token && (
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Button
                     variant="outline"
