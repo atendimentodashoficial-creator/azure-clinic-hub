@@ -643,8 +643,8 @@ export default function AprovacaoMockup() {
     };
 
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <div className={cn("bg-background", isEmbedded ? "" : "min-h-screen")}>
+        <div className={cn("mx-auto px-4 space-y-6", isEmbedded ? "max-w-full py-2" : "max-w-7xl py-8")}>
           {!isEmbedded && (
             <div className="text-center space-y-1">
               <h1 className="text-xl font-bold text-foreground">{gridTitulo}</h1>
@@ -652,9 +652,9 @@ export default function AprovacaoMockup() {
             </div>
           )}
 
-          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-32">
+          <div data-grid-layout className={cn("flex flex-col lg:flex-row lg:items-start lg:justify-center", isEmbedded ? "lg:gap-8 xl:gap-16" : "lg:gap-32")}>
             {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
-            <div className="order-2 lg:order-1 lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
+            <div className={cn("order-2 lg:order-1 lg:sticky lg:top-8 w-full mx-auto lg:mx-0 flex-shrink-0", isEmbedded ? "max-w-[320px]" : "max-w-[400px]")}>
               <GridMockupScaler>
                 <IPhoneFrame>
                   <InstagramGridPreview
