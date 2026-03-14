@@ -782,6 +782,7 @@ export default function Tarefas() {
                 clientes={clientes}
                 membrosNomes={membrosNomes}
                 reunioesMap={reunioesMap}
+                tiposTarefas={tiposTarefas}
                 isFuncionario={isFuncionario}
               />
             </div>
