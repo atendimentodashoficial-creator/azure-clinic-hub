@@ -358,6 +358,7 @@ export default function AprovacaoMockup() {
         )
       );
       toast.success("Post reprovado com feedback.");
+      checkAndNotifyRejection(token!, feedbacks[currentPost.postIndex]);
     } catch {
       toast.error("Erro ao reprovar");
     } finally {
