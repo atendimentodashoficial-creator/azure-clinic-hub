@@ -1139,16 +1139,22 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
                       onChange={e => setFeedbacks(prev => ({ ...prev, [currentPost.postIndex]: e.target.value }))}
                       rows={2}
                     />
-                    <div className="flex gap-2">
-                      <Button onClick={handleApprovePost} disabled={submitting} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
-                        <Check className="w-4 h-4" />
-                        {currentPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                    {pendingAdvance ? (
+                      <Button onClick={() => { pendingAdvance(); setPendingAdvance(null); }} className="w-full gap-1.5">
+                        Próximo <ChevronRight className="w-4 h-4" />
                       </Button>
-                      <Button onClick={handleRejectPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
-                        <X className="w-4 h-4" />
-                        {currentPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
-                      </Button>
-                    </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button onClick={handleApprovePost} disabled={submitting} className="flex-1 gap-1.5" variant={currentPost.status === "aprovado" ? "secondary" : "default"}>
+                          <Check className="w-4 h-4" />
+                          {currentPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                        </Button>
+                        <Button onClick={handleRejectPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
+                          <X className="w-4 h-4" />
+                          {currentPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                        </Button>
+                      </div>
+                    )}
                   </Card>
               </div>
             )}
