@@ -27,6 +27,7 @@ export interface Tarefa {
   comissao: number | null;
   reuniao_id: string | null;
   tipo_tarefa_id: string | null;
+  produto_template_id: string | null;
   timer_inicio: string | null;
   tempo_acumulado_segundos: number;
   timer_status: string;
