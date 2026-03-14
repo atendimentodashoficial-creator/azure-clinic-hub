@@ -69,7 +69,7 @@ export function InstagramGridPreview({
     <div className="space-y-0">
       <div className="w-full bg-background overflow-hidden">
         {/* Profile header */}
-        <div className="flex items-center gap-4 p-4">
+        <div className="flex items-center gap-4 p-4 pt-10">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 p-[2px] flex-shrink-0">
             <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
               <span className="text-sm font-bold text-foreground">{iniciais}</span>
