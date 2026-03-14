@@ -676,7 +676,7 @@ export default function AprovacaoMockup() {
                             onClick={() => setCurrentGridIdx(i)}
                             className={cn(
                               "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
-                              i === currentGridIdx ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                              i === Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
                               g.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
                               g.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
                               "bg-muted border-muted-foreground/30 text-muted-foreground"
