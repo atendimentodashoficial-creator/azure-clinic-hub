@@ -1010,7 +1010,10 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
       <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
         {!isEmbedded && (
           <div className="text-center space-y-1">
-            <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
+            <div className="flex items-center justify-center gap-2">
+              <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
+              {isInternal && <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs">Aprovação Interna</Badge>}
+            </div>
             <p className="text-sm text-muted-foreground">Aprovação de Posts • {clienteNome}</p>
           </div>
         )}
