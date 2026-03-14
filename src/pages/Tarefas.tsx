@@ -585,11 +585,16 @@ export default function Tarefas() {
     const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
 
     // Apply move + timer in a single update
+    // Generate internal_approval_token if moving to internal_approval
+    const needsInternalToken = targetColType === 'internal_approval' && !tarefa.internal_approval_token;
+    const internalToken = needsInternalToken ? crypto.randomUUID() : undefined;
+
     const updatePayload: any = {
       coluna_id: nextCol.id,
       ordem: targetTarefas.length,
       ...timerUpdates,
       updated_at: new Date().toISOString(),
+      ...(needsInternalToken && { internal_approval_token: internalToken, aprovacao_interna_status: "pendente" }),
     };
 
     atualizarTarefa.mutate(
