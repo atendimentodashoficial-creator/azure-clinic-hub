@@ -201,6 +201,8 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [linkApprovalStatus, setLinkApprovalStatus] = useState<string>("pendente");
+  // Track pending advance after rejection — stores the callback to advance
+  const [pendingAdvance, setPendingAdvance] = useState<(() => void) | null>(null);
   
   const isEmbedded = searchParams.get("hideFilter") === "1";
   const filterParam = searchParams.get("filter") as "pendentes" | "aprovadas" | "reprovadas" | null;
