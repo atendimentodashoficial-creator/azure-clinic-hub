@@ -176,7 +176,7 @@ export default function AprovacaoMockup() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [linkApprovalStatus, setLinkApprovalStatus] = useState<string>("pendente");
-  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas">("pendentes");
+  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">("pendentes");
 
   const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
   const isGridMode = gridPosts.length > 0;
@@ -248,7 +248,7 @@ export default function AprovacaoMockup() {
 
   // === MOCKUP APPROVAL HANDLERS ===
   const posts = groupByPost(mockups);
-  const filteredPosts = posts.filter(p => approvalFilter === "pendentes" ? p.status !== "aprovado" : p.status === "aprovado");
+  const filteredPosts = posts.filter(p => approvalFilter === "pendentes" ? p.status === "pendente" : approvalFilter === "aprovadas" ? p.status === "aprovado" : p.status === "reprovado");
   const currentPost = filteredPosts[currentPostIdx];
 
   const handleApprovePost = async () => {
@@ -333,7 +333,8 @@ export default function AprovacaoMockup() {
 
   // === GRID APPROVAL HANDLERS ===
   const sortedGridPosts = [...gridPosts].sort((a, b) => a.posicao - b.posicao);
-  const filteredSortedGridPostsForHandler = sortedGridPosts.filter(g => approvalFilter === "pendentes" ? g.status !== "aprovado" : g.status === "aprovado");
+  const filterStatus = (s: string) => approvalFilter === "pendentes" ? s === "pendente" : approvalFilter === "aprovadas" ? s === "aprovado" : s === "reprovado";
+  const filteredSortedGridPostsForHandler = sortedGridPosts.filter(g => filterStatus(g.status));
   const currentGridPost = filteredSortedGridPostsForHandler[currentGridIdx];
 
   const handleApproveGridPost = async () => {
@@ -406,7 +407,7 @@ export default function AprovacaoMockup() {
   };
   // === HIGHLIGHT APPROVAL HANDLERS ===
   const sortedHighlights = [...gridHighlights].sort((a, b) => a.ordem - b.ordem);
-  const filteredSortedHighlightsForHandler = sortedHighlights.filter(h => approvalFilter === "pendentes" ? h.status !== "aprovado" : h.status === "aprovado");
+  const filteredSortedHighlightsForHandler = sortedHighlights.filter(h => filterStatus(h.status));
   const currentHighlight = filteredSortedHighlightsForHandler[currentHighlightIdx];
 
   const handleApproveHighlight = async () => {
@@ -558,22 +559,41 @@ export default function AprovacaoMockup() {
     );
   }
 
-  const ApprovalFilterTabs = ({ pendingCount, approvedCount }: { pendingCount: number; approvedCount: number }) => (
+  const ApprovalFilterTabs = ({ pendingCount, approvedCount, rejectedCount }: { pendingCount: number; approvedCount: number; rejectedCount: number }) => (
     <div className="flex gap-2 justify-center">
-      <Button
-        variant={approvalFilter === "pendentes" ? "default" : "outline"}
-        size="sm"
+      <button
         onClick={() => { setApprovalFilter("pendentes"); setCurrentPostIdx(0); setCurrentGridIdx(0); setCurrentHighlightIdx(0); }}
+        className={cn(
+          "px-3 py-1.5 text-sm font-medium rounded-md border transition-all",
+          approvalFilter === "pendentes"
+            ? "bg-amber-500/20 border-amber-500 text-amber-600 ring-2 ring-amber-500/30"
+            : "border-border text-muted-foreground hover:bg-muted"
+        )}
       >
         Pendentes ({pendingCount})
-      </Button>
-      <Button
-        variant={approvalFilter === "aprovadas" ? "default" : "outline"}
-        size="sm"
+      </button>
+      <button
         onClick={() => { setApprovalFilter("aprovadas"); setCurrentPostIdx(0); setCurrentGridIdx(0); setCurrentHighlightIdx(0); }}
+        className={cn(
+          "px-3 py-1.5 text-sm font-medium rounded-md border transition-all",
+          approvalFilter === "aprovadas"
+            ? "bg-emerald-500/20 border-emerald-500 text-emerald-600 ring-2 ring-emerald-500/30"
+            : "border-border text-muted-foreground hover:bg-muted"
+        )}
       >
         Aprovadas ({approvedCount})
-      </Button>
+      </button>
+      <button
+        onClick={() => { setApprovalFilter("reprovadas"); setCurrentPostIdx(0); setCurrentGridIdx(0); setCurrentHighlightIdx(0); }}
+        className={cn(
+          "px-3 py-1.5 text-sm font-medium rounded-md border transition-all",
+          approvalFilter === "reprovadas"
+            ? "bg-red-500/20 border-red-500 text-red-600 ring-2 ring-red-500/30"
+            : "border-border text-muted-foreground hover:bg-muted"
+        )}
+      >
+        Reprovadas ({rejectedCount})
+      </button>
     </div>
   );
 
@@ -583,13 +603,18 @@ export default function AprovacaoMockup() {
     const gridCliente = extractInstagramUsername(taskInfo?.cliente_instagram) || gridPosts[0]?.cliente_nome || taskInfo?.cliente_nome || "perfil";
     const gridEmpresa = gridPosts[0]?.cliente_empresa || taskInfo?.cliente_empresa || "";
     
-    const pendingGridPosts = gridPosts.filter(g => g.status !== "aprovado");
+    const pendingGridPosts = gridPosts.filter(g => g.status === "pendente");
     const approvedGridPosts = gridPosts.filter(g => g.status === "aprovado");
-    const pendingHighlights = gridHighlights.filter(h => h.status !== "aprovado");
+    const rejectedGridPosts = gridPosts.filter(g => g.status === "reprovado");
+    const pendingHighlights = gridHighlights.filter(h => h.status === "pendente");
     const approvedHighlights = gridHighlights.filter(h => h.status === "aprovado");
+    const rejectedHighlights = gridHighlights.filter(h => h.status === "reprovado");
     
-    const filteredGridPosts = approvalFilter === "pendentes" ? pendingGridPosts : approvedGridPosts;
-    const filteredHighlights = approvalFilter === "pendentes" ? pendingHighlights : approvedHighlights;
+    const filterFn = (status: string) => 
+      approvalFilter === "pendentes" ? status === "pendente" :
+      approvalFilter === "aprovadas" ? status === "aprovado" : status === "reprovado";
+    const filteredGridPosts = gridPosts.filter(g => filterFn(g.status));
+    const filteredHighlights = gridHighlights.filter(h => filterFn(h.status));
     const filteredSortedGridPosts = [...filteredGridPosts].sort((a, b) => a.posicao - b.posicao);
     const filteredSortedHighlights = [...filteredHighlights].sort((a, b) => a.ordem - b.ordem);
     const currentFilteredGridPost = filteredSortedGridPosts[currentGridIdx];
@@ -601,6 +626,7 @@ export default function AprovacaoMockup() {
     const hasHighlights = gridHighlights.length > 0;
     const totalPending = pendingGridPosts.length + pendingHighlights.length;
     const totalApproved = approvedGridPosts.length + approvedHighlights.length;
+    const totalRejected = rejectedGridPosts.length + rejectedHighlights.length;
 
     const itemStatusColor = (s: string) => {
       if (s === "aprovado") return "bg-emerald-500/20 text-emerald-400";
@@ -654,7 +680,7 @@ export default function AprovacaoMockup() {
             {/* Right: Approval controls */}
             <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6 lg:min-h-[700px]">
               {/* Filter: Pendentes / Aprovadas */}
-              <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} />
+              <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />
 
               {/* Tab switch: Posts / Destaques */}
               {hasHighlights && (
@@ -887,8 +913,9 @@ export default function AprovacaoMockup() {
   const tarefaTitulo = mockups[0]?.tarefa_titulo || "Tarefa";
   const clienteNome = extractInstagramUsername(taskInfo?.cliente_instagram) || mockups[0]?.cliente_nome || "perfil";
   const clienteEmpresa = mockups[0]?.cliente_empresa || "";
-  const pendingMockupPosts = posts.filter(p => p.status !== "aprovado");
+  const pendingMockupPosts = posts.filter(p => p.status === "pendente");
   const approvedMockupPosts = posts.filter(p => p.status === "aprovado");
+  const rejectedMockupPosts = posts.filter(p => p.status === "reprovado");
 
   const statusColor = (s: string) => {
     if (s === "aprovado") return "bg-emerald-500/20 text-emerald-400";
@@ -946,7 +973,7 @@ export default function AprovacaoMockup() {
           </Card>
         )}
 
-        <ApprovalFilterTabs pendingCount={pendingMockupPosts.length} approvedCount={approvedMockupPosts.length} />
+        <ApprovalFilterTabs pendingCount={pendingMockupPosts.length} approvedCount={approvedMockupPosts.length} rejectedCount={rejectedMockupPosts.length} />
 
         {filteredPosts.length === 0 ? (
           <Card className="p-6 text-center">
