@@ -45,7 +45,6 @@ export function useTarefaGrid(tarefaId: string | null) {
       const ext = file.name.split(".").pop() || "jpg";
       const path = `${effectiveUserId}/${tarefaId}/${posicao}.${ext}`;
 
-      // Upload to storage
       const { error: uploadErr } = await supabase.storage
         .from("tarefa-grid")
         .upload(path, file, { upsert: true });
@@ -57,7 +56,6 @@ export function useTarefaGrid(tarefaId: string | null) {
 
       const imageUrl = urlData.publicUrl + `?t=${Date.now()}`;
 
-      // Upsert grid post
       const existing = gridPosts.find(g => g.posicao === posicao);
       if (existing) {
         const { error } = await supabase
@@ -75,6 +73,74 @@ export function useTarefaGrid(tarefaId: string | null) {
             image_url: imageUrl,
           });
         if (error) throw error;
+      }
+    },
+    onSuccess: invalidate,
+  });
+
+  const uploadBatch = useMutation({
+    mutationFn: async (files: File[]) => {
+      if (!tarefaId || !effectiveUserId) throw new Error("Não autenticado");
+
+      // Find available positions (0-8)
+      const usedPositions = new Set(gridPosts.map(g => g.posicao));
+      const availablePositions: number[] = [];
+      for (let i = 0; i < 9; i++) {
+        if (!usedPositions.has(i)) availablePositions.push(i);
+      }
+
+      const filesToUpload = files.slice(0, availablePositions.length);
+
+      for (let idx = 0; idx < filesToUpload.length; idx++) {
+        const file = filesToUpload[idx];
+        const posicao = availablePositions[idx];
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `${effectiveUserId}/${tarefaId}/${posicao}.${ext}`;
+
+        const { error: uploadErr } = await supabase.storage
+          .from("tarefa-grid")
+          .upload(path, file, { upsert: true });
+        if (uploadErr) throw uploadErr;
+
+        const { data: urlData } = supabase.storage
+          .from("tarefa-grid")
+          .getPublicUrl(path);
+
+        const imageUrl = urlData.publicUrl + `?t=${Date.now()}`;
+
+        const { error } = await supabase
+          .from("tarefa_grid_posts")
+          .insert({
+            tarefa_id: tarefaId,
+            user_id: effectiveUserId,
+            posicao,
+            image_url: imageUrl,
+          });
+        if (error) throw error;
+      }
+
+      return filesToUpload.length;
+    },
+    onSuccess: invalidate,
+  });
+
+  const swapPositions = useMutation({
+    mutationFn: async ({ from, to }: { from: number; to: number }) => {
+      if (!tarefaId) throw new Error("Sem tarefa");
+      const postA = gridPosts.find(g => g.posicao === from);
+      const postB = gridPosts.find(g => g.posicao === to);
+
+      // Use a temp position to avoid unique constraint conflicts
+      const tempPos = 99;
+
+      if (postA && postB) {
+        // Swap both
+        await supabase.from("tarefa_grid_posts").update({ posicao: tempPos }).eq("id", postA.id);
+        await supabase.from("tarefa_grid_posts").update({ posicao: from }).eq("id", postB.id);
+        await supabase.from("tarefa_grid_posts").update({ posicao: to }).eq("id", postA.id);
+      } else if (postA) {
+        // Move A to empty slot
+        await supabase.from("tarefa_grid_posts").update({ posicao: to }).eq("id", postA.id);
       }
     },
     onSuccess: invalidate,
@@ -106,5 +172,5 @@ export function useTarefaGrid(tarefaId: string | null) {
     onSuccess: invalidate,
   });
 
-  return { gridPosts, isLoading, uploadImage, removeImage, resubmitRejected };
+  return { gridPosts, isLoading, uploadImage, uploadBatch, removeImage, swapPositions, resubmitRejected };
 }

@@ -1,7 +1,8 @@
-import { useRef } from "react";
-import { Plus, X, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Plus, X, Loader2, Upload, ArrowLeftRight } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TarefaGridPost } from "@/hooks/useTarefaGrid";
 import { toast } from "sonner";
@@ -9,17 +10,46 @@ import { toast } from "sonner";
 interface GridPostsManagerProps {
   gridPosts: TarefaGridPost[];
   onUpload: (posicao: number, file: File) => Promise<void>;
+  onBatchUpload?: (files: File[]) => Promise<number>;
   onRemove: (posicao: number) => Promise<void>;
+  onSwap?: (from: number, to: number) => Promise<void>;
   uploading: boolean;
 }
 
-export function GridPostsManager({ gridPosts, onUpload, onRemove, uploading }: GridPostsManagerProps) {
+export function GridPostsManager({ gridPosts, onUpload, onBatchUpload, onRemove, onSwap, uploading }: GridPostsManagerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const batchInputRef = useRef<HTMLInputElement>(null);
   const activePosRef = useRef<number>(0);
+  const [swapMode, setSwapMode] = useState(false);
+  const [swapFrom, setSwapFrom] = useState<number | null>(null);
+  const [batchUploading, setBatchUploading] = useState(false);
 
   const handleSlotClick = (posicao: number) => {
+    if (swapMode) {
+      handleSwapClick(posicao);
+      return;
+    }
     activePosRef.current = posicao;
     fileInputRef.current?.click();
+  };
+
+  const handleSwapClick = (posicao: number) => {
+    const post = gridPosts.find(g => g.posicao === posicao);
+    if (swapFrom === null) {
+      if (!post) {
+        toast.error("Selecione uma posição que tenha imagem");
+        return;
+      }
+      setSwapFrom(posicao);
+    } else {
+      if (posicao === swapFrom) {
+        setSwapFrom(null);
+        return;
+      }
+      onSwap?.(swapFrom, posicao);
+      setSwapFrom(null);
+      setSwapMode(false);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,17 +68,91 @@ export function GridPostsManager({ gridPosts, onUpload, onRemove, uploading }: G
     e.target.value = "";
   };
 
+  const handleBatchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const imageFiles = files.filter(f => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) {
+      toast.error("Apenas imagens são permitidas");
+      return;
+    }
+
+    const usedCount = gridPosts.length;
+    const available = 9 - usedCount;
+    if (available === 0) {
+      toast.error("A grade já está completa (9/9)");
+      return;
+    }
+
+    const toUpload = imageFiles.slice(0, available);
+    if (imageFiles.length > available) {
+      toast.warning(`Apenas ${available} posição(ões) disponível(is). ${imageFiles.length - available} arquivo(s) ignorado(s).`);
+    }
+
+    setBatchUploading(true);
+    try {
+      const count = await onBatchUpload?.(toUpload);
+      toast.success(`${count || toUpload.length} imagem(ns) enviada(s)!`);
+    } catch {
+      toast.error("Erro ao enviar imagens");
+    } finally {
+      setBatchUploading(false);
+    }
+    e.target.value = "";
+  };
+
   const statusColor = (s: string) => {
     if (s === "aprovado") return "ring-2 ring-emerald-500";
     if (s === "reprovado") return "ring-2 ring-red-500";
     return "";
   };
 
+  const isUploading = uploading || batchUploading;
+
   return (
     <div className="space-y-3">
-      <Label className="text-sm font-semibold">
-        Grade do Instagram <span className="font-normal text-muted-foreground">({gridPosts.length}/9)</span>
-      </Label>
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-semibold">
+          Grade do Instagram <span className="font-normal text-muted-foreground">({gridPosts.length}/9)</span>
+        </Label>
+        <div className="flex gap-1.5">
+          {gridPosts.length >= 2 && onSwap && (
+            <Button
+              type="button"
+              variant={swapMode ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={() => { setSwapMode(!swapMode); setSwapFrom(null); }}
+            >
+              <ArrowLeftRight className="w-3 h-3" />
+              {swapMode ? "Cancelar" : "Reordenar"}
+            </Button>
+          )}
+          {onBatchUpload && gridPosts.length < 9 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              disabled={isUploading}
+              onClick={() => batchInputRef.current?.click()}
+            >
+              <Upload className="w-3 h-3" />
+              Enviar vários
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {swapMode && (
+        <p className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1.5">
+          {swapFrom === null
+            ? "Clique no post que deseja mover"
+            : `Post ${swapFrom + 1} selecionado — clique na posição de destino`}
+        </p>
+      )}
+
       <input
         ref={fileInputRef}
         type="file"
@@ -56,18 +160,30 @@ export function GridPostsManager({ gridPosts, onUpload, onRemove, uploading }: G
         className="hidden"
         onChange={handleFileChange}
       />
+      <input
+        ref={batchInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleBatchChange}
+      />
+
       <div className="grid grid-cols-3 gap-1.5 max-w-[320px]">
         {Array.from({ length: 9 }).map((_, i) => {
           const post = gridPosts.find(g => g.posicao === i);
+          const isSwapSource = swapMode && swapFrom === i;
           return (
             <div
               key={i}
               className={cn(
-                "relative aspect-square rounded-md border-2 border-dashed border-muted-foreground/30 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors bg-muted/30",
+                "relative aspect-square rounded-md border-2 border-dashed border-muted-foreground/30 overflow-hidden cursor-pointer hover:border-primary/50 transition-all bg-muted/30",
                 post && "border-solid border-border",
-                post && statusColor(post.status)
+                post && statusColor(post.status),
+                swapMode && "hover:ring-2 hover:ring-primary/50",
+                isSwapSource && "ring-2 ring-primary scale-95"
               )}
-              onClick={() => !uploading && handleSlotClick(i)}
+              onClick={() => !isUploading && handleSlotClick(i)}
             >
               {post ? (
                 <>
@@ -76,15 +192,17 @@ export function GridPostsManager({ gridPosts, onUpload, onRemove, uploading }: G
                     alt={`Post ${i + 1}`}
                     className="w-full h-full object-cover"
                   />
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      onRemove(i);
-                    }}
-                    className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-background/80 flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
+                  {!swapMode && (
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        onRemove(i);
+                      }}
+                      className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-background/80 flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
                   {post.status !== "pendente" && (
                     <Badge
                       className={cn(
@@ -95,10 +213,13 @@ export function GridPostsManager({ gridPosts, onUpload, onRemove, uploading }: G
                       {post.status === "aprovado" ? "✓" : "✗"}
                     </Badge>
                   )}
+                  <div className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-background/70 flex items-center justify-center text-[9px] font-medium text-foreground">
+                    {i + 1}
+                  </div>
                 </>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/50">
-                  {uploading ? (
+                  {isUploading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
