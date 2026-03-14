@@ -47,6 +47,19 @@ interface GridPostData {
   cliente_empresa: string;
 }
 
+interface HighlightData {
+  highlight_id: string;
+  tarefa_id: string;
+  ordem: number;
+  titulo: string;
+  image_url: string;
+  status: string;
+  feedback: string | null;
+  tarefa_titulo: string;
+  cliente_nome: string;
+  cliente_empresa: string;
+}
+
 interface TaskInfo {
   tarefa_id: string;
   tarefa_titulo: string;
