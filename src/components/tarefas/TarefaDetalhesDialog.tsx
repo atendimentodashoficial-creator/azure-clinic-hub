@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { formatPhoneDisplay } from "@/utils/phoneFormat";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sendTaskNotification } from "@/utils/taskNotifications";
 
 const PRIORIDADES = [
   { value: "baixa", label: "Baixa", color: "bg-emerald-500/20 text-emerald-400" },
