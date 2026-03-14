@@ -659,8 +659,7 @@ export default function AprovacaoMockup() {
                         />
                       </div>
 
-                      {!allGridPostsDecided && (
-                        <Card className="p-4 space-y-3">
+                      <Card className="p-4 space-y-3">
                           <Textarea
                             placeholder="Feedback para este post (obrigatório para reprovar)..."
                             value={gridFeedbacks[currentGridPost.grid_post_id] || ""}
@@ -668,17 +667,16 @@ export default function AprovacaoMockup() {
                             rows={2}
                           />
                           <div className="flex gap-2">
-                            <Button onClick={handleApproveGridPost} disabled={submitting || currentGridPost.status === "aprovado"} className="flex-1 gap-1.5" variant={currentGridPost.status === "aprovado" ? "secondary" : "default"}>
+                            <Button onClick={handleApproveGridPost} disabled={submitting} className="flex-1 gap-1.5" variant={currentGridPost.status === "aprovado" ? "secondary" : "default"}>
                               <Check className="w-4 h-4" />
                               {currentGridPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
                             </Button>
-                            <Button onClick={handleRejectGridPost} disabled={submitting || currentGridPost.status === "reprovado"} variant="destructive" className="flex-1 gap-1.5">
+                            <Button onClick={handleRejectGridPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
                               <X className="w-4 h-4" />
                               {currentGridPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
                             </Button>
                           </div>
                         </Card>
-                      )}
 
                       {currentGridPost.status === "reprovado" && currentGridPost.feedback && (
                         <p className="text-xs text-red-400 bg-red-500/10 rounded px-3 py-2">
