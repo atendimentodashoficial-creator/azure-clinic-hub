@@ -30,7 +30,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// GridLayoutSyncer removed — mockup now shown as a "Grade" tab
+
 
 interface MockupData {
   mockup_id: string;
