@@ -325,7 +325,8 @@ export default function AprovacaoMockup() {
   const sortedGridPosts = [...gridPosts].sort((a, b) => a.posicao - b.posicao);
   const filterStatus = (s: string) => approvalFilter === "pendentes" ? s === "pendente" : approvalFilter === "aprovadas" ? s === "aprovado" : s === "reprovado";
   const filteredSortedGridPostsForHandler = sortedGridPosts.filter(g => filterStatus(g.status));
-  const currentGridPost = filteredSortedGridPostsForHandler[currentGridIdx];
+  const clampedGridIdx = Math.min(currentGridIdx, Math.max(0, filteredSortedGridPostsForHandler.length - 1));
+  const currentGridPost = filteredSortedGridPostsForHandler[clampedGridIdx];
 
   const handleApproveGridPost = async () => {
     if (!currentGridPost) return;
@@ -338,19 +339,9 @@ export default function AprovacaoMockup() {
         p_feedback: gridFeedbacks[currentGridPost.grid_post_id] || null,
       });
       if (err) throw err;
-      setGridPosts(prev => {
-        const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "aprovado", feedback: gridFeedbacks[currentGridPost.grid_post_id] || null } : g);
-        setTimeout(() => {
-          const sorted = [...updated].sort((a, b) => a.posicao - b.posicao);
-          const nextUndecided = sorted.findIndex((g, i) => i > currentGridIdx && g.status === "pendente");
-          if (nextUndecided !== -1) setCurrentGridIdx(nextUndecided);
-          else {
-            const first = sorted.findIndex(g => g.status === "pendente");
-            if (first !== -1) setCurrentGridIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+      setGridPosts(prev =>
+        prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "aprovado", feedback: gridFeedbacks[currentGridPost.grid_post_id] || null } : g)
+      );
       toast.success("Post aprovado!");
     } catch {
       toast.error("Erro ao aprovar");
@@ -375,19 +366,9 @@ export default function AprovacaoMockup() {
         p_feedback: feedback,
       });
       if (err) throw err;
-      setGridPosts(prev => {
-        const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g);
-        setTimeout(() => {
-          const sorted = [...updated].sort((a, b) => a.posicao - b.posicao);
-          const nextUndecided = sorted.findIndex((g, i) => i > currentGridIdx && g.status === "pendente");
-          if (nextUndecided !== -1) setCurrentGridIdx(nextUndecided);
-          else {
-            const first = sorted.findIndex(g => g.status === "pendente");
-            if (first !== -1) setCurrentGridIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+      setGridPosts(prev =>
+        prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g)
+      );
       toast.success("Post reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
@@ -398,7 +379,8 @@ export default function AprovacaoMockup() {
   // === HIGHLIGHT APPROVAL HANDLERS ===
   const sortedHighlights = [...gridHighlights].sort((a, b) => a.ordem - b.ordem);
   const filteredSortedHighlightsForHandler = sortedHighlights.filter(h => filterStatus(h.status));
-  const currentHighlight = filteredSortedHighlightsForHandler[currentHighlightIdx];
+  const clampedHighlightIdx = Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlightsForHandler.length - 1));
+  const currentHighlight = filteredSortedHighlightsForHandler[clampedHighlightIdx];
 
   const handleApproveHighlight = async () => {
     if (!currentHighlight) return;
@@ -411,19 +393,9 @@ export default function AprovacaoMockup() {
         p_feedback: highlightFeedbacks[currentHighlight.highlight_id] || null,
       });
       if (err) throw err;
-      setGridHighlights(prev => {
-        const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "aprovado", feedback: highlightFeedbacks[currentHighlight.highlight_id] || null } : h);
-        setTimeout(() => {
-          const sorted = [...updated].sort((a, b) => a.ordem - b.ordem);
-          const next = sorted.findIndex((h, i) => i > currentHighlightIdx && h.status === "pendente");
-          if (next !== -1) setCurrentHighlightIdx(next);
-          else {
-            const first = sorted.findIndex(h => h.status === "pendente");
-            if (first !== -1) setCurrentHighlightIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+      setGridHighlights(prev =>
+        prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "aprovado", feedback: highlightFeedbacks[currentHighlight.highlight_id] || null } : h)
+      );
       toast.success("Destaque aprovado!");
     } catch {
       toast.error("Erro ao aprovar");
@@ -448,19 +420,9 @@ export default function AprovacaoMockup() {
         p_feedback: feedback,
       });
       if (err) throw err;
-      setGridHighlights(prev => {
-        const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h);
-        setTimeout(() => {
-          const sorted = [...updated].sort((a, b) => a.ordem - b.ordem);
-          const next = sorted.findIndex((h, i) => i > currentHighlightIdx && h.status === "pendente");
-          if (next !== -1) setCurrentHighlightIdx(next);
-          else {
-            const first = sorted.findIndex(h => h.status === "pendente");
-            if (first !== -1) setCurrentHighlightIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+      setGridHighlights(prev =>
+        prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h)
+      );
       toast.success("Destaque reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
