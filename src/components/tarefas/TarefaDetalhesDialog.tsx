@@ -817,7 +817,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                               try {
                                 await resubmitGridRejected.mutateAsync();
                                 await resubmitHighlightsRejected.mutateAsync();
-                                const approvalColumnId = await findAguardandoAprovacaoColumnId();
+                                const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
                                 if (approvalColumnId) {
                                   await supabase.from("tarefas").update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() }).eq("id", tarefa.id);
                                 }
