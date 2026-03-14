@@ -47,7 +47,9 @@ function normalizeColName(name: string) {
   return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
-function getColumnNotificationEvent(colName?: string): "atribuida" | "aprovacao_interna" | "aprovacao_cliente" | "aprovada_concluida" {
+type TaskNotificationEvent = "atribuida" | "aprovacao_interna" | "aprovacao_cliente" | "aprovada_concluida";
+
+function getColumnNotificationEvent(colName?: string): TaskNotificationEvent {
   const n = normalizeColName(colName || "");
   if (n.includes("aprovacao") && n.includes("interna")) return "aprovacao_interna";
   if ((n.includes("aguardando") && n.includes("aprovacao")) || (n.includes("aprovacao") && n.includes("cliente"))) return "aprovacao_cliente";
