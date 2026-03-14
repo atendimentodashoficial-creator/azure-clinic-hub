@@ -429,7 +429,7 @@ export default function Tarefas() {
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
 
-  const lastColOrdem = colunas.length > 0 ? colunas[colunas.length - 1].ordem : 4;
+  // lastColOrdem removed - using name-based column detection now
 
   // Fetch reunioes for tasks that have reuniao_id
   const reuniaoIds = tarefas.filter(t => t.reuniao_id).map(t => t.reuniao_id!);
