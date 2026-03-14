@@ -423,21 +423,8 @@ function TarefaDetalheView({ tarefa, onBack }: { tarefa: ClienteTarefa; onBack: 
           )}
 
           {hasLinks && (
-            <TabsContent value="links" className="mt-4 space-y-2">
-              {links.map((link: any) => (
-                <Card key={link.id} className="p-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{link.titulo || link.url}</p>
-                    {link.titulo && <p className="text-xs text-muted-foreground truncate">{link.url}</p>}
-                  </div>
-                  <Button variant="outline" size="sm" className="gap-1.5 shrink-0" asChild>
-                    <a href={link.url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="w-3 h-3" />
-                      Abrir
-                    </a>
-                  </Button>
-                </Card>
-              ))}
+            <TabsContent value="links" className="mt-4 space-y-4">
+              <LinkDevicePreview links={links} />
             </TabsContent>
           )}
         </Tabs>
