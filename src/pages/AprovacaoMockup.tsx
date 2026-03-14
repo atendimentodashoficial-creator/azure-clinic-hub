@@ -309,7 +309,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
     setSubmitting(true);
     try {
       for (const m of currentPost.mockups) {
-        const { error: err } = await supabase.rpc("update_mockup_approval", {
+        const { error: err } = await supabase.rpc(isInternal ? "update_mockup_approval_internal" : "update_mockup_approval", {
           p_token: token!,
           p_mockup_id: m.mockup_id,
           p_status: "aprovado",
