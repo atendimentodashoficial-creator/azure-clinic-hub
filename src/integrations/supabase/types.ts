@@ -6157,6 +6157,7 @@ export type Database = {
         Returns: {
           approval_status: string
           cliente_empresa: string
+          cliente_instagram: string
           cliente_nome: string
           tarefa_id: string
           tarefa_titulo: string
