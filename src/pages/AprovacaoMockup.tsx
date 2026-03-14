@@ -1114,8 +1114,8 @@ function LinkOnlyApproval({
   const clienteNome = taskInfo?.cliente_nome || "";
   const decided = linkApprovalStatus === "aprovado" || linkApprovalStatus === "reprovado";
   const isMobile = useIsMobile();
-  const [deviceView, setDeviceView] = useState<"mobile" | "desktop">(isEmbedded ? "mobile" : isMobile ? "mobile" : "desktop");
-  const showDeviceToggle = isEmbedded; // Only show toggle in client panel
+  const [deviceView, setDeviceView] = useState<"mobile" | "desktop">(isMobile ? "mobile" : "desktop");
+  const showDeviceToggle = isEmbedded && !isMobile; // Only show toggle in client panel on desktop
 
   const statusColor = (s: string) => {
     if (s === "aprovado") return "bg-emerald-500/20 text-emerald-400";
