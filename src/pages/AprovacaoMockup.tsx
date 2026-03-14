@@ -114,7 +114,7 @@ export default function AprovacaoMockup() {
   const [currentPostIdx, setCurrentPostIdx] = useState(0);
   const [currentGridIdx, setCurrentGridIdx] = useState(0);
   const [currentHighlightIdx, setCurrentHighlightIdx] = useState(0);
-  const [gridApprovalTab, setGridApprovalTab] = useState<"posts" | "highlights">("posts");
+  const [gridApprovalTab, setGridApprovalTab] = useState<"posts" | "highlights" | "grade">("posts");
   const [feedbacks, setFeedbacks] = useState<Record<number, string>>({});
   const [gridFeedbacks, setGridFeedbacks] = useState<Record<string, string>>({});
   const [highlightFeedbacks, setHighlightFeedbacks] = useState<Record<string, string>>({});
