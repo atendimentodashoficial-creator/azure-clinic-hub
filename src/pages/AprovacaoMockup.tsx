@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MockupPreview, MockupSlide } from "@/components/tarefas/MockupPreview";
@@ -12,6 +12,51 @@ import { DeviceFrame, DeviceFrameWithFallback } from "@/components/ui/device-fra
 import { Check, X, ChevronLeft, ChevronRight, Send, ExternalLink, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+// Scales the IPhoneFrame proportionally to match the right panel height on desktop
+function GridMockupScaler({ children }: { children: React.ReactNode }) {
+  const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  const recalc = useCallback(() => {
+    if (isMobile || !containerRef.current || !innerRef.current) return;
+    const parent = containerRef.current.closest('[data-grid-layout]');
+    if (!parent) return;
+    const rightPanel = parent.querySelector('[data-grid-right]') as HTMLElement;
+    if (!rightPanel) return;
+    const rightH = rightPanel.offsetHeight;
+    const naturalH = innerRef.current.scrollHeight;
+    if (naturalH > 0 && rightH > 0) {
+      const s = Math.min(rightH / naturalH, 1.5);
+      setScale(s < 1 ? 1 : s);
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    recalc();
+    const timer = setInterval(recalc, 500);
+    return () => clearInterval(timer);
+  }, [recalc]);
+
+  if (isMobile) return <>{children}</>;
+
+  return (
+    <div ref={containerRef} style={{ height: innerRef.current ? innerRef.current.scrollHeight * scale : 'auto' }} className="overflow-hidden">
+      <div
+        ref={innerRef}
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: 'top center',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 
 interface MockupData {
   mockup_id: string;
@@ -503,35 +548,37 @@ export default function AprovacaoMockup() {
             <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-8">
-            {/* Left: Instagram grid mockup — visual reference */}
-            <div className="lg:sticky lg:top-8 lg:self-stretch w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
-              <IPhoneFrame className="lg:h-full lg:[&_.iphone-shell]:h-full lg:[&_.iphone-shell]:aspect-auto lg:[&_.iphone-shell]:min-h-[600px]">
-                <InstagramGridPreview
-                  posts={gridPosts.map(g => ({
-                    id: g.grid_post_id,
-                    posicao: g.posicao,
-                    image_url: g.image_url,
-                    status: g.status,
-                    feedback: g.feedback,
-                  }))}
-                  highlights={gridHighlights.map(h => ({
-                    id: h.highlight_id,
-                    ordem: h.ordem,
-                    titulo: h.titulo,
-                    image_url: h.image_url,
-                    status: h.status,
-                    feedback: h.feedback,
-                  }))}
-                  perfilNome={gridCliente}
-                  perfilCategoria={gridEmpresa}
-                  approvalMode={false}
-                />
-              </IPhoneFrame>
+          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-8">
+            {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
+            <div className="lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
+              <GridMockupScaler>
+                <IPhoneFrame>
+                  <InstagramGridPreview
+                    posts={gridPosts.map(g => ({
+                      id: g.grid_post_id,
+                      posicao: g.posicao,
+                      image_url: g.image_url,
+                      status: g.status,
+                      feedback: g.feedback,
+                    }))}
+                    highlights={gridHighlights.map(h => ({
+                      id: h.highlight_id,
+                      ordem: h.ordem,
+                      titulo: h.titulo,
+                      image_url: h.image_url,
+                      status: h.status,
+                      feedback: h.feedback,
+                    }))}
+                    perfilNome={gridCliente}
+                    perfilCategoria={gridEmpresa}
+                    approvalMode={false}
+                  />
+                </IPhoneFrame>
+              </GridMockupScaler>
             </div>
 
             {/* Right: Approval controls */}
-            <div className="flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6">
+            <div data-grid-right className="flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6">
               {/* Tab switch: Posts / Destaques */}
               {hasHighlights && (
                 <div className="flex gap-2 justify-center">
