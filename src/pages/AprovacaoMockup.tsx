@@ -195,6 +195,20 @@ export default function AprovacaoMockup() {
   const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
   const isGridMode = gridPosts.length > 0;
 
+  // Auto-select the tab that still has pending items
+  useEffect(() => {
+    if (!isGridMode) return;
+    const pendingPosts = gridPosts.filter(g => g.status === "pendente");
+    const pendingHL = gridHighlights.filter(h => h.status === "pendente");
+    if (gridApprovalTab === "posts" && pendingPosts.length === 0 && pendingHL.length > 0) {
+      setGridApprovalTab("highlights");
+      setCurrentHighlightIdx(0);
+    } else if (gridApprovalTab === "highlights" && pendingHL.length === 0 && pendingPosts.length > 0) {
+      setGridApprovalTab("posts");
+      setCurrentGridIdx(0);
+    }
+  }, [isGridMode, gridPosts, gridHighlights, gridApprovalTab]);
+
   useEffect(() => {
     if (!token) return;
     loadData();
