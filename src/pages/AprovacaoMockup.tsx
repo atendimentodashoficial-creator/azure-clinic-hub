@@ -569,8 +569,8 @@ export default function AprovacaoMockup() {
     const filteredHighlights = gridHighlights.filter(h => filterFn(h.status));
     const filteredSortedGridPosts = [...filteredGridPosts].sort((a, b) => a.posicao - b.posicao);
     const filteredSortedHighlights = [...filteredHighlights].sort((a, b) => a.ordem - b.ordem);
-    const currentFilteredGridPost = filteredSortedGridPosts[currentGridIdx];
-    const currentFilteredHighlight = filteredSortedHighlights[currentHighlightIdx];
+    const currentFilteredGridPost = filteredSortedGridPosts[Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1))];
+    const currentFilteredHighlight = filteredSortedHighlights[Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1))];
     
     const allGridPostsDecided = gridPosts.every(g => g.status === "aprovado" || g.status === "reprovado");
     const allHighlightsDecided = gridHighlights.length === 0 || gridHighlights.every(h => h.status === "aprovado" || h.status === "reprovado");
