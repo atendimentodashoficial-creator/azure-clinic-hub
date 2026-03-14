@@ -5081,6 +5081,7 @@ export type Database = {
           tipo: string
           updated_at: string
           user_id: string
+          whatsapp_grupo: string | null
         }
         Insert: {
           cnpj?: string | null
@@ -5101,6 +5102,7 @@ export type Database = {
           tipo?: string
           updated_at?: string
           user_id: string
+          whatsapp_grupo?: string | null
         }
         Update: {
           cnpj?: string | null
@@ -5121,6 +5123,7 @@ export type Database = {
           tipo?: string
           updated_at?: string
           user_id?: string
+          whatsapp_grupo?: string | null
         }
         Relationships: [
           {

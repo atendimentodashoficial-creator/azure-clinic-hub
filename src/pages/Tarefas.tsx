@@ -7,6 +7,7 @@ import { useMembroAtual } from "@/hooks/useMembroAtual";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useOwnerId } from "@/hooks/useOwnerId";
 import { supabase } from "@/integrations/supabase/client";
+import { sendTaskNotification } from "@/utils/taskNotifications";
 import { useQuery } from "@tanstack/react-query";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable, closestCenter } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
@@ -465,7 +466,13 @@ export default function Tarefas() {
 
   const handleCriar = (data: any) => {
     criarTarefa.mutate(data, {
-      onSuccess: () => toast.success("Tarefa criada!"),
+      onSuccess: (result) => {
+        toast.success("Tarefa criada!");
+        // Send "atribuida" notification if task has a responsável
+        if (result?.id && data.responsavel_nome) {
+          sendTaskNotification({ evento: "atribuida", tarefa_id: result.id, user_id: result.user_id });
+        }
+      },
       onError: (e: any) => toast.error(e.message),
     });
   };
