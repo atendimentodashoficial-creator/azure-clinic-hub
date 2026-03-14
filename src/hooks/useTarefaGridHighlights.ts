@@ -72,6 +72,45 @@ export function useTarefaGridHighlights(tarefaId: string | null) {
     onSuccess: invalidate,
   });
 
+  const addBatch = useMutation({
+    mutationFn: async (files: File[]) => {
+      if (!tarefaId || !effectiveUserId) throw new Error("Não autenticado");
+
+      let currentOrdem = highlights.length;
+
+      for (const file of files) {
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `${effectiveUserId}/${tarefaId}/highlight_${currentOrdem}_${Date.now()}.${ext}`;
+
+        const { error: uploadErr } = await supabase.storage
+          .from("tarefa-grid")
+          .upload(path, file, { upsert: true });
+        if (uploadErr) throw uploadErr;
+
+        const { data: urlData } = supabase.storage
+          .from("tarefa-grid")
+          .getPublicUrl(path);
+
+        const imageUrl = urlData.publicUrl + `?t=${Date.now()}`;
+
+        const { error } = await supabase
+          .from("tarefa_grid_highlights")
+          .insert({
+            tarefa_id: tarefaId,
+            user_id: effectiveUserId,
+            ordem: currentOrdem,
+            titulo: `Destaque ${currentOrdem + 1}`,
+            image_url: imageUrl,
+          });
+        if (error) throw error;
+        currentOrdem++;
+      }
+
+      return files.length;
+    },
+    onSuccess: invalidate,
+  });
+
   const removeHighlight = useMutation({
     mutationFn: async (highlightId: string) => {
       const { error } = await supabase
@@ -107,5 +146,5 @@ export function useTarefaGridHighlights(tarefaId: string | null) {
     onSuccess: invalidate,
   });
 
-  return { highlights, isLoading, addHighlight, removeHighlight, updateTitle, resubmitRejected };
+  return { highlights, isLoading, addHighlight, addBatch, removeHighlight, updateTitle, resubmitRejected };
 }

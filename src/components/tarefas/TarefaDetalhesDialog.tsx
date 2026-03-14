@@ -58,7 +58,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
   const { links: savedLinks, saveLinks } = useTarefaLinks(tarefa?.id || null);
   const { gridPosts, uploadImage, uploadBatch, removeImage, swapPositions, resubmitRejected: resubmitGridRejected } = useTarefaGrid(tarefa?.id || null);
-  const { highlights: gridHighlights, addHighlight, removeHighlight, updateTitle: updateHighlightTitle, resubmitRejected: resubmitHighlightsRejected } = useTarefaGridHighlights(tarefa?.id || null);
+  const { highlights: gridHighlights, addHighlight, addBatch: addHighlightBatch, removeHighlight, updateTitle: updateHighlightTitle, resubmitRejected: resubmitHighlightsRejected } = useTarefaGridHighlights(tarefa?.id || null);
   const [resubmitting, setResubmitting] = useState(false);
   const [posts, setPosts] = useState<PostGroup[]>([
     { postIndex: 0, slides: [{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }] },
@@ -608,13 +608,16 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   onAdd={async (file, titulo) => {
                     await addHighlight.mutateAsync({ file, titulo });
                   }}
+                  onBatchAdd={async (files) => {
+                    return await addHighlightBatch.mutateAsync(files);
+                  }}
                   onRemove={async (id) => {
                     await removeHighlight.mutateAsync(id);
                   }}
                   onUpdateTitle={async (id, titulo) => {
                     await updateHighlightTitle.mutateAsync({ id, titulo });
                   }}
-                  uploading={addHighlight.isPending}
+                  uploading={addHighlight.isPending || addHighlightBatch.isPending}
                 />
 
 
