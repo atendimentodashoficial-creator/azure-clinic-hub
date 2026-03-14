@@ -671,7 +671,7 @@ export default function AprovacaoMockup() {
             {/* Grade (mockup) tab */}
             {gridApprovalTab === "grade" && (
               <GradeScaledMockup>
-                <IPhoneFrame>
+                <IPhoneFrame className="[&_.iphone-shell]:aspect-auto [&_.iphone-shell]:overflow-visible [&_.iphone-shell>div:last-child]:static [&_.iphone-shell>div:last-child]:rounded-[2rem] [&_.iphone-shell>div:last-child>div]:overflow-hidden">
                   <InstagramGridPreview
                     posts={gridPosts.map(g => ({
                       id: g.grid_post_id,
