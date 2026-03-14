@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOwnerId } from "@/hooks/useOwnerId";
 
 export interface TarefaCliente {
   id: string;
@@ -26,22 +27,24 @@ export interface TarefaCliente {
 
 export function useTarefasClientes() {
   const { user } = useAuth();
+  const { ownerId } = useOwnerId();
   const qc = useQueryClient();
   const syncedClienteIds = useRef<Set<string>>(new Set());
+  const effectiveUserId = ownerId || user?.id;
 
   const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ["tarefas-clientes", user?.id],
+    queryKey: ["tarefas-clientes", effectiveUserId],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!effectiveUserId) return [];
       const { data, error } = await supabase
         .from("tarefas_clientes")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .order("nome");
       if (error) throw error;
       return data as unknown as TarefaCliente[];
     },
-    enabled: !!user?.id,
+    enabled: !!effectiveUserId,
   });
 
   const ensureClienteInternoAuth = async (cliente: Partial<TarefaCliente>) => {
