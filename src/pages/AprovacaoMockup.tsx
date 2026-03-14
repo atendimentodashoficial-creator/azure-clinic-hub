@@ -51,7 +51,7 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
     const rightH = Math.max(rightPanel.offsetHeight, 900);
 
     if (naturalH > 0 && rightH > 0) {
-      const s = Math.max(1.15, Math.min(rightH / naturalH, 1.5));
+      const s = Math.max(1, Math.min(rightH / naturalH, 1.5));
       maxScaleRef.current = Math.max(maxScaleRef.current, s);
       const finalScale = maxScaleRef.current;
       setScale(finalScale);
