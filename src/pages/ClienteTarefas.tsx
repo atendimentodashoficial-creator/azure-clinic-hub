@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { IPhoneFrame } from "@/components/ui/device-frame";
+import { DeviceFrameWithFallback } from "@/components/ui/device-frame";
 import { ClipboardList, ExternalLink, Clock, CalendarDays, ArrowLeft, Grid3X3, FileText, Link2, Image, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
