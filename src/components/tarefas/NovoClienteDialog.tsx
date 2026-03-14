@@ -63,6 +63,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
   const [grupoWhatsapp, setGrupoWhatsapp] = useState(clienteEditando?.grupo_whatsapp || "");
   const [tipo, setTipo] = useState(clienteEditando?.tipo || defaultTipo || "interno");
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(clienteEditando?.foto_perfil_url || "");
+  const [gestorId, setGestorId] = useState(clienteEditando?.gestor_id || "");
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const fotoInputRef = useRef<HTMLInputElement>(null);
 
