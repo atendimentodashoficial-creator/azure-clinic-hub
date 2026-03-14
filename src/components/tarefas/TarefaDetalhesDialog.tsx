@@ -284,10 +284,8 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         if (error) throw error;
 
         const link = `${window.location.origin}/aprovacao-interna/${internaToken}`;
-        // Send notification with internal approval link
         await sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
-        await navigator.clipboard.writeText(link);
-        toast.success("Link de aprovação interna copiado para a área de transferência!");
+        await copyApprovalLink(link, "Link de aprovação interna copiado para a área de transferência!");
         window.location.reload();
         return;
       }
@@ -298,6 +296,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       const updateData: Record<string, any> = {
         approval_token: token,
         approval_status: "aguardando",
+        ...getPausedTimerFields(),
         updated_at: new Date().toISOString(),
       };
       if (approvalColumnId) {
@@ -310,12 +309,11 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
       if (error) throw error;
 
       const link = `${window.location.origin}/aprovacao/${token}`;
-      // Send notification with approval link
       await sendTaskNotification({ evento: "aprovacao_cliente", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
-      await navigator.clipboard.writeText(link);
-      toast.success("Link de aprovação copiado para a área de transferência!");
+      await copyApprovalLink(link, "Link de aprovação copiado para a área de transferência!");
       window.location.reload();
-    } catch {
+    } catch (error) {
+      console.error("Erro ao gerar link de aprovação:", error);
       toast.error("Erro ao gerar link de aprovação");
     }
   };
