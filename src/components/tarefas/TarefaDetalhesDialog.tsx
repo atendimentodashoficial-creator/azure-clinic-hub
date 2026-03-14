@@ -454,7 +454,89 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
             )}
           </div>
 
-          {/* File upload requirements */}
+          {/* Internal Approval Section */}
+          {exigeAprovacaoInterna && tarefa.aprovacao_interna_status && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4" /> Aprovação Interna
+                </Label>
+
+                {tarefa.aprovacao_interna_status === "pendente" && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Badge variant="outline" className="border-amber-500 text-amber-400 text-[10px]">
+                        Aguardando aprovação
+                      </Badge>
+                      {gestorMembro && (
+                        <span className="text-xs text-muted-foreground">
+                          Gestor: <strong>{gestorMembro.nome}</strong>
+                        </span>
+                      )}
+                    </div>
+                    <Textarea
+                      placeholder="Feedback da aprovação interna (opcional)..."
+                      value={internaFeedback}
+                      onChange={e => setInternaFeedback(e.target.value)}
+                      className="text-sm"
+                      rows={2}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 gap-1.5 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                        onClick={() => handleInternalApproval("aprovado")}
+                        disabled={resubmitting}
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        {resubmitting ? "Processando..." : "Aprovar"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 gap-1.5 border-red-500/50 text-red-400 hover:bg-red-500/10"
+                        onClick={() => handleInternalApproval("reprovado")}
+                        disabled={resubmitting}
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Reprovar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {tarefa.aprovacao_interna_status === "aprovado" && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="border-emerald-500 text-emerald-400 text-[10px]">
+                      Aprovado internamente
+                    </Badge>
+                    {tarefa.aprovacao_interna_por && (
+                      <span className="text-xs text-muted-foreground">por {tarefa.aprovacao_interna_por}</span>
+                    )}
+                  </div>
+                )}
+
+                {tarefa.aprovacao_interna_status === "reprovado" && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="border-red-500 text-red-400 text-[10px]">
+                        Reprovado internamente
+                      </Badge>
+                      {tarefa.aprovacao_interna_por && (
+                        <span className="text-xs text-muted-foreground">por {tarefa.aprovacao_interna_por}</span>
+                      )}
+                    </div>
+                    {tarefa.aprovacao_interna_feedback && (
+                      <p className="text-[11px] text-red-400 bg-red-500/10 rounded px-2 py-1">
+                        💬 {tarefa.aprovacao_interna_feedback}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           {requiredFileTypes.length > 0 && (
             <>
               <Separator />
