@@ -38,6 +38,7 @@ const FILE_TYPE_LABELS: Record<string, string> = {
   texto: "Texto",
   links: "Links",
   mockup: "Mockup de Post",
+  grade: "Grade do Instagram",
   qualquer: "Qualquer arquivo",
 };
 
