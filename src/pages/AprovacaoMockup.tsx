@@ -232,7 +232,49 @@ export default function AprovacaoMockup() {
     }
   };
 
-  // === LINK-ONLY APPROVAL HANDLERS ===
+  // === GRID APPROVAL HANDLERS ===
+  const handleApproveGridPost = async (postId: string) => {
+    setSubmitting(true);
+    try {
+      const { error: err } = await supabase.rpc("update_grid_post_approval", {
+        p_token: token!,
+        p_grid_post_id: postId,
+        p_status: "aprovado",
+        p_feedback: gridFeedbacks[postId] || null,
+      });
+      if (err) throw err;
+      setGridPosts(prev => prev.map(g => g.grid_post_id === postId ? { ...g, status: "aprovado", feedback: gridFeedbacks[postId] || null } : g));
+      toast.success("Post aprovado!");
+    } catch {
+      toast.error("Erro ao aprovar");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectGridPost = async (postId: string, feedback: string) => {
+    if (!feedback.trim()) {
+      toast.error("Adicione um feedback antes de reprovar.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error: err } = await supabase.rpc("update_grid_post_approval", {
+        p_token: token!,
+        p_grid_post_id: postId,
+        p_status: "reprovado",
+        p_feedback: feedback,
+      });
+      if (err) throw err;
+      setGridPosts(prev => prev.map(g => g.grid_post_id === postId ? { ...g, status: "reprovado", feedback } : g));
+      toast.success("Post reprovado com feedback.");
+    } catch {
+      toast.error("Erro ao reprovar");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleApproveLinks = async () => {
     setSubmitting(true);
     try {
