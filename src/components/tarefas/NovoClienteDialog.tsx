@@ -103,6 +103,30 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
     setCnpj(docTipo === "cnpj" ? formatCnpj(digits) : formatCpf(digits));
   };
 
+  const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 2MB"); return; }
+
+    setUploadingFoto(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const fileName = `${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("membros-fotos")
+        .upload(`clientes/${fileName}`, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("membros-fotos").getPublicUrl(`clientes/${fileName}`);
+      setFotoPerfilUrl(urlData.publicUrl);
+    } catch (err: any) {
+      toast.error("Erro ao enviar foto: " + err.message);
+    } finally {
+      setUploadingFoto(false);
+    }
+  };
+
   const handleSubmit = () => {
     if (!nome.trim()) { toast.error("Nome é obrigatório"); return; }
     if (tipo === "interno" && !email.trim()) { toast.error("Email é obrigatório para clientes internos"); return; }
@@ -122,6 +146,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
       google_meu_negocio: googleMeuNegocio.trim() || null,
       observacoes: observacoes.trim() || null,
       grupo_whatsapp: grupoWhatsapp.trim() || null,
+      foto_perfil_url: fotoPerfilUrl || null,
       tipo,
     });
     resetForm();
