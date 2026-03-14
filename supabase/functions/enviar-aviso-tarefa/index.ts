@@ -119,7 +119,7 @@ serve(async (req) => {
     }
 
     const destinos = avisoConfig.destinos || {};
-    if (!destinos.grupo_cliente && !destinos.grupo_membro && !destinos.pessoal_membro && !destinos.pessoal_gestor) {
+    if (!destinos.grupo_cliente && !destinos.grupo_membro && !destinos.pessoal_membro && !destinos.pessoal_gestor && !destinos.pessoal_cliente) {
       console.log(`Aviso "${evento}" has no destinations selected`);
       return new Response(
         JSON.stringify({ success: true, message: "Nenhum destino selecionado para este aviso", sent: 0 }),
@@ -164,16 +164,18 @@ serve(async (req) => {
     let clienteNome = "";
     let clienteEmpresa = "";
     let clienteGrupo = "";
+    let clientePessoal = "";
     if (tarefa.cliente_id) {
       const { data: cliente } = await supabase
         .from("tarefas_clientes")
-        .select("nome, empresa, grupo_whatsapp")
+        .select("nome, empresa, grupo_whatsapp, telefone")
         .eq("id", tarefa.cliente_id)
         .maybeSingle();
       if (cliente) {
         clienteNome = cliente.nome || "";
         clienteEmpresa = cliente.empresa || "";
         clienteGrupo = cliente.grupo_whatsapp || "";
+        clientePessoal = cliente.telefone || "";
       }
     }
 
@@ -254,6 +256,9 @@ serve(async (req) => {
     }
     if (destinos.pessoal_gestor && gestorPessoal) {
       destinations.push({ number: gestorPessoal, label: "pessoal_gestor" });
+    }
+    if (destinos.pessoal_cliente && clientePessoal) {
+      destinations.push({ number: clientePessoal, label: "pessoal_cliente" });
     }
 
     if (destinations.length === 0) {

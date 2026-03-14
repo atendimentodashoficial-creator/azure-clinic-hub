@@ -64,6 +64,16 @@ function getColType(colName: string): string {
   return "unknown";
 }
 
+type ColumnNotificationEvent = "aprovacao_interna" | "aprovacao_cliente" | "aprovada_concluida";
+
+function getNotificationEventForColumnMove(targetColumnName: string): ColumnNotificationEvent | null {
+  const targetType = getColType(targetColumnName);
+  if (targetType === "internal_approval") return "aprovacao_interna";
+  if (targetType === "client_approval") return "aprovacao_cliente";
+  if (targetType === "done") return "aprovada_concluida";
+  return null;
+}
+
 export function useTarefas() {
   const { user } = useAuth();
   const { ownerId } = useOwnerId();
@@ -144,20 +154,22 @@ export function useTarefas() {
     mutationFn: async ({ id, ...updates }: Partial<Tarefa> & { id: string }) => {
       const currentTask = tarefas.find((t) => t.id === id);
       const targetColumn = updates.coluna_id ? colunas.find((c) => c.id === updates.coluna_id) : null;
-      const movedToDone = !!targetColumn && currentTask?.coluna_id !== updates.coluna_id && getColType(targetColumn.nome) === "done";
+      const notificationEvent = targetColumn && currentTask?.coluna_id !== updates.coluna_id
+        ? getNotificationEventForColumnMove(targetColumn.nome)
+        : null;
 
       const { error } = await supabase.from("tarefas").update({ ...updates, updated_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
 
       return {
-        movedToDone,
+        notificationEvent,
         tarefaId: id,
         userId: currentTask?.user_id || effectiveUserId,
       };
     },
     onSuccess: async (result) => {
-      if (result?.movedToDone && result.userId) {
-        await sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: result.tarefaId, user_id: result.userId });
+      if (result?.notificationEvent && result.userId) {
+        await sendTaskNotification({ evento: result.notificationEvent, tarefa_id: result.tarefaId, user_id: result.userId });
       }
       invalidate();
     },
@@ -177,20 +189,22 @@ export function useTarefas() {
     mutationFn: async ({ id, coluna_id, ordem }: { id: string; coluna_id: string; ordem: number }) => {
       const currentTask = tarefas.find((t) => t.id === id);
       const targetColumn = colunas.find((c) => c.id === coluna_id);
-      const movedToDone = !!targetColumn && currentTask?.coluna_id !== coluna_id && getColType(targetColumn.nome) === "done";
+      const notificationEvent = targetColumn && currentTask?.coluna_id !== coluna_id
+        ? getNotificationEventForColumnMove(targetColumn.nome)
+        : null;
 
       const { error } = await supabase.from("tarefas").update({ coluna_id, ordem, updated_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
 
       return {
-        movedToDone,
+        notificationEvent,
         tarefaId: id,
         userId: currentTask?.user_id || effectiveUserId,
       };
     },
     onSuccess: async (result) => {
-      if (result?.movedToDone && result.userId) {
-        await sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: result.tarefaId, user_id: result.userId });
+      if (result?.notificationEvent && result.userId) {
+        await sendTaskNotification({ evento: result.notificationEvent, tarefa_id: result.tarefaId, user_id: result.userId });
       }
       invalidate();
     },
