@@ -38,7 +38,7 @@ export function useTarefasClientes() {
         .eq("user_id", user.id)
         .order("nome");
       if (error) throw error;
-      return data as TarefaCliente[];
+      return data as unknown as TarefaCliente[];
     },
     enabled: !!user?.id,
   });
