@@ -57,7 +57,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const { tipos } = useTiposTarefas();
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
   const { links: savedLinks, saveLinks } = useTarefaLinks(tarefa?.id || null);
-  const { gridPosts, uploadImage, removeImage, resubmitRejected: resubmitGridRejected } = useTarefaGrid(tarefa?.id || null);
+  const { gridPosts, uploadImage, uploadBatch, removeImage, swapPositions, resubmitRejected: resubmitGridRejected } = useTarefaGrid(tarefa?.id || null);
   const { highlights: gridHighlights, addHighlight, removeHighlight, updateTitle: updateHighlightTitle, resubmitRejected: resubmitHighlightsRejected } = useTarefaGridHighlights(tarefa?.id || null);
   const [resubmitting, setResubmitting] = useState(false);
   const [posts, setPosts] = useState<PostGroup[]>([
