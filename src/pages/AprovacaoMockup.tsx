@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MockupPreview, MockupSlide } from "@/components/tarefas/MockupPreview";
@@ -30,9 +30,68 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Simply renders the IPhoneFrame at its natural size — no dynamic scaling
+// Scales the IPhoneFrame proportionally to match the right panel height on desktop
 function GridMockupScaler({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1.15);
+  const [wrapperH, setWrapperH] = useState<string>('auto');
+  const maxScaleRef = useRef(1.15);
+
+  const recalc = useCallback(() => {
+    if (isMobile || !containerRef.current || !innerRef.current) return;
+    const parent = containerRef.current.closest('[data-grid-layout]');
+    if (!parent) return;
+    const rightPanel = parent.querySelector('[data-grid-right]') as HTMLElement;
+    if (!rightPanel) return;
+
+    innerRef.current.style.transform = 'scale(1)';
+    const naturalH = innerRef.current.offsetHeight;
+    const rightH = Math.max(rightPanel.offsetHeight, 900);
+
+    if (naturalH > 0 && rightH > 0) {
+      const s = Math.max(1.15, Math.min(rightH / naturalH, 1.5));
+      maxScaleRef.current = Math.max(maxScaleRef.current, s);
+      const finalScale = maxScaleRef.current;
+      setScale(finalScale);
+      setWrapperH(`${naturalH * finalScale}px`);
+      innerRef.current.style.transform = `scale(${finalScale})`;
+    } else {
+      innerRef.current.style.transform = `scale(${maxScaleRef.current})`;
+    }
+  }, [isMobile]);
+
+  // Run immediately on mount to avoid flash at small size
+  useLayoutEffect(() => {
+    recalc();
+  }, [recalc]);
+
+  useEffect(() => {
+    const t = setTimeout(recalc, 100);
+    return () => clearTimeout(t);
+  }, [recalc]);
+
+  useEffect(() => {
+    const interval = setInterval(recalc, 1000);
+    return () => clearInterval(interval);
+  }, [recalc]);
+
+  if (isMobile) return <>{children}</>;
+
+  return (
+    <div ref={containerRef} style={{ height: wrapperH }}>
+      <div
+        ref={innerRef}
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: 'top center',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
 }
 
 interface MockupData {
@@ -584,8 +643,8 @@ export default function AprovacaoMockup() {
     };
 
     return (
-      <div className={cn("bg-background", isEmbedded ? "" : "min-h-screen")}>
-        <div className={cn("mx-auto px-4 space-y-6", isEmbedded ? "max-w-full py-2" : "max-w-7xl py-8")}>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
           {!isEmbedded && (
             <div className="text-center space-y-1">
               <h1 className="text-xl font-bold text-foreground">{gridTitulo}</h1>
@@ -593,9 +652,9 @@ export default function AprovacaoMockup() {
             </div>
           )}
 
-          <div data-grid-layout className={cn("flex flex-col lg:flex-row lg:items-start lg:justify-center", isEmbedded ? "lg:gap-8" : "lg:gap-12")}>
-            {/* Left: Instagram grid mockup — visual reference */}
-            <div className={cn("order-2 lg:order-1 lg:sticky lg:top-4 w-full mx-auto lg:mx-0 flex-shrink-0", isEmbedded ? "max-w-[400px]" : "max-w-[440px]")}>
+          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-32">
+            {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
+            <div className="order-2 lg:order-1 lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
               <GridMockupScaler>
                 <IPhoneFrame>
                   <InstagramGridPreview
@@ -624,7 +683,7 @@ export default function AprovacaoMockup() {
             </div>
 
             {/* Right: Approval controls */}
-            <div data-grid-right className={cn("order-1 lg:order-2 min-w-0 mx-auto lg:mx-0 space-y-6 w-full", isEmbedded ? "max-w-[400px]" : "max-w-[440px]")}>
+            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6 lg:min-h-[850px]">
               {/* Filter: Pendentes / Aprovadas */}
               {!hideFilterTabs && <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />}
 
@@ -695,7 +754,7 @@ export default function AprovacaoMockup() {
                             </Button>
                           </div>
 
-                          <div className="w-full mx-auto aspect-square rounded-lg border border-border overflow-hidden">
+                          <div className="w-[min(100vw-2rem,28rem)] mx-auto aspect-[4/5] rounded-lg border border-border overflow-hidden">
                             <img
                               src={currentFilteredGridPost.image_url}
                               alt={`Post ${currentFilteredGridPost.posicao + 1}`}
@@ -777,8 +836,8 @@ export default function AprovacaoMockup() {
                             </Button>
                           </div>
 
-                          <div className="w-full mx-auto aspect-square rounded-lg border border-border bg-muted/20 flex items-center justify-center overflow-hidden">
-                            <div className="w-3/4 aspect-square rounded-full overflow-hidden border-2 border-border flex-shrink-0">
+                          <div className="w-[min(100vw-2rem,28rem)] mx-auto aspect-[4/5] rounded-lg border border-border bg-muted/20 flex items-center justify-center overflow-hidden">
+                            <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-full overflow-hidden border-2 border-border flex-shrink-0">
                               <img
                                 src={currentFilteredHighlight.image_url}
                                 alt={currentFilteredHighlight.titulo}
