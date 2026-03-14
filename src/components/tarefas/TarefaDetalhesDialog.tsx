@@ -495,7 +495,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
                 {tarefa.aprovacao_interna_status === "pendente" && (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-sm flex-wrap">
                       <Badge variant="outline" className="border-amber-500 text-amber-400 text-[10px]">
                         Aguardando aprovação
                       </Badge>
@@ -504,6 +504,33 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                           Gestor: <strong>{gestorMembro.nome}</strong>
                         </span>
                       )}
+                    </div>
+                    {(tarefa as any).internal_approval_token && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs"
+                          onClick={() => {
+                            const link = `${window.location.origin}/aprovacao-interna/${(tarefa as any).internal_approval_token}`;
+                            navigator.clipboard.writeText(link);
+                            toast.success("Link de aprovação interna copiado!");
+                          }}
+                        >
+                          <Copy className="h-3 w-3" /> Copiar link
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs"
+                          onClick={() => {
+                            window.open(`/aprovacao-interna/${(tarefa as any).internal_approval_token}`, "_blank");
+                          }}
+                        >
+                          <ExternalLink className="h-3 w-3" /> Abrir
+                        </Button>
+                      </div>
+                    )}
                     </div>
                     <Textarea
                       placeholder="Feedback da aprovação interna (opcional)..."
