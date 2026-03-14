@@ -93,7 +93,7 @@ export default function TarefasClientesTab() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtrados.map(cliente => (
-                <Card key={cliente.id} className="p-4 flex flex-col gap-3">
+                <Card key={cliente.id} className="p-4 flex flex-col gap-3 cursor-pointer hover:border-primary/40 transition-colors" onClick={() => setClienteDetalhe(cliente)}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
