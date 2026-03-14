@@ -177,7 +177,7 @@ export function GridPostsManager({ gridPosts, onUpload, onBatchUpload, onRemove,
             <div
               key={i}
               className={cn(
-                "relative aspect-square rounded-md border-2 border-dashed border-muted-foreground/30 overflow-hidden cursor-pointer hover:border-primary/50 transition-all bg-muted/30",
+                "relative aspect-[4/5] rounded-md border-2 border-dashed border-muted-foreground/30 overflow-hidden cursor-pointer hover:border-primary/50 transition-all bg-muted/30",
                 post && "border-solid border-border",
                 post && statusColor(post.status),
                 swapMode && "hover:ring-2 hover:ring-primary/50",
