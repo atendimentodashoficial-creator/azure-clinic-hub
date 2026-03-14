@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MockupPreview, MockupSlide } from "@/components/tarefas/MockupPreview";
+import { InstagramGridPreview } from "@/components/tarefas/InstagramGridPreview";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
