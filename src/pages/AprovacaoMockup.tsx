@@ -664,215 +664,217 @@ export default function AprovacaoMockup() {
                 </IPhoneFrame>
             </div>
 
-            {/* Right: Approval controls — constrained to mockup height */}
-            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6">
-              {/* Filter: Pendentes / Aprovadas */}
-              {!hideFilterTabs && <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />}
+            {/* Right: Approval controls — scaled down to fit mockup height */}
+            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0">
+              <div data-grid-right-inner className="space-y-6">
+                {/* Filter: Pendentes / Aprovadas */}
+                {!hideFilterTabs && <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />}
 
-              {/* Tab switch: Posts / Destaques */}
-              {hasHighlights && (
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    variant={gridApprovalTab === "posts" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => { setGridApprovalTab("posts"); setCurrentGridIdx(0); }}
-                    className="gap-1.5"
-                  >
-                    Posts ({filteredGridPosts.length})
-                    {approvalFilter === "pendentes" && allGridPostsDecided && <Check className="w-3 h-3" />}
-                  </Button>
-                  <Button
-                    variant={gridApprovalTab === "highlights" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => { setGridApprovalTab("highlights"); setCurrentHighlightIdx(0); }}
-                    className="gap-1.5"
-                  >
-                    Destaques ({filteredHighlights.length})
-                    {approvalFilter === "pendentes" && allHighlightsDecided && <Check className="w-3 h-3" />}
-                  </Button>
-                </div>
-              )}
+                {/* Tab switch: Posts / Destaques */}
+                {hasHighlights && (
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      variant={gridApprovalTab === "posts" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => { setGridApprovalTab("posts"); setCurrentGridIdx(0); }}
+                      className="gap-1.5"
+                    >
+                      Posts ({filteredGridPosts.length})
+                      {approvalFilter === "pendentes" && allGridPostsDecided && <Check className="w-3 h-3" />}
+                    </Button>
+                    <Button
+                      variant={gridApprovalTab === "highlights" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => { setGridApprovalTab("highlights"); setCurrentHighlightIdx(0); }}
+                      className="gap-1.5"
+                    >
+                      Destaques ({filteredHighlights.length})
+                      {approvalFilter === "pendentes" && allHighlightsDecided && <Check className="w-3 h-3" />}
+                    </Button>
+                  </div>
+                )}
 
-              {/* Posts approval */}
-              {gridApprovalTab === "posts" && (
-                <>
-                  {filteredSortedGridPosts.length === 0 ? (
-                    <Card className="p-6 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        {approvalFilter === "pendentes" ? "Nenhum post pendente." : "Nenhum post aprovado."}
-                      </p>
-                    </Card>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-center gap-2 flex-wrap">
-                        {filteredSortedGridPosts.map((g, i) => (
-                          <button
-                            key={g.grid_post_id}
-                            onClick={() => setCurrentGridIdx(i)}
-                            className={cn(
-                              "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
-                              i === Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
-                              g.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
-                              g.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
-                              "bg-muted border-muted-foreground/30 text-muted-foreground"
+                {/* Posts approval */}
+                {gridApprovalTab === "posts" && (
+                  <>
+                    {filteredSortedGridPosts.length === 0 ? (
+                      <Card className="p-6 text-center">
+                        <p className="text-sm text-muted-foreground">
+                          {approvalFilter === "pendentes" ? "Nenhum post pendente." : "Nenhum post aprovado."}
+                        </p>
+                      </Card>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-center gap-2 flex-wrap">
+                          {filteredSortedGridPosts.map((g, i) => (
+                            <button
+                              key={g.grid_post_id}
+                              onClick={() => setCurrentGridIdx(i)}
+                              className={cn(
+                                "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
+                                i === Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                                g.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
+                                g.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
+                                "bg-muted border-muted-foreground/30 text-muted-foreground"
+                              )}
+                            >
+                              {g.posicao + 1}
+                            </button>
+                          ))}
+                        </div>
+
+                        {currentFilteredGridPost && (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Button variant="ghost" size="sm" disabled={Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) === 0} onClick={() => setCurrentGridIdx(i => Math.max(0, i - 1))}>
+                                <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+                              </Button>
+                              <Badge className={cn("border-0", itemStatusColor(currentFilteredGridPost.status))}>
+                                {itemStatusLabel(currentFilteredGridPost.status)}
+                              </Badge>
+                              <Button variant="ghost" size="sm" disabled={Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) === filteredSortedGridPosts.length - 1} onClick={() => setCurrentGridIdx(i => i + 1)}>
+                                Próximo <ChevronRight className="w-4 h-4 ml-1" />
+                              </Button>
+                            </div>
+
+                            <div className="w-[min(100vw-2rem,28rem)] mx-auto aspect-[4/5] rounded-lg border border-border overflow-hidden">
+                              <img
+                                src={currentFilteredGridPost.image_url}
+                                alt={`Post ${currentFilteredGridPost.posicao + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+
+                            <Card className="p-4 space-y-3">
+                                <Textarea
+                                  placeholder="Feedback para este post (obrigatório para reprovar)..."
+                                  value={gridFeedbacks[currentFilteredGridPost.grid_post_id] || ""}
+                                  onChange={e => setGridFeedbacks(prev => ({ ...prev, [currentFilteredGridPost.grid_post_id]: e.target.value }))}
+                                  rows={2}
+                                />
+                                <div className="flex gap-2">
+                                  <Button onClick={handleApproveGridPost} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredGridPost.status === "aprovado" ? "secondary" : "default"}>
+                                    <Check className="w-4 h-4" />
+                                    {currentFilteredGridPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                                  </Button>
+                                  <Button onClick={handleRejectGridPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
+                                    <X className="w-4 h-4" />
+                                    {currentFilteredGridPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                                  </Button>
+                                </div>
+                              </Card>
+
+                            {currentFilteredGridPost.status === "reprovado" && currentFilteredGridPost.feedback && (
+                              <p className="text-xs text-red-400 bg-red-500/10 rounded px-3 py-2">
+                                💬 {currentFilteredGridPost.feedback}
+                              </p>
                             )}
-                          >
-                            {g.posicao + 1}
-                          </button>
-                        ))}
-                      </div>
-
-                      {currentFilteredGridPost && (
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <Button variant="ghost" size="sm" disabled={Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) === 0} onClick={() => setCurrentGridIdx(i => Math.max(0, i - 1))}>
-                              <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-                            </Button>
-                            <Badge className={cn("border-0", itemStatusColor(currentFilteredGridPost.status))}>
-                              {itemStatusLabel(currentFilteredGridPost.status)}
-                            </Badge>
-                            <Button variant="ghost" size="sm" disabled={Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) === filteredSortedGridPosts.length - 1} onClick={() => setCurrentGridIdx(i => i + 1)}>
-                              Próximo <ChevronRight className="w-4 h-4 ml-1" />
-                            </Button>
                           </div>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
 
-                          <div className="w-[min(100vw-2rem,28rem)] mx-auto aspect-[4/5] rounded-lg border border-border overflow-hidden">
-                            <img
-                              src={currentFilteredGridPost.image_url}
-                              alt={`Post ${currentFilteredGridPost.posicao + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
+                {/* Highlights approval */}
+                {gridApprovalTab === "highlights" && (
+                  <>
+                    {filteredSortedHighlights.length === 0 ? (
+                      <Card className="p-6 text-center">
+                        <p className="text-sm text-muted-foreground">
+                          {approvalFilter === "pendentes" ? "Nenhum destaque pendente." : "Nenhum destaque aprovado."}
+                        </p>
+                      </Card>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-center gap-2 flex-wrap">
+                          {filteredSortedHighlights.map((h, i) => (
+                            <button
+                              key={h.highlight_id}
+                              onClick={() => setCurrentHighlightIdx(i)}
+                              className={cn(
+                                "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
+                                i === Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
+                                h.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
+                                h.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
+                                "bg-muted border-muted-foreground/30 text-muted-foreground"
+                              )}
+                            >
+                              {i + 1}
+                            </button>
+                          ))}
+                        </div>
 
-                          <Card className="p-4 space-y-3">
+                        {currentFilteredHighlight && (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Button variant="ghost" size="sm" disabled={Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) === 0} onClick={() => setCurrentHighlightIdx(i => Math.max(0, i - 1))}>
+                                <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+                              </Button>
+                              <Badge className={cn("border-0", itemStatusColor(currentFilteredHighlight.status))}>
+                                {itemStatusLabel(currentFilteredHighlight.status)}
+                              </Badge>
+                              <Button variant="ghost" size="sm" disabled={Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) === filteredSortedHighlights.length - 1} onClick={() => setCurrentHighlightIdx(i => i + 1)}>
+                                Próximo <ChevronRight className="w-4 h-4 ml-1" />
+                              </Button>
+                            </div>
+
+                            <div className="w-[min(100vw-2rem,28rem)] mx-auto aspect-[4/5] rounded-lg border border-border bg-muted/20 flex items-center justify-center overflow-hidden">
+                              <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-full overflow-hidden border-2 border-border flex-shrink-0">
+                                <img
+                                  src={currentFilteredHighlight.image_url}
+                                  alt={currentFilteredHighlight.titulo}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+
+                            <Card className="p-4 space-y-3">
                               <Textarea
-                                placeholder="Feedback para este post (obrigatório para reprovar)..."
-                                value={gridFeedbacks[currentFilteredGridPost.grid_post_id] || ""}
-                                onChange={e => setGridFeedbacks(prev => ({ ...prev, [currentFilteredGridPost.grid_post_id]: e.target.value }))}
+                                placeholder="Feedback para este destaque (obrigatório para reprovar)..."
+                                value={highlightFeedbacks[currentFilteredHighlight.highlight_id] || ""}
+                                onChange={e => setHighlightFeedbacks(prev => ({ ...prev, [currentFilteredHighlight.highlight_id]: e.target.value }))}
                                 rows={2}
                               />
                               <div className="flex gap-2">
-                                <Button onClick={handleApproveGridPost} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredGridPost.status === "aprovado" ? "secondary" : "default"}>
+                                <Button onClick={handleApproveHighlight} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredHighlight.status === "aprovado" ? "secondary" : "default"}>
                                   <Check className="w-4 h-4" />
-                                  {currentFilteredGridPost.status === "aprovado" ? "Aprovado" : "Aprovar"}
+                                  {currentFilteredHighlight.status === "aprovado" ? "Aprovado" : "Aprovar"}
                                 </Button>
-                                <Button onClick={handleRejectGridPost} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
+                                <Button onClick={handleRejectHighlight} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
                                   <X className="w-4 h-4" />
-                                  {currentFilteredGridPost.status === "reprovado" ? "Reprovado" : "Reprovar"}
+                                  {currentFilteredHighlight.status === "reprovado" ? "Reprovado" : "Reprovar"}
                                 </Button>
                               </div>
                             </Card>
 
-                          {currentFilteredGridPost.status === "reprovado" && currentFilteredGridPost.feedback && (
-                            <p className="text-xs text-red-400 bg-red-500/10 rounded px-3 py-2">
-                              💬 {currentFilteredGridPost.feedback}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </>
-              )}
-
-              {/* Highlights approval */}
-              {gridApprovalTab === "highlights" && (
-                <>
-                  {filteredSortedHighlights.length === 0 ? (
-                    <Card className="p-6 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        {approvalFilter === "pendentes" ? "Nenhum destaque pendente." : "Nenhum destaque aprovado."}
-                      </p>
-                    </Card>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-center gap-2 flex-wrap">
-                        {filteredSortedHighlights.map((h, i) => (
-                          <button
-                            key={h.highlight_id}
-                            onClick={() => setCurrentHighlightIdx(i)}
-                            className={cn(
-                              "w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center border-2 transition-all",
-                              i === Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
-                              h.status === "aprovado" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
-                              h.status === "reprovado" ? "bg-red-500/20 border-red-500 text-red-400" :
-                              "bg-muted border-muted-foreground/30 text-muted-foreground"
+                            {currentFilteredHighlight.status === "reprovado" && currentFilteredHighlight.feedback && (
+                              <p className="text-xs text-red-400 bg-red-500/10 rounded px-3 py-2">
+                                💬 {currentFilteredHighlight.feedback}
+                              </p>
                             )}
-                          >
-                            {i + 1}
-                          </button>
-                        ))}
-                      </div>
-
-                      {currentFilteredHighlight && (
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <Button variant="ghost" size="sm" disabled={Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) === 0} onClick={() => setCurrentHighlightIdx(i => Math.max(0, i - 1))}>
-                              <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-                            </Button>
-                            <Badge className={cn("border-0", itemStatusColor(currentFilteredHighlight.status))}>
-                              {itemStatusLabel(currentFilteredHighlight.status)}
-                            </Badge>
-                            <Button variant="ghost" size="sm" disabled={Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlights.length - 1)) === filteredSortedHighlights.length - 1} onClick={() => setCurrentHighlightIdx(i => i + 1)}>
-                              Próximo <ChevronRight className="w-4 h-4 ml-1" />
-                            </Button>
                           </div>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
 
-                          <div className="w-[min(100vw-2rem,28rem)] mx-auto aspect-[4/5] rounded-lg border border-border bg-muted/20 flex items-center justify-center overflow-hidden">
-                            <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-full overflow-hidden border-2 border-border flex-shrink-0">
-                              <img
-                                src={currentFilteredHighlight.image_url}
-                                alt={currentFilteredHighlight.titulo}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-
-                          <Card className="p-4 space-y-3">
-                            <Textarea
-                              placeholder="Feedback para este destaque (obrigatório para reprovar)..."
-                              value={highlightFeedbacks[currentFilteredHighlight.highlight_id] || ""}
-                              onChange={e => setHighlightFeedbacks(prev => ({ ...prev, [currentFilteredHighlight.highlight_id]: e.target.value }))}
-                              rows={2}
-                            />
-                            <div className="flex gap-2">
-                              <Button onClick={handleApproveHighlight} disabled={submitting} className="flex-1 gap-1.5" variant={currentFilteredHighlight.status === "aprovado" ? "secondary" : "default"}>
-                                <Check className="w-4 h-4" />
-                                {currentFilteredHighlight.status === "aprovado" ? "Aprovado" : "Aprovar"}
-                              </Button>
-                              <Button onClick={handleRejectHighlight} disabled={submitting} variant="destructive" className="flex-1 gap-1.5">
-                                <X className="w-4 h-4" />
-                                {currentFilteredHighlight.status === "reprovado" ? "Reprovado" : "Reprovar"}
-                              </Button>
-                            </div>
-                          </Card>
-
-                          {currentFilteredHighlight.status === "reprovado" && currentFilteredHighlight.feedback && (
-                            <p className="text-xs text-red-400 bg-red-500/10 rounded px-3 py-2">
-                              💬 {currentFilteredHighlight.feedback}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </>
-              )}
-
-              {allGridDecided && (
-                <Card className="p-5 space-y-4 text-center border-primary/30">
-                  <p className="text-sm font-medium text-foreground">Todos os itens foram revisados!</p>
-                  <div className="flex flex-col items-center gap-2">
-                    <p className="text-xs text-muted-foreground">
-                      {gridPosts.filter(g => g.status === "aprovado").length + gridHighlights.filter(h => h.status === "aprovado").length} aprovado(s) • {gridPosts.filter(g => g.status === "reprovado").length + gridHighlights.filter(h => h.status === "reprovado").length} reprovado(s)
-                    </p>
-                    <Button onClick={() => setSubmitted(true)} className="gap-2" size="lg">
-                      <Send className="w-4 h-4" />
-                      Enviar respostas
-                    </Button>
-                  </div>
-                </Card>
-              )}
+                {allGridDecided && (
+                  <Card className="p-5 space-y-4 text-center border-primary/30">
+                    <p className="text-sm font-medium text-foreground">Todos os itens foram revisados!</p>
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        {gridPosts.filter(g => g.status === "aprovado").length + gridHighlights.filter(h => h.status === "aprovado").length} aprovado(s) • {gridPosts.filter(g => g.status === "reprovado").length + gridHighlights.filter(h => h.status === "reprovado").length} reprovado(s)
+                      </p>
+                      <Button onClick={() => setSubmitted(true)} className="gap-2" size="lg">
+                        <Send className="w-4 h-4" />
+                        Enviar respostas
+                      </Button>
+                    </div>
+                  </Card>
+                )}
+              </div>
             </div>
           </div>
           </GridLayoutSyncer>
