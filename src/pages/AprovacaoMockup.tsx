@@ -1148,6 +1148,7 @@ function LinkOnlyApproval({
   onReject,
   onSubmit,
   isEmbedded,
+  isInternal,
 }: {
   taskInfo: TaskInfo | null;
   taskLinks: TaskLink[];
@@ -1160,6 +1161,7 @@ function LinkOnlyApproval({
   onReject: () => void;
   onSubmit: () => void;
   isEmbedded?: boolean;
+  isInternal?: boolean;
 }) {
   const tarefaTitulo = taskInfo?.tarefa_titulo || "Tarefa";
   const clienteNome = taskInfo?.cliente_nome || "";
