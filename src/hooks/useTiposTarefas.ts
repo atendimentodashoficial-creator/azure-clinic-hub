@@ -23,7 +23,7 @@ export function useTiposTarefas() {
   const qc = useQueryClient();
   const effectiveUserId = ownerId || user?.id;
 
-  const { data: tipos = [], isLoading } = useQuery({
+  const { data: tipos = [], isLoading, error } = useQuery({
     queryKey: ["tipos-tarefas", effectiveUserId],
     queryFn: async () => {
       if (!effectiveUserId) return [];

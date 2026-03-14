@@ -99,7 +99,7 @@ function FileLimitCounter({ label, value, onChange }: { label: string; value: nu
 
 // --- Main Page ---
 export default function TiposTarefas() {
-  const { tipos, isLoading, createTipo, updateTipo, deleteTipo } = useTiposTarefas();
+  const { tipos, isLoading, error, createTipo, updateTipo, deleteTipo } = useTiposTarefas();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTipo, setEditingTipo] = useState<TipoTarefa | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
