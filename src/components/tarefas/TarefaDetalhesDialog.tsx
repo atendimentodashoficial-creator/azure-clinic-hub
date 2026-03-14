@@ -589,10 +589,16 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   onUpload={async (posicao, file) => {
                     await uploadImage.mutateAsync({ posicao, file });
                   }}
+                  onBatchUpload={async (files) => {
+                    return await uploadBatch.mutateAsync(files);
+                  }}
                   onRemove={async (posicao) => {
                     await removeImage.mutateAsync(posicao);
                   }}
-                  uploading={uploadImage.isPending}
+                  onSwap={async (from, to) => {
+                    await swapPositions.mutateAsync({ from, to });
+                  }}
+                  uploading={uploadImage.isPending || uploadBatch.isPending}
                 />
 
                 <Separator />
