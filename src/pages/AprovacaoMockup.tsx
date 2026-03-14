@@ -34,6 +34,18 @@ interface TaskLink {
   ordem: number;
 }
 
+interface GridPostData {
+  grid_post_id: string;
+  tarefa_id: string;
+  posicao: number;
+  image_url: string;
+  status: string;
+  feedback: string | null;
+  tarefa_titulo: string;
+  cliente_nome: string;
+  cliente_empresa: string;
+}
+
 interface TaskInfo {
   tarefa_id: string;
   tarefa_titulo: string;
