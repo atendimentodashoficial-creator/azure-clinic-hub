@@ -351,8 +351,11 @@ export default function AprovacaoMockup() {
       if (err) throw err;
       setGridPosts(prev => {
         const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "aprovado", feedback: gridFeedbacks[currentGridPost.grid_post_id] || null } : g);
-        // Auto-switch to highlights if no more pending grid posts
-        if (gridHighlights.some(h => h.status === "pendente") && !updated.some(g => g.status === "pendente")) {
+        const allPostsDecided = !updated.some(g => g.status === "pendente");
+        const allHighlightsDecided = !gridHighlights.some(h => h.status === "pendente");
+        if (allPostsDecided && allHighlightsDecided) {
+          setGridApprovalTab("grade");
+        } else if (allPostsDecided && !allHighlightsDecided) {
           setGridApprovalTab("highlights");
           setCurrentHighlightIdx(0);
         }
