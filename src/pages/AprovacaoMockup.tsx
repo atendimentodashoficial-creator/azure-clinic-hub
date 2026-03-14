@@ -1144,20 +1144,20 @@ function LinkOnlyApproval({
         {showDeviceToggle && (
           <div className="flex gap-2 justify-center">
             <Button
-              variant={deviceView === "mobile" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDeviceView("mobile")}
-              className="gap-1.5"
-            >
-              📱 Mobile
-            </Button>
-            <Button
               variant={deviceView === "desktop" ? "default" : "outline"}
               size="sm"
               onClick={() => setDeviceView("desktop")}
               className="gap-1.5"
             >
               🖥️ Desktop
+            </Button>
+            <Button
+              variant={deviceView === "mobile" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDeviceView("mobile")}
+              className="gap-1.5"
+            >
+              📱 Mobile
             </Button>
           </div>
         )}
