@@ -432,3 +432,108 @@ function TarefaDetalheView({ tarefa, onBack }: { tarefa: ClienteTarefa; onBack: 
     </div>
   );
 }
+
+/* ─── Scaled iPhone Mockup (same as AprovacaoMockup) ─── */
+function GradeScaledMockup({ children }: { children: ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [naturalH, setNaturalH] = useState(0);
+
+  useEffect(() => {
+    const sync = () => {
+      const container = containerRef.current;
+      const inner = innerRef.current;
+      if (!container || !inner) return;
+      inner.style.transform = 'scale(1)';
+      requestAnimationFrame(() => {
+        const nW = inner.offsetWidth;
+        const nH = inner.offsetHeight;
+        const cW = container.clientWidth;
+        if (nW <= 0) return;
+        const s = cW / nW;
+        setScale(s);
+        setNaturalH(nH);
+        inner.style.transform = `scale(${s})`;
+        inner.style.transformOrigin = 'top left';
+      });
+    };
+    const timer = setTimeout(sync, 100);
+    const ro = new ResizeObserver(() => sync());
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => { clearTimeout(timer); ro.disconnect(); };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="w-full" style={{ height: naturalH > 0 ? naturalH * scale : 'auto' }}>
+      <div ref={innerRef} style={{ width: 380, display: 'inline-block' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Link Device Preview with mobile/desktop sub-tabs ─── */
+function LinkDevicePreview({ links }: { links: any[] }) {
+  const [deviceView, setDeviceView] = useState<"mobile" | "desktop">("mobile");
+
+  return (
+    <div className="space-y-4">
+      {/* Device toggle */}
+      <div className="flex gap-2 justify-center">
+        <Button
+          variant={deviceView === "mobile" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setDeviceView("mobile")}
+          className="gap-1.5"
+        >
+          📱 Mobile
+        </Button>
+        <Button
+          variant={deviceView === "desktop" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setDeviceView("desktop")}
+          className="gap-1.5"
+        >
+          🖥️ Desktop
+        </Button>
+      </div>
+
+      {/* Link previews */}
+      <div className="space-y-6">
+        {links.map((link: any) => {
+          const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
+          return (
+            <div key={link.id} className="space-y-2">
+              <div className="flex items-center gap-2 px-1">
+                <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline truncate"
+                >
+                  {link.titulo || link.url}
+                </a>
+              </div>
+              {deviceView === "mobile" ? (
+                <GradeScaledMockup>
+                  <IPhoneFrame>
+                    <iframe
+                      src={href}
+                      className="block w-full h-full border-0"
+                      sandbox="allow-scripts allow-same-origin allow-popups"
+                      title={link.titulo || link.url}
+                    />
+                  </IPhoneFrame>
+                </GradeScaledMockup>
+              ) : (
+                <DeviceFrameWithFallback href={href} title={link.titulo || link.url} deviceType="desktop" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
