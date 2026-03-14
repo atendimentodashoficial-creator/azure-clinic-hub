@@ -530,7 +530,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
   const handleApproveLinks = async () => {
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_task_approval_by_token", {
+      const { error: err } = await supabase.rpc(isInternal ? "update_task_approval_by_internal_token" : "update_task_approval_by_token", {
         p_token: token!,
         p_status: "aprovado",
         p_feedback: linkFeedback || null,
