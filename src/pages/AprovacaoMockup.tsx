@@ -504,30 +504,32 @@ export default function AprovacaoMockup() {
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-8">
-            {/* Left: Instagram grid mockup — visual reference */}
-            <div className="lg:sticky lg:top-8 lg:self-stretch w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
-              <IPhoneFrame className="lg:h-full lg:[&_.iphone-shell]:h-full lg:[&_.iphone-shell]:aspect-auto lg:[&_.iphone-shell]:min-h-[600px]">
-                <InstagramGridPreview
-                  posts={gridPosts.map(g => ({
-                    id: g.grid_post_id,
-                    posicao: g.posicao,
-                    image_url: g.image_url,
-                    status: g.status,
-                    feedback: g.feedback,
-                  }))}
-                  highlights={gridHighlights.map(h => ({
-                    id: h.highlight_id,
-                    ordem: h.ordem,
-                    titulo: h.titulo,
-                    image_url: h.image_url,
-                    status: h.status,
-                    feedback: h.feedback,
-                  }))}
-                  perfilNome={gridCliente}
-                  perfilCategoria={gridEmpresa}
-                  approvalMode={false}
-                />
-              </IPhoneFrame>
+            {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
+            <div className="lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
+              <GridMockupScaler>
+                <IPhoneFrame>
+                  <InstagramGridPreview
+                    posts={gridPosts.map(g => ({
+                      id: g.grid_post_id,
+                      posicao: g.posicao,
+                      image_url: g.image_url,
+                      status: g.status,
+                      feedback: g.feedback,
+                    }))}
+                    highlights={gridHighlights.map(h => ({
+                      id: h.highlight_id,
+                      ordem: h.ordem,
+                      titulo: h.titulo,
+                      image_url: h.image_url,
+                      status: h.status,
+                      feedback: h.feedback,
+                    }))}
+                    perfilNome={gridCliente}
+                    perfilCategoria={gridEmpresa}
+                    approvalMode={false}
+                  />
+                </IPhoneFrame>
+              </GridMockupScaler>
             </div>
 
             {/* Right: Approval controls */}
