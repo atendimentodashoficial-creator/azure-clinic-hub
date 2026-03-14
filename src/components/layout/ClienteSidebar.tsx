@@ -1,12 +1,13 @@
-import { Calendar, LogOut, ChevronLeft, ChevronRight, Home, FileCheck, ClipboardList } from "lucide-react";
+import { Calendar, LogOut, ChevronLeft, ChevronRight, Home, FileCheck, ClipboardList, Package } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useClienteProdutos } from "@/hooks/useClienteProdutos";
 import noktaLogoDefault from "@/assets/nokta-logo.png";
 
-const clienteNavigation = [
+const baseNavigation = [
   { name: "Início", href: "/cliente", icon: Home },
   { name: "Tarefas", href: "/cliente/tarefas", icon: ClipboardList },
   { name: "Agendamentos", href: "/cliente/agendamentos", icon: Calendar },
@@ -21,11 +22,22 @@ interface SidebarContentProps {
 
 export const ClienteSidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse }: SidebarContentProps) => {
   const { user, signOut } = useAuth();
+  const { data: produtos = [] } = useClienteProdutos();
 
   const handleLogout = async () => {
     await signOut();
     onNavigate?.();
   };
+
+  // Build dynamic navigation items
+  const navigation = [
+    ...baseNavigation,
+    ...produtos.map(p => ({
+      name: p.nome,
+      href: `/cliente/produto/${p.id}`,
+      icon: Package,
+    })),
+  ];
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -55,49 +67,59 @@ export const ClienteSidebarContent = ({ onNavigate, collapsed = false, onToggleC
           "flex-1 overflow-y-auto flex flex-col",
           collapsed ? "py-4 gap-6 items-center" : "px-3 py-4 space-y-1"
         )}>
-          {clienteNavigation.map((item) => (
-            <div key={item.name}>
-              {collapsed ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <NavLink
-                      to={item.href}
-                      end={item.href === "/cliente"}
-                      onClick={onNavigate}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center justify-center h-10 w-10 rounded-lg text-sm font-medium transition-all",
-                          isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-card" : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )
-                      }
-                    >
-                      {({ isActive }) => <item.icon className={cn("h-5 w-5", isActive && "text-sidebar-primary")} />}
-                    </NavLink>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">{item.name}</TooltipContent>
-                </Tooltip>
-              ) : (
-                <NavLink
-                  to={item.href}
-                  end={item.href === "/cliente"}
-                  onClick={onNavigate}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
-                      isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-card" : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon className={cn("h-5 w-5", isActive && "text-sidebar-primary")} />
-                      <span>{item.name}</span>
-                    </>
-                  )}
-                </NavLink>
-              )}
-            </div>
-          ))}
+          {navigation.map((item, idx) => {
+            // Add separator before products
+            const isFirstProduct = idx === baseNavigation.length && produtos.length > 0;
+            return (
+              <div key={item.name + item.href}>
+                {isFirstProduct && !collapsed && (
+                  <div className="pt-3 pb-1 px-3">
+                    <span className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Produtos</span>
+                  </div>
+                )}
+                {isFirstProduct && collapsed && <div className="w-6 border-t border-sidebar-border" />}
+                {collapsed ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <NavLink
+                        to={item.href}
+                        end={item.href === "/cliente"}
+                        onClick={onNavigate}
+                        className={({ isActive }) =>
+                          cn(
+                            "flex items-center justify-center h-10 w-10 rounded-lg text-sm font-medium transition-all",
+                            isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-card" : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                          )
+                        }
+                      >
+                        {({ isActive }) => <item.icon className={cn("h-5 w-5", isActive && "text-sidebar-primary")} />}
+                      </NavLink>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{item.name}</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <NavLink
+                    to={item.href}
+                    end={item.href === "/cliente"}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                        isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-card" : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-sidebar-primary")} />
+                        <span className="truncate">{item.name}</span>
+                      </>
+                    )}
+                  </NavLink>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {onToggleCollapse && !collapsed && (
