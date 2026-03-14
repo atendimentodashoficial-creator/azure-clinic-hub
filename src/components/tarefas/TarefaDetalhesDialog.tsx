@@ -374,10 +374,12 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
       // Reset internal approval if needed
       if (exigeAprovacaoInterna) {
+        const internaToken = tarefa.internal_approval_token || crypto.randomUUID();
         const internaColumnId = await findColumnByMatcherAsync(isAprovacaoInternaColumn);
         const updateData: Record<string, any> = {
           aprovacao_interna_status: "pendente",
           aprovacao_interna_feedback: null,
+          internal_approval_token: internaToken,
           updated_at: new Date().toISOString(),
         };
         if (internaColumnId) updateData.coluna_id = internaColumnId;
