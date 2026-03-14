@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TarefaCliente } from "@/hooks/useTarefasClientes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
 import { extractCountryCode, formatPhoneByCountry, getPhonePlaceholder, normalizePhone, stripCountryCode } from "@/utils/phoneFormat";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Instagram, Link, Globe, MessageSquare } from "lucide-react";
+import { Plus, Instagram, Link, Globe, MessageSquare, Camera, X } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface NovoClienteDialogProps {
   onSubmit: (data: any) => void;
