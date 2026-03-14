@@ -267,7 +267,7 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   );
 }
 
-function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, tiposTarefas, isFuncionario, onDelete, onStartTimer, onClick, onAdvance }: {
+function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, tiposTarefas, isFuncionario, onDelete, onStartTimer, onClick, onAdvance, revisoesCounts }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
@@ -279,6 +279,7 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioes
   onStartTimer: (id: string) => void;
   onClick?: (tarefa: Tarefa) => void;
   onAdvance?: (tarefa: Tarefa) => void;
+  revisoesCounts?: { interna: number; cliente: number };
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tarefa.id,
@@ -306,6 +307,7 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioes
         onClick={onClick}
         onAdvance={onAdvance}
         dragHandleProps={{ ...attributes, ...listeners }}
+        revisoesCounts={revisoesCounts}
       />
     </div>
   );
