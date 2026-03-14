@@ -286,7 +286,7 @@ export default function ClienteAprovacoes() {
                       }))}
                       perfilNome={activeTarefa.cliente_nome}
                       perfilCategoria={activeTarefa.cliente_empresa || ""}
-                      className="w-full"
+                      className="w-full max-w-none"
                     />
                   </div>
 
