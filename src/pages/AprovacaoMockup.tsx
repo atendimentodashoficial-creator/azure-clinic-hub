@@ -435,6 +435,13 @@ export default function AprovacaoMockup() {
       });
       toast.success("Post reprovado com feedback.");
       checkAndNotifyRejection(token!, feedback);
+    } catch {
+      toast.error("Erro ao reprovar");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  // === HIGHLIGHT APPROVAL HANDLERS ===
   const sortedHighlights = [...gridHighlights].sort((a, b) => a.ordem - b.ordem);
   const filteredSortedHighlightsForHandler = sortedHighlights.filter(h => filterStatus(h.status));
   const clampedHighlightIdx = Math.min(currentHighlightIdx, Math.max(0, filteredSortedHighlightsForHandler.length - 1));
