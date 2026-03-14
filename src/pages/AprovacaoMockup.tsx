@@ -818,7 +818,7 @@ export default function AprovacaoMockup() {
 
   // Mockup approval mode
   const tarefaTitulo = mockups[0]?.tarefa_titulo || "Tarefa";
-  const clienteNome = taskInfo?.cliente_instagram || mockups[0]?.cliente_nome || "perfil";
+  const clienteNome = extractInstagramUsername(taskInfo?.cliente_instagram) || mockups[0]?.cliente_nome || "perfil";
   const clienteEmpresa = mockups[0]?.cliente_empresa || "";
 
   const statusColor = (s: string) => {
