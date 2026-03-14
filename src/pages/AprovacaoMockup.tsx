@@ -690,7 +690,7 @@ export default function AprovacaoMockup() {
                       {currentFilteredGridPost && (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <Button variant="ghost" size="sm" disabled={currentGridIdx === 0} onClick={() => setCurrentGridIdx(i => i - 1)}>
+                            <Button variant="ghost" size="sm" disabled={Math.min(currentGridIdx, Math.max(0, filteredSortedGridPosts.length - 1)) === 0} onClick={() => setCurrentGridIdx(i => Math.max(0, i - 1))}>
                               <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
                             </Button>
                             <Badge className={cn("border-0", itemStatusColor(currentFilteredGridPost.status))}>
