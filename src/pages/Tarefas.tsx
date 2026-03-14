@@ -555,17 +555,24 @@ export default function Tarefas() {
     const timerUpdates = computeTimerUpdates(tarefa, colunas, nextCol.id);
     const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
 
-    moverTarefa.mutate(
-      { id: tarefa.id, coluna_id: nextCol.id, ordem: targetTarefas.length },
+    // Apply move + timer in a single update
+    const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
+    const updatePayload: any = {
+      coluna_id: nextCol.id,
+      ordem: targetTarefas.length,
+      ...timerUpdates,
+      updated_at: new Date().toISOString(),
+    };
+
+    atualizarTarefa.mutate(
+      { id: tarefa.id, ...updatePayload },
       {
         onSuccess: async () => {
           toast.success(`Tarefa movida para "${nextCol.nome}"`);
 
-          if (Object.keys(timerUpdates).length > 0) {
-            await supabase.from("tarefas").update({
-              ...timerUpdates,
-              updated_at: new Date().toISOString(),
-            } as any).eq("id", tarefa.id);
+          // Send notification for completed task
+          if (targetColType === 'done' && tarefa.user_id) {
+            sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
           }
 
           // Auto-create commission when moved to Concluído
