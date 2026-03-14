@@ -921,6 +921,7 @@ export default function AprovacaoMockup() {
       onApprove={handleApproveLinks}
       onReject={handleRejectLinks}
       onSubmit={() => setSubmitted(true)}
+      isEmbedded={isEmbedded}
     />;
   }
 
