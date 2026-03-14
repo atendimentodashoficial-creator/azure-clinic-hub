@@ -595,7 +595,23 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   uploading={uploadImage.isPending}
                 />
 
-                {/* Approval actions for grid */}
+                <Separator />
+
+                <GridHighlightsManager
+                  highlights={gridHighlights}
+                  onAdd={async (file, titulo) => {
+                    await addHighlight.mutateAsync({ file, titulo });
+                  }}
+                  onRemove={async (id) => {
+                    await removeHighlight.mutateAsync(id);
+                  }}
+                  onUpdateTitle={async (id, titulo) => {
+                    await updateHighlightTitle.mutateAsync({ id, titulo });
+                  }}
+                  uploading={addHighlight.isPending}
+                />
+
+
                 {gridPosts.length > 0 && (
                   <div className="space-y-2">
                     <Separator />
