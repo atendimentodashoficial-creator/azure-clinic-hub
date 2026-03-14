@@ -651,11 +651,11 @@ export default function AprovacaoMockup() {
                         </Button>
                       </div>
 
-                      <div className="w-full max-w-md mx-auto">
+                      <div className="w-full max-w-md mx-auto aspect-[4/5] rounded-lg border border-border overflow-hidden">
                         <img
                           src={currentGridPost.image_url}
                           alt={`Post ${currentGridPost.posicao + 1}`}
-                          className="w-full aspect-[4/5] object-cover rounded-lg border border-border"
+                          className="w-full h-full object-cover"
                         />
                       </div>
 
