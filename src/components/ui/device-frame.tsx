@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 interface DeviceFrameProps {
   children: React.ReactNode;
   className?: string;
+  noScroll?: boolean;
 }
 
 interface DeviceFrameWithFallbackProps {
