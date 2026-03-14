@@ -142,10 +142,25 @@ export function useTarefas() {
   // Update task
   const atualizarTarefa = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Tarefa> & { id: string }) => {
+      const currentTask = tarefas.find((t) => t.id === id);
+      const targetColumn = updates.coluna_id ? colunas.find((c) => c.id === updates.coluna_id) : null;
+      const movedToDone = !!targetColumn && currentTask?.coluna_id !== updates.coluna_id && getColType(targetColumn.nome) === "done";
+
       const { error } = await supabase.from("tarefas").update({ ...updates, updated_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
+
+      return {
+        movedToDone,
+        tarefaId: id,
+        userId: currentTask?.user_id || effectiveUserId,
+      };
     },
-    onSuccess: invalidate,
+    onSuccess: async (result) => {
+      if (result?.movedToDone && result.userId) {
+        await sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: result.tarefaId, user_id: result.userId });
+      }
+      invalidate();
+    },
   });
 
   // Delete task
