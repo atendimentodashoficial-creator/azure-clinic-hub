@@ -18,9 +18,10 @@ interface MockupPostsManagerProps {
   maxPosts: number; // 0 = unlimited
   perfilNome?: string;
   perfilCategoria?: string;
+  perfilFotoUrl?: string | null;
 }
 
-export function MockupPostsManager({ posts, onChange, maxPosts, perfilNome, perfilCategoria }: MockupPostsManagerProps) {
+export function MockupPostsManager({ posts, onChange, maxPosts, perfilNome, perfilCategoria, perfilFotoUrl }: MockupPostsManagerProps) {
   const [expandedPost, setExpandedPost] = useState<number>(0);
 
   const effectiveMax = maxPosts > 0 ? maxPosts : 50;
