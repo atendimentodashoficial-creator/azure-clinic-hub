@@ -602,6 +602,7 @@ export default function AprovacaoMockup() {
                     }))}
                     perfilNome={gridCliente}
                     perfilCategoria={gridEmpresa}
+                    perfilFotoUrl={taskInfo?.cliente_foto_perfil_url}
                     approvalMode={false}
                   />
                 </IPhoneFrame>
