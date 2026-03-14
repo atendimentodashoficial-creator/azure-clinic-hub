@@ -7,8 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { extractCountryCode, formatPhoneByCountry } from "@/utils/phoneFormat";
 import { toast } from "sonner";
 import { Trash2, Edit, Mail, Phone, Building2 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
+import { ClienteTarefasDialog } from "@/components/tarefas/ClienteTarefasDialog";
 
 export default function TarefasClientesTab() {
   const { clientes, isLoading, criarCliente, atualizarCliente, excluirCliente } = useTarefasClientes();
