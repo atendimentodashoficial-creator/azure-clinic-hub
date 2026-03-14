@@ -627,7 +627,7 @@ export default function AprovacaoMockup() {
             </div>
 
             {/* Grade (mockup) tab */}
-            {gridApprovalTab === ("grade" as any) && (
+            {gridApprovalTab === "grade" && (
               <div className="flex justify-center">
                 <div className="w-full max-w-[400px]">
                   <IPhoneFrame>
