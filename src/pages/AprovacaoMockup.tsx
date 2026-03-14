@@ -195,26 +195,26 @@ export default function AprovacaoMockup() {
   const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
   const isGridMode = gridPosts.length > 0;
 
-  // Auto-select the tab that has items for the current filter
+  // Auto-select tab based on current filter results (prioritize posts)
   useEffect(() => {
     if (!isGridMode) return;
     const statusMatch = approvalFilter === "pendentes" ? "pendente" : approvalFilter === "aprovadas" ? "aprovado" : approvalFilter === "reprovadas" ? "reprovado" : null;
-    if (!statusMatch) return; // "all" → no auto-switch
+    if (!statusMatch) return; // "all" → keep current tab
+
     const matchingPosts = gridPosts.filter(g => g.status === statusMatch);
-    const matchingHL = gridHighlights.filter(h => h.status === statusMatch);
-    // If current tab has no items but other tab does, switch
-    if (gridApprovalTab === "posts" && matchingPosts.length === 0 && matchingHL.length > 0) {
-      setGridApprovalTab("highlights");
-      setCurrentHighlightIdx(0);
-    } else if (gridApprovalTab === "highlights" && matchingHL.length === 0 && matchingPosts.length > 0) {
+    const matchingHighlights = gridHighlights.filter(h => h.status === statusMatch);
+
+    if (matchingPosts.length > 0) {
       setGridApprovalTab("posts");
       setCurrentGridIdx(0);
+      return;
     }
-    // If both have items, prioritize posts
-    else if (gridApprovalTab === "highlights" && matchingPosts.length > 0 && matchingHL.length > 0) {
-      // Don't force switch — user manually chose highlights
+
+    if (matchingHighlights.length > 0) {
+      setGridApprovalTab("highlights");
+      setCurrentHighlightIdx(0);
     }
-  }, [isGridMode, gridPosts, gridHighlights, gridApprovalTab, approvalFilter]);
+  }, [isGridMode, gridPosts, gridHighlights, approvalFilter]);
 
   useEffect(() => {
     if (!token) return;
