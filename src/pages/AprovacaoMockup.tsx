@@ -777,7 +777,7 @@ export default function AprovacaoMockup() {
                             </Button>
                           </div>
 
-                          <div className="w-[min(100vw-2rem,28rem)] mx-auto aspect-[4/5] rounded-lg border border-border bg-muted/20 flex items-center justify-center overflow-hidden">
+                          <div className="w-full max-w-full mx-auto aspect-[4/5] rounded-lg border border-border bg-muted/20 flex items-center justify-center overflow-hidden">
                             <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-full overflow-hidden border-2 border-border flex-shrink-0">
                               <img
                                 src={currentFilteredHighlight.image_url}
