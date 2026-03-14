@@ -507,14 +507,14 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                         </span>
                       )}
                     </div>
-                    {(tarefa as any).internal_approval_token && (
+                    {tarefa.internal_approval_token && (
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
                           className="gap-1.5 text-xs"
                           onClick={() => {
-                            const link = `${window.location.origin}/aprovacao-interna/${(tarefa as any).internal_approval_token}`;
+                            const link = `${window.location.origin}/aprovacao-interna/${tarefa.internal_approval_token}`;
                             navigator.clipboard.writeText(link);
                             toast.success("Link de aprovação interna copiado!");
                           }}
@@ -526,7 +526,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                           size="sm"
                           className="gap-1.5 text-xs"
                           onClick={() => {
-                            window.open(`/aprovacao-interna/${(tarefa as any).internal_approval_token}`, "_blank");
+                            window.open(`/aprovacao-interna/${tarefa.internal_approval_token}`, "_blank");
                           }}
                         >
                           <ExternalLink className="h-3 w-3" /> Abrir
