@@ -120,7 +120,7 @@ function MonitorFrame({ children, className }: DeviceFrameProps) {
   );
 }
 
-function IPhoneFrame({ children, className }: DeviceFrameProps) {
+export function IPhoneFrame({ children, className }: DeviceFrameProps) {
   return (
     <div className={cn("flex justify-center py-4 w-full overflow-x-hidden", className)}>
       <div className="relative flex-shrink-0 w-full max-w-[380px] aspect-[9/16] overflow-hidden">

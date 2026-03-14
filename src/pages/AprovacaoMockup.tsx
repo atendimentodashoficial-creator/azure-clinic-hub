@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MockupPreview, MockupSlide } from "@/components/tarefas/MockupPreview";
 import { InstagramGridPreview } from "@/components/tarefas/InstagramGridPreview";
+import { IPhoneFrame } from "@/components/ui/device-frame";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -366,23 +367,25 @@ export default function AprovacaoMockup() {
             <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
           </div>
 
-          <InstagramGridPreview
-            posts={gridPosts.map(g => ({
-              id: g.grid_post_id,
-              posicao: g.posicao,
-              image_url: g.image_url,
-              status: g.status,
-              feedback: g.feedback,
-            }))}
-            perfilNome={gridCliente}
-            perfilCategoria={gridEmpresa}
-            approvalMode={!allGridDecided}
-            onApprove={handleApproveGridPost}
-            onReject={handleRejectGridPost}
-            feedbacks={gridFeedbacks}
-            onFeedbackChange={(id, fb) => setGridFeedbacks(prev => ({ ...prev, [id]: fb }))}
-            submitting={submitting}
-          />
+          <IPhoneFrame>
+            <InstagramGridPreview
+              posts={gridPosts.map(g => ({
+                id: g.grid_post_id,
+                posicao: g.posicao,
+                image_url: g.image_url,
+                status: g.status,
+                feedback: g.feedback,
+              }))}
+              perfilNome={gridCliente}
+              perfilCategoria={gridEmpresa}
+              approvalMode={!allGridDecided}
+              onApprove={handleApproveGridPost}
+              onReject={handleRejectGridPost}
+              feedbacks={gridFeedbacks}
+              onFeedbackChange={(id, fb) => setGridFeedbacks(prev => ({ ...prev, [id]: fb }))}
+              submitting={submitting}
+            />
+          </IPhoneFrame>
 
           {allGridDecided && (
             <Card className="p-5 space-y-4 text-center border-primary/30">
