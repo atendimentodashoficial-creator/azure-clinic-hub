@@ -108,12 +108,13 @@ export function useTarefas() {
     mutationFn: async (tarefa: { titulo: string; descricao?: string; responsavel_nome?: string; prioridade?: string; data_limite?: string; coluna_id: string; cliente_id?: string; subtarefas_total?: number; comissao?: number; reuniao_id?: string; tipo_tarefa_id?: string; produto_template_id?: string }) => {
       if (!effectiveUserId) throw new Error("Não autenticado");
       const maxOrdem = tarefas.filter((t) => t.coluna_id === tarefa.coluna_id).length;
-      const { error } = await supabase.from("tarefas").insert({
+      const { data, error } = await supabase.from("tarefas").insert({
         ...tarefa,
         user_id: effectiveUserId,
         ordem: maxOrdem,
-      });
+      }).select("id").single();
       if (error) throw error;
+      return { id: data.id, user_id: effectiveUserId, responsavel_nome: tarefa.responsavel_nome };
     },
     onSuccess: invalidate,
   });
