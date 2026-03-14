@@ -887,6 +887,8 @@ export default function AprovacaoMockup() {
   const tarefaTitulo = mockups[0]?.tarefa_titulo || "Tarefa";
   const clienteNome = extractInstagramUsername(taskInfo?.cliente_instagram) || mockups[0]?.cliente_nome || "perfil";
   const clienteEmpresa = mockups[0]?.cliente_empresa || "";
+  const pendingMockupPosts = posts.filter(p => p.status !== "aprovado");
+  const approvedMockupPosts = posts.filter(p => p.status === "aprovado");
 
   const statusColor = (s: string) => {
     if (s === "aprovado") return "bg-emerald-500/20 text-emerald-400";
