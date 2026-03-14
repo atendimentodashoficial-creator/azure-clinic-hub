@@ -40,7 +40,7 @@ serve(async (req) => {
       );
     }
 
-    const { action, email, password, fullName, userId } = await req.json();
+    const { action, email, password, fullName, userId, role: requestedRole } = await req.json();
 
     if (action === 'create') {
       if (!email || !password) {
@@ -49,6 +49,9 @@ serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+
+      // Determine role - default to 'funcionario' for backwards compatibility
+      const assignRole = requestedRole === 'cliente' ? 'cliente' : 'funcionario';
 
       // Create auth user
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
@@ -60,10 +63,10 @@ serve(async (req) => {
 
       if (createError) throw createError;
 
-      // Assign funcionario role
+      // Assign role
       const { error: roleError } = await supabase
         .from('user_roles')
-        .insert({ user_id: newUser.user.id, role: 'funcionario' });
+        .insert({ user_id: newUser.user.id, role: assignRole });
 
       if (roleError) throw roleError;
 
