@@ -175,10 +175,25 @@ export function useTarefas() {
   // Move task to column
   const moverTarefa = useMutation({
     mutationFn: async ({ id, coluna_id, ordem }: { id: string; coluna_id: string; ordem: number }) => {
+      const currentTask = tarefas.find((t) => t.id === id);
+      const targetColumn = colunas.find((c) => c.id === coluna_id);
+      const movedToDone = !!targetColumn && currentTask?.coluna_id !== coluna_id && getColType(targetColumn.nome) === "done";
+
       const { error } = await supabase.from("tarefas").update({ coluna_id, ordem, updated_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
+
+      return {
+        movedToDone,
+        tarefaId: id,
+        userId: currentTask?.user_id || effectiveUserId,
+      };
     },
-    onSuccess: invalidate,
+    onSuccess: async (result) => {
+      if (result?.movedToDone && result.userId) {
+        await sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: result.tarefaId, user_id: result.userId });
+      }
+      invalidate();
+    },
   });
 
   // Add column
