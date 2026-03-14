@@ -4949,6 +4949,7 @@ export type Database = {
           data_limite: string | null
           descricao: string | null
           id: string
+          internal_approval_token: string | null
           ordem: number
           prioridade: string
           produto_template_id: string | null
@@ -4978,6 +4979,7 @@ export type Database = {
           data_limite?: string | null
           descricao?: string | null
           id?: string
+          internal_approval_token?: string | null
           ordem?: number
           prioridade?: string
           produto_template_id?: string | null
@@ -5007,6 +5009,7 @@ export type Database = {
           data_limite?: string | null
           descricao?: string | null
           id?: string
+          internal_approval_token?: string | null
           ordem?: number
           prioridade?: string
           produto_template_id?: string | null
@@ -6191,7 +6194,36 @@ export type Database = {
           titulo: string
         }[]
       }
+      get_grid_highlights_by_internal_token: {
+        Args: { p_token: string }
+        Returns: {
+          cliente_empresa: string
+          cliente_nome: string
+          feedback: string
+          highlight_id: string
+          image_url: string
+          ordem: number
+          status: string
+          tarefa_id: string
+          tarefa_titulo: string
+          titulo: string
+        }[]
+      }
       get_grid_posts_by_approval_token: {
+        Args: { p_token: string }
+        Returns: {
+          cliente_empresa: string
+          cliente_nome: string
+          feedback: string
+          grid_post_id: string
+          image_url: string
+          posicao: number
+          status: string
+          tarefa_id: string
+          tarefa_titulo: string
+        }[]
+      }
+      get_grid_posts_by_internal_token: {
         Args: { p_token: string }
         Returns: {
           cliente_empresa: string
@@ -6213,7 +6245,33 @@ export type Database = {
           url: string
         }[]
       }
+      get_links_by_internal_token: {
+        Args: { p_token: string }
+        Returns: {
+          ordem: number
+          titulo: string
+          url: string
+        }[]
+      }
       get_mockups_by_approval_token: {
+        Args: { p_token: string }
+        Returns: {
+          cliente_empresa: string
+          cliente_nome: string
+          cta: string
+          feedback: string
+          legenda: string
+          mockup_id: string
+          ordem: number
+          post_index: number
+          status: string
+          subtitulo: string
+          tarefa_id: string
+          tarefa_titulo: string
+          titulo: string
+        }[]
+      }
+      get_mockups_by_internal_token: {
         Args: { p_token: string }
         Returns: {
           cliente_empresa: string
@@ -6244,9 +6302,31 @@ export type Database = {
           tarefa_titulo: string
         }[]
       }
+      get_task_by_internal_approval_token: {
+        Args: { p_token: string }
+        Returns: {
+          approval_status: string
+          aprovacao_interna_status: string
+          cliente_empresa: string
+          cliente_foto_perfil_url: string
+          cliente_instagram: string
+          cliente_nome: string
+          tarefa_id: string
+          tarefa_titulo: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      handle_internal_approval: {
+        Args: {
+          p_feedback?: string
+          p_gestor_nome: string
+          p_status: string
+          p_token: string
+        }
+        Returns: undefined
       }
       has_role: {
         Args: {
