@@ -578,7 +578,7 @@ export default function AprovacaoMockup() {
             </div>
 
             {/* Right: Approval controls */}
-            <div className="flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6">
+            <div data-grid-right className="flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6">
               {/* Tab switch: Posts / Destaques */}
               {hasHighlights && (
                 <div className="flex gap-2 justify-center">
