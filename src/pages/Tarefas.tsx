@@ -753,9 +753,11 @@ export default function Tarefas() {
                         membrosNomes={membrosNomes}
                         reunioesMap={reunioesMap}
                         isFuncionario={isFuncionario}
+                        tiposTarefas={tiposTarefas}
                         onDelete={handleExcluir}
                         onStartTimer={handleStartTimer}
                         onClick={setDetalheTarefa}
+                        onAdvance={handleAdvance}
                       />
                     ))}
                   </DroppableColumn>
