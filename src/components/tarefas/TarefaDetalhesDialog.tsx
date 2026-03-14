@@ -595,8 +595,8 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   onRemove={async (posicao) => {
                     await removeImage.mutateAsync(posicao);
                   }}
-                  onSwap={async (from, to) => {
-                    await swapPositions.mutateAsync({ from, to });
+                  onReorder={async (newOrder) => {
+                    await reorderPosts.mutateAsync(newOrder);
                   }}
                   uploading={uploadImage.isPending || uploadBatch.isPending}
                 />
@@ -616,6 +616,9 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   }}
                   onUpdateTitle={async (id, titulo) => {
                     await updateHighlightTitle.mutateAsync({ id, titulo });
+                  }}
+                  onReorder={async (newOrder) => {
+                    await reorderHighlights.mutateAsync(newOrder);
                   }}
                   uploading={addHighlight.isPending || addHighlightBatch.isPending}
                 />
