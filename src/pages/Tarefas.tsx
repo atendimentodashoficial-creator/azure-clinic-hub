@@ -7,6 +7,7 @@ import { useMembroAtual } from "@/hooks/useMembroAtual";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useOwnerId } from "@/hooks/useOwnerId";
 import { supabase } from "@/integrations/supabase/client";
+import { sendTaskNotification } from "@/utils/taskNotifications";
 import { useQuery } from "@tanstack/react-query";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable, closestCenter } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
