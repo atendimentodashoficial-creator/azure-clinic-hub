@@ -12,6 +12,7 @@ export interface TipoTarefa {
   limite_arquivos: Record<string, number>;
   exige_aprovacao: boolean;
   exige_aprovacao_interna: boolean;
+  avisos: Record<string, any>;
   ativo: boolean;
   ordem: number;
   created_at: string;
