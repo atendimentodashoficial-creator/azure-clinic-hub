@@ -1186,7 +1186,10 @@ function LinkOnlyApproval({
       <div className={cn("mx-auto px-4 py-8 space-y-6", deviceView === "mobile" ? "max-w-xl" : "max-w-6xl")}>
         {!isEmbedded && (
           <div className="text-center space-y-1">
-            <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
+            <div className="flex items-center justify-center gap-2">
+              <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
+              {isInternal && <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs">Aprovação Interna</Badge>}
+            </div>
             <p className="text-sm text-muted-foreground">
               Aprovação de Entrega{clienteNome ? ` • ${clienteNome}` : ""}
             </p>
