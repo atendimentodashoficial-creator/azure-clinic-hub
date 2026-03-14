@@ -511,6 +511,7 @@ export default function AprovacaoMockup() {
         return updated;
       });
       toast.success("Destaque reprovado com feedback.");
+      checkAndNotifyRejection(token!, feedback);
     } catch {
       toast.error("Erro ao reprovar");
     } finally {
