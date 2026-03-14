@@ -633,7 +633,7 @@ export default function AprovacaoMockup() {
               {/* Highlights approval */}
               {gridApprovalTab === "highlights" && (
                 <>
-                  <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
                     {sortedHighlights.map((h, i) => (
                       <button
                         key={h.highlight_id}
