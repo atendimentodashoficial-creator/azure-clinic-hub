@@ -384,7 +384,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         }
       }
 
-      sendTaskNotification({ evento: "ajustada", tarefa_id: tarefa.id, user_id: tarefa.user_id });
+      await sendTaskNotification({ evento: "ajustada", tarefa_id: tarefa.id, user_id: tarefa.user_id });
       toast.success("Itens revisados reenviados para aprovação!");
       window.location.reload();
     } catch {
