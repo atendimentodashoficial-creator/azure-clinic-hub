@@ -26,6 +26,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Minus, Plus as PlusIcon, X } from "lucide-react";
+import { TipoTarefaAvisosConfig, AvisosMap } from "@/components/tarefas/TipoTarefaAvisosConfig";
+import { TarefasNotificacaoInstanciaConfig } from "@/components/tarefas/TarefasNotificacaoInstanciaConfig";
 
 const FILE_TYPES = [
   { key: "imagens", label: "Imagens" },
