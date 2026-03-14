@@ -530,6 +530,7 @@ export default function AprovacaoMockup() {
       if (err) throw err;
       setLinkApprovalStatus("aprovado");
       toast.success("Aprovado com sucesso!");
+      checkAndNotifyCompletion(token!);
     } catch {
       toast.error("Erro ao aprovar");
     } finally {
