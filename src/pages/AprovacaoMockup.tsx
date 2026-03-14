@@ -338,7 +338,7 @@ export default function AprovacaoMockup() {
     );
   }
 
-  if (error || (!isLinkOnlyMode && posts.length === 0)) {
+  if (error || (!isLinkOnlyMode && !isGridMode && posts.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="p-8 text-center max-w-md">
@@ -347,6 +347,58 @@ export default function AprovacaoMockup() {
             {error || "Todos os itens já foram aprovados ou não há itens para revisar."}
           </p>
         </Card>
+      </div>
+    );
+  }
+
+  // Grid approval mode
+  if (isGridMode) {
+    const gridTitulo = gridPosts[0]?.tarefa_titulo || taskInfo?.tarefa_titulo || "Tarefa";
+    const gridCliente = gridPosts[0]?.cliente_nome || taskInfo?.cliente_nome || "perfil";
+    const gridEmpresa = gridPosts[0]?.cliente_empresa || taskInfo?.cliente_empresa || "";
+    const allGridDecided = gridPosts.every(g => g.status === "aprovado" || g.status === "reprovado");
+
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+          <div className="text-center space-y-1">
+            <h1 className="text-xl font-bold text-foreground">{gridTitulo}</h1>
+            <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
+          </div>
+
+          <InstagramGridPreview
+            posts={gridPosts.map(g => ({
+              id: g.grid_post_id,
+              posicao: g.posicao,
+              image_url: g.image_url,
+              status: g.status,
+              feedback: g.feedback,
+            }))}
+            perfilNome={gridCliente}
+            perfilCategoria={gridEmpresa}
+            approvalMode={!allGridDecided}
+            onApprove={handleApproveGridPost}
+            onReject={handleRejectGridPost}
+            feedbacks={gridFeedbacks}
+            onFeedbackChange={(id, fb) => setGridFeedbacks(prev => ({ ...prev, [id]: fb }))}
+            submitting={submitting}
+          />
+
+          {allGridDecided && (
+            <Card className="p-5 space-y-4 text-center border-primary/30">
+              <p className="text-sm font-medium text-foreground">Todos os posts foram revisados!</p>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-xs text-muted-foreground">
+                  {gridPosts.filter(g => g.status === "aprovado").length} aprovado(s) • {gridPosts.filter(g => g.status === "reprovado").length} reprovado(s)
+                </p>
+                <Button onClick={() => setSubmitted(true)} className="gap-2" size="lg">
+                  <Send className="w-4 h-4" />
+                  Enviar respostas
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
     );
   }
