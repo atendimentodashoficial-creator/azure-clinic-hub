@@ -172,6 +172,22 @@ All colors MUST be HSL.
     display: none;
   }
 
+  /* Subtle thin scrollbar */
+  .scrollbar-subtle {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--foreground) / 0.1) transparent;
+  }
+  .scrollbar-subtle::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-subtle::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-subtle::-webkit-scrollbar-thumb {
+    background: hsl(var(--foreground) / 0.1);
+    border-radius: 9999px;
+  }
+
   /* Make native color input swatch fill the whole control */
   input[type="color"].color-swatch-full {
     -webkit-appearance: none;

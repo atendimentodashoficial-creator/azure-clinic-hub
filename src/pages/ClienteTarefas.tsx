@@ -326,7 +326,23 @@ function TarefaDetalheView({ tarefa, onBack }: { tarefa: ClienteTarefa; onBack: 
         )}
       </div>
 
-      {tarefa.approval_token && tarefa.coluna_nome === "Aguardando Aprovação" ? (
+      {tarefa.approval_token && tarefa.coluna_nome === "Aguardando Aprovação" ? (() => {
+        // Compute counts: for link-only tasks, count as 1 item; for others, count from deliverables
+        const allItems = [...gridPosts, ...highlights, ...mockups];
+        const isLinkOnly = allItems.length === 0 && links.length > 0;
+        const approvalStatus = tarefa.approval_status;
+        const countPendentes = isLinkOnly
+          ? (!approvalStatus || approvalStatus === "pendente" ? 1 : 0)
+          : allItems.filter((i: any) => i.status === "pendente").length;
+        const countAprovadas = isLinkOnly
+          ? (approvalStatus === "concluido" ? 1 : 0)
+          : allItems.filter((i: any) => i.status === "aprovado").length;
+        const countReprovadas = isLinkOnly
+          ? (approvalStatus === "em_revisao" ? 1 : 0)
+          : allItems.filter((i: any) => i.status === "reprovado").length;
+        const counts = { pendentes: countPendentes, aprovadas: countAprovadas, reprovadas: countReprovadas };
+
+        return (
         <div className="space-y-4">
           <div className="flex gap-2 justify-center flex-wrap">
             {(["pendentes", "aprovadas", "reprovadas"] as const).map(f => (
@@ -343,7 +359,7 @@ function TarefaDetalheView({ tarefa, onBack }: { tarefa: ClienteTarefa; onBack: 
                   approvalFilter === f && f === "reprovadas" && "ring-2 ring-red-500/30 bg-red-500/20",
                 )}
               >
-                {f === "pendentes" ? "Pendentes" : f === "aprovadas" ? "Aprovadas" : "Reprovadas"}
+                {f === "pendentes" ? "Pendentes" : f === "aprovadas" ? "Aprovadas" : "Reprovadas"} ({counts[f]})
               </button>
             ))}
           </div>
@@ -363,7 +379,8 @@ function TarefaDetalheView({ tarefa, onBack }: { tarefa: ClienteTarefa; onBack: 
             />
           </div>
         </div>
-      ) : !hasDeliverables ? (
+        );
+      })() : !hasDeliverables ? (
         <Card className="p-8 text-center">
           <ClipboardList className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
           <p className="text-sm text-muted-foreground">Nenhum conteúdo entregue ainda para esta tarefa.</p>
