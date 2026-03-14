@@ -553,6 +553,7 @@ export default function AprovacaoMockup() {
       if (err) throw err;
       setLinkApprovalStatus("reprovado");
       toast.success("Mudança solicitada com sucesso.");
+      checkAndNotifyRejection(token!, linkFeedback);
     } catch {
       toast.error("Erro ao solicitar mudança");
     } finally {
