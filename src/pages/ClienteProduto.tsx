@@ -310,9 +310,17 @@ function TarefaDetalheView({ tarefa, produtoNome, onBack }: { tarefa: ProdutoTar
 
       {tarefa.approval_token ? (() => {
         const allItems = [...gridPosts, ...highlights, ...mockups];
-        const countPendentes = allItems.filter((i: any) => i.status === "pendente").length;
-        const countAprovadas = allItems.filter((i: any) => i.status === "aprovado").length;
-        const countReprovadas = allItems.filter((i: any) => i.status === "reprovado").length;
+        const isLinkOnly = allItems.length === 0 && links.length > 0;
+        const approvalStatus = tarefa.approval_status;
+        const countPendentes = isLinkOnly
+          ? (!approvalStatus || approvalStatus === "pendente" ? 1 : 0)
+          : allItems.filter((i: any) => i.status === "pendente").length;
+        const countAprovadas = isLinkOnly
+          ? (approvalStatus === "concluido" ? 1 : 0)
+          : allItems.filter((i: any) => i.status === "aprovado").length;
+        const countReprovadas = isLinkOnly
+          ? (approvalStatus === "em_revisao" ? 1 : 0)
+          : allItems.filter((i: any) => i.status === "reprovado").length;
         const counts = { pendentes: countPendentes, aprovadas: countAprovadas, reprovadas: countReprovadas };
         return (
         <div className="space-y-4">
