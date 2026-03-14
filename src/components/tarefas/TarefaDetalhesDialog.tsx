@@ -900,7 +900,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                         onClick={async () => {
                           setResubmitting(true);
                           try {
-                            const approvalColumnId = await findAguardandoAprovacaoColumnId();
+                            const approvalColumnId = await findColumnByMatcherAsync(isAprovacaoClienteColumn);
                             const updateData: Record<string, any> = {
                               approval_status: "aguardando",
                               updated_at: new Date().toISOString(),
