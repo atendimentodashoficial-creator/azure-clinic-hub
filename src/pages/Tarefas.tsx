@@ -465,7 +465,13 @@ export default function Tarefas() {
 
   const handleCriar = (data: any) => {
     criarTarefa.mutate(data, {
-      onSuccess: () => toast.success("Tarefa criada!"),
+      onSuccess: (result) => {
+        toast.success("Tarefa criada!");
+        // Send "atribuida" notification if task has a responsável
+        if (result?.id && data.responsavel_nome) {
+          sendTaskNotification({ evento: "atribuida", tarefa_id: result.id, user_id: result.user_id });
+        }
+      },
       onError: (e: any) => toast.error(e.message),
     });
   };
