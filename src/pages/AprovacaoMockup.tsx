@@ -695,7 +695,7 @@ export default function AprovacaoMockup() {
                             </Button>
                           </div>
 
-                          <div className="w-full max-w-full mx-auto aspect-[4/5] rounded-lg border border-border overflow-hidden">
+                          <div className="w-full mx-auto aspect-square rounded-lg border border-border overflow-hidden">
                             <img
                               src={currentFilteredGridPost.image_url}
                               alt={`Post ${currentFilteredGridPost.posicao + 1}`}
@@ -777,8 +777,8 @@ export default function AprovacaoMockup() {
                             </Button>
                           </div>
 
-                          <div className="w-full max-w-full mx-auto aspect-[4/5] rounded-lg border border-border bg-muted/20 flex items-center justify-center overflow-hidden">
-                            <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-full overflow-hidden border-2 border-border flex-shrink-0">
+                          <div className="w-full mx-auto aspect-square rounded-lg border border-border bg-muted/20 flex items-center justify-center overflow-hidden">
+                            <div className="w-3/4 aspect-square rounded-full overflow-hidden border-2 border-border flex-shrink-0">
                               <img
                                 src={currentFilteredHighlight.image_url}
                                 alt={currentFilteredHighlight.titulo}

@@ -103,11 +103,11 @@ export function InstagramGridPreview({
 
         {/* Highlights */}
         {sortedHighlights.length > 0 && (
-          <div className="flex gap-2 px-4 pb-3 justify-center">
+          <div className="flex gap-2 px-3 pb-3 justify-center overflow-hidden">
             {sortedHighlights.map(h => (
-              <div key={h.id} className="flex flex-col items-center gap-1 min-w-0 flex-shrink">
+              <div key={h.id} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: `${Math.min(56, 280 / (sortedHighlights.length + 1))}px` }}>
                 <div className={cn(
-                  "w-14 h-14 max-w-full aspect-square rounded-full p-[2px] bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500",
+                  "w-full aspect-square rounded-full p-[2px] bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500",
                   h.status === "aprovado" && "from-emerald-400 to-emerald-600",
                   h.status === "reprovado" && "from-red-400 to-red-600"
                 )}>
@@ -115,15 +115,15 @@ export function InstagramGridPreview({
                     <img src={h.image_url} alt={h.titulo} className="w-full h-full rounded-full object-cover" />
                   </div>
                 </div>
-                <span className="text-[10px] text-foreground truncate max-w-[56px] text-center">{h.titulo}</span>
+                <span className="text-[9px] text-foreground truncate w-full text-center">{h.titulo}</span>
               </div>
             ))}
             {/* "Add" placeholder */}
-            <div className="flex flex-col items-center gap-1 min-w-0 flex-shrink">
-              <div className="w-14 h-14 max-w-full aspect-square rounded-full border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: `${Math.min(56, 280 / (sortedHighlights.length + 1))}px` }}>
+              <div className="w-full aspect-square rounded-full border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
                 <span className="text-lg text-muted-foreground/40">+</span>
               </div>
-              <span className="text-[10px] text-muted-foreground">Novo</span>
+              <span className="text-[9px] text-muted-foreground">Novo</span>
             </div>
           </div>
         )}
