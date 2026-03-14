@@ -28,6 +28,7 @@ interface InstagramGridPreviewProps {
   highlights?: GridHighlight[];
   perfilNome: string;
   perfilCategoria?: string;
+  perfilFotoUrl?: string | null;
   approvalMode?: boolean;
   onApprove?: (postId: string) => void;
   onReject?: (postId: string, feedback: string) => void;
@@ -41,6 +42,7 @@ export function InstagramGridPreview({
   highlights = [],
   perfilNome,
   perfilCategoria,
+  perfilFotoUrl,
   approvalMode,
   onApprove,
   onReject,
@@ -71,8 +73,12 @@ export function InstagramGridPreview({
         {/* Profile header */}
         <div className="flex items-center gap-4 p-4 pt-10">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 p-[2px] flex-shrink-0">
-            <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-              <span className="text-sm font-bold text-foreground">{iniciais}</span>
+            <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
+              {perfilFotoUrl ? (
+                <img src={perfilFotoUrl} alt={perfilNome} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-bold text-foreground">{iniciais}</span>
+              )}
             </div>
           </div>
           <div className="flex-1 min-w-0">

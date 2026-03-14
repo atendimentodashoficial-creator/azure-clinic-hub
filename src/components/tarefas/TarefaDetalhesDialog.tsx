@@ -457,6 +457,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   maxPosts={mockupLimit}
                   perfilNome={cliente?.nome || "perfil"}
                   perfilCategoria={cliente?.empresa || ""}
+                  perfilFotoUrl={(cliente as any)?.foto_perfil_url}
                 />
                 <Button onClick={handleSaveMockups} disabled={saveMockups.isPending} className="w-full gap-2">
                   <Save className="h-4 w-4" />

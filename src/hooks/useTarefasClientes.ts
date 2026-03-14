@@ -18,6 +18,7 @@ export interface TarefaCliente {
   google_meu_negocio: string | null;
   observacoes: string | null;
   grupo_whatsapp: string | null;
+  foto_perfil_url: string | null;
   tipo: string;
   created_at: string;
 }
@@ -37,7 +38,7 @@ export function useTarefasClientes() {
         .eq("user_id", user.id)
         .order("nome");
       if (error) throw error;
-      return data as TarefaCliente[];
+      return data as unknown as TarefaCliente[];
     },
     enabled: !!user?.id,
   });

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TarefaCliente } from "@/hooks/useTarefasClientes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
 import { extractCountryCode, formatPhoneByCountry, getPhonePlaceholder, normalizePhone, stripCountryCode } from "@/utils/phoneFormat";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Instagram, Link, Globe, MessageSquare } from "lucide-react";
+import { Plus, Instagram, Link, Globe, MessageSquare, Camera, X } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface NovoClienteDialogProps {
   onSubmit: (data: any) => void;
@@ -57,11 +59,14 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
   const [observacoes, setObservacoes] = useState(clienteEditando?.observacoes || "");
   const [grupoWhatsapp, setGrupoWhatsapp] = useState(clienteEditando?.grupo_whatsapp || "");
   const [tipo, setTipo] = useState(clienteEditando?.tipo || defaultTipo || "interno");
+  const [fotoPerfilUrl, setFotoPerfilUrl] = useState(clienteEditando?.foto_perfil_url || "");
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
     setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("55"); setEmpresa("");
     setCnpj(""); setDocTipo("cnpj"); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
-    setObservacoes(""); setGrupoWhatsapp(""); setTipo(defaultTipo || "interno"); setFormTab("info");
+    setObservacoes(""); setGrupoWhatsapp(""); setTipo(defaultTipo || "interno"); setFormTab("info"); setFotoPerfilUrl("");
   };
 
   // Pre-fill when opened externally with initialData
@@ -98,6 +103,30 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
     setCnpj(docTipo === "cnpj" ? formatCnpj(digits) : formatCpf(digits));
   };
 
+  const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 2MB"); return; }
+
+    setUploadingFoto(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const fileName = `${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("membros-fotos")
+        .upload(`clientes/${fileName}`, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("membros-fotos").getPublicUrl(`clientes/${fileName}`);
+      setFotoPerfilUrl(urlData.publicUrl);
+    } catch (err: any) {
+      toast.error("Erro ao enviar foto: " + err.message);
+    } finally {
+      setUploadingFoto(false);
+    }
+  };
+
   const handleSubmit = () => {
     if (!nome.trim()) { toast.error("Nome é obrigatório"); return; }
     if (tipo === "interno" && !email.trim()) { toast.error("Email é obrigatório para clientes internos"); return; }
@@ -117,6 +146,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
       google_meu_negocio: googleMeuNegocio.trim() || null,
       observacoes: observacoes.trim() || null,
       grupo_whatsapp: grupoWhatsapp.trim() || null,
+      foto_perfil_url: fotoPerfilUrl || null,
       tipo,
     });
     resetForm();
@@ -163,6 +193,46 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
                     <label htmlFor="tipo-preview" className="text-sm cursor-pointer">Cliente Preview</label>
                   </div>
                 </RadioGroup>
+              </div>
+              {/* Profile photo */}
+              <div className="space-y-2">
+                <Label>Foto de Perfil</Label>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Avatar className="h-14 w-14">
+                      <AvatarImage src={fotoPerfilUrl || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                        {nome ? nome.slice(0, 2).toUpperCase() : <Camera className="h-5 w-5" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    {fotoPerfilUrl && (
+                      <button
+                        type="button"
+                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                        onClick={() => setFotoPerfilUrl("")}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploadingFoto}
+                    onClick={() => fotoInputRef.current?.click()}
+                  >
+                    <Camera className="h-4 w-4 mr-1.5" />
+                    {uploadingFoto ? "Enviando..." : fotoPerfilUrl ? "Trocar" : "Enviar foto"}
+                  </Button>
+                  <input
+                    ref={fotoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFotoUpload}
+                  />
+                </div>
               </div>
               <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} /></div>
               <div className="space-y-2">

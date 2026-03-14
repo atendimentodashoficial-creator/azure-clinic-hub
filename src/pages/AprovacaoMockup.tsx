@@ -141,6 +141,7 @@ interface TaskInfo {
   cliente_empresa: string;
   approval_status: string;
   cliente_instagram: string;
+  cliente_foto_perfil_url: string | null;
 }
 
 interface PostForApproval {
@@ -601,6 +602,7 @@ export default function AprovacaoMockup() {
                     }))}
                     perfilNome={gridCliente}
                     perfilCategoria={gridEmpresa}
+                    perfilFotoUrl={taskInfo?.cliente_foto_perfil_url}
                     approvalMode={false}
                   />
                 </IPhoneFrame>
@@ -916,7 +918,7 @@ export default function AprovacaoMockup() {
               </Button>
             </div>
 
-            <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} />
+            <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} perfilFotoUrl={taskInfo?.cliente_foto_perfil_url} />
 
               <Card className="p-4 space-y-3">
                 <Textarea

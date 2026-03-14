@@ -15,10 +15,11 @@ interface MockupPreviewProps {
   slides: MockupSlide[];
   perfilNome?: string;
   perfilCategoria?: string;
+  perfilFotoUrl?: string | null;
   className?: string;
 }
 
-export function MockupPreview({ slides, perfilNome = "perfil", perfilCategoria = "", className }: MockupPreviewProps) {
+export function MockupPreview({ slides, perfilNome = "perfil", perfilCategoria = "", perfilFotoUrl, className }: MockupPreviewProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slide = slides[currentSlide];
   const isCarousel = slides.length > 1;
@@ -32,8 +33,12 @@ export function MockupPreview({ slides, perfilNome = "perfil", perfilCategoria =
       {/* Header */}
       <div className="flex items-center gap-2.5 px-3 py-2.5">
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 p-[2px]">
-          <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-            <span className="text-[10px] font-bold text-foreground">{iniciais}</span>
+          <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
+            {perfilFotoUrl ? (
+              <img src={perfilFotoUrl} alt={perfilNome} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-[10px] font-bold text-foreground">{iniciais}</span>
+            )}
           </div>
         </div>
         <div className="flex-1 min-w-0">
