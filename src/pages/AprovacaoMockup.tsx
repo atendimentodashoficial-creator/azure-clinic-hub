@@ -469,6 +469,7 @@ export default function AprovacaoMockup() {
         return updated;
       });
       toast.success("Destaque aprovado!");
+      checkAndNotifyCompletion(token!);
     } catch {
       toast.error("Erro ao aprovar");
     } finally {
