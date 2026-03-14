@@ -43,6 +43,18 @@ function parseTarefaMeta(descricao: string | null): any {
 
 type Step = "select-client" | "schedule-meeting" | "auto-matched";
 
+function normalizeColName(name: string) {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+function getColumnNotificationEvent(colName?: string): "atribuida" | "aprovacao_interna" | "aprovacao_cliente" | "aprovada_concluida" {
+  const n = normalizeColName(colName || "");
+  if (n.includes("aprovacao") && n.includes("interna")) return "aprovacao_interna";
+  if ((n.includes("aguardando") && n.includes("aprovacao")) || (n.includes("aprovacao") && n.includes("cliente"))) return "aprovacao_cliente";
+  if (n.includes("concluido") || n.includes("concluida")) return "aprovada_concluida";
+  return "atribuida";
+}
+
 export function AtribuirProdutoDialog({ template, open, onClose, initialContactData }: AtribuirProdutoDialogProps) {
   
   const { clientes, criarCliente } = useTarefasClientes();
@@ -100,9 +112,11 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
         tipo_tarefa_id: meta.tipo_tarefa_id || undefined,
         produto_template_id: template.id,
       });
-      // Send "atribuida" notification if task has a responsável
-      if (result?.id && meta.responsavel) {
-        sendTaskNotification({ evento: "atribuida", tarefa_id: result.id, user_id: result.user_id });
+      // Send notification based on initial column/stage
+      if (result?.id) {
+        const colunaNome = colunas.find((c) => c.id === colunaId)?.nome;
+        const evento = getColumnNotificationEvent(colunaNome);
+        await sendTaskNotification({ evento, tarefa_id: result.id, user_id: result.user_id });
       }
     }
   };
@@ -190,9 +204,11 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
             produto_template_id: template.id,
             reuniao_id: reuniaoId,
           });
-          // Send "atribuida" notification if task has a responsável
-          if (result?.id && meta.responsavel) {
-            sendTaskNotification({ evento: "atribuida", tarefa_id: result.id, user_id: result.user_id });
+          // Send notification based on initial column/stage
+          if (result?.id) {
+            const colunaNome = colunas.find((c) => c.id === colunaId)?.nome;
+            const evento = getColumnNotificationEvent(colunaNome);
+            await sendTaskNotification({ evento, tarefa_id: result.id, user_id: result.user_id });
           }
         }
       }
