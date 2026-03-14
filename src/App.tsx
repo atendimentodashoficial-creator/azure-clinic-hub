@@ -43,6 +43,7 @@ import ProdutosTarefas from "./pages/ProdutosTarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import ClienteAprovacoes from "./pages/ClienteAprovacoes";
 import ClienteTarefas from "./pages/ClienteTarefas";
+import ClienteProduto from "./pages/ClienteProduto";
 import FuncionarioDashboard from "./pages/FuncionarioDashboard";
 import FuncionarioEscala from "./pages/FuncionarioEscala";
 import FuncionarioWhatsApp from "./pages/FuncionarioWhatsApp";
