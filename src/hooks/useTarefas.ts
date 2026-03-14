@@ -188,6 +188,7 @@ export function useTarefas() {
   const moverTarefa = useMutation({
     mutationFn: async ({ id, coluna_id, ordem }: { id: string; coluna_id: string; ordem: number }) => {
       const currentTask = tarefas.find((t) => t.id === id);
+      const targetColumn = colunas.find((c) => c.id === coluna_id);
       const notificationEvent = targetColumn && currentTask?.coluna_id !== coluna_id
         ? getNotificationEventForColumnMove(targetColumn.nome)
         : null;
