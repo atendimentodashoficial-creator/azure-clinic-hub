@@ -266,16 +266,18 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   );
 }
 
-function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer, onClick }: {
+function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, tiposTarefas, isFuncionario, onDelete, onStartTimer, onClick, onAdvance }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
   membrosNomes: string[];
   reunioesMap?: Record<string, { data_reuniao: string; status: string }>;
+  tiposTarefas: TipoTarefa[];
   isFuncionario: boolean;
   onDelete: (id: string) => void;
   onStartTimer: (id: string) => void;
   onClick?: (tarefa: Tarefa) => void;
+  onAdvance?: (tarefa: Tarefa) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tarefa.id,
@@ -296,32 +298,37 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioes
         clientes={clientes}
         membrosNomes={membrosNomes}
         reunioesMap={reunioesMap}
+        tiposTarefas={tiposTarefas}
         isFuncionario={isFuncionario}
         onDelete={onDelete}
         onStartTimer={onStartTimer}
         onClick={onClick}
+        onAdvance={onAdvance}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
   );
 }
 
-function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer, onClick, dragHandleProps }: {
+function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, tiposTarefas, isFuncionario, onDelete, onStartTimer, onClick, onAdvance, dragHandleProps }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
   membrosNomes?: string[];
   reunioesMap?: Record<string, { data_reuniao: string; status: string }>;
+  tiposTarefas: TipoTarefa[];
   isFuncionario?: boolean;
   onDelete?: (id: string) => void;
   onStartTimer?: (id: string) => void;
   onClick?: (tarefa: Tarefa) => void;
+  onAdvance?: (tarefa: Tarefa) => void;
   dragHandleProps?: Record<string, any>;
 }) {
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
   const cliente = tarefa.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
   const reuniao = tarefa.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
   const colType = getColTypeById(colunas, tarefa.coluna_id);
+  const nextCol = getNextColumn(tarefa, colunas, tiposTarefas || []);
 
   // Employees can't see details when task is in "A Fazer"
   const hideDetails = isFuncionario && colType === 'todo';
