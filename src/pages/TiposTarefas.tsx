@@ -133,6 +133,7 @@ export default function TiposTarefas() {
     setFormArquivos(tipo.tipos_arquivo_permitidos);
     setFormLimites(tipo.limite_arquivos);
     setFormExigeAprovacao(tipo.exige_aprovacao);
+    setFormExigeAprovacaoInterna(tipo.exige_aprovacao_interna);
     setIsDialogOpen(true);
   };
 
