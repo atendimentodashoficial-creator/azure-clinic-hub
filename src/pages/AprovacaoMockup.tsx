@@ -581,10 +581,9 @@ export default function AprovacaoMockup() {
     };
 
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <div className="min-h-screen bg-background px-4 py-8">
           {!isEmbedded && (
-            <div className="text-center space-y-1">
+            <div className="text-center space-y-1 mb-6">
               <h1 className="text-xl font-bold text-foreground">{gridTitulo}</h1>
               <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
             </div>
@@ -838,7 +837,6 @@ export default function AprovacaoMockup() {
               </Card>
             )}
           </div>
-        </div>
       </div>
     );
   }
