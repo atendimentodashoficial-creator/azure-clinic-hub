@@ -576,8 +576,111 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
             </>
           )}
 
+          {/* Grid editor */}
+          {hasGrid && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <GridPostsManager
+                  gridPosts={gridPosts}
+                  onUpload={async (posicao, file) => {
+                    await uploadImage.mutateAsync({ posicao, file });
+                  }}
+                  onRemove={async (posicao) => {
+                    await removeImage.mutateAsync(posicao);
+                  }}
+                  uploading={uploadImage.isPending}
+                />
+
+                {/* Approval actions for grid */}
+                {gridPosts.length > 0 && (
+                  <div className="space-y-2">
+                    <Separator />
+                    {tarefa.approval_token ? (
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Link de aprovação</Label>
+                        <div className="flex gap-2">
+                          <code className="flex-1 text-xs bg-muted px-3 py-2 rounded truncate">
+                            {`${window.location.origin}/aprovacao/${tarefa.approval_token}`}
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/aprovacao/${tarefa.approval_token}`);
+                              toast.success("Link copiado!");
+                            }}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        <div className="space-y-1.5 mt-1">
+                          {gridPosts.map(g => (
+                            <div key={g.id} className="space-y-1">
+                              <Badge
+                                variant="outline"
+                                className={cn("text-[10px]",
+                                  g.status === "aprovado" ? "border-emerald-500 text-emerald-400" :
+                                  g.status === "reprovado" ? "border-red-500 text-red-400 cursor-pointer hover:bg-red-500/10" :
+                                  "border-muted-foreground/30 text-muted-foreground"
+                                )}
+                                onClick={() => g.status === "reprovado" && g.feedback && setExpandedFeedback(prev => prev === g.id ? null : g.id)}
+                              >
+                                Post {g.posicao + 1}: {g.status === "aprovado" ? "Aprovado" : g.status === "reprovado" ? "Reprovado" : "Pendente"}
+                              </Badge>
+                              {g.status === "reprovado" && g.feedback && expandedFeedback === g.id && (
+                                <p className="text-[11px] text-red-400 bg-red-500/10 rounded px-2 py-1 ml-1 animate-in fade-in slide-in-from-top-1">
+                                  💬 {g.feedback}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        {gridPosts.some(g => g.status === "reprovado") && (
+                          <Button
+                            variant="outline"
+                            className="w-full gap-2 mt-2"
+                            onClick={async () => {
+                              setResubmitting(true);
+                              try {
+                                await resubmitGridRejected.mutateAsync();
+                                const approvalColumnId = await findAguardandoAprovacaoColumnId();
+                                if (approvalColumnId) {
+                                  await supabase.from("tarefas").update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() }).eq("id", tarefa.id);
+                                }
+                                toast.success("Itens reenviados para aprovação!");
+                                window.location.reload();
+                              } catch {
+                                toast.error("Erro ao reenviar");
+                              } finally {
+                                setResubmitting(false);
+                              }
+                            }}
+                            disabled={resubmitting}
+                          >
+                            <Send className="h-4 w-4" />
+                            {resubmitting ? "Reenviando..." : `Reenviar ${gridPosts.filter(g => g.status === "reprovado").length} post(s) para Aprovação`}
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={handleSendForApproval}
+                      >
+                        <Send className="h-4 w-4" />
+                        Enviar para Aprovação
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           {/* Link-only approval section (no mockups) */}
-          {!hasMockup && hasLinks && savedLinks.length > 0 && (
+          {!hasMockup && !hasGrid && hasLinks && savedLinks.length > 0 && (
             <>
               <Separator />
               <div className="space-y-2">
