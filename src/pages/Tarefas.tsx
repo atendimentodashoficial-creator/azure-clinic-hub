@@ -24,7 +24,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play } from "lucide-react";
+import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play, ChevronRight } from "lucide-react";
+import { TipoTarefa } from "@/hooks/useTiposTarefas";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TarefaTimer } from "@/components/tarefas/TarefaTimer";
@@ -57,6 +58,34 @@ function getColType(colName: string): string {
 function getColTypeById(colunas: TarefaColuna[], colunaId: string): string {
   const col = colunas.find(c => c.id === colunaId);
   return col ? getColType(col.nome) : 'unknown';
+}
+
+// Find column ID by type
+function findColByType(colunas: TarefaColuna[], type: string): TarefaColuna | undefined {
+  return colunas.find(c => getColType(c.nome) === type);
+}
+
+// Compute the next column for a task based on its type configuration
+function getNextColumn(tarefa: Tarefa, colunas: TarefaColuna[], tiposTarefas: TipoTarefa[]): TarefaColuna | null {
+  const currentType = getColTypeById(colunas, tarefa.coluna_id);
+  const tipoTarefa = tarefa.tipo_tarefa_id ? tiposTarefas.find(t => t.id === tarefa.tipo_tarefa_id) : null;
+
+  const hasInternalApproval = tipoTarefa?.exige_aprovacao_interna ?? false;
+  const hasClientApproval = tipoTarefa?.exige_aprovacao ?? false;
+  const hasAnyApproval = hasInternalApproval || hasClientApproval;
+
+  // Build the ordered flow based on config
+  const flow: string[] = ['todo', 'in_progress'];
+  if (hasInternalApproval) flow.push('internal_approval');
+  if (hasClientApproval) flow.push('client_approval');
+  if (hasAnyApproval) flow.push('review');
+  flow.push('done');
+
+  const currentIndex = flow.indexOf(currentType);
+  if (currentIndex === -1 || currentIndex >= flow.length - 1) return null;
+
+  const nextType = flow[currentIndex + 1];
+  return findColByType(colunas, nextType) || null;
 }
 
 // Compute timer updates when moving between columns
@@ -237,16 +266,18 @@ function NovaTarefaDialog({ colunas, onSubmit }: { colunas: TarefaColuna[]; onSu
   );
 }
 
-function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer, onClick }: {
+function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioesMap, tiposTarefas, isFuncionario, onDelete, onStartTimer, onClick, onAdvance }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
   membrosNomes: string[];
   reunioesMap?: Record<string, { data_reuniao: string; status: string }>;
+  tiposTarefas: TipoTarefa[];
   isFuncionario: boolean;
   onDelete: (id: string) => void;
   onStartTimer: (id: string) => void;
   onClick?: (tarefa: Tarefa) => void;
+  onAdvance?: (tarefa: Tarefa) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tarefa.id,
@@ -267,32 +298,37 @@ function DraggableTarefaCard({ tarefa, colunas, clientes, membrosNomes, reunioes
         clientes={clientes}
         membrosNomes={membrosNomes}
         reunioesMap={reunioesMap}
+        tiposTarefas={tiposTarefas}
         isFuncionario={isFuncionario}
         onDelete={onDelete}
         onStartTimer={onStartTimer}
         onClick={onClick}
+        onAdvance={onAdvance}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
   );
 }
 
-function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, isFuncionario, onDelete, onStartTimer, onClick, dragHandleProps }: {
+function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMap, tiposTarefas, isFuncionario, onDelete, onStartTimer, onClick, onAdvance, dragHandleProps }: {
   tarefa: Tarefa;
   colunas: TarefaColuna[];
   clientes: { id: string; nome: string; empresa: string | null }[];
   membrosNomes?: string[];
   reunioesMap?: Record<string, { data_reuniao: string; status: string }>;
+  tiposTarefas: TipoTarefa[];
   isFuncionario?: boolean;
   onDelete?: (id: string) => void;
   onStartTimer?: (id: string) => void;
   onClick?: (tarefa: Tarefa) => void;
+  onAdvance?: (tarefa: Tarefa) => void;
   dragHandleProps?: Record<string, any>;
 }) {
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
   const cliente = tarefa.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
   const reuniao = tarefa.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
   const colType = getColTypeById(colunas, tarefa.coluna_id);
+  const nextCol = getNextColumn(tarefa, colunas, tiposTarefas || []);
 
   // Employees can't see details when task is in "A Fazer"
   const hideDetails = isFuncionario && colType === 'todo';
@@ -380,19 +416,32 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
             </>
           )}
 
-          <div className="flex items-center gap-3 mt-2 flex-wrap">
-            <Badge className={cn("text-xs border-0", prio.color)}>{prio.label}</Badge>
-            {tarefa.data_limite && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {format(new Date(tarefa.data_limite + "T00:00:00"), "dd/MM/yyyy")}
-              </span>
+          <div className="flex items-center justify-between gap-2 mt-2">
+            <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0">
+              <Badge className={cn("text-xs border-0", prio.color)}>{prio.label}</Badge>
+              {tarefa.data_limite && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {format(new Date(tarefa.data_limite + "T00:00:00"), "dd/MM/yyyy")}
+                </span>
+              )}
+              <TarefaTimer
+                timerStatus={tarefa.timer_status}
+                timerInicio={tarefa.timer_inicio}
+                tempoAcumulado={tarefa.tempo_acumulado_segundos}
+              />
+            </div>
+            {nextCol && onAdvance && colType !== 'done' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs gap-1 shrink-0 text-muted-foreground hover:text-primary"
+                title={`Avançar para ${nextCol.nome}`}
+                onClick={(e) => { e.stopPropagation(); onAdvance(tarefa); }}
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
             )}
-            <TarefaTimer
-              timerStatus={tarefa.timer_status}
-              timerInicio={tarefa.timer_inicio}
-              tempoAcumulado={tarefa.tempo_acumulado_segundos}
-            />
           </div>
         </div>
       </div>
@@ -482,6 +531,62 @@ export default function Tarefas() {
       onSuccess: () => toast.success("Tarefa excluída"),
       onError: (e: any) => toast.error(e.message),
     });
+  };
+
+  const handleAdvance = (tarefa: Tarefa) => {
+    const nextCol = getNextColumn(tarefa, colunas, tiposTarefas);
+    if (!nextCol) return;
+
+    const targetColType = getColType(nextCol.nome);
+
+    // Block advance to done if approvals are pending
+    if (targetColType === 'done') {
+      const tipoTarefa = tarefa.tipo_tarefa_id ? tiposTarefas.find(t => t.id === tarefa.tipo_tarefa_id) : null;
+      if (tipoTarefa?.exige_aprovacao && tarefa.approval_status !== "concluido") {
+        toast.error("Esta tarefa exige aprovação do cliente antes de ser concluída.");
+        return;
+      }
+      if (tipoTarefa?.exige_aprovacao_interna && tarefa.aprovacao_interna_status !== "aprovado") {
+        toast.error("Esta tarefa exige aprovação interna antes de ser concluída.");
+        return;
+      }
+    }
+
+    const timerUpdates = computeTimerUpdates(tarefa, colunas, nextCol.id);
+    const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
+
+    moverTarefa.mutate(
+      { id: tarefa.id, coluna_id: nextCol.id, ordem: targetTarefas.length },
+      {
+        onSuccess: async () => {
+          toast.success(`Tarefa movida para "${nextCol.nome}"`);
+
+          if (Object.keys(timerUpdates).length > 0) {
+            await supabase.from("tarefas").update({
+              ...timerUpdates,
+              updated_at: new Date().toISOString(),
+            } as any).eq("id", tarefa.id);
+          }
+
+          // Auto-create commission when moved to Concluído
+          if (targetColType === 'done' && tarefa.comissao && tarefa.comissao > 0 && tarefa.responsavel_nome && ownerId) {
+            const responsaveis = tarefa.responsavel_nome.split(",").map(n => n.trim());
+            const comissaoPorPessoa = tarefa.comissao / responsaveis.length;
+            for (const nome of responsaveis) {
+              await supabase.from("comissoes").insert({
+                tarefa_id: tarefa.id,
+                user_id: ownerId,
+                membro_nome: nome,
+                valor: comissaoPorPessoa,
+                status: "pendente",
+              });
+            }
+            toast.info("Comissão criada! Aguardando aprovação.");
+          }
+        },
+        onError: (e: any) => toast.error(e.message),
+      }
+    );
   };
 
   const handleStartTimer = (id: string) => {
@@ -648,9 +753,11 @@ export default function Tarefas() {
                         membrosNomes={membrosNomes}
                         reunioesMap={reunioesMap}
                         isFuncionario={isFuncionario}
+                        tiposTarefas={tiposTarefas}
                         onDelete={handleExcluir}
                         onStartTimer={handleStartTimer}
                         onClick={setDetalheTarefa}
+                        onAdvance={handleAdvance}
                       />
                     ))}
                   </DroppableColumn>
@@ -675,6 +782,7 @@ export default function Tarefas() {
                 clientes={clientes}
                 membrosNomes={membrosNomes}
                 reunioesMap={reunioesMap}
+                tiposTarefas={tiposTarefas}
                 isFuncionario={isFuncionario}
               />
             </div>
