@@ -602,13 +602,18 @@ export default function AprovacaoMockup() {
     const gridCliente = extractInstagramUsername(taskInfo?.cliente_instagram) || gridPosts[0]?.cliente_nome || taskInfo?.cliente_nome || "perfil";
     const gridEmpresa = gridPosts[0]?.cliente_empresa || taskInfo?.cliente_empresa || "";
     
-    const pendingGridPosts = gridPosts.filter(g => g.status !== "aprovado");
+    const pendingGridPosts = gridPosts.filter(g => g.status === "pendente");
     const approvedGridPosts = gridPosts.filter(g => g.status === "aprovado");
-    const pendingHighlights = gridHighlights.filter(h => h.status !== "aprovado");
+    const rejectedGridPosts = gridPosts.filter(g => g.status === "reprovado");
+    const pendingHighlights = gridHighlights.filter(h => h.status === "pendente");
     const approvedHighlights = gridHighlights.filter(h => h.status === "aprovado");
+    const rejectedHighlights = gridHighlights.filter(h => h.status === "reprovado");
     
-    const filteredGridPosts = approvalFilter === "pendentes" ? pendingGridPosts : approvedGridPosts;
-    const filteredHighlights = approvalFilter === "pendentes" ? pendingHighlights : approvedHighlights;
+    const filterFn = (status: string) => 
+      approvalFilter === "pendentes" ? status === "pendente" :
+      approvalFilter === "aprovadas" ? status === "aprovado" : status === "reprovado";
+    const filteredGridPosts = gridPosts.filter(g => filterFn(g.status));
+    const filteredHighlights = gridHighlights.filter(h => filterFn(h.status));
     const filteredSortedGridPosts = [...filteredGridPosts].sort((a, b) => a.posicao - b.posicao);
     const filteredSortedHighlights = [...filteredHighlights].sort((a, b) => a.ordem - b.ordem);
     const currentFilteredGridPost = filteredSortedGridPosts[currentGridIdx];
@@ -620,6 +625,7 @@ export default function AprovacaoMockup() {
     const hasHighlights = gridHighlights.length > 0;
     const totalPending = pendingGridPosts.length + pendingHighlights.length;
     const totalApproved = approvedGridPosts.length + approvedHighlights.length;
+    const totalRejected = rejectedGridPosts.length + rejectedHighlights.length;
 
     const itemStatusColor = (s: string) => {
       if (s === "aprovado") return "bg-emerald-500/20 text-emerald-400";
