@@ -92,6 +92,28 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
     c.telefone?.includes(busca)
   );
 
+  const resolveNotificationEvent = async (colunaId?: string): Promise<TaskNotificationEvent> => {
+    if (!colunaId) return "atribuida";
+
+    const colunaNomeLocal = colunas.find((c) => c.id === colunaId)?.nome;
+    if (colunaNomeLocal) {
+      return getColumnNotificationEvent(colunaNomeLocal);
+    }
+
+    const { data, error } = await supabase
+      .from("tarefas_colunas")
+      .select("nome")
+      .eq("id", colunaId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erro ao resolver coluna para notificação:", error);
+      return "atribuida";
+    }
+
+    return getColumnNotificationEvent(data?.nome);
+  };
+
   const criarTarefasDoProduto = async (clienteId: string) => {
     for (const tt of templateTarefas) {
       const meta = parseTarefaMeta(tt.descricao);
