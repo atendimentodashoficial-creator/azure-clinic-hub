@@ -564,7 +564,7 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
       if (err) throw err;
       setLinkApprovalStatus("reprovado");
       toast.success("Mudança solicitada com sucesso.");
-      checkAndNotifyRejection(token!, linkFeedback);
+      checkAndNotifyRejection(token!, linkFeedback, isInternal);
     } catch {
       toast.error("Erro ao solicitar mudança");
     } finally {
