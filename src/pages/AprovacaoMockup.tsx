@@ -158,6 +158,7 @@ function derivePostStatus(mockups: MockupData[]): string {
 
 export default function AprovacaoMockup() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const [mockups, setMockups] = useState<MockupData[]>([]);
   const [taskLinks, setTaskLinks] = useState<TaskLink[]>([]);
   const [gridPosts, setGridPosts] = useState<GridPostData[]>([]);
@@ -176,7 +177,15 @@ export default function AprovacaoMockup() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [linkApprovalStatus, setLinkApprovalStatus] = useState<string>("pendente");
-  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">("pendentes");
+  
+  const filterParam = searchParams.get("filter") as "pendentes" | "aprovadas" | "reprovadas" | null;
+  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">(filterParam || "pendentes");
+  const hideFilterTabs = searchParams.get("hideFilter") === "1";
+
+  // Sync filter from parent via search params changes
+  useEffect(() => {
+    if (filterParam) setApprovalFilter(filterParam);
+  }, [filterParam]);
 
   const isLinkOnlyMode = mockups.length === 0 && gridPosts.length === 0 && taskLinks.length > 0;
   const isGridMode = gridPosts.length > 0;
