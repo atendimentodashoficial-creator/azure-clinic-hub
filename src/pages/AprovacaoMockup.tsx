@@ -235,17 +235,33 @@ export default function AprovacaoMockup() {
   };
 
   // === GRID APPROVAL HANDLERS ===
-  const handleApproveGridPost = async (postId: string) => {
+  const sortedGridPosts = [...gridPosts].sort((a, b) => a.posicao - b.posicao);
+  const currentGridPost = sortedGridPosts[currentGridIdx];
+
+  const handleApproveGridPost = async () => {
+    if (!currentGridPost) return;
     setSubmitting(true);
     try {
       const { error: err } = await supabase.rpc("update_grid_post_approval", {
         p_token: token!,
-        p_grid_post_id: postId,
+        p_grid_post_id: currentGridPost.grid_post_id,
         p_status: "aprovado",
-        p_feedback: gridFeedbacks[postId] || null,
+        p_feedback: gridFeedbacks[currentGridPost.grid_post_id] || null,
       });
       if (err) throw err;
-      setGridPosts(prev => prev.map(g => g.grid_post_id === postId ? { ...g, status: "aprovado", feedback: gridFeedbacks[postId] || null } : g));
+      setGridPosts(prev => {
+        const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "aprovado", feedback: gridFeedbacks[currentGridPost.grid_post_id] || null } : g);
+        setTimeout(() => {
+          const sorted = [...updated].sort((a, b) => a.posicao - b.posicao);
+          const nextUndecided = sorted.findIndex((g, i) => i > currentGridIdx && g.status === "pendente");
+          if (nextUndecided !== -1) setCurrentGridIdx(nextUndecided);
+          else {
+            const first = sorted.findIndex(g => g.status === "pendente");
+            if (first !== -1) setCurrentGridIdx(first);
+          }
+        }, 300);
+        return updated;
+      });
       toast.success("Post aprovado!");
     } catch {
       toast.error("Erro ao aprovar");
