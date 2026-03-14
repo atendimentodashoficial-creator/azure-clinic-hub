@@ -257,6 +257,9 @@ serve(async (req) => {
     if (destinos.pessoal_gestor && gestorPessoal) {
       destinations.push({ number: gestorPessoal, label: "pessoal_gestor" });
     }
+    if (destinos.pessoal_cliente && clientePessoal) {
+      destinations.push({ number: clientePessoal, label: "pessoal_cliente" });
+    }
 
     if (destinations.length === 0) {
       console.log("No valid destination numbers found");
