@@ -538,18 +538,41 @@ export default function AprovacaoMockup() {
     );
   }
 
-  if (error || (!isLinkOnlyMode && !isGridMode && posts.length === 0)) {
+  const hasPendingMockups = posts.some(p => p.status !== "aprovado");
+  const hasPendingGrid = gridPosts.some(g => g.status !== "aprovado") || gridHighlights.some(h => h.status !== "aprovado");
+  const hasAnyContent = posts.length > 0 || gridPosts.length > 0 || taskLinks.length > 0;
+
+  if (error || !hasAnyContent) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="p-8 text-center max-w-md">
-          <h2 className="text-lg font-semibold text-foreground mb-2">Nenhum item pendente</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-2">Nenhum item encontrado</h2>
           <p className="text-sm text-muted-foreground">
-            {error || "Todos os itens já foram aprovados ou não há itens para revisar."}
+            {error || "Não há itens para revisar nesta tarefa."}
           </p>
         </Card>
       </div>
     );
   }
+
+  const ApprovalFilterTabs = ({ pendingCount, approvedCount }: { pendingCount: number; approvedCount: number }) => (
+    <div className="flex gap-2 justify-center">
+      <Button
+        variant={approvalFilter === "pendentes" ? "default" : "outline"}
+        size="sm"
+        onClick={() => { setApprovalFilter("pendentes"); setCurrentPostIdx(0); setCurrentGridIdx(0); setCurrentHighlightIdx(0); }}
+      >
+        Pendentes ({pendingCount})
+      </Button>
+      <Button
+        variant={approvalFilter === "aprovadas" ? "default" : "outline"}
+        size="sm"
+        onClick={() => { setApprovalFilter("aprovadas"); setCurrentPostIdx(0); setCurrentGridIdx(0); setCurrentHighlightIdx(0); }}
+      >
+        Aprovadas ({approvedCount})
+      </Button>
+    </div>
+  );
 
   // Grid approval mode
   if (isGridMode) {
