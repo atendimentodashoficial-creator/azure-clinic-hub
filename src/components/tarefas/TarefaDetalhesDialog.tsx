@@ -231,7 +231,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     try {
       // If internal approval is required and not yet approved, send to internal approval first
       if (exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== "aprovado") {
-        const internaToken = (tarefa as any).internal_approval_token || crypto.randomUUID();
+        const internaToken = tarefa.internal_approval_token || crypto.randomUUID();
         const internaColumnId = await findColumnByMatcherAsync(isAprovacaoInternaColumn);
         const updateData: Record<string, any> = {
           aprovacao_interna_status: "pendente",
