@@ -291,15 +291,15 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   const prio = PRIORIDADES.find(p => p.value === tarefa.prioridade) || PRIORIDADES[1];
   const cliente = tarefa.cliente_id ? clientes.find(c => c.id === tarefa.cliente_id) : null;
   const reuniao = tarefa.reuniao_id && reunioesMap ? reunioesMap[tarefa.reuniao_id] : null;
-  const colOrdem = getColOrdem(colunas, tarefa.coluna_id);
+  const colType = getColTypeById(colunas, tarefa.coluna_id);
 
-  // Employees can't see details when task is in "A Fazer" (ordem 0)
-  const hideDetails = isFuncionario && colOrdem === 0;
-  // In "Em Revisão" (ordem 3) with pausado_revisao, employee needs to start timer to see details
-  const needsManualStart = isFuncionario && colOrdem === 3 && tarefa.timer_status === "pausado_revisao";
+  // Employees can't see details when task is in "A Fazer"
+  const hideDetails = isFuncionario && colType === 'todo';
+  // In "Em Revisão" with pausado_revisao, employee needs to start timer to see details
+  const needsManualStart = isFuncionario && colType === 'review' && tarefa.timer_status === "pausado_revisao";
 
   // Task is clickable when not in "A Fazer" and not needing manual start
-  const isClickable = !hideDetails && !needsManualStart && onClick && colOrdem >= 1;
+  const isClickable = !hideDetails && !needsManualStart && onClick && colType !== 'todo';
 
   const renderResponsaveis = () => {
     if (!tarefa.responsavel_nome) return null;
