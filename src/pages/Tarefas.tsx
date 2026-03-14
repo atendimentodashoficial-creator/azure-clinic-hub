@@ -397,8 +397,6 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
 
           {hideDetails ? (
             <p className="text-xs text-muted-foreground mt-1 italic">Detalhes disponíveis ao iniciar</p>
-          ) : needsManualStart ? (
-            <p className="text-xs text-muted-foreground mt-1 italic">Clique ▶ para ver as revisões</p>
           ) : (
             <>
               {renderResponsaveis()}
