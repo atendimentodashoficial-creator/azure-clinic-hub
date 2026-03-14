@@ -33,6 +33,7 @@ export interface Tarefa {
   tempo_acumulado_segundos: number;
   timer_status: string;
   approval_token: string | null;
+  internal_approval_token: string | null;
   approval_status: string | null;
   aprovacao_interna_status: string | null;
   aprovacao_interna_por: string | null;
