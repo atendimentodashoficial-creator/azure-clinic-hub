@@ -587,6 +587,7 @@ export default function Tarefas() {
         onError: (e: any) => toast.error(e.message),
       }
     );
+  };
 
   const handleStartTimer = (id: string) => {
     atualizarTarefa.mutate({
