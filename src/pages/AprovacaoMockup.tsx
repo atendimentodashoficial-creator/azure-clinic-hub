@@ -37,7 +37,7 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
   const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.95);
   const [wrapperH, setWrapperH] = useState<string>('auto');
-  const maxScaleRef = useRef(1.15);
+  const maxScaleRef = useRef(0.95);
 
   const recalc = useCallback(() => {
     if (isMobile || !containerRef.current || !innerRef.current) return;
