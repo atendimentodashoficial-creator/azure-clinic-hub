@@ -503,9 +503,9 @@ export default function AprovacaoMockup() {
             <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-start lg:gap-8">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-8">
             {/* Left: Instagram grid mockup — visual reference */}
-            <div className="lg:sticky lg:top-8 flex-shrink-0 mx-auto">
+            <div className="lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
               <IPhoneFrame>
                 <InstagramGridPreview
                   posts={gridPosts.map(g => ({
