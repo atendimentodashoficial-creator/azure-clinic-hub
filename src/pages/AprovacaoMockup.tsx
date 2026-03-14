@@ -30,68 +30,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Scales the IPhoneFrame proportionally to match the right panel height on desktop
+// Simply renders the IPhoneFrame at its natural size — no dynamic scaling
 function GridMockupScaler({ children }: { children: React.ReactNode }) {
-  const isMobile = useIsMobile();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  const [wrapperH, setWrapperH] = useState<string>('auto');
-  const maxScaleRef = useRef(1);
-
-  const recalc = useCallback(() => {
-    if (isMobile || !containerRef.current || !innerRef.current) return;
-    const parent = containerRef.current.closest('[data-grid-layout]');
-    if (!parent) return;
-    const rightPanel = parent.querySelector('[data-grid-right]') as HTMLElement;
-    if (!rightPanel) return;
-
-    innerRef.current.style.transform = 'scale(1)';
-    const naturalH = innerRef.current.offsetHeight;
-    const rightH = Math.max(rightPanel.offsetHeight, 900);
-
-    if (naturalH > 0 && rightH > 0) {
-      const s = Math.max(1, Math.min(rightH / naturalH, 1.5));
-      maxScaleRef.current = Math.max(maxScaleRef.current, s);
-      const finalScale = maxScaleRef.current;
-      setScale(finalScale);
-      setWrapperH(`${naturalH * finalScale}px`);
-      innerRef.current.style.transform = `scale(${finalScale})`;
-    } else {
-      innerRef.current.style.transform = `scale(${maxScaleRef.current})`;
-    }
-  }, [isMobile]);
-
-  // Run immediately on mount to avoid flash at small size
-  useLayoutEffect(() => {
-    recalc();
-  }, [recalc]);
-
-  useEffect(() => {
-    const t = setTimeout(recalc, 100);
-    return () => clearTimeout(t);
-  }, [recalc]);
-
-  useEffect(() => {
-    const interval = setInterval(recalc, 1000);
-    return () => clearInterval(interval);
-  }, [recalc]);
-
-  if (isMobile) return <>{children}</>;
-
-  return (
-    <div ref={containerRef} style={{ height: wrapperH }}>
-      <div
-        ref={innerRef}
-        style={{
-          transform: `scale(${scale})`,
-          transformOrigin: 'top center',
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
+  return <>{children}</>;
 }
 
 interface MockupData {
