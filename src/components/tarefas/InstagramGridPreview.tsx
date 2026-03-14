@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, MessageCircle, Grid3X3, Bookmark, PlaySquare, UserCircle, ChevronLeft, ChevronRight, Check, X, Send } from "lucide-react";
+import { Heart, MessageCircle, Grid3X3, Bookmark, PlaySquare, UserCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -14,11 +14,20 @@ interface GridPost {
   feedback: string | null;
 }
 
+export interface GridHighlight {
+  id: string;
+  ordem: number;
+  titulo: string;
+  image_url: string;
+  status: string;
+  feedback: string | null;
+}
+
 interface InstagramGridPreviewProps {
   posts: GridPost[];
+  highlights?: GridHighlight[];
   perfilNome: string;
   perfilCategoria?: string;
-  /** If true, shows approve/reject controls */
   approvalMode?: boolean;
   onApprove?: (postId: string) => void;
   onReject?: (postId: string, feedback: string) => void;
@@ -29,6 +38,7 @@ interface InstagramGridPreviewProps {
 
 export function InstagramGridPreview({
   posts,
+  highlights = [],
   perfilNome,
   perfilCategoria,
   approvalMode,
@@ -42,10 +52,9 @@ export function InstagramGridPreview({
   const iniciais = perfilNome.slice(0, 2).toUpperCase();
   const postCount = posts.length;
 
-  // Sort by posicao
   const sortedPosts = [...posts].sort((a, b) => a.posicao - b.posicao);
+  const sortedHighlights = [...highlights].sort((a, b) => a.ordem - b.ordem);
 
-  // Fill 9 slots
   const grid = Array.from({ length: 9 }, (_, i) => sortedPosts.find(p => p.posicao === i) || null);
 
   const selected = selectedPost ? posts.find(p => p.id === selectedPost) : null;
@@ -57,8 +66,7 @@ export function InstagramGridPreview({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Instagram profile mockup */}
+    <div className="space-y-0">
       <div className="w-full bg-background overflow-hidden">
         {/* Profile header */}
         <div className="flex items-center gap-4 p-4">
@@ -86,6 +94,33 @@ export function InstagramGridPreview({
             </div>
           </div>
         </div>
+
+        {/* Highlights */}
+        {sortedHighlights.length > 0 && (
+          <div className="flex gap-3 px-4 pb-3 overflow-x-auto scrollbar-none">
+            {sortedHighlights.map(h => (
+              <div key={h.id} className="flex flex-col items-center gap-1 flex-shrink-0">
+                <div className={cn(
+                  "w-14 h-14 rounded-full p-[2px] bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500",
+                  h.status === "aprovado" && "from-emerald-400 to-emerald-600",
+                  h.status === "reprovado" && "from-red-400 to-red-600"
+                )}>
+                  <div className="w-full h-full rounded-full overflow-hidden bg-background p-[2px]">
+                    <img src={h.image_url} alt={h.titulo} className="w-full h-full rounded-full object-cover" />
+                  </div>
+                </div>
+                <span className="text-[10px] text-foreground truncate max-w-[56px] text-center">{h.titulo}</span>
+              </div>
+            ))}
+            {/* "Add" placeholder */}
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
+              <div className="w-14 h-14 rounded-full border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
+                <span className="text-lg text-muted-foreground/40">+</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">Novo</span>
+            </div>
+          </div>
+        )}
 
         {/* Tab bar */}
         <div className="flex border-t border-border">
@@ -152,7 +187,6 @@ export function InstagramGridPreview({
               {selected.status === "aprovado" ? "Aprovado" : selected.status === "reprovado" ? "Reprovado" : "Pendente"}
             </Badge>
           </div>
-          {/* Enlarged preview */}
           <img
             src={selected.image_url}
             alt={`Post ${selected.posicao + 1}`}
