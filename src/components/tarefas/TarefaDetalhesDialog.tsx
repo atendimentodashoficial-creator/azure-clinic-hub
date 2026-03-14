@@ -412,6 +412,32 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
 
   if (!tarefa) return null;
 
+  // Determine the correct send button label and visibility based on current state
+  const getSendButtonConfig = (): { label: string; action: () => Promise<void> } | null => {
+    // If already in internal approval column and pending, don't show send button
+    if (currentColType === 'internal_approval' && tarefa.aprovacao_interna_status === 'pendente') {
+      return null;
+    }
+
+    // If internal approval is required but not yet approved
+    if (exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== 'aprovado') {
+      // If reprovado in internal_approval column, resubmit handles it
+      if (tarefa.aprovacao_interna_status === 'reprovado' && currentColType === 'internal_approval') {
+        return null;
+      }
+      return { label: "Enviar para Aprovação Interna", action: handleSendForApproval };
+    }
+
+    // Internal already approved or not required → send to client
+    if (exigeAprovacaoCliente) {
+      return { label: "Enviar para Aprovação Cliente", action: handleSendForApproval };
+    }
+
+    return { label: "Enviar para Aprovação", action: handleSendForApproval };
+  };
+
+  const sendButtonConfig = getSendButtonConfig();
+
   // Determine which file types this task type requires (excluding mockup)
   const requiredFileTypes = tipoTarefa?.tipos_arquivo_permitidos?.filter(t => t !== "mockup" && t !== "qualquer" && t !== "links" && t !== "grade") || [];
 
