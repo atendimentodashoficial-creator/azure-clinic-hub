@@ -338,9 +338,11 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
   const hideDetails = isFuncionario && colType === 'todo';
   // In "Em Revisão" with pausado_revisao, employee needs to start timer to see details
   const needsManualStart = isFuncionario && colType === 'review' && tarefa.timer_status === "pausado_revisao";
+  // Timer should auto-resume when clicking card in review column
+  const shouldResumeTimerOnClick = colType === 'review' && tarefa.timer_status === "pausado_revisao";
 
-  // Task is clickable when not in "A Fazer" and not needing manual start
-  const isClickable = !hideDetails && !needsManualStart && onClick && colType !== 'todo';
+  // Task is clickable when not in "A Fazer" (employees can now click in review to resume timer)
+  const isClickable = !hideDetails && onClick && colType !== 'todo';
 
   const renderResponsaveis = () => {
     if (!tarefa.responsavel_nome) return null;
