@@ -44,21 +44,24 @@ async function notifyTaskEvent(tarefaId: string, evento: string, feedback?: stri
 }
 
 // Check if task became fully approved after an action and send notification
-async function checkAndNotifyCompletion(token: string) {
+async function checkAndNotifyCompletion(token: string, internal = false) {
   try {
-    const { data } = await supabase.rpc("get_task_by_approval_token", { p_token: token });
-    if (data?.[0]?.approval_status === "concluido") {
-      notifyTaskEvent(data[0].tarefa_id, "aprovada_concluida");
+    const rpc = internal ? "get_task_by_internal_approval_token" : "get_task_by_approval_token";
+    const { data } = await supabase.rpc(rpc, { p_token: token });
+    const status = internal ? data?.[0]?.aprovacao_interna_status : data?.[0]?.approval_status;
+    if (status === (internal ? "aprovado" : "concluido")) {
+      notifyTaskEvent(data[0].tarefa_id, internal ? "aprovada_concluida" : "aprovada_concluida");
     }
   } catch {}
 }
 
 // Send rejection notification
-async function checkAndNotifyRejection(token: string, feedback?: string) {
+async function checkAndNotifyRejection(token: string, feedback?: string, internal = false) {
   try {
-    const { data } = await supabase.rpc("get_task_by_approval_token", { p_token: token });
+    const rpc = internal ? "get_task_by_internal_approval_token" : "get_task_by_approval_token";
+    const { data } = await supabase.rpc(rpc, { p_token: token });
     if (data?.[0]?.tarefa_id) {
-      notifyTaskEvent(data[0].tarefa_id, "reprovada_cliente", feedback);
+      notifyTaskEvent(data[0].tarefa_id, internal ? "reprovada_cliente" : "reprovada_cliente", feedback);
     }
   } catch {}
 }
@@ -177,7 +180,7 @@ function derivePostStatus(mockups: MockupData[]): string {
   return "pendente";
 }
 
-export default function AprovacaoMockup() {
+export default function AprovacaoMockup({ isInternal = false }: { isInternal?: boolean } = {}) {
   const { token } = useParams<{ token: string }>();
   const [searchParams] = useSearchParams();
   const [mockups, setMockups] = useState<MockupData[]>([]);
@@ -243,11 +246,11 @@ export default function AprovacaoMockup() {
     try {
       setLoading(true);
       const [mockupRes, linksRes, taskRes, gridRes, highlightsRes] = await Promise.all([
-        supabase.rpc("get_mockups_by_approval_token", { p_token: token! }),
-        supabase.rpc("get_links_by_approval_token", { p_token: token! }),
-        supabase.rpc("get_task_by_approval_token", { p_token: token! }),
-        supabase.rpc("get_grid_posts_by_approval_token", { p_token: token! }),
-        supabase.rpc("get_grid_highlights_by_approval_token", { p_token: token! }),
+        supabase.rpc(isInternal ? "get_mockups_by_internal_token" : "get_mockups_by_approval_token", { p_token: token! }),
+        supabase.rpc(isInternal ? "get_links_by_internal_token" : "get_links_by_approval_token", { p_token: token! }),
+        supabase.rpc(isInternal ? "get_task_by_internal_approval_token" : "get_task_by_approval_token", { p_token: token! }),
+        supabase.rpc(isInternal ? "get_grid_posts_by_internal_token" : "get_grid_posts_by_approval_token", { p_token: token! }),
+        supabase.rpc(isInternal ? "get_grid_highlights_by_internal_token" : "get_grid_highlights_by_approval_token", { p_token: token! }),
       ]);
 
       if (mockupRes.error) throw mockupRes.error;
@@ -309,7 +312,7 @@ export default function AprovacaoMockup() {
     setSubmitting(true);
     try {
       for (const m of currentPost.mockups) {
-        const { error: err } = await supabase.rpc("update_mockup_approval", {
+        const { error: err } = await supabase.rpc(isInternal ? "update_mockup_approval_internal" : "update_mockup_approval", {
           p_token: token!,
           p_mockup_id: m.mockup_id,
           p_status: "aprovado",
@@ -325,7 +328,7 @@ export default function AprovacaoMockup() {
         )
       );
       toast.success("Post aprovado!");
-      checkAndNotifyCompletion(token!);
+      checkAndNotifyCompletion(token!, isInternal);
     } catch {
       toast.error("Erro ao aprovar");
     } finally {
@@ -342,7 +345,7 @@ export default function AprovacaoMockup() {
     setSubmitting(true);
     try {
       for (const m of currentPost.mockups) {
-        const { error: err } = await supabase.rpc("update_mockup_approval", {
+        const { error: err } = await supabase.rpc(isInternal ? "update_mockup_approval_internal" : "update_mockup_approval", {
           p_token: token!,
           p_mockup_id: m.mockup_id,
           p_status: "reprovado",
@@ -358,7 +361,7 @@ export default function AprovacaoMockup() {
         )
       );
       toast.success("Post reprovado com feedback.");
-      checkAndNotifyRejection(token!, feedbacks[currentPost.postIndex]);
+      checkAndNotifyRejection(token!, feedbacks[currentPost.postIndex], isInternal);
     } catch {
       toast.error("Erro ao reprovar");
     } finally {
@@ -377,7 +380,7 @@ export default function AprovacaoMockup() {
     if (!currentGridPost) return;
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_grid_post_approval", {
+      const { error: err } = await supabase.rpc(isInternal ? "update_grid_post_approval_internal" : "update_grid_post_approval", {
         p_token: token!,
         p_grid_post_id: currentGridPost.grid_post_id,
         p_status: "aprovado",
@@ -397,7 +400,7 @@ export default function AprovacaoMockup() {
         return updated;
       });
       toast.success("Post aprovado!");
-      checkAndNotifyCompletion(token!);
+      checkAndNotifyCompletion(token!, isInternal);
     } catch {
       toast.error("Erro ao aprovar");
     } finally {
@@ -414,7 +417,7 @@ export default function AprovacaoMockup() {
     }
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_grid_post_approval", {
+      const { error: err } = await supabase.rpc(isInternal ? "update_grid_post_approval_internal" : "update_grid_post_approval", {
         p_token: token!,
         p_grid_post_id: currentGridPost.grid_post_id,
         p_status: "reprovado",
@@ -434,7 +437,7 @@ export default function AprovacaoMockup() {
         return updated;
       });
       toast.success("Post reprovado com feedback.");
-      checkAndNotifyRejection(token!, feedback);
+      checkAndNotifyRejection(token!, feedback, isInternal);
     } catch {
       toast.error("Erro ao reprovar");
     } finally {
@@ -451,7 +454,7 @@ export default function AprovacaoMockup() {
     if (!currentHighlight) return;
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_grid_highlight_approval", {
+      const { error: err } = await supabase.rpc(isInternal ? "update_grid_highlight_approval_internal" : "update_grid_highlight_approval", {
         p_token: token!,
         p_highlight_id: currentHighlight.highlight_id,
         p_status: "aprovado",
@@ -477,7 +480,7 @@ export default function AprovacaoMockup() {
         return updated;
       });
       toast.success("Destaque aprovado!");
-      checkAndNotifyCompletion(token!);
+      checkAndNotifyCompletion(token!, isInternal);
     } catch {
       toast.error("Erro ao aprovar");
     } finally {
@@ -494,7 +497,7 @@ export default function AprovacaoMockup() {
     }
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_grid_highlight_approval", {
+      const { error: err } = await supabase.rpc(isInternal ? "update_grid_highlight_approval_internal" : "update_grid_highlight_approval", {
         p_token: token!,
         p_highlight_id: currentHighlight.highlight_id,
         p_status: "reprovado",
@@ -519,7 +522,7 @@ export default function AprovacaoMockup() {
         return updated;
       });
       toast.success("Destaque reprovado com feedback.");
-      checkAndNotifyRejection(token!, feedback);
+      checkAndNotifyRejection(token!, feedback, isInternal);
     } catch {
       toast.error("Erro ao reprovar");
     } finally {
@@ -530,7 +533,7 @@ export default function AprovacaoMockup() {
   const handleApproveLinks = async () => {
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_task_approval_by_token", {
+      const { error: err } = await supabase.rpc(isInternal ? "update_task_approval_by_internal_token" : "update_task_approval_by_token", {
         p_token: token!,
         p_status: "aprovado",
         p_feedback: linkFeedback || null,
@@ -538,7 +541,7 @@ export default function AprovacaoMockup() {
       if (err) throw err;
       setLinkApprovalStatus("aprovado");
       toast.success("Aprovado com sucesso!");
-      checkAndNotifyCompletion(token!);
+      checkAndNotifyCompletion(token!, isInternal);
     } catch {
       toast.error("Erro ao aprovar");
     } finally {
@@ -553,7 +556,7 @@ export default function AprovacaoMockup() {
     }
     setSubmitting(true);
     try {
-      const { error: err } = await supabase.rpc("update_task_approval_by_token", {
+      const { error: err } = await supabase.rpc(isInternal ? "update_task_approval_by_internal_token" : "update_task_approval_by_token", {
         p_token: token!,
         p_status: "reprovado",
         p_feedback: linkFeedback,
@@ -561,7 +564,7 @@ export default function AprovacaoMockup() {
       if (err) throw err;
       setLinkApprovalStatus("reprovado");
       toast.success("Mudança solicitada com sucesso.");
-      checkAndNotifyRejection(token!, linkFeedback);
+      checkAndNotifyRejection(token!, linkFeedback, isInternal);
     } catch {
       toast.error("Erro ao solicitar mudança");
     } finally {
@@ -694,7 +697,10 @@ export default function AprovacaoMockup() {
       <div className="min-h-screen bg-background px-4 py-8">
           {!isEmbedded && (
             <div className="text-center space-y-1 mb-6">
-              <h1 className="text-xl font-bold text-foreground">{gridTitulo}</h1>
+              <div className="flex items-center justify-center gap-2">
+                <h1 className="text-xl font-bold text-foreground">{gridTitulo}</h1>
+                {isInternal && <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs">Aprovação Interna</Badge>}
+              </div>
               <p className="text-sm text-muted-foreground">Aprovação de Grade do Instagram • {gridCliente}</p>
             </div>
           )}
@@ -963,6 +969,7 @@ export default function AprovacaoMockup() {
       onReject={handleRejectLinks}
       onSubmit={() => setSubmitted(true)}
       isEmbedded={isEmbedded}
+      isInternal={isInternal}
     />;
   }
 
@@ -1004,7 +1011,10 @@ export default function AprovacaoMockup() {
       <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
         {!isEmbedded && (
           <div className="text-center space-y-1">
-            <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
+            <div className="flex items-center justify-center gap-2">
+              <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
+              {isInternal && <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs">Aprovação Interna</Badge>}
+            </div>
             <p className="text-sm text-muted-foreground">Aprovação de Posts • {clienteNome}</p>
           </div>
         )}
@@ -1138,6 +1148,7 @@ function LinkOnlyApproval({
   onReject,
   onSubmit,
   isEmbedded,
+  isInternal,
 }: {
   taskInfo: TaskInfo | null;
   taskLinks: TaskLink[];
@@ -1150,6 +1161,7 @@ function LinkOnlyApproval({
   onReject: () => void;
   onSubmit: () => void;
   isEmbedded?: boolean;
+  isInternal?: boolean;
 }) {
   const tarefaTitulo = taskInfo?.tarefa_titulo || "Tarefa";
   const clienteNome = taskInfo?.cliente_nome || "";
@@ -1174,7 +1186,10 @@ function LinkOnlyApproval({
       <div className={cn("mx-auto px-4 py-8 space-y-6", deviceView === "mobile" ? "max-w-xl" : "max-w-6xl")}>
         {!isEmbedded && (
           <div className="text-center space-y-1">
-            <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
+            <div className="flex items-center justify-center gap-2">
+              <h1 className="text-xl font-bold text-foreground">{tarefaTitulo}</h1>
+              {isInternal && <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs">Aprovação Interna</Badge>}
+            </div>
             <p className="text-sm text-muted-foreground">
               Aprovação de Entrega{clienteNome ? ` • ${clienteNome}` : ""}
             </p>

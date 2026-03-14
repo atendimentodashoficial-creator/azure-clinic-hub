@@ -6137,6 +6137,10 @@ export type Database = {
         Args: { p_feedback?: string; p_status: string; p_token: string }
         Returns: undefined
       }
+      bulk_update_mockup_approval_internal: {
+        Args: { p_feedback?: string; p_status: string; p_token: string }
+        Returns: undefined
+      }
       calcular_disponibilidade_horarios:
         | {
             Args: {
@@ -6372,7 +6376,25 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_grid_highlight_approval_internal: {
+        Args: {
+          p_feedback?: string
+          p_highlight_id: string
+          p_status: string
+          p_token: string
+        }
+        Returns: undefined
+      }
       update_grid_post_approval: {
+        Args: {
+          p_feedback?: string
+          p_grid_post_id: string
+          p_status: string
+          p_token: string
+        }
+        Returns: undefined
+      }
+      update_grid_post_approval_internal: {
         Args: {
           p_feedback?: string
           p_grid_post_id: string
@@ -6388,6 +6410,19 @@ export type Database = {
           p_status: string
           p_token: string
         }
+        Returns: undefined
+      }
+      update_mockup_approval_internal: {
+        Args: {
+          p_feedback?: string
+          p_mockup_id: string
+          p_status: string
+          p_token: string
+        }
+        Returns: undefined
+      }
+      update_task_approval_by_internal_token: {
+        Args: { p_feedback?: string; p_status: string; p_token: string }
         Returns: undefined
       }
       update_task_approval_by_token: {
