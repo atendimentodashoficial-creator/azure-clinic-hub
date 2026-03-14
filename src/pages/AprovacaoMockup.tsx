@@ -837,7 +837,6 @@ export default function AprovacaoMockup() {
               </Card>
             )}
           </div>
-        </div>
       </div>
     );
   }
