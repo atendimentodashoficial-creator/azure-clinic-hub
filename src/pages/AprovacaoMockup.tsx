@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MockupPreview, MockupSlide } from "@/components/tarefas/MockupPreview";
@@ -99,33 +99,39 @@ interface PostForApproval {
 function GradeScaledMockup({ children }: { children: ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number | undefined>();
+  const [scale, setScale] = useState(1);
+  const [naturalH, setNaturalH] = useState(0);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const sync = () => {
       const container = containerRef.current;
       const inner = innerRef.current;
       if (!container || !inner) return;
-      // Reset scale to measure natural size
-      inner.style.transform = 'none';
-      const naturalW = inner.scrollWidth;
-      const naturalH = inner.scrollHeight;
-      const containerW = container.clientWidth;
-      if (naturalW <= 0) return;
-      const scale = containerW / naturalW;
-      inner.style.transform = `scale(${scale})`;
-      inner.style.transformOrigin = 'top left';
-      setHeight(naturalH * scale);
+      // Reset to measure natural size
+      inner.style.transform = 'scale(1)';
+      // Wait a frame for layout
+      requestAnimationFrame(() => {
+        const nW = inner.offsetWidth;
+        const nH = inner.offsetHeight;
+        const cW = container.clientWidth;
+        if (nW <= 0) return;
+        const s = cW / nW;
+        setScale(s);
+        setNaturalH(nH);
+        inner.style.transform = `scale(${s})`;
+        inner.style.transformOrigin = 'top left';
+      });
     };
-    sync();
-    const ro = new ResizeObserver(sync);
+    // Delay initial sync to allow IPhoneFrame to render
+    const timer = setTimeout(sync, 100);
+    const ro = new ResizeObserver(() => sync());
     if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, [children]);
+    return () => { clearTimeout(timer); ro.disconnect(); };
+  }, []);
 
   return (
-    <div ref={containerRef} className="w-full overflow-hidden" style={{ height }}>
-      <div ref={innerRef} className="w-max">
+    <div ref={containerRef} className="w-full" style={{ height: naturalH > 0 ? naturalH * scale : 'auto' }}>
+      <div ref={innerRef} style={{ width: 380, display: 'inline-block' }}>
         {children}
       </div>
     </div>
