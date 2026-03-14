@@ -533,6 +533,61 @@ export default function Tarefas() {
     });
   };
 
+  const handleAdvance = (tarefa: Tarefa) => {
+    const nextCol = getNextColumn(tarefa, colunas, tiposTarefas);
+    if (!nextCol) return;
+
+    const targetColType = getColType(nextCol.nome);
+
+    // Block advance to done if approvals are pending
+    if (targetColType === 'done') {
+      const tipoTarefa = tarefa.tipo_tarefa_id ? tiposTarefas.find(t => t.id === tarefa.tipo_tarefa_id) : null;
+      if (tipoTarefa?.exige_aprovacao && tarefa.approval_status !== "concluido") {
+        toast.error("Esta tarefa exige aprovação do cliente antes de ser concluída.");
+        return;
+      }
+      if (tipoTarefa?.exige_aprovacao_interna && tarefa.aprovacao_interna_status !== "aprovado") {
+        toast.error("Esta tarefa exige aprovação interna antes de ser concluída.");
+        return;
+      }
+    }
+
+    const timerUpdates = computeTimerUpdates(tarefa, colunas, nextCol.id);
+    const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
+
+    moverTarefa.mutate(
+      { id: tarefa.id, coluna_id: nextCol.id, ordem: targetTarefas.length },
+      {
+        onSuccess: async () => {
+          toast.success(`Tarefa movida para "${nextCol.nome}"`);
+
+          if (Object.keys(timerUpdates).length > 0) {
+            await supabase.from("tarefas").update({
+              ...timerUpdates,
+              updated_at: new Date().toISOString(),
+            } as any).eq("id", tarefa.id);
+          }
+
+          // Auto-create commission when moved to Concluído
+          if (targetColType === 'done' && tarefa.comissao && tarefa.comissao > 0 && tarefa.responsavel_nome && ownerId) {
+            const responsaveis = tarefa.responsavel_nome.split(",").map(n => n.trim());
+            const comissaoPorPessoa = tarefa.comissao / responsaveis.length;
+            for (const nome of responsaveis) {
+              await supabase.from("comissoes").insert({
+                tarefa_id: tarefa.id,
+                user_id: ownerId,
+                membro_nome: nome,
+                valor: comissaoPorPessoa,
+                status: "pendente",
+              });
+            }
+            toast.info("Comissão criada! Aguardando aprovação.");
+          }
+        },
+        onError: (e: any) => toast.error(e.message),
+      }
+    );
+
   const handleStartTimer = (id: string) => {
     atualizarTarefa.mutate({
       id,
