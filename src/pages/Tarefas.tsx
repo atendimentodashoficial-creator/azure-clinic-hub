@@ -872,6 +872,7 @@ export default function Tarefas() {
                 reunioesMap={reunioesMap}
                 tiposTarefas={tiposTarefas}
                 isFuncionario={isFuncionario}
+                revisoesCounts={revisoesByTarefa[activeTarefa.id]}
               />
             </div>
           )}
