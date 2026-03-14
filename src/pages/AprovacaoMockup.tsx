@@ -113,11 +113,12 @@ export default function AprovacaoMockup() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [mockupRes, linksRes, taskRes, gridRes] = await Promise.all([
+      const [mockupRes, linksRes, taskRes, gridRes, highlightsRes] = await Promise.all([
         supabase.rpc("get_mockups_by_approval_token", { p_token: token! }),
         supabase.rpc("get_links_by_approval_token", { p_token: token! }),
         supabase.rpc("get_task_by_approval_token", { p_token: token! }),
         supabase.rpc("get_grid_posts_by_approval_token", { p_token: token! }),
+        supabase.rpc("get_grid_highlights_by_approval_token", { p_token: token! }),
       ]);
 
       if (mockupRes.error) throw mockupRes.error;
@@ -126,6 +127,7 @@ export default function AprovacaoMockup() {
       setMockups(withPostIndex);
       setTaskLinks((linksRes.data || []) as TaskLink[]);
       setGridPosts((gridRes.data || []) as GridPostData[]);
+      setGridHighlights((highlightsRes.data || []) as HighlightData[]);
 
       const taskData = (taskRes.data || []) as TaskInfo[];
       if (taskData.length > 0) {
