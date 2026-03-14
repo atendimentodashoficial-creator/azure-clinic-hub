@@ -660,10 +660,6 @@ export default function Tarefas() {
         onSuccess: async () => {
           toast.success("Tarefa movida!");
 
-          // Send notification for completed task
-          if (targetColType === 'done' && tarefa.user_id) {
-            await sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
-          }
 
           // Auto-create commission when moved to Concluído
           if (targetColType === 'done' && tarefa.comissao && tarefa.comissao > 0 && tarefa.responsavel_nome && ownerId) {
