@@ -5180,6 +5180,8 @@ export type Database = {
           updated_at: string
           user_id: string
           whatsapp_api_key: string | null
+          whatsapp_aviso_grupo: string | null
+          whatsapp_aviso_pessoal: string | null
           whatsapp_base_url: string | null
           whatsapp_instance_name: string | null
         }
@@ -5200,6 +5202,8 @@ export type Database = {
           updated_at?: string
           user_id: string
           whatsapp_api_key?: string | null
+          whatsapp_aviso_grupo?: string | null
+          whatsapp_aviso_pessoal?: string | null
           whatsapp_base_url?: string | null
           whatsapp_instance_name?: string | null
         }
@@ -5220,6 +5224,8 @@ export type Database = {
           updated_at?: string
           user_id?: string
           whatsapp_api_key?: string | null
+          whatsapp_aviso_grupo?: string | null
+          whatsapp_aviso_pessoal?: string | null
           whatsapp_base_url?: string | null
           whatsapp_instance_name?: string | null
         }
