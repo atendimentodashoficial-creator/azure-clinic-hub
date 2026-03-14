@@ -407,7 +407,7 @@ export default function AprovacaoMockup() {
   };
   // === HIGHLIGHT APPROVAL HANDLERS ===
   const sortedHighlights = [...gridHighlights].sort((a, b) => a.ordem - b.ordem);
-  const filteredSortedHighlightsForHandler = sortedHighlights.filter(h => approvalFilter === "pendentes" ? h.status !== "aprovado" : h.status === "aprovado");
+  const filteredSortedHighlightsForHandler = sortedHighlights.filter(h => filterStatus(h.status));
   const currentHighlight = filteredSortedHighlightsForHandler[currentHighlightIdx];
 
   const handleApproveHighlight = async () => {
