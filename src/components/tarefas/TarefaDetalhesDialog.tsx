@@ -231,9 +231,11 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
     try {
       // If internal approval is required and not yet approved, send to internal approval first
       if (exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== "aprovado") {
+        const internaToken = (tarefa as any).internal_approval_token || crypto.randomUUID();
         const internaColumnId = await findColumnByMatcherAsync(isAprovacaoInternaColumn);
         const updateData: Record<string, any> = {
           aprovacao_interna_status: "pendente",
+          internal_approval_token: internaToken,
           updated_at: new Date().toISOString(),
         };
         if (internaColumnId) {
@@ -244,9 +246,12 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
           .update(updateData)
           .eq("id", tarefa.id);
         if (error) throw error;
-        // Send notification
-        await sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: tarefa.user_id });
-        toast.success("Tarefa enviada para aprovação interna do gestor!");
+
+        const link = `${window.location.origin}/aprovacao-interna/${internaToken}`;
+        // Send notification with internal approval link
+        await sendTaskNotification({ evento: "aprovacao_interna", tarefa_id: tarefa.id, user_id: tarefa.user_id, link_aprovacao: link });
+        await navigator.clipboard.writeText(link);
+        toast.success("Link de aprovação interna copiado para a área de transferência!");
         window.location.reload();
         return;
       }
