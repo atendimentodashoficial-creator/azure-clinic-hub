@@ -925,7 +925,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                         onClick={handleSendForApproval}
                       >
                         <Send className="h-4 w-4" />
-                        Enviar para Aprovação
+                        {exigeAprovacaoInterna && tarefa.aprovacao_interna_status !== "aprovado" ? "Enviar para Aprovação Interna" : "Enviar para Aprovação"}
                       </Button>
                     )}
                   </div>
