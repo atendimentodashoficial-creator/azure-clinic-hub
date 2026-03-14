@@ -246,6 +246,7 @@ export default function TiposTarefas() {
           )}
         </CardContent>
       </Card>
+      </div>
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
