@@ -416,19 +416,32 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
             </>
           )}
 
-          <div className="flex items-center gap-3 mt-2 flex-wrap">
-            <Badge className={cn("text-xs border-0", prio.color)}>{prio.label}</Badge>
-            {tarefa.data_limite && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {format(new Date(tarefa.data_limite + "T00:00:00"), "dd/MM/yyyy")}
-              </span>
+          <div className="flex items-center justify-between gap-2 mt-2">
+            <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0">
+              <Badge className={cn("text-xs border-0", prio.color)}>{prio.label}</Badge>
+              {tarefa.data_limite && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {format(new Date(tarefa.data_limite + "T00:00:00"), "dd/MM/yyyy")}
+                </span>
+              )}
+              <TarefaTimer
+                timerStatus={tarefa.timer_status}
+                timerInicio={tarefa.timer_inicio}
+                tempoAcumulado={tarefa.tempo_acumulado_segundos}
+              />
+            </div>
+            {nextCol && onAdvance && colType !== 'done' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs gap-1 shrink-0 text-muted-foreground hover:text-primary"
+                title={`Avançar para ${nextCol.nome}`}
+                onClick={(e) => { e.stopPropagation(); onAdvance(tarefa); }}
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
             )}
-            <TarefaTimer
-              timerStatus={tarefa.timer_status}
-              timerInicio={tarefa.timer_inicio}
-              tempoAcumulado={tarefa.tempo_acumulado_segundos}
-            />
           </div>
         </div>
       </div>
