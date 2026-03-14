@@ -627,33 +627,31 @@ export default function AprovacaoMockup() {
 
             {/* Grade (mockup) tab */}
             {gridApprovalTab === "grade" && (
-              <div className="flex justify-center">
-                <div className="w-full">
-                  <IPhoneFrame className="[&_.iphone-shell]:max-w-full">
-                    <InstagramGridPreview
-                      posts={gridPosts.map(g => ({
-                        id: g.grid_post_id,
-                        posicao: g.posicao,
-                        image_url: g.image_url,
-                        status: g.status,
-                        feedback: g.feedback,
-                      }))}
-                      highlights={gridHighlights.map(h => ({
-                        id: h.highlight_id,
-                        ordem: h.ordem,
-                        titulo: h.titulo,
-                        image_url: h.image_url,
-                        status: h.status,
-                        feedback: h.feedback,
-                      }))}
-                      perfilNome={gridCliente}
-                      perfilCategoria={gridEmpresa}
-                      perfilFotoUrl={taskInfo?.cliente_foto_perfil_url}
-                      approvalMode={false}
-                    />
-                  </IPhoneFrame>
-                </div>
-              </div>
+              <GradeScaledMockup>
+                <IPhoneFrame>
+                  <InstagramGridPreview
+                    posts={gridPosts.map(g => ({
+                      id: g.grid_post_id,
+                      posicao: g.posicao,
+                      image_url: g.image_url,
+                      status: g.status,
+                      feedback: g.feedback,
+                    }))}
+                    highlights={gridHighlights.map(h => ({
+                      id: h.highlight_id,
+                      ordem: h.ordem,
+                      titulo: h.titulo,
+                      image_url: h.image_url,
+                      status: h.status,
+                      feedback: h.feedback,
+                    }))}
+                    perfilNome={gridCliente}
+                    perfilCategoria={gridEmpresa}
+                    perfilFotoUrl={taskInfo?.cliente_foto_perfil_url}
+                    approvalMode={false}
+                  />
+                </IPhoneFrame>
+              </GradeScaledMockup>
             )}
 
             {/* Posts approval */}
