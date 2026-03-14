@@ -945,7 +945,6 @@ export default function AprovacaoMockup({ isInternal = false }: { isInternal?: b
                             onChange={e => setHighlightFeedbacks(prev => ({ ...prev, [currentFilteredHighlight.highlight_id]: e.target.value }))}
                             rows={2}
                           />
-                          <div className="flex gap-2">
                           {pendingAdvance ? (
                             <Button onClick={() => { pendingAdvance(); setPendingAdvance(null); }} className="w-full gap-1.5">
                               Próximo <ChevronRight className="w-4 h-4" />
