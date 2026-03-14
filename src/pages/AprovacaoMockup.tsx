@@ -1039,9 +1039,7 @@ export default function AprovacaoMockup() {
                   </Button>
                 </div>
 
-                <div className="flex justify-center">
-                  <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} perfilFotoUrl={taskInfo?.cliente_foto_perfil_url} className="w-full max-w-none" />
-                </div>
+                <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} perfilFotoUrl={taskInfo?.cliente_foto_perfil_url} className="max-w-none" />
 
                   <Card className="p-4 space-y-3">
                     <Textarea
