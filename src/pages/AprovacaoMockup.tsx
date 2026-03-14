@@ -306,23 +306,13 @@ export default function AprovacaoMockup() {
         });
         if (err) throw err;
       }
-      setMockups(prev => {
-        const updated = prev.map(m =>
+      setMockups(prev =>
+        prev.map(m =>
           currentPost.mockups.some(cm => cm.mockup_id === m.mockup_id)
             ? { ...m, status: "reprovado", feedback: feedbacks[currentPost.postIndex] }
             : m
-        );
-        setTimeout(() => {
-          const nextPosts = groupByPost(updated);
-          const nextUndecided = nextPosts.findIndex((p, i) => i > currentPostIdx && p.status === "pendente");
-          if (nextUndecided !== -1) setCurrentPostIdx(nextUndecided);
-          else {
-            const first = nextPosts.findIndex(p => p.status === "pendente");
-            if (first !== -1) setCurrentPostIdx(first);
-          }
-        }, 300);
-        return updated;
-      });
+        )
+      );
       toast.success("Post reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
