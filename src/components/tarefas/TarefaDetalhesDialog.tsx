@@ -311,11 +311,19 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
         } else {
           // No client approval, move to Concluído
           const concluidoColumnId = await findColumnByMatcherAsync(isConcluido);
+          const base = Number(tarefa.tempo_acumulado_segundos ?? 0);
+          const accumulated = tarefa.timer_status === "rodando" && tarefa.timer_inicio
+            ? base + Math.max(0, Math.floor((Date.now() - new Date(tarefa.timer_inicio).getTime()) / 1000))
+            : base;
+
           const updateData: Record<string, any> = {
             aprovacao_interna_status: "aprovado",
             aprovacao_interna_por: gestorNome,
             aprovacao_interna_feedback: internaFeedback || null,
             approval_status: "concluido",
+            timer_inicio: null,
+            timer_status: "concluido",
+            tempo_acumulado_segundos: accumulated,
             updated_at: new Date().toISOString(),
           };
           if (concluidoColumnId) {
@@ -323,7 +331,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
           }
           const { error } = await supabase.from("tarefas").update(updateData).eq("id", tarefa.id);
           if (error) throw error;
-          sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
+          await sendTaskNotification({ evento: "aprovada_concluida", tarefa_id: tarefa.id, user_id: tarefa.user_id });
           toast.success("Aprovação interna concluída! Tarefa finalizada.");
         }
       } else {
