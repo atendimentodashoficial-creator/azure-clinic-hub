@@ -340,9 +340,15 @@ export default function AprovacaoMockup() {
         p_feedback: gridFeedbacks[currentGridPost.grid_post_id] || null,
       });
       if (err) throw err;
-      setGridPosts(prev =>
-        prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "aprovado", feedback: gridFeedbacks[currentGridPost.grid_post_id] || null } : g)
-      );
+      setGridPosts(prev => {
+        const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "aprovado", feedback: gridFeedbacks[currentGridPost.grid_post_id] || null } : g);
+        // Auto-switch to highlights if no more pending grid posts
+        if (gridHighlights.some(h => h.status === "pendente") && !updated.some(g => g.status === "pendente")) {
+          setGridApprovalTab("highlights");
+          setCurrentHighlightIdx(0);
+        }
+        return updated;
+      });
       toast.success("Post aprovado!");
     } catch {
       toast.error("Erro ao aprovar");
@@ -367,9 +373,14 @@ export default function AprovacaoMockup() {
         p_feedback: feedback,
       });
       if (err) throw err;
-      setGridPosts(prev =>
-        prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g)
-      );
+      setGridPosts(prev => {
+        const updated = prev.map(g => g.grid_post_id === currentGridPost.grid_post_id ? { ...g, status: "reprovado", feedback } : g);
+        if (gridHighlights.some(h => h.status === "pendente") && !updated.some(g => g.status === "pendente")) {
+          setGridApprovalTab("highlights");
+          setCurrentHighlightIdx(0);
+        }
+        return updated;
+      });
       toast.success("Post reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
@@ -394,9 +405,14 @@ export default function AprovacaoMockup() {
         p_feedback: highlightFeedbacks[currentHighlight.highlight_id] || null,
       });
       if (err) throw err;
-      setGridHighlights(prev =>
-        prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "aprovado", feedback: highlightFeedbacks[currentHighlight.highlight_id] || null } : h)
-      );
+      setGridHighlights(prev => {
+        const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "aprovado", feedback: highlightFeedbacks[currentHighlight.highlight_id] || null } : h);
+        if (gridPosts.some(g => g.status === "pendente") && !updated.some(h => h.status === "pendente")) {
+          setGridApprovalTab("posts");
+          setCurrentGridIdx(0);
+        }
+        return updated;
+      });
       toast.success("Destaque aprovado!");
     } catch {
       toast.error("Erro ao aprovar");
@@ -421,9 +437,14 @@ export default function AprovacaoMockup() {
         p_feedback: feedback,
       });
       if (err) throw err;
-      setGridHighlights(prev =>
-        prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h)
-      );
+      setGridHighlights(prev => {
+        const updated = prev.map(h => h.highlight_id === currentHighlight.highlight_id ? { ...h, status: "reprovado", feedback } : h);
+        if (gridPosts.some(g => g.status === "pendente") && !updated.some(h => h.status === "pendente")) {
+          setGridApprovalTab("posts");
+          setCurrentGridIdx(0);
+        }
+        return updated;
+      });
       toast.success("Destaque reprovado com feedback.");
     } catch {
       toast.error("Erro ao reprovar");
