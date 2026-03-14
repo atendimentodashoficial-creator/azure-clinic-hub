@@ -47,12 +47,15 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
   const [fotoUrl, setFotoUrl] = useState(membroEditando?.foto_url || "");
   const [fotoPreview, setFotoPreview] = useState(membroEditando?.foto_url || "");
   const [uploading, setUploading] = useState(false);
+  const [whatsappAvisoPessoal, setWhatsappAvisoPessoal] = useState(membroEditando?.whatsapp_aviso_pessoal || "");
+  const [whatsappAvisoGrupo, setWhatsappAvisoGrupo] = useState(membroEditando?.whatsapp_aviso_grupo || "");
 
   const resetForm = () => {
     setNome(""); setEmail(""); setTelefone(""); setCountryCode("55");
     setCargo(""); setObservacoes(""); setSenha(""); setSalario("");
     setDataContratacao(undefined); setDiaPagamento("");
     setFotoUrl(""); setFotoPreview("");
+    setWhatsappAvisoPessoal(""); setWhatsappAvisoGrupo("");
   };
 
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,6 +109,8 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
       data_contratacao: dataContratacao ? format(dataContratacao, "yyyy-MM-dd") : null,
       dia_pagamento: diaPagamento ? parseInt(diaPagamento) : null,
       foto_url: fotoUrl || null,
+      whatsapp_aviso_pessoal: whatsappAvisoPessoal.trim() || null,
+      whatsapp_aviso_grupo: whatsappAvisoGrupo.trim() || null,
     });
     resetForm();
     setOpen(false);
@@ -230,6 +235,33 @@ function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
             </Select>
           </div>
           <div className="space-y-2"><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
+
+          {/* WhatsApp Avisos */}
+          <div className="border rounded-lg p-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-sm font-medium">Contatos para Avisos de Tarefas</Label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Preencha o número pessoal e/ou do grupo para receber notificações sobre tarefas via WhatsApp.
+            </p>
+            <div className="space-y-2">
+              <Label className="text-xs">WhatsApp Pessoal</Label>
+              <Input
+                value={whatsappAvisoPessoal}
+                onChange={e => setWhatsappAvisoPessoal(e.target.value)}
+                placeholder="5521999999999"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">WhatsApp do Grupo</Label>
+              <Input
+                value={whatsappAvisoGrupo}
+                onChange={e => setWhatsappAvisoGrupo(e.target.value)}
+                placeholder="ID do grupo ou JID"
+              />
+            </div>
+          </div>
         </div>
         <div className="flex justify-end gap-2 pt-2 shrink-0">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancelar</Button>
