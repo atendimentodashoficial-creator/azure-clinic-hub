@@ -333,7 +333,8 @@ export default function AprovacaoMockup() {
 
   // === GRID APPROVAL HANDLERS ===
   const sortedGridPosts = [...gridPosts].sort((a, b) => a.posicao - b.posicao);
-  const filteredSortedGridPostsForHandler = sortedGridPosts.filter(g => approvalFilter === "pendentes" ? g.status !== "aprovado" : g.status === "aprovado");
+  const filterStatus = (s: string) => approvalFilter === "pendentes" ? s === "pendente" : approvalFilter === "aprovadas" ? s === "aprovado" : s === "reprovado";
+  const filteredSortedGridPostsForHandler = sortedGridPosts.filter(g => filterStatus(g.status));
   const currentGridPost = filteredSortedGridPostsForHandler[currentGridIdx];
 
   const handleApproveGridPost = async () => {
