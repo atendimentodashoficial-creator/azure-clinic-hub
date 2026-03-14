@@ -652,7 +652,7 @@ export default function AprovacaoMockup() {
             </div>
           )}
 
-          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-32">
+          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-20">
             {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
             <div className="order-2 lg:order-1 lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
               <GridMockupScaler>
