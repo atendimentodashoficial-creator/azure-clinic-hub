@@ -34,6 +34,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 function GridLayoutSyncer({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const layoutRef = useRef<HTMLDivElement>(null);
+  const minScaleRef = useRef<number>(1);
 
   const sync = useCallback(() => {
     if (!layoutRef.current) return;
@@ -63,7 +64,13 @@ function GridLayoutSyncer({ children }: { children: React.ReactNode }) {
 
     const scaleByHeight = leftH / rightNaturalH;
     const scaleByWidth = rightAvailableW / rightNaturalW;
-    const scale = Math.min(1, scaleByHeight, scaleByWidth);
+    let scale = Math.min(1, scaleByHeight, scaleByWidth);
+
+    // Keep the smallest scale ever seen so switching tabs doesn't enlarge
+    if (scale < minScaleRef.current) {
+      minScaleRef.current = scale;
+    }
+    scale = minScaleRef.current;
 
     right.style.height = `${leftH}px`;
     right.style.maxHeight = `${leftH}px`;
