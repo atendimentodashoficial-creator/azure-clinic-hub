@@ -1040,7 +1040,7 @@ export default function AprovacaoMockup() {
                 </div>
 
                 <div className="flex justify-center">
-                  <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} perfilFotoUrl={taskInfo?.cliente_foto_perfil_url} className="w-full" />
+                  <MockupPreview slides={previewSlides} perfilNome={clienteNome} perfilCategoria={clienteEmpresa} perfilFotoUrl={taskInfo?.cliente_foto_perfil_url} className="w-full max-w-none" />
                 </div>
 
                   <Card className="p-4 space-y-3">

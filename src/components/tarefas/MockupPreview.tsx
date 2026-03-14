@@ -29,7 +29,7 @@ export function MockupPreview({ slides, perfilNome = "perfil", perfilCategoria =
   const iniciais = perfilNome.slice(0, 2).toUpperCase();
 
   return (
-    <div className={cn("w-full max-w-[400px] mx-auto bg-background border rounded-xl overflow-hidden shadow-lg", className?.includes("max-w-") ? className.replace("max-w-[400px]", "") : "", className)}>
+    <div className={cn("w-full max-w-[400px] mx-auto bg-background border rounded-xl overflow-hidden shadow-lg", className)}>
       {/* Header */}
       <div className="flex items-center gap-2.5 px-3 py-2.5">
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 p-[2px]">
