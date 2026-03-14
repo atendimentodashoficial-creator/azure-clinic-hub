@@ -35,9 +35,9 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1.15);
+  const [scale, setScale] = useState(0.95);
   const [wrapperH, setWrapperH] = useState<string>('auto');
-  const maxScaleRef = useRef(1.15);
+  const maxScaleRef = useRef(0.95);
 
   const recalc = useCallback(() => {
     if (isMobile || !containerRef.current || !innerRef.current) return;
@@ -48,10 +48,10 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
 
     innerRef.current.style.transform = 'scale(1)';
     const naturalH = innerRef.current.offsetHeight;
-    const rightH = Math.max(rightPanel.offsetHeight, 900);
+    const rightH = Math.max(rightPanel.offsetHeight, 700);
 
     if (naturalH > 0 && rightH > 0) {
-      const s = Math.max(1.15, Math.min(rightH / naturalH, 1.5));
+      const s = Math.max(0.85, Math.min(rightH / naturalH, 1.15));
       maxScaleRef.current = Math.max(maxScaleRef.current, s);
       const finalScale = maxScaleRef.current;
       setScale(finalScale);
@@ -652,7 +652,7 @@ export default function AprovacaoMockup() {
             </div>
           )}
 
-          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-32">
+          <div data-grid-layout className="flex flex-col lg:flex-row lg:items-start lg:justify-center lg:gap-20">
             {/* Left: Instagram grid mockup — visual reference, scales to match right panel */}
             <div className="order-2 lg:order-1 lg:sticky lg:top-8 w-full max-w-[400px] mx-auto lg:mx-0 flex-shrink-0">
               <GridMockupScaler>
@@ -683,7 +683,7 @@ export default function AprovacaoMockup() {
             </div>
 
             {/* Right: Approval controls */}
-            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6 lg:min-h-[850px]">
+            <div data-grid-right className="order-1 lg:order-2 flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 space-y-6 lg:min-h-[700px]">
               {/* Filter: Pendentes / Aprovadas */}
               {!hideFilterTabs && <ApprovalFilterTabs pendingCount={totalPending} approvedCount={totalApproved} rejectedCount={totalRejected} />}
 
