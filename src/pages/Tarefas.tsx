@@ -553,7 +553,7 @@ export default function Tarefas() {
     }
 
     const timerUpdates = computeTimerUpdates(tarefa, colunas, nextCol.id);
-    const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
+    const advanceTargetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
 
     // Apply move + timer in a single update
     const targetTarefas = tarefas.filter(t => t.coluna_id === nextCol.id);
