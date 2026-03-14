@@ -124,6 +124,7 @@ interface TaskInfo {
   cliente_nome: string;
   cliente_empresa: string;
   approval_status: string;
+  cliente_instagram: string;
 }
 
 interface PostForApproval {
@@ -535,7 +536,7 @@ export default function AprovacaoMockup() {
   // Grid approval mode
   if (isGridMode) {
     const gridTitulo = gridPosts[0]?.tarefa_titulo || taskInfo?.tarefa_titulo || "Tarefa";
-    const gridCliente = gridPosts[0]?.cliente_nome || taskInfo?.cliente_nome || "perfil";
+    const gridCliente = taskInfo?.cliente_instagram || gridPosts[0]?.cliente_nome || taskInfo?.cliente_nome || "perfil";
     const gridEmpresa = gridPosts[0]?.cliente_empresa || taskInfo?.cliente_empresa || "";
     const allGridPostsDecided = gridPosts.every(g => g.status === "aprovado" || g.status === "reprovado");
     const allHighlightsDecided = gridHighlights.length === 0 || gridHighlights.every(h => h.status === "aprovado" || h.status === "reprovado");
@@ -801,7 +802,7 @@ export default function AprovacaoMockup() {
 
   // Mockup approval mode
   const tarefaTitulo = mockups[0]?.tarefa_titulo || "Tarefa";
-  const clienteNome = mockups[0]?.cliente_nome || "perfil";
+  const clienteNome = taskInfo?.cliente_instagram || mockups[0]?.cliente_nome || "perfil";
   const clienteEmpresa = mockups[0]?.cliente_empresa || "";
 
   const statusColor = (s: string) => {
