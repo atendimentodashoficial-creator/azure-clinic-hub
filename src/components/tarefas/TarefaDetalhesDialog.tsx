@@ -12,7 +12,9 @@ import { useTiposTarefas, TipoTarefa } from "@/hooks/useTiposTarefas";
 import { useTarefaMockups } from "@/hooks/useTarefaMockups";
 import { useTarefaLinks } from "@/hooks/useTarefaLinks";
 import { useTarefaGrid } from "@/hooks/useTarefaGrid";
+import { useTarefaGridHighlights } from "@/hooks/useTarefaGridHighlights";
 import { GridPostsManager } from "./GridPostsManager";
+import { GridHighlightsManager } from "./GridHighlightsManager";
 import { MockupPostsManager, PostGroup } from "./MockupPostsManager";
 import { MockupSlide } from "./MockupPreview";
 import { TarefaTimer } from "./TarefaTimer";
@@ -56,6 +58,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
   const { mockups, saveMockups, resubmitRejected } = useTarefaMockups(tarefa?.id || null);
   const { links: savedLinks, saveLinks } = useTarefaLinks(tarefa?.id || null);
   const { gridPosts, uploadImage, removeImage, resubmitRejected: resubmitGridRejected } = useTarefaGrid(tarefa?.id || null);
+  const { highlights: gridHighlights, addHighlight, removeHighlight, updateTitle: updateHighlightTitle, resubmitRejected: resubmitHighlightsRejected } = useTarefaGridHighlights(tarefa?.id || null);
   const [resubmitting, setResubmitting] = useState(false);
   const [posts, setPosts] = useState<PostGroup[]>([
     { postIndex: 0, slides: [{ ordem: 0, subtitulo: "", titulo: "", legenda: "", cta: "" }] },
@@ -592,7 +595,23 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                   uploading={uploadImage.isPending}
                 />
 
-                {/* Approval actions for grid */}
+                <Separator />
+
+                <GridHighlightsManager
+                  highlights={gridHighlights}
+                  onAdd={async (file, titulo) => {
+                    await addHighlight.mutateAsync({ file, titulo });
+                  }}
+                  onRemove={async (id) => {
+                    await removeHighlight.mutateAsync(id);
+                  }}
+                  onUpdateTitle={async (id, titulo) => {
+                    await updateHighlightTitle.mutateAsync({ id, titulo });
+                  }}
+                  uploading={addHighlight.isPending}
+                />
+
+
                 {gridPosts.length > 0 && (
                   <div className="space-y-2">
                     <Separator />
@@ -635,8 +654,28 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                               )}
                             </div>
                           ))}
+                          {gridHighlights.map(h => (
+                            <div key={h.id} className="space-y-1">
+                              <Badge
+                                variant="outline"
+                                className={cn("text-[10px]",
+                                  h.status === "aprovado" ? "border-emerald-500 text-emerald-400" :
+                                  h.status === "reprovado" ? "border-red-500 text-red-400 cursor-pointer hover:bg-red-500/10" :
+                                  "border-muted-foreground/30 text-muted-foreground"
+                                )}
+                                onClick={() => h.status === "reprovado" && h.feedback && setExpandedFeedback(prev => prev === h.id ? null : h.id)}
+                              >
+                                Destaque "{h.titulo}": {h.status === "aprovado" ? "Aprovado" : h.status === "reprovado" ? "Reprovado" : "Pendente"}
+                              </Badge>
+                              {h.status === "reprovado" && h.feedback && expandedFeedback === h.id && (
+                                <p className="text-[11px] text-red-400 bg-red-500/10 rounded px-2 py-1 ml-1 animate-in fade-in slide-in-from-top-1">
+                                  💬 {h.feedback}
+                                </p>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                        {gridPosts.some(g => g.status === "reprovado") && (
+                        {(gridPosts.some(g => g.status === "reprovado") || gridHighlights.some(h => h.status === "reprovado")) && (
                           <Button
                             variant="outline"
                             className="w-full gap-2 mt-2"
@@ -644,6 +683,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                               setResubmitting(true);
                               try {
                                 await resubmitGridRejected.mutateAsync();
+                                await resubmitHighlightsRejected.mutateAsync();
                                 const approvalColumnId = await findAguardandoAprovacaoColumnId();
                                 if (approvalColumnId) {
                                   await supabase.from("tarefas").update({ coluna_id: approvalColumnId, updated_at: new Date().toISOString() }).eq("id", tarefa.id);
@@ -659,7 +699,7 @@ export function TarefaDetalhesDialog({ tarefa, colunas, clientes, reunioesMap, o
                             disabled={resubmitting}
                           >
                             <Send className="h-4 w-4" />
-                            {resubmitting ? "Reenviando..." : `Reenviar ${gridPosts.filter(g => g.status === "reprovado").length} post(s) para Aprovação`}
+                            {resubmitting ? "Reenviando..." : `Reenviar ${gridPosts.filter(g => g.status === "reprovado").length + gridHighlights.filter(h => h.status === "reprovado").length} item(ns) para Aprovação`}
                           </Button>
                         )}
                       </div>

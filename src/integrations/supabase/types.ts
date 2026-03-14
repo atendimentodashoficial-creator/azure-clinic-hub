@@ -4702,6 +4702,53 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefa_grid_highlights: {
+        Row: {
+          created_at: string
+          feedback: string | null
+          id: string
+          image_url: string
+          ordem: number
+          status: string
+          tarefa_id: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          image_url: string
+          ordem?: number
+          status?: string
+          tarefa_id: string
+          titulo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          image_url?: string
+          ordem?: number
+          status?: string
+          tarefa_id?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_grid_highlights_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefa_grid_posts: {
         Row: {
           created_at: string
@@ -6049,6 +6096,21 @@ export type Database = {
         Returns: boolean
       }
       generate_slug: { Args: { input_text: string }; Returns: string }
+      get_grid_highlights_by_approval_token: {
+        Args: { p_token: string }
+        Returns: {
+          cliente_empresa: string
+          cliente_nome: string
+          feedback: string
+          highlight_id: string
+          image_url: string
+          ordem: number
+          status: string
+          tarefa_id: string
+          tarefa_titulo: string
+          titulo: string
+        }[]
+      }
       get_grid_posts_by_approval_token: {
         Args: { p_token: string }
         Returns: {
@@ -6133,6 +6195,15 @@ export type Database = {
       }
       normalize_br_phone: { Args: { phone: string }; Returns: string }
       soft_delete_lead: { Args: { lead_id: string }; Returns: undefined }
+      update_grid_highlight_approval: {
+        Args: {
+          p_feedback?: string
+          p_highlight_id: string
+          p_status: string
+          p_token: string
+        }
+        Returns: undefined
+      }
       update_grid_post_approval: {
         Args: {
           p_feedback?: string
