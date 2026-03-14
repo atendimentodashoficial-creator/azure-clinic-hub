@@ -20,6 +20,7 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [wrapperH, setWrapperH] = useState<string>('auto');
 
   const recalc = useCallback(() => {
     if (isMobile || !containerRef.current || !innerRef.current) return;
@@ -27,24 +28,36 @@ function GridMockupScaler({ children }: { children: React.ReactNode }) {
     if (!parent) return;
     const rightPanel = parent.querySelector('[data-grid-right]') as HTMLElement;
     if (!rightPanel) return;
+
+    // Temporarily reset to measure natural height
+    innerRef.current.style.transform = 'scale(1)';
+    const naturalH = innerRef.current.offsetHeight;
     const rightH = rightPanel.offsetHeight;
-    const naturalH = innerRef.current.scrollHeight;
+
     if (naturalH > 0 && rightH > 0) {
-      const s = Math.min(rightH / naturalH, 1.5);
-      setScale(s < 1 ? 1 : s);
+      const s = Math.max(1, Math.min(rightH / naturalH, 1.5));
+      setScale(s);
+      setWrapperH(`${naturalH * s}px`);
+      innerRef.current.style.transform = `scale(${s})`;
+    } else {
+      innerRef.current.style.transform = 'scale(1)';
     }
   }, [isMobile]);
 
   useEffect(() => {
-    recalc();
-    const timer = setInterval(recalc, 500);
-    return () => clearInterval(timer);
+    const t = setTimeout(recalc, 300);
+    return () => clearTimeout(t);
+  }, [recalc]);
+
+  useEffect(() => {
+    const interval = setInterval(recalc, 1000);
+    return () => clearInterval(interval);
   }, [recalc]);
 
   if (isMobile) return <>{children}</>;
 
   return (
-    <div ref={containerRef} style={{ height: innerRef.current ? innerRef.current.scrollHeight * scale : 'auto' }} className="overflow-hidden">
+    <div ref={containerRef} style={{ height: wrapperH }}>
       <div
         ref={innerRef}
         style={{
