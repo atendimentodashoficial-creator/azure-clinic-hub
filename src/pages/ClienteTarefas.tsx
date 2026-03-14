@@ -194,6 +194,7 @@ export default function ClienteTarefas() {
 /* ─── Detail View ─── */
 
 function TarefaDetalheView({ tarefa, onBack }: { tarefa: ClienteTarefa; onBack: () => void }) {
+  const [approvalFilter, setApprovalFilter] = useState<"pendentes" | "aprovadas" | "reprovadas">("pendentes");
   const { data: gridPosts = [] } = useQuery({
     queryKey: ["cliente-grid", tarefa.id],
     queryFn: async () => {
