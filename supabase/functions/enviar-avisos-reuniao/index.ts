@@ -627,6 +627,14 @@ Deno.serve(async (req) => {
 
       console.log(`${pendingAvisos.length} messages to send for aviso "${aviso.nome}"`);
 
+      // Load main WhatsApp config (uazapi_config) for this user - PRIORITY
+      const { data: mainWhatsAppConfig } = await supabase
+        .from("uazapi_config")
+        .select("id, base_url, api_key, instance_name, is_active")
+        .eq("user_id", userId)
+        .eq("is_active", true)
+        .maybeSingle();
+
       // Load ALL Disparos instances for this user (to match by chat)
       const { data: disparosInstances } = await supabase
         .from("disparos_instancias")
@@ -634,8 +642,8 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .eq("is_active", true);
 
-      if (!disparosInstances || disparosInstances.length === 0) {
-        console.log(`No active Disparos instance for user ${userId}, skipping aviso`);
+      if (!mainWhatsAppConfig && (!disparosInstances || disparosInstances.length === 0)) {
+        console.log(`No active WhatsApp instance for user ${userId}, skipping aviso`);
         continue;
       }
 
