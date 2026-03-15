@@ -299,76 +299,126 @@ serve(async (req) => {
       );
     }
 
-    // Pick instance: prefer the one from the client's chat history (same instance they were chatting with)
+    // Pick instance: prefer the MAIN WhatsApp instance (uazapi_config) over Disparos instances
     let instancia: InstanciaConfig | null = null;
     
-    // First, try to find the instance from the client's existing chat
-    // Priority: instancia_original (where chat was created) > most messages > latest message
     const phoneLast8 = telefone.replace(/\D/g, "").slice(-8);
     console.log(`Looking for chat with phone last8: ${phoneLast8}`);
-    
-    // Get all chats for this phone number to analyze
-    const { data: existingChats, error: chatError } = await supabase
-      .from("disparos_chats")
-      .select("id, instancia_id, instancia_nome, instancia_original_id, instancia_original_nome, last_message_time, created_at")
+
+    // === PRIORITY 1: Check main WhatsApp (uazapi_config + whatsapp_chats) ===
+    // First check if the client has a chat in the main WhatsApp
+    const { data: mainWhatsAppChats } = await supabase
+      .from("whatsapp_chats")
+      .select("id, user_id")
       .eq("user_id", resolvedUserId)
       .is("deleted_at", null)
-      .like("normalized_number", `%${phoneLast8}`);
+      .like("normalized_number", `%${phoneLast8}`)
+      .limit(1);
     
-    if (chatError) {
-      console.error("Error fetching existing chats:", chatError);
-    }
-    
-    let selectedChat: { instancia_id: string; instancia_nome: string | null } | null = null;
-    
-    if (existingChats && existingChats.length > 0) {
-      console.log(`Found ${existingChats.length} chat(s) for phone ${phoneLast8}`);
-      
-      // If there's only one chat, use it
-      if (existingChats.length === 1) {
-        selectedChat = existingChats[0];
-        console.log(`Single chat found, using instance: ${selectedChat.instancia_nome}`);
-      } else {
-        // Multiple chats - prioritize the one that has instancia_original_id set (migrated chat)
-        // or the oldest chat (original conversation)
-        const chatWithOriginal = existingChats.find(c => c.instancia_original_id);
-        if (chatWithOriginal) {
-          // This chat was migrated, use the original instance for continuity
-          selectedChat = {
-            instancia_id: chatWithOriginal.instancia_original_id!,
-            instancia_nome: chatWithOriginal.instancia_original_nome
-          };
-          console.log(`Found migrated chat, using original instance: ${selectedChat.instancia_nome}`);
-        } else {
-          // Use the oldest chat (the original conversation)
-          const oldestChat = existingChats.sort((a, b) => 
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-          )[0];
-          selectedChat = oldestChat;
-          console.log(`Multiple chats found, using oldest (original): ${selectedChat.instancia_nome} created at ${oldestChat.created_at}`);
-        }
-      }
-    }
-    
-    if (selectedChat?.instancia_id) {
-      console.log(`Selected chat instance: ${selectedChat.instancia_id} (${selectedChat.instancia_nome})`);
-      const { data: chatInstance } = await supabase
-        .from("disparos_instancias")
-        .select("*")
-        .eq("id", selectedChat.instancia_id)
+    if (mainWhatsAppChats && mainWhatsAppChats.length > 0) {
+      console.log(`Found chat in main WhatsApp for phone ${phoneLast8}`);
+      // Get the main WhatsApp config (uazapi_config)
+      const { data: mainConfig } = await supabase
+        .from("uazapi_config")
+        .select("id, user_id, base_url, api_key, instance_name, is_active")
         .eq("user_id", resolvedUserId)
         .eq("is_active", true)
         .maybeSingle();
       
-      if (chatInstance) {
-        instancia = chatInstance as any;
-        console.log(`Using instance from chat history: ${chatInstance.nome}`);
-      } else {
-        console.log(`Instance ${selectedChat.instancia_id} not active, will try fallbacks`);
+      if (mainConfig) {
+        instancia = {
+          id: mainConfig.id,
+          user_id: mainConfig.user_id,
+          base_url: mainConfig.base_url,
+          api_key: mainConfig.api_key,
+          nome: mainConfig.instance_name || "WhatsApp Principal",
+          instance_name: mainConfig.instance_name,
+          is_active: mainConfig.is_active,
+        };
+        console.log(`Using MAIN WhatsApp instance: ${instancia.nome}`);
       }
     }
 
-    // If no chat found, try the one passed from parameters (instanciaId / instanciaNome)
+    // === PRIORITY 2: Even without chat history, prefer main WhatsApp if it exists ===
+    if (!instancia) {
+      const { data: mainConfig } = await supabase
+        .from("uazapi_config")
+        .select("id, user_id, base_url, api_key, instance_name, is_active")
+        .eq("user_id", resolvedUserId)
+        .eq("is_active", true)
+        .maybeSingle();
+      
+      if (mainConfig) {
+        instancia = {
+          id: mainConfig.id,
+          user_id: mainConfig.user_id,
+          base_url: mainConfig.base_url,
+          api_key: mainConfig.api_key,
+          nome: mainConfig.instance_name || "WhatsApp Principal",
+          instance_name: mainConfig.instance_name,
+          is_active: mainConfig.is_active,
+        };
+        console.log(`Using MAIN WhatsApp instance (no chat history): ${instancia.nome}`);
+      }
+    }
+
+    // === PRIORITY 3: Check disparos_chats for chat history ===
+    if (!instancia) {
+      const { data: existingChats, error: chatError } = await supabase
+        .from("disparos_chats")
+        .select("id, instancia_id, instancia_nome, instancia_original_id, instancia_original_nome, last_message_time, created_at")
+        .eq("user_id", resolvedUserId)
+        .is("deleted_at", null)
+        .like("normalized_number", `%${phoneLast8}`);
+      
+      if (chatError) {
+        console.error("Error fetching existing chats:", chatError);
+      }
+      
+      let selectedChat: { instancia_id: string; instancia_nome: string | null } | null = null;
+      
+      if (existingChats && existingChats.length > 0) {
+        console.log(`Found ${existingChats.length} chat(s) in Disparos for phone ${phoneLast8}`);
+        
+        if (existingChats.length === 1) {
+          selectedChat = existingChats[0];
+          console.log(`Single disparos chat found, using instance: ${selectedChat.instancia_nome}`);
+        } else {
+          const chatWithOriginal = existingChats.find(c => c.instancia_original_id);
+          if (chatWithOriginal) {
+            selectedChat = {
+              instancia_id: chatWithOriginal.instancia_original_id!,
+              instancia_nome: chatWithOriginal.instancia_original_nome
+            };
+            console.log(`Found migrated chat, using original instance: ${selectedChat.instancia_nome}`);
+          } else {
+            const oldestChat = existingChats.sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            )[0];
+            selectedChat = oldestChat;
+            console.log(`Multiple chats found, using oldest: ${selectedChat.instancia_nome}`);
+          }
+        }
+      }
+      
+      if (selectedChat?.instancia_id) {
+        console.log(`Selected disparos chat instance: ${selectedChat.instancia_id} (${selectedChat.instancia_nome})`);
+        const { data: chatInstance } = await supabase
+          .from("disparos_instancias")
+          .select("*")
+          .eq("id", selectedChat.instancia_id)
+          .eq("user_id", resolvedUserId)
+          .eq("is_active", true)
+          .maybeSingle();
+        
+        if (chatInstance) {
+          instancia = chatInstance as any;
+          console.log(`Using disparos instance from chat history: ${chatInstance.nome}`);
+        }
+      }
+    }
+
+    // === PRIORITY 4: Use parameters (instanciaId / instanciaNome) ===
     if (!instancia && instanciaId) {
       const { data: byId } = await supabase
         .from("disparos_instancias")
@@ -382,40 +432,29 @@ serve(async (req) => {
 
     if (!instancia && instanciaNome) {
       const escaped = String(instanciaNome).replace(/,/g, "");
-      const { data: byName, error: byNameError } = await supabase
+      const { data: byName } = await supabase
         .from("disparos_instancias")
         .select("*")
         .eq("user_id", resolvedUserId)
         .eq("is_active", true)
         .or(`nome.eq.${escaped},instance_name.eq.${escaped}`)
         .limit(1);
-
-      if (byNameError) {
-        console.error("Error fetching instance by name:", byNameError);
-      }
-
       if (byName && byName.length > 0) instancia = byName[0] as any;
     }
 
-    // Last resort: use the first active instance
+    // === PRIORITY 5: Last resort - first active disparos instance ===
     if (!instancia) {
-      console.log("No chat history or parameter instance found, using first active instance");
-      const { data: instancias, error: instanciasError } = await supabase
+      console.log("No main WhatsApp or chat history found, using first active disparos instance");
+      const { data: instancias } = await supabase
         .from("disparos_instancias")
         .select("*")
         .eq("user_id", resolvedUserId)
         .eq("is_active", true)
         .limit(1);
 
-      if (instanciasError || !instancias || instancias.length === 0) {
-        console.error("No active WhatsApp instance:", instanciasError);
-        return new Response(
-          JSON.stringify({ success: false, error: "Nenhuma instância WhatsApp ativa configurada" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (instancias && instancias.length > 0) {
+        instancia = instancias[0] as any;
       }
-
-      instancia = instancias[0] as any;
     }
 
     if (!instancia) {
