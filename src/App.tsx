@@ -12,6 +12,7 @@ import ClienteLayout from "./pages/ClienteLayout";
 import FuncionarioLayout from "./pages/FuncionarioLayout";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
+import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 import Configuracoes from "./pages/Configuracoes";
 import AdminWhatsApp from "./pages/AdminWhatsApp";
@@ -65,6 +66,7 @@ const App = () => (
           <Route path="/cliente-form/:clienteId" element={<FormularioCliente />} />
           <Route path="/aprovacao/:token" element={<AprovacaoMockup />} />
           <Route path="/aprovacao-interna/:token" element={<AprovacaoInterna />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
 
           {/* Root: redirect based on role */}
           <Route
