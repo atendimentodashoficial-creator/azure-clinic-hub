@@ -43,7 +43,7 @@ export function NovaCobrancaDialog({ onSubmit, clienteId, editando, onClose, ext
   useEffect(() => {
     if (editando) {
       setDescricao(editando.descricao);
-      setValor(editando.valor);
+      setValor(String(editando.valor).replace(".", ","));
       setTipo(editando.tipo);
       setStatus(editando.status);
       setDataVencimento(editando.data_vencimento);
