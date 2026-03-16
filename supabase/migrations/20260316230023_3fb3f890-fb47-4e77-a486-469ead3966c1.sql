@@ -1,0 +1,1 @@
+DELETE FROM panel_tabs_config WHERE tab_key IN ('calendario', 'clientes', 'nao-compareceu', 'leads', 'em-negociacao', 'faturas', 'despesas');
