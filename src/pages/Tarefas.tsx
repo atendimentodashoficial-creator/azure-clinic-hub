@@ -771,7 +771,6 @@ export default function Tarefas() {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
   }
 
-  const [activeTab, setActiveTab] = useState("kanban");
 
   return (
     <div className="space-y-6">
