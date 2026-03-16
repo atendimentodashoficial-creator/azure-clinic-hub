@@ -34,6 +34,7 @@ const hrefToFeatureKey: Record<string, string> = {
 };
 
 export const navigation = [
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare },
   { name: "Disparos", href: "/admin/disparos", icon: Send },
   { name: "Extrator", href: "/admin/extrator", icon: Database },
