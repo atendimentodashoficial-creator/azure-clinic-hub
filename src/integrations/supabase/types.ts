@@ -999,6 +999,75 @@ export type Database = {
         }
         Relationships: []
       }
+      cobrancas: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string
+          id: string
+          metodo_pagamento: string | null
+          observacoes: string | null
+          recorrencia_ativa: boolean | null
+          recorrencia_origem_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao: string
+          id?: string
+          metodo_pagamento?: string | null
+          observacoes?: string | null
+          recorrencia_ativa?: boolean | null
+          recorrencia_origem_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          id?: string
+          metodo_pagamento?: string | null
+          observacoes?: string | null
+          recorrencia_ativa?: boolean | null
+          recorrencia_origem_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cobrancas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_recorrencia_origem_id_fkey"
+            columns: ["recorrencia_origem_id"]
+            isOneToOne: false
+            referencedRelation: "cobrancas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comissoes: {
         Row: {
           aprovado_em: string | null

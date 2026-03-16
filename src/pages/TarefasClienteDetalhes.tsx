@@ -20,9 +20,10 @@ import {
   ArrowLeft, Building2, Mail, Phone, Globe, Instagram,
   FileText, Layers, CheckCircle2, Clock, AlertCircle,
   Link2, ExternalLink, Users, Calendar, DollarSign,
-  Upload, Download, Trash2, Paperclip,
+  Upload, Download, Trash2, Paperclip, Receipt,
 } from "lucide-react";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
+import { CobrancasTab } from "@/components/cobrancas/CobrancasTab";
 
 const colunaIconMap: Record<string, React.ReactNode> = {
   "Concluído": <CheckCircle2 className="h-4 w-4 text-green-500" />,
@@ -241,10 +242,11 @@ export default function TarefasClienteDetalhes() {
       {/* Tabs */}
       <Tabs defaultValue="geral" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="geral">Geral</TabsTrigger>
-          <TabsTrigger value="tarefas">Tarefas ({clienteTarefas.length})</TabsTrigger>
-          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-          <TabsTrigger value="contrato">Contrato</TabsTrigger>
+          <TabsTrigger value="geral" className="gap-1.5"><Building2 className="h-4 w-4" />Geral</TabsTrigger>
+          <TabsTrigger value="tarefas" className="gap-1.5"><Layers className="h-4 w-4" />Tarefas ({clienteTarefas.length})</TabsTrigger>
+          <TabsTrigger value="financeiro" className="gap-1.5"><DollarSign className="h-4 w-4" />Financeiro</TabsTrigger>
+          <TabsTrigger value="cobrancas" className="gap-1.5"><Receipt className="h-4 w-4" />Cobranças</TabsTrigger>
+          <TabsTrigger value="contrato" className="gap-1.5"><Paperclip className="h-4 w-4" />Contrato</TabsTrigger>
         </TabsList>
 
         {/* ── Geral ── */}
@@ -432,6 +434,11 @@ export default function TarefasClienteDetalhes() {
               Nenhuma comissão registrada para este cliente
             </Card>
           )}
+        </TabsContent>
+
+        {/* ── Cobranças ── */}
+        <TabsContent value="cobrancas">
+          <CobrancasTab clienteId={cliente.id} valorContrato={financeiro.valorContrato} />
         </TabsContent>
 
         {/* ── Contrato ── */}
