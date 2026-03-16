@@ -24,13 +24,14 @@ export default function FuncionarioDashboard() {
       if (!ownerId || !membro?.nome) return [];
       const { data, error } = await supabase
         .from("tarefas")
-        .select("id, titulo, prioridade, data_entrega, coluna_id, responsavel_nome, created_at, updated_at, cliente_id, tarefas_colunas!inner(nome)")
+        .select("id, titulo, prioridade, data_limite, coluna_id, responsavel_nome, created_at, updated_at, cliente_id, tarefas_colunas!inner(nome)")
         .eq("user_id", ownerId)
         .ilike("responsavel_nome", `%${(membro as any).nome}%`);
       if (error) throw error;
       return (data || []) as any[];
     },
     enabled: !!ownerId && !!(membro as any)?.nome,
+    staleTime: 2 * 60 * 1000,
   });
 
   // Fetch reunioes for this member
