@@ -153,7 +153,7 @@ serve(async (req) => {
     const { data: config } = await supabase
       .from("uazapi_config")
       .select("base_url, api_key")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .eq("is_active", true)
       .single();
 
