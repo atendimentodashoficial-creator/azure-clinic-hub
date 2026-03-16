@@ -765,20 +765,20 @@ function ProdutoCard({
       </div>
 
       {tarefas.length > 0 && (
-        <div className="space-y-2 flex-1">
+        <div className="space-y-1.5 flex-1">
           <p className="text-xs text-primary font-medium">
             {tarefas.length} tarefa{tarefas.length !== 1 ? "s" : ""} incluída{tarefas.length !== 1 ? "s" : ""}:
           </p>
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             {visibleTarefas.map(t => (
-              <li key={t.id} className="text-sm text-foreground flex items-center gap-2">
+              <li key={t.id} className="text-xs text-foreground flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
                 <span className="truncate">{t.titulo}</span>
               </li>
             ))}
           </ul>
           {remaining > 0 && (
-            <p className="text-xs text-muted-foreground pl-3.5">+{remaining} mais...</p>
+            <p className="text-xs text-muted-foreground pl-3">+{remaining} mais...</p>
           )}
         </div>
       )}
