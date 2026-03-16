@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import noktaLogoDefault from "@/assets/nokta-logo.png";
 import googleAdsIcon from "@/assets/google-ads-icon.png";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 import { AdminClientSwitcher } from "./AdminClientSwitcher";
 import { useUserFeatureAccess } from "@/hooks/useUserFeatureAccess";
 
@@ -50,14 +50,22 @@ export const navigation = [
   { name: "Meta Ads", href: "/admin/metricas-campanhas", icon: MetaIcon },
   { name: "Google Ads", href: "/admin/google-ads", icon: ({ className }: { className?: string }) => <img src={googleAdsIcon} alt="Google Ads" className={cn("h-5 w-5 shrink-0 brightness-0 invert opacity-80", className)} /> },
   { name: "Reuniões", href: "/admin/reunioes", icon: Video },
-  { name: "Tarefas", href: "/admin/tarefas", icon: ListChecks, separator: true },
+  { name: "Tarefas", href: "/admin/tarefas", icon: ListChecks },
   { name: "Produtos", href: "/admin/produtos-tarefas", icon: Package },
-  { name: "Clientes *", href: "/admin/tarefas-clientes", icon: Building2, separator: true },
+  { name: "Clientes *", href: "/admin/tarefas-clientes", icon: Building2 },
   { name: "Equipe", href: "/admin/equipe", icon: UsersRound },
-  { name: "Financeiro", href: "/admin/financeiro", icon: DollarSign, separator: true },
+  { name: "Financeiro", href: "/admin/financeiro", icon: DollarSign },
   { name: "Painéis", href: "/admin/paineis", icon: Settings2 },
   { name: "Configurações", href: "/admin/configuracoes", icon: Settings },
 ];
+
+// Map tab_key -> navigation item
+const getTabKey = (href: string) => {
+  const stripped = href.replace(/^\/admin\/?/, "");
+  return stripped || "calendario";
+};
+
+const navByKey = new Map(navigation.map((item) => [getTabKey(item.href), item]));
 
 // Context para compartilhar o estado do sidebar
 const SidebarContext = createContext<{
@@ -85,27 +93,58 @@ export const SidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse
       const { data, error } = await supabase
         .from("panel_tabs_config")
         .select("*")
-        .eq("panel_type", "admin");
+        .eq("panel_type", "admin")
+        .order("ordem");
       if (error) return [];
       return data;
     },
   });
 
-  // Filtrar navegação baseado nas permissões do usuário e config do painel admin
-  const filteredNavigation = navigation.filter(item => {
-    const featureKey = hrefToFeatureKey[item.href];
-    if (featureKey && !isFeatureEnabled(featureKey)) return false;
-    
-    // Check panel_tabs_config for admin - "paineis" always visible
-    if (featureKey === "paineis") return true;
-    if (panelConfigs && panelConfigs.length > 0) {
-      const stripped = item.href.replace(/^\/admin\/?/, "");
-      const tabKey = stripped || "calendario";
-      const config = panelConfigs.find((c: any) => c.tab_key === tabKey);
-      if (config && !config.is_visible) return false;
+  // Build navigation items from DB order, or fallback to hardcoded
+  const orderedNavItems = useMemo(() => {
+    if (!panelConfigs || panelConfigs.length === 0) {
+      // Fallback: use hardcoded navigation with no dividers
+      return navigation
+        .filter(item => {
+          const featureKey = hrefToFeatureKey[item.href];
+          if (featureKey && !isFeatureEnabled(featureKey)) return false;
+          return true;
+        })
+        .map(item => ({ type: 'item' as const, item }));
     }
-    return true;
-  });
+
+    const result: Array<{ type: 'item'; item: typeof navigation[0] } | { type: 'divider' }> = [];
+
+    for (const config of panelConfigs) {
+      if ((config as any).is_divider) {
+        result.push({ type: 'divider' });
+        continue;
+      }
+
+      if (!config.is_visible) continue;
+
+      const navItem = navByKey.get(config.tab_key);
+      if (!navItem) continue;
+
+      const featureKey = hrefToFeatureKey[navItem.href];
+      if (featureKey && !isFeatureEnabled(featureKey)) continue;
+
+      result.push({ type: 'item', item: navItem });
+    }
+
+    // Add any nav items not in config (e.g. newly added) at the end
+    const configuredKeys = new Set(panelConfigs.filter(c => !(c as any).is_divider).map(c => c.tab_key));
+    for (const item of navigation) {
+      const key = getTabKey(item.href);
+      if (!configuredKeys.has(key)) {
+        const featureKey = hrefToFeatureKey[item.href];
+        if (featureKey && !isFeatureEnabled(featureKey)) continue;
+        result.push({ type: 'item', item });
+      }
+    }
+
+    return result;
+  }, [panelConfigs, isFeatureEnabled]);
 
   const handleLogout = async () => {
     await signOut();
@@ -145,7 +184,7 @@ export const SidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse
         )}
         </div>
 
-        {/* Admin Client Switcher - só aparece quando admin está logado como cliente */}
+        {/* Admin Client Switcher */}
         <AdminClientSwitcher collapsed={collapsed} />
 
         {/* Navigation */}
@@ -153,62 +192,68 @@ export const SidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse
           "flex-1 overflow-y-auto flex flex-col",
           collapsed ? "py-4 gap-6 items-center" : "px-3 py-4 space-y-1"
         )}>
-          {filteredNavigation.map((item) => (
-            <div key={item.name}>
-              {/* Separator only when expanded */}
-              {item.separator && !collapsed && <div className="my-2 border-t border-sidebar-border" />}
-              {collapsed ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <NavLink
-                      to={item.href}
-                      end={item.href === "/admin"}
-                      onClick={onNavigate}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center justify-center h-10 w-10 rounded-lg text-sm font-medium transition-all",
-                          isActive
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-card"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                        )
-                      }
-                    >
-                      {({ isActive }) => (
+          {orderedNavItems.map((entry, idx) => {
+            if (entry.type === 'divider') {
+              if (collapsed) return null;
+              return <div key={`div-${idx}`} className="my-2 border-t border-sidebar-border" />;
+            }
+
+            const item = entry.item;
+            return (
+              <div key={item.href}>
+                {collapsed ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <NavLink
+                        to={item.href}
+                        end={item.href === "/admin"}
+                        onClick={onNavigate}
+                        className={({ isActive }) =>
+                          cn(
+                            "flex items-center justify-center h-10 w-10 rounded-lg text-sm font-medium transition-all",
+                            isActive
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-card"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                          )
+                        }
+                      >
+                        {({ isActive }) => (
+                          <item.icon className={cn("h-5 w-5", isActive && "text-sidebar-primary")} />
+                        )}
+                      </NavLink>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="font-medium">
+                      {item.name}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <NavLink
+                    to={item.href}
+                    end={item.href === "/admin"}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-card"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
                         <item.icon className={cn("h-5 w-5", isActive && "text-sidebar-primary")} />
-                      )}
-                    </NavLink>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="font-medium">
-                    {item.name}
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                <NavLink
-                  to={item.href}
-                  end={item.href === "/admin"}
-                  onClick={onNavigate}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-card"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon className={cn("h-5 w-5", isActive && "text-sidebar-primary")} />
-                      <span>{item.name}</span>
-                    </>
-                  )}
-                </NavLink>
-              )}
-            </div>
-          ))}
+                        <span>{item.name}</span>
+                      </>
+                    )}
+                  </NavLink>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
-        {/* Collapse Toggle Button (Desktop only - only shown when expanded) */}
+        {/* Collapse Toggle Button */}
         {onToggleCollapse && !collapsed && (
           <div className="px-3 py-2">
             <Button
