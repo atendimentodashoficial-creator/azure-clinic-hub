@@ -282,32 +282,33 @@ serve(async (req) => {
       throw reuniaoError || new Error("Falha ao criar reunião");
     }
 
-    let notificationSent = false;
+    // Fire-and-forget: don't await the notification to avoid timeout
     if (clienteTelefone) {
-      try {
-        const notifyResponse = await fetch(`${supabaseUrl}/functions/v1/enviar-aviso-reuniao-imediato`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${serviceKey}`,
-          },
-          body: JSON.stringify({
-            reuniaoId: reuniao.id,
-            userId: targetUserId,
-            clienteTelefone,
-            clienteNome,
-            tipo: "imediato",
-          }),
-        });
+      const notifyPromise = fetch(`${supabaseUrl}/functions/v1/enviar-aviso-reuniao-imediato`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({
+          reuniaoId: reuniao.id,
+          userId: targetUserId,
+          clienteTelefone,
+          clienteNome,
+          tipo: "imediato",
+        }),
+      }).catch(err => console.error("Erro ao disparar aviso imediato:", err));
 
-        notificationSent = notifyResponse.ok;
-      } catch (notifyError) {
-        console.error("Erro ao disparar aviso imediato:", notifyError);
+      // Use EdgeRuntime.waitUntil if available, otherwise just let it run
+      try {
+        (globalThis as any).EdgeRuntime?.waitUntil?.(notifyPromise);
+      } catch {
+        // fallback: promise already running in background
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true, reuniaoId: reuniao.id, targetUserId, notificationSent, meetLinkGenerated: !!finalMeetLink, meetLink: finalMeetLink }),
+      JSON.stringify({ success: true, reuniaoId: reuniao.id, targetUserId, meetLinkGenerated: !!finalMeetLink, meetLink: finalMeetLink }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
