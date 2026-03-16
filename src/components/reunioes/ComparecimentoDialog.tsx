@@ -117,6 +117,7 @@ export function ComparecimentoDialog({
           : "Não comparecimento registrado!"
       );
       setSelectedColumnId(null);
+      setSkipMove(false);
       onOpenChange(false);
     },
     onError: (error) => {
