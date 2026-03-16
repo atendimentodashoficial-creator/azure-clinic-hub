@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, TrendingUp, Calendar, FileText, LogOut, UserPlus, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, Pencil, GripVertical, Check, X, Shield, Settings } from "lucide-react";
+import { Users, TrendingUp, Calendar, FileText, LogOut, UserPlus, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, Pencil, GripVertical, Check, X, Shield, Settings, BarChart3, LayoutDashboard } from "lucide-react";
 import { AdminNotificationsConfig } from "@/components/admin/AdminNotificationsConfig";
 import { AdminInstanceManager } from "@/components/admin/AdminInstanceManager";
 import { UserPermissionsDialog } from "@/components/admin/UserPermissionsDialog";
@@ -715,11 +715,17 @@ export default function AdminDashboard() {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full">
-          <TabsList className="h-8 mx-auto mb-8">
-            <TabsTrigger value="metrics" className="text-xs px-3 h-7">Métricas</TabsTrigger>
-            <TabsTrigger value="dashboard" className="text-xs px-3 h-7">Dashboard</TabsTrigger>
-            <TabsTrigger value="settings" className="text-xs px-3 h-7">
-              <Settings className="h-3 w-3 mr-1" />
+          <TabsList className="mx-auto mb-8">
+            <TabsTrigger value="metrics" className="gap-1.5">
+              <BarChart3 className="h-4 w-4" />
+              Métricas
+            </TabsTrigger>
+            <TabsTrigger value="dashboard" className="gap-1.5">
+              <LayoutDashboard className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-1.5">
+              <Settings className="h-4 w-4" />
               Configurações
             </TabsTrigger>
           </TabsList>

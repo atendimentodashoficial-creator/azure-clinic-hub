@@ -1,4 +1,4 @@
-import { Settings } from "lucide-react";
+import { Settings, Video, MessageSquare, Link, RotateCcw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -10,10 +10,10 @@ import { TiposReuniaoConfig } from "@/components/configuracoes/TiposReuniaoConfi
 import { useTabPersistence } from "@/hooks/useTabPersistence";
 
 const tabOptions = [
-  { value: "tipos-reuniao", label: "Tipos Reunião" },
-  { value: "mensagens", label: "Mensagens" },
-  { value: "conexoes", label: "Conexões" },
-  { value: "reset", label: "Reset" },
+  { value: "tipos-reuniao", label: "Tipos Reunião", icon: Video },
+  { value: "mensagens", label: "Mensagens", icon: MessageSquare },
+  { value: "conexoes", label: "Conexões", icon: Link },
+  { value: "reset", label: "Reset", icon: RotateCcw },
 ];
 
 export default function Configuracoes() {
@@ -46,9 +46,10 @@ export default function Configuracoes() {
             </SelectContent>
           </Select>
         ) : (
-          <TabsList className="h-8">
+          <TabsList>
             {tabOptions.map((option) => (
-              <TabsTrigger key={option.value} value={option.value} className="gap-1.5 text-xs px-3 h-7">
+              <TabsTrigger key={option.value} value={option.value} className="gap-1.5">
+                <option.icon className="h-4 w-4" />
                 {option.label}
               </TabsTrigger>
             ))}

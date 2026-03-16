@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { extractCountryCode, formatPhoneByCountry } from "@/utils/phoneFormat";
 import { toast } from "sonner";
-import { Trash2, Edit, Mail, Phone, Building2 } from "lucide-react";
+import { Trash2, Edit, Mail, Phone, Building2, Eye } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
@@ -81,8 +81,14 @@ export default function TarefasClientesTab() {
 
       <Tabs value={subTab} onValueChange={setSubTab}>
         <TabsList>
-          <TabsTrigger value="interno">Internos</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
+          <TabsTrigger value="interno" className="gap-1.5">
+            <Building2 className="h-4 w-4" />
+            Internos
+          </TabsTrigger>
+          <TabsTrigger value="preview" className="gap-1.5">
+            <Eye className="h-4 w-4" />
+            Preview
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={subTab} className="mt-4">

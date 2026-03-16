@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, LayoutDashboard, UserPlus, UserX, FileText, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -11,11 +11,11 @@ import FormulariosTemplates from "@/components/formularios/FormulariosTemplates"
 import FormulariosConfiguracoes from "@/components/formularios/FormulariosConfiguracoes";
 
 const tabOptions = [
-  { value: "dashboard", label: "Dashboard" },
-  { value: "leads", label: "Leads" },
-  { value: "abandonos", label: "Abandonos" },
-  { value: "templates", label: "Templates" },
-  { value: "configuracoes", label: "Configurações" },
+  { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { value: "leads", label: "Leads", icon: UserPlus },
+  { value: "abandonos", label: "Abandonos", icon: UserX },
+  { value: "templates", label: "Templates", icon: FileText },
+  { value: "configuracoes", label: "Configurações", icon: Settings },
 ];
 
 export default function Formularios() {
@@ -47,9 +47,10 @@ export default function Formularios() {
             </SelectContent>
           </Select>
         ) : (
-          <TabsList className="h-8 mb-4">
+          <TabsList className="mb-4">
             {tabOptions.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value} className="text-xs px-3 h-7">
+              <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
+                <tab.icon className="h-4 w-4" />
                 {tab.label}
               </TabsTrigger>
             ))}

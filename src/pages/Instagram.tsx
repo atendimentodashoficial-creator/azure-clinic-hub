@@ -19,17 +19,17 @@ export default function Instagram() {
       </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="h-8">
-            <TabsTrigger value="gatilhos" className="gap-1.5 text-xs px-3 h-7">
-              <Zap className="h-3.5 w-3.5" />
+          <TabsList>
+            <TabsTrigger value="gatilhos" className="gap-1.5">
+              <Zap className="h-4 w-4" />
               Gatilhos
             </TabsTrigger>
-            <TabsTrigger value="formularios" className="gap-1.5 text-xs px-3 h-7">
-              <FileText className="h-3.5 w-3.5" />
+            <TabsTrigger value="formularios" className="gap-1.5">
+              <FileText className="h-4 w-4" />
               Formulários
             </TabsTrigger>
-            <TabsTrigger value="historico" className="gap-1.5 text-xs px-3 h-7">
-              <BarChart3 className="h-3.5 w-3.5" />
+            <TabsTrigger value="historico" className="gap-1.5">
+              <BarChart3 className="h-4 w-4" />
               Histórico
             </TabsTrigger>
           </TabsList>

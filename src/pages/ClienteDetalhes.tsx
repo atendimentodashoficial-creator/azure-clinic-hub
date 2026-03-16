@@ -414,11 +414,23 @@ export default function ClienteDetalhes() {
                   <SelectItem value="faturas">Faturas</SelectItem>
                   <SelectItem value="historico">Histórico de Exclusões</SelectItem>
                 </SelectContent>
-              </Select> : <TabsList className="h-8">
-                <TabsTrigger value="proximos" className="text-xs px-3 h-7">Próximos Agendamentos</TabsTrigger>
-                <TabsTrigger value="agendamentos" className="text-xs px-3 h-7">Agendamentos Passados</TabsTrigger>
-                <TabsTrigger value="faturas" className="text-xs px-3 h-7">Faturas</TabsTrigger>
-                <TabsTrigger value="historico" className="text-xs px-3 h-7">Histórico de Exclusões</TabsTrigger>
+              </Select> : <TabsList>
+                <TabsTrigger value="proximos" className="gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  Próximos
+                </TabsTrigger>
+                <TabsTrigger value="agendamentos" className="gap-1.5">
+                  <Clock className="h-4 w-4" />
+                  Passados
+                </TabsTrigger>
+                <TabsTrigger value="faturas" className="gap-1.5">
+                  <CreditCard className="h-4 w-4" />
+                  Faturas
+                </TabsTrigger>
+                <TabsTrigger value="historico" className="gap-1.5">
+                  <History className="h-4 w-4" />
+                  Histórico
+                </TabsTrigger>
               </TabsList>}
           </CardHeader>
 

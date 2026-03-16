@@ -350,17 +350,17 @@ export default function Reunioes() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="h-8">
-          <TabsTrigger value="reunioes" className="gap-1.5 text-xs px-3 h-7">
-            <Video className="h-3.5 w-3.5" />
+        <TabsList>
+          <TabsTrigger value="reunioes" className="gap-1.5">
+            <Video className="h-4 w-4" />
             Reuniões
           </TabsTrigger>
-          <TabsTrigger value="avisos" className="gap-1.5 text-xs px-3 h-7">
-            <Bell className="h-3.5 w-3.5" />
+          <TabsTrigger value="avisos" className="gap-1.5">
+            <Bell className="h-4 w-4" />
             Avisos
           </TabsTrigger>
-          <TabsTrigger value="escalas" className="gap-1.5 text-xs px-3 h-7">
-            <CalendarClock className="h-3.5 w-3.5" />
+          <TabsTrigger value="escalas" className="gap-1.5">
+            <CalendarClock className="h-4 w-4" />
             Escalas
           </TabsTrigger>
         </TabsList>
