@@ -380,6 +380,20 @@ export default function EquipeMembroDetalhes() {
           )}
         </TabsContent>
       </Tabs>
+
+      {editando && membro && (
+        <NovoMembroDialog
+          membroEditando={membro as any}
+          onSubmit={(data: any) => {
+            const { id: mid, ...rest } = data;
+            atualizarMembro.mutate({ id: mid, ...rest }, {
+              onSuccess: () => { toast.success("Membro atualizado!"); setEditando(false); },
+              onError: (e: any) => toast.error(e.message),
+            });
+          }}
+          onClose={() => setEditando(false)}
+        />
+      )}
     </div>
   );
 }

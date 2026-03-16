@@ -22,6 +22,7 @@ import {
   Link2, ExternalLink, Users, Calendar, DollarSign,
   Upload, Download, Trash2, Paperclip,
 } from "lucide-react";
+import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
 
 const colunaIconMap: Record<string, React.ReactNode> = {
   "Concluído": <CheckCircle2 className="h-4 w-4 text-green-500" />,
