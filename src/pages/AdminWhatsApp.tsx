@@ -1715,6 +1715,11 @@ export default function AdminWhatsApp() {
                 void clearUnreadCount(selectedChat.id);
               }
             }} onChatDeleted={() => {
+              // Optimistic removal — same pattern as Disparos
+              const deletedId = selectedChat?.id;
+              const deletedNorm = (selectedChat?.normalized_number || '').toString();
+              setChats((prev) => prev.filter((c) => c.id !== deletedId && (c.normalized_number || '').toString() !== deletedNorm));
+              setFilteredChats((prev) => prev.filter((c) => c.id !== deletedId && (c.normalized_number || '').toString() !== deletedNorm));
               setSelectedChat(null);
               setShowChatWindow(false);
               setPrefillMessage(null);
