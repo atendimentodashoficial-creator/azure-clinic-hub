@@ -20,7 +20,7 @@ import { HeaderAttributionBadge } from "./HeaderAttributionBadge";
 
 import { getInitials, normalizePhoneNumber, formatPhoneNumber, getLast8Digits } from "@/utils/whatsapp";
 import { syncContactNameEverywhere, CONTACT_NAME_QUERY_KEYS } from "@/utils/syncContactName";
-import { NovoAgendamentoDialog } from "@/components/clientes/NovoAgendamentoDialog";
+import { NovaReuniaoDialog } from "@/components/reunioes/NovaReuniaoDialog";
 import { useMensagensPredefinidas } from "@/hooks/useMensagensPredefinidas";
 import { useBlocosMensagens } from "@/hooks/useBlocosMensagens";
 import { useAudiosPredefinidos } from "@/hooks/useAudiosPredefinidos";
