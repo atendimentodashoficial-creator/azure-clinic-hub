@@ -789,22 +789,22 @@ function ProdutoCard({
         <Button
           variant="secondary"
           size="sm"
-          className="h-8 gap-1.5 px-3 text-xs font-medium"
+          className="h-7 gap-1.5 px-2.5 text-xs font-medium"
           onClick={onAtribuir}
         >
-          <Play className="h-3.5 w-3.5 fill-current" />
+          <Play className="h-3 w-3 fill-current" />
           Atribuir
         </Button>
-        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2.5 text-xs" onClick={onEdit}>
-          <Edit className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={onEdit}>
+          <Edit className="h-3 w-3" />
           Editar
         </Button>
-        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2.5 text-xs" onClick={onDuplicar}>
-          <Copy className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={onDuplicar}>
+          <Copy className="h-3 w-3" />
           Duplicar
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive ml-auto" onClick={onDelete}>
-          <Trash2 className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive ml-auto" onClick={onDelete}>
+          <Trash2 className="h-3 w-3" />
         </Button>
       </div>
     </Card>
