@@ -54,11 +54,20 @@ serve(async (req) => {
       });
     }
 
+    // Resolve owner context: admin uses own id; funcionário uses linked owner id
+    const { data: callerMembership } = await supabaseAdmin
+      .from("tarefas_membros")
+      .select("user_id")
+      .eq("auth_user_id", caller.id)
+      .maybeSingle();
+
+    const ownerUserId = (callerMembership as any)?.user_id || caller.id;
+
     const { data: member, error: memberError } = await supabaseAdmin
       .from("tarefas_membros")
       .select("id, user_id, nome, email, auth_user_id")
       .eq("id", memberId)
-      .eq("user_id", caller.id)
+      .eq("user_id", ownerUserId)
       .maybeSingle();
 
     if (memberError) {
@@ -66,13 +75,13 @@ serve(async (req) => {
     }
 
     if (!member) {
-      return new Response(JSON.stringify({ success: false, error: "Membro não encontrado para este administrador" }), {
+      return new Response(JSON.stringify({ success: false, error: "Membro não encontrado para este workspace" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const targetUserId = member.auth_user_id || caller.id;
+    const targetUserId = member.auth_user_id || ownerUserId;
 
     // --- Server-side conflict check ---
     const startDate = new Date(dataHora);

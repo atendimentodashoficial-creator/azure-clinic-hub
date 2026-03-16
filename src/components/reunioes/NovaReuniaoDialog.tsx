@@ -247,7 +247,22 @@ export function NovaReuniaoDialog({ open, onOpenChange, initialClienteNome, init
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        let detailedMessage = error.message || "Erro ao criar reunião";
+        const maybeResponse = (error as any)?.context;
+
+        if (maybeResponse instanceof Response) {
+          try {
+            const body = await maybeResponse.json();
+            if (body?.error) detailedMessage = body.error;
+          } catch {
+            // ignore parse errors and keep default message
+          }
+        }
+
+        throw new Error(detailedMessage);
+      }
+
       if (result?.success === false) throw new Error(result.error || "Erro ao criar reunião");
 
       // Auto-move kanban cards when meeting is scheduled (use targetUserId for funcionário support)
