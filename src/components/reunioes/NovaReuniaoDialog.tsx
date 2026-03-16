@@ -21,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatInTimeZone } from "date-fns-tz";
 import { timeToMinutes, minutesToTime, rangesOverlap } from "@/utils/timeSlots";
 import { useTiposReuniao, useTipoReuniaoMembros } from "@/hooks/useTiposReuniao";
-import { getLast8Digits } from "@/utils/phoneFormat";
+import { autoMoveKanbanOnReuniao } from "@/utils/kanbanAutoMove";
 
 // Auto-move WhatsApp kanban card when meeting is created
 async function autoMoveWhatsAppKanbanOnReuniao(userId: string, telefone: string) {
