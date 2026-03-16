@@ -1958,16 +1958,19 @@ Deno.serve(async (req) => {
             }
 
             // Auto-move new Disparos chat to kanban column on first message
+            console.log('[Disparos-AutoMove] Checking conditions:', { isFromMe, wasSentByApi, isOutboundBySender, disparosChatIdForMessage: !!disparosChatIdForMessage });
             if (!isFromMe && !wasSentByApi && !isOutboundBySender && disparosChatIdForMessage) {
               try {
-                const { data: kanbanConfig } = await supabase
+                const { data: kanbanConfig, error: kcErr } = await supabase
                   .from('disparos_kanban_config')
                   .select('auto_move_column_id')
                   .eq('user_id', effectiveUserId)
                   .maybeSingle();
 
+                console.log('[Disparos-AutoMove] Config:', { auto_move_column_id: kanbanConfig?.auto_move_column_id, error: kcErr?.message });
+
                 if (kanbanConfig?.auto_move_column_id) {
-                  await supabase
+                  const { error: upsertErr } = await supabase
                     .from('disparos_chat_kanban')
                     .upsert({
                       user_id: effectiveUserId,
@@ -1975,11 +1978,17 @@ Deno.serve(async (req) => {
                       column_id: kanbanConfig.auto_move_column_id,
                       first_reply_moved: true,
                     }, { onConflict: 'chat_id' });
-                  console.log('[Disparos-AutoMove] New chat auto-moved to column', kanbanConfig.auto_move_column_id);
+                  if (upsertErr) {
+                    console.error('[Disparos-AutoMove] Upsert error:', upsertErr);
+                  } else {
+                    console.log('[Disparos-AutoMove] New chat auto-moved to column', kanbanConfig.auto_move_column_id);
+                  }
                 }
               } catch (e) {
                 console.error('[Disparos-AutoMove] Error on new chat:', e);
               }
+            } else {
+              console.log('[Disparos-AutoMove] Skipped - conditions not met');
             }
           }
         }
