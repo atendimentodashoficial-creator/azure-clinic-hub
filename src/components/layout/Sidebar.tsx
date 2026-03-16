@@ -15,6 +15,7 @@ import { useUserFeatureAccess } from "@/hooks/useUserFeatureAccess";
 
 // Mapeamento de href para feature_key
 const hrefToFeatureKey: Record<string, string> = {
+  "/admin/dashboard": "dashboard",
   "/admin/whatsapp": "whatsapp",
   "/admin/disparos": "disparos",
   "/admin/extrator": "extrator",
