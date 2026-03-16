@@ -91,7 +91,10 @@ export default function FuncionarioDashboard() {
       .slice(0, 5);
   }, [tarefas]);
 
-  const isLoading = membroLoading || tarefasLoading || reunioesLoading;
+  // Only consider truly loading when actually fetching, not when disabled/idle
+  const isLoading = membroLoading || 
+    (tarefasLoading && tarefasFetchStatus !== 'idle') || 
+    (reunioesLoading && reunioesFetchStatus !== 'idle');
 
   const firstName = (membro as any)?.nome?.split(" ")[0] || user?.user_metadata?.full_name?.split(" ")[0] || "Funcionário";
 
