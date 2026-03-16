@@ -365,10 +365,18 @@ export default function Disparos() {
   // IMPORTANT: Exclude the main WhatsApp instance (linked via uazapi_config.whatsapp_instancia_id)
   const loadInstancias = async (): Promise<DisparosInstancia[]> => {
     try {
+      if (!user?.id) {
+        setInstanciasMap({});
+        setInstanciasList([]);
+        setFullInstancias([]);
+        return [];
+      }
+
       // First, get the main WhatsApp instance ID to exclude it
       const { data: uazapiConfig } = await supabase
         .from("uazapi_config")
         .select("whatsapp_instancia_id")
+        .eq("user_id", user.id)
         .maybeSingle();
 
       const mainWhatsappId = uazapiConfig?.whatsapp_instancia_id || null;
@@ -378,7 +386,7 @@ export default function Disparos() {
       const { data } = await supabase
         .from("disparos_instancias")
         .select("*")
-        .eq("user_id", user?.id || "");
+        .eq("user_id", user.id);
 
       if (data) {
         // Filter out the main WhatsApp instance - it should only appear in the WhatsApp tab
