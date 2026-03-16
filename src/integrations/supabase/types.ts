@@ -4016,6 +4016,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_divider: boolean
           is_visible: boolean
           ordem: number
           panel_type: Database["public"]["Enums"]["app_role"]
@@ -4028,6 +4029,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_divider?: boolean
           is_visible?: boolean
           ordem?: number
           panel_type: Database["public"]["Enums"]["app_role"]
@@ -4040,6 +4042,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_divider?: boolean
           is_visible?: boolean
           ordem?: number
           panel_type?: Database["public"]["Enums"]["app_role"]
