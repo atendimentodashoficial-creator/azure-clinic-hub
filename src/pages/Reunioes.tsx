@@ -464,7 +464,7 @@ export default function Reunioes() {
                         }`}
                       >
                         <CardContent className="p-4 flex-1 flex flex-col">
-                          <div className="space-y-3 flex-1">
+                          <div className="space-y-2 flex-1">
                             {/* Cabeçalho: Hora e Nome do Cliente */}
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
@@ -546,7 +546,7 @@ export default function Reunioes() {
                           </div>
 
                           {/* Ações - Botões */}
-                          <div className="mt-4 pt-3 border-t border-border space-y-2">
+                          <div className="mt-3 pt-3 border-t border-border space-y-2">
                             <div className="flex flex-wrap gap-2">
                               <Button 
                                 variant="outline" 
