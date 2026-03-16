@@ -32,7 +32,6 @@ const hrefToFeatureKey: Record<string, string> = {
   "/admin/metricas-campanhas": "meta-ads",
   "/admin/google-ads": "google-ads",
   "/admin/configuracoes": "configuracoes",
-  "/admin/usuarios": "usuarios",
   "/admin/paineis": "paineis",
   "/admin/tarefas": "tarefas",
   "/admin/tipos-tarefas": "tarefas",
