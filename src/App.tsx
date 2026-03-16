@@ -11,18 +11,10 @@ import Layout from "./pages/Layout";
 import ClienteLayout from "./pages/ClienteLayout";
 import FuncionarioLayout from "./pages/FuncionarioLayout";
 import Dashboard from "./pages/Dashboard";
-import Leads from "./pages/Leads";
-import Clientes from "./pages/Clientes";
-import ClienteDetalhes from "./pages/ClienteDetalhes";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import Agenda from "./pages/Agenda";
 import Configuracoes from "./pages/Configuracoes";
-import Faturas from "./pages/Faturas";
-import Despesas from "./pages/Despesas";
-import EmNegociacao from "./pages/EmNegociacao";
 import AdminWhatsApp from "./pages/AdminWhatsApp";
-import NaoCompareceu from "./pages/NaoCompareceu";
 import MetricasCampanhas from "./pages/MetricasCampanhas";
 import GoogleAdsMetrics from "./pages/GoogleAdsMetrics";
 import Disparos from "./pages/Disparos";
@@ -92,15 +84,8 @@ const App = () => (
               </RoleProtectedRoute>
             }
           >
-            <Route index element={<Agenda />} />
-            <Route path="nao-compareceu" element={<NaoCompareceu />} />
-            <Route path="relatorios" element={<Dashboard />} />
-            <Route path="leads" element={<Leads />} />
-            <Route path="clientes" element={<Clientes />} />
-            <Route path="clientes/:id" element={<ClienteDetalhes />} />
-            <Route path="em-negociacao" element={<EmNegociacao />} />
-            <Route path="faturas" element={<Faturas />} />
-            <Route path="despesas" element={<Despesas />} />
+            <Route index element={<AdminWhatsApp />} />
+            <Route path="whatsapp" element={<AdminWhatsApp />} />
             <Route path="whatsapp" element={<AdminWhatsApp />} />
             <Route path="disparos" element={<Disparos />} />
             <Route path="extrator" element={<Extrator />} />
