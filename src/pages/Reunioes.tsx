@@ -23,6 +23,7 @@ import { ReagendarReuniaoDialog } from "@/components/reunioes/ReagendarReuniaoDi
 import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog";
 import { EscalaMembrosTab } from "@/components/reunioes/EscalaMembrosTab";
 import { NovaReuniaoDialog } from "@/components/reunioes/NovaReuniaoDialog";
+import { ReunioesDashboard } from "@/components/reunioes/ReunioesDashboard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -365,6 +366,11 @@ export default function Reunioes() {
         </TabsList>
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
+          {/* Dashboard colapsável */}
+          {reunioes && reunioes.length > 0 && (
+            <ReunioesDashboard reunioes={reunioes} />
+          )}
+
           {/* Period filter chips */}
           <ReunioesPeriodFilter
             value={periodFilter.filterValue}
