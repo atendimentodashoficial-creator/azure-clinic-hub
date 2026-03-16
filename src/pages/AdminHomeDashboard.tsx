@@ -328,7 +328,7 @@ export default function AdminHomeDashboard() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">{r.titulo}</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(r.data_hora), "HH:mm", { locale: ptBR })}
+                          {format(new Date(r.data_reuniao), "HH:mm", { locale: ptBR })}
                         </p>
                       </div>
                     </div>
