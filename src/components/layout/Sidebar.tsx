@@ -56,7 +56,7 @@ export const navigation = [
 // Map tab_key -> navigation item
 const getTabKey = (href: string) => {
   const stripped = href.replace(/^\/admin\/?/, "");
-  return stripped || "calendario";
+  return stripped || "dashboard";
 };
 
 const navByKey = new Map(navigation.map((item) => [getTabKey(item.href), item]));
