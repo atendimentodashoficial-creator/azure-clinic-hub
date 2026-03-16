@@ -53,8 +53,10 @@ interface Reuniao {
   cliente_id: string | null;
   cliente_telefone: string | null;
   profissional_id: string | null;
+  tipo_reuniao_id: string | null;
   profissionais?: { nome: string } | null;
   leads?: { nome: string; telefone: string } | null;
+  tipos_reuniao?: { nome: string } | null;
 }
 
 export default function Reunioes() {
@@ -152,7 +154,7 @@ export default function Reunioes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reunioes" as any)
-        .select("*, profissionais(nome), leads:cliente_id(nome, telefone)")
+        .select("*, profissionais(nome), leads:cliente_id(nome, telefone), tipos_reuniao:tipo_reuniao_id(nome)")
         .or("google_event_id.not.is.null,status.eq.agendado")
         .order("data_reuniao", { ascending: false });
       
@@ -519,12 +521,12 @@ export default function Reunioes() {
                               ) : null;
                             })()}
 
-                            {/* Assunto/Título da Reunião */}
-                            {reuniao.titulo && (
+                            {/* Tipo de Reunião */}
+                            {(reuniao as any).tipos_reuniao?.nome && (
                               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                 <FileText className="h-3.5 w-3.5 flex-shrink-0" />
                                 <span className="truncate">
-                                  {reuniao.titulo.replace(/^Reunião com\s+[^-–]+\s*[-–]\s*/i, "").trim() || reuniao.titulo}
+                                  {(reuniao as any).tipos_reuniao.nome}
                                 </span>
                               </div>
                             )}
