@@ -691,12 +691,13 @@ export default function Disparos() {
     (async () => {
       // Run config + instancias in parallel for faster startup
       const [, loadedInstancias] = await Promise.all([checkConfig(), loadInstancias()]);
+      const allowedInstanciaIds = (loadedInstancias || []).map((inst) => inst.id);
 
       // Load cached chats immediately (DB query, very fast)
-      await loadChats((loadedInstancias || []).map((inst) => inst.id));
+      await loadChats(allowedInstanciaIds);
 
       // Sync with external API in background (doesn't block UI)
-      syncChats({ silent: true });
+      syncChats({ silent: true, allowedInstanciaIds });
     })();
   }, []);
 
