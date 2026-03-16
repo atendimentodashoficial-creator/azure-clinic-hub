@@ -317,7 +317,7 @@ export default function TarefasClienteDetalhes() {
               <Card className="p-5 space-y-3">
                 <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Gestor</h3>
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-16 w-16 ring-2 ring-primary/20">
+                  <Avatar className="h-14 w-14 ring-2 ring-primary/20">
                     <AvatarImage src={(gestor as any).foto_url || undefined} className="object-cover" />
                     <AvatarFallback className="bg-primary/10 text-primary text-base font-medium">{(gestor as any).nome?.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>

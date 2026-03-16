@@ -96,7 +96,7 @@ export default function TarefasClientesTab() {
                 <Card key={cliente.id} className="p-5 cursor-pointer hover:border-primary/40 transition-colors" onClick={() => navigate(`/admin/tarefas-clientes/${cliente.id}`)}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <Avatar className="h-16 w-16 shrink-0 ring-2 ring-primary/20">
+                      <Avatar className="h-14 w-14 shrink-0 ring-2 ring-primary/20">
                         <AvatarImage src={cliente.foto_perfil_url || undefined} className="object-cover" />
                         <AvatarFallback className="bg-primary/10 text-primary text-base font-semibold">
                           {getInitials(cliente.nome)}
