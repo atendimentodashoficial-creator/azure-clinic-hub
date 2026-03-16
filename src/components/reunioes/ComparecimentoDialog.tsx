@@ -169,9 +169,9 @@ export function ComparecimentoDialog({
               {columns.map((col) => (
                 <button
                   key={col.id}
-                  onClick={() => setSelectedColumnId(col.id)}
+                  onClick={() => { setSelectedColumnId(col.id); setSkipMove(false); }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all ${
-                    selectedColumnId === col.id
+                    selectedColumnId === col.id && !skipMove
                       ? "border-primary bg-primary/10 ring-1 ring-primary"
                       : "border-border hover:bg-muted/50"
                   }`}
@@ -181,18 +181,25 @@ export function ComparecimentoDialog({
                     style={{ backgroundColor: col.cor }}
                   />
                   <span className="font-medium text-sm">{col.nome}</span>
-                  {selectedColumnId === col.id && (
+                  {selectedColumnId === col.id && !skipMove && (
                     <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />
                   )}
                 </button>
               ))}
-            </div>
-          ) : (
-            <div className="text-center py-6 text-sm text-muted-foreground">
-              <Columns3 className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p>Nenhuma coluna do Kanban encontrada.</p>
-              <p className="text-xs mt-1">Configure as colunas na aba WhatsApp.</p>
-            </div>
+              <button
+                onClick={() => { setSkipMove(true); setSelectedColumnId(null); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all ${
+                  skipMove
+                    ? "border-primary bg-primary/10 ring-1 ring-primary"
+                    : "border-border hover:bg-muted/50"
+                }`}
+              >
+                <XCircle className="w-3 h-3 flex-shrink-0 text-muted-foreground" />
+                <span className="font-medium text-sm text-muted-foreground">Não movimentar card</span>
+                {skipMove && (
+                  <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />
+                )}
+              </button>
           )}
 
           <div className="flex gap-2 pt-2">
