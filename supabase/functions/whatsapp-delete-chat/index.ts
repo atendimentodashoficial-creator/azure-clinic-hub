@@ -66,7 +66,7 @@ serve(async (req) => {
     const { data: chats, error: chatsError } = await supabase
       .from("whatsapp_chats")
       .select("id, chat_id, contact_number, normalized_number")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .in("id", chatIdsToProcess);
 
     if (chatsError) {
