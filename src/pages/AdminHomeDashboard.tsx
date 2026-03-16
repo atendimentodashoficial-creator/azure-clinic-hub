@@ -146,7 +146,7 @@ export default function AdminHomeDashboard() {
     });
 
     const reunioesAmanha = reunioes.filter(r => {
-      const d = new Date(r.data_hora);
+      const d = new Date(r.data_reuniao);
       return isTomorrow(d);
     });
 
