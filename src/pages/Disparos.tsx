@@ -697,8 +697,12 @@ export default function Disparos() {
       const [, loadedInstancias] = await Promise.all([checkConfig(), loadInstancias()]);
       const allowedInstanciaIds = (loadedInstancias || []).map((inst) => inst.id);
 
+      // Build a fresh map to pass directly (avoids stale closure on instanciasMap state)
+      const freshMap: Record<string, DisparosInstancia> = {};
+      (loadedInstancias || []).forEach((inst) => { freshMap[inst.id] = inst; });
+
       // Load cached chats immediately (DB query, very fast)
-      await loadChats(allowedInstanciaIds);
+      await loadChats(allowedInstanciaIds, freshMap);
 
       // Sync with external API in background (doesn't block UI)
       syncChats({ silent: true, allowedInstanciaIds });
