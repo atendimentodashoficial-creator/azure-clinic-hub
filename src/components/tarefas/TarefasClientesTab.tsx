@@ -66,11 +66,6 @@ export default function TarefasClientesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <Input placeholder="Buscar cliente..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-sm" />
-        <NovoClienteDialog onSubmit={handleCriar} />
-      </div>
-
       {editando && (
         <NovoClienteDialog
           clienteEditando={editando}
@@ -80,16 +75,21 @@ export default function TarefasClientesTab() {
       )}
 
       <Tabs value={subTab} onValueChange={setSubTab}>
-        <TabsList>
-          <TabsTrigger value="interno" className="gap-1.5">
-            <Building2 className="h-4 w-4" />
-            Internos
-          </TabsTrigger>
-          <TabsTrigger value="preview" className="gap-1.5">
-            <Eye className="h-4 w-4" />
-            Preview
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between gap-4">
+          <TabsList>
+            <TabsTrigger value="interno" className="gap-1.5">
+              <Building2 className="h-4 w-4" />
+              Internos
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="gap-1.5">
+              <Eye className="h-4 w-4" />
+              Preview
+            </TabsTrigger>
+          </TabsList>
+          <NovoClienteDialog onSubmit={handleCriar} />
+        </div>
+
+        <Input placeholder="Buscar cliente..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-sm mt-4" />
 
         <TabsContent value={subTab} className="mt-4">
           {filtrados.length === 0 ? (

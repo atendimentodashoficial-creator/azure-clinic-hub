@@ -7,7 +7,7 @@ export default function TarefasClientesPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Building2 className="h-6 w-6" />
-          Clientes *
+          Clientes
         </h1>
         <p className="text-muted-foreground">Gerencie os clientes vinculados às tarefas</p>
       </div>
