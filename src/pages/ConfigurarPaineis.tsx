@@ -16,11 +16,15 @@ const getTabKey = (href: string) => {
   return stripped || "calendario";
 };
 
-// Available tabs that admin can toggle for each panel
-const availableTabs = navigation.map((item) => ({
-  key: getTabKey(item.href),
-  label: item.name,
-}));
+// Available tabs that admin can toggle for each panel (deduplicated by key)
+const availableTabs = Array.from(
+  new Map(
+    navigation.map((item) => {
+      const key = getTabKey(item.href);
+      return [key, { key, label: item.name }] as const;
+    })
+  ).values()
+);
 
 export default function ConfigurarPaineis() {
   const queryClient = useQueryClient();
