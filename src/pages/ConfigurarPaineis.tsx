@@ -11,19 +11,43 @@ import { Settings2, User, UserCog, Shield, GripVertical, Plus, Trash2, Minus } f
 import { navigation } from "@/components/layout/Sidebar";
 import { cn } from "@/lib/utils";
 
-const getTabKey = (href: string) => {
-  const stripped = href.replace(/^\/admin\/?/, "");
-  return stripped || "calendario";
+const getTabKeyForPanel = (href: string, prefix: string) => {
+  const stripped = href.replace(new RegExp(`^\\/${prefix}\\/?`), "");
+  return stripped || "inicio";
 };
 
-const defaultTabs = Array.from(
+const adminDefaultTabs = Array.from(
   new Map(
     navigation.map((item) => {
-      const key = getTabKey(item.href);
+      const key = getTabKeyForPanel(item.href, "admin");
       return [key, { key, label: item.name }] as const;
     })
   ).values()
 );
+
+const clienteDefaultTabs = [
+  { key: "inicio", label: "Início" },
+  { key: "tarefas", label: "Tarefas" },
+  { key: "agendamentos", label: "Agendamentos" },
+  { key: "aprovacoes", label: "Aprovações" },
+];
+
+const funcionarioDefaultTabs = [
+  { key: "inicio", label: "Início" },
+  { key: "tarefas", label: "Tarefas" },
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "reunioes", label: "Reuniões" },
+  { key: "financeiro", label: "Financeiro" },
+];
+
+const getDefaultTabsForPanel = (panelType: string) => {
+  switch (panelType) {
+    case "cliente": return clienteDefaultTabs;
+    case "funcionario": return funcionarioDefaultTabs;
+    default: return adminDefaultTabs;
+  }
+};
+
 
 interface OrderedItem {
   id?: string;
