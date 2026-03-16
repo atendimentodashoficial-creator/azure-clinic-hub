@@ -2075,20 +2075,13 @@ export const ChatWindow = ({ chat, onMessagesRead, onChatDeleted, onChatUpdated,
         </p>
       </div>
 
-      {/* Dialog de Agendamento */}
-      {clienteData && (
-        <NovoAgendamentoDialog
-          open={agendamentoDialogOpen}
-          onOpenChange={setAgendamentoDialogOpen}
-          clienteId={clienteData.id}
-          initialData={{
-            nome: clienteData.nome,
-            telefone: clienteData.telefone,
-            email: clienteData.email,
-          }}
-          origem="WhatsApp"
-        />
-      )}
+      {/* Dialog de Reunião */}
+      <NovaReuniaoDialog
+        open={agendamentoDialogOpen}
+        onOpenChange={setAgendamentoDialogOpen}
+        initialClienteNome={clienteData?.nome}
+        initialClienteTelefone={clienteData?.telefone}
+      />
 
       {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
