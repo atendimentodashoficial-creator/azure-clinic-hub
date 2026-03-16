@@ -475,11 +475,32 @@ serve(async (req) => {
         continue;
       }
 
-      // Chat doesn't exist in DB - DON'T create it during sync.
-      // New chats should only be created via webhook when a new message arrives.
-      // This prevents importing old conversations and avoids resurrecting deleted chats.
+      // Chat doesn't exist in DB yet.
+      // If there's a tombstone, it was already skipped earlier (line ~332).
+      // At this point we know there's NO tombstone, so it's safe to create the chat.
       if (!row.isExisting) {
-        console.log(`[SYNC] Skipping insert for ${row.normalized_number} - new chats only created via webhook`);
+        console.log(`[SYNC] Creating new chat for ${row.normalized_number} (no tombstone found)`);
+        const createdAt = row.last_message_time || new Date().toISOString();
+        const { isExisting, ...rowWithoutFlag } = row;
+        const { data: insertedNew, error: insertNewError } = await supabase
+          .from("whatsapp_chats")
+          .insert({
+            ...rowWithoutFlag,
+            created_at: createdAt,
+            deleted_at: null,
+          })
+          .select();
+
+        if (insertNewError) {
+          const errAny: any = insertNewError;
+          if (errAny?.code === "23505") {
+            console.warn(`[SYNC] Duplicate key for new chat ${row.normalized_number}, skipping.`);
+          } else {
+            console.error("Error inserting new chat:", insertNewError);
+          }
+        } else if (insertedNew && insertedNew.length > 0) {
+          syncedChats.push(insertedNew[0]);
+        }
         continue;
       }
 
