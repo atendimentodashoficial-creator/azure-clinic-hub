@@ -811,6 +811,8 @@ export default function Disparos() {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    const allowedInstanciaIds = new Set(instanciasList.map((inst) => inst.id));
+
     const channel = supabase
       .channel("disparos-chats-realtime")
       .on(
@@ -824,6 +826,7 @@ export default function Disparos() {
         (payload) => {
           const inserted = (payload as any).new as any;
           if (!inserted?.id) return;
+          if (!inserted?.instancia_id || !allowedInstanciaIds.has(inserted.instancia_id)) return;
           pendingRef.current.set(inserted.id, inserted);
           scheduleFlush();
         }
@@ -839,6 +842,7 @@ export default function Disparos() {
         (payload) => {
           const updated = payload.new as any;
           if (!updated?.id) return;
+          if (!updated?.instancia_id || !allowedInstanciaIds.has(updated.instancia_id)) return;
           pendingRef.current.set(updated.id, updated);
           scheduleFlush();
         }
@@ -850,7 +854,7 @@ export default function Disparos() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, instanciasList]);
 
   // Clear unread count and lock provider baseline to prevent badge from reappearing
   const clearUnreadCount = async (chatId: string) => {
