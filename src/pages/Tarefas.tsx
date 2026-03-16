@@ -395,6 +395,14 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
             </div>
           </div>
 
+          {/* Always show meeting info, even in "A Fazer" for employees */}
+          {reuniao && (
+            <p className="text-xs mt-1 flex items-center gap-1 text-primary">
+              <Video className="h-3 w-3" />
+              {format(new Date(reuniao.data_reuniao), "dd/MM/yyyy 'às' HH:mm")}
+            </p>
+          )}
+
           {hideDetails ? (
             <p className="text-xs text-muted-foreground mt-1 italic">Detalhes disponíveis ao iniciar</p>
           ) : (
@@ -403,12 +411,6 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
               {cliente && (
                 <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                   <Building2 className="h-3 w-3" /> {cliente.nome}
-                </p>
-              )}
-              {reuniao && (
-                <p className="text-xs mt-1 flex items-center gap-1 text-primary">
-                  <Video className="h-3 w-3" />
-                  {format(new Date(reuniao.data_reuniao), "dd/MM/yyyy 'às' HH:mm")}
                 </p>
               )}
               {(tarefa as any).internal_approval_token && (
