@@ -138,37 +138,59 @@ export default function Disparos() {
   };
 
   // Load chats from database (excluding deleted ones)
-  // Only show chats with messages AFTER any instance was created (avoid old conversations)
-  const loadChats = async (): Promise<any[]> => {
+  // Only include chats from connected Disparos instances (never from WhatsApp main instance)
+  const loadChats = async (allowedInstanciaIdsParam?: string[]): Promise<any[]> => {
     try {
+      if (!user?.id) {
+        setChats([]);
+        setFilteredChats([]);
+        setChatsLoaded(true);
+        return [];
+      }
+
+      const allowedInstanciaIds = (
+        allowedInstanciaIdsParam?.length
+          ? allowedInstanciaIdsParam
+          : instanciasList.map((inst) => inst.id)
+      ).filter(Boolean);
+
+      // No Disparos instance connected => no chats to show
+      if (allowedInstanciaIds.length === 0) {
+        setChats([]);
+        setFilteredChats([]);
+        setChatsLoaded(true);
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('disparos_chats')
         .select('*')
+        .eq('user_id', user.id)
         .is('deleted_at', null)
+        .in('instancia_id', allowedInstanciaIds)
         .order('last_message_time', { ascending: false, nullsFirst: false })
-        .limit(1000); // Ensure we don't hit query limits
-        
+        .limit(1000);
+
       if (error) throw error;
       const deduped = dedupeChatsByInstanceAndPhone(data || []);
 
       // Filter: only show chats where the message time (or creation) is after the instance was created
       // This prevents showing old conversations that existed before Disparos was configured
       const visible = deduped.filter((chat) => {
-        // Get the instance creation date for this chat's instance
         const instancia = instanciasMap[chat.instancia_id];
-        if (!instancia) return true; // If no instance info, show chat
-        
+        if (!instancia) return false;
+
         const instanciaCreatedAt = (instancia as any).created_at;
-        if (!instanciaCreatedAt) return true; // If no creation date, show chat
-        
+        if (!instanciaCreatedAt) return true;
+
         const instanciaCreatedMs = new Date(instanciaCreatedAt).getTime();
         if (!Number.isFinite(instanciaCreatedMs)) return true;
-        
+
         const chatTime = Math.max(
           chat.last_message_time ? new Date(chat.last_message_time).getTime() : 0,
           chat.created_at ? new Date(chat.created_at).getTime() : 0
         );
-        
+
         return chatTime >= instanciaCreatedMs;
       });
 
