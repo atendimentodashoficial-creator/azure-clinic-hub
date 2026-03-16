@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MensagensPredefinidas from "./MensagensPredefinidas";
-import Produtos from "./Produtos";
+
 import Conexoes from "./Conexoes";
 import { ResetDataConfig } from "@/components/configuracoes/ResetDataConfig";
 import { TiposReuniaoConfig } from "@/components/configuracoes/TiposReuniaoConfig";
