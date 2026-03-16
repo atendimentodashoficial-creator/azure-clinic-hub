@@ -13,7 +13,7 @@ export interface Cargo {
 }
 
 export function useCargos() {
-  const ownerId = useOwnerId();
+  const { ownerId } = useOwnerId();
   const qc = useQueryClient();
 
   const { data: cargos = [], isLoading } = useQuery({
