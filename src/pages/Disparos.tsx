@@ -138,37 +138,59 @@ export default function Disparos() {
   };
 
   // Load chats from database (excluding deleted ones)
-  // Only show chats with messages AFTER any instance was created (avoid old conversations)
-  const loadChats = async (): Promise<any[]> => {
+  // Only include chats from connected Disparos instances (never from WhatsApp main instance)
+  const loadChats = async (allowedInstanciaIdsParam?: string[]): Promise<any[]> => {
     try {
+      if (!user?.id) {
+        setChats([]);
+        setFilteredChats([]);
+        setChatsLoaded(true);
+        return [];
+      }
+
+      const allowedInstanciaIds = (
+        allowedInstanciaIdsParam?.length
+          ? allowedInstanciaIdsParam
+          : instanciasList.map((inst) => inst.id)
+      ).filter(Boolean);
+
+      // No Disparos instance connected => no chats to show
+      if (allowedInstanciaIds.length === 0) {
+        setChats([]);
+        setFilteredChats([]);
+        setChatsLoaded(true);
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('disparos_chats')
         .select('*')
+        .eq('user_id', user.id)
         .is('deleted_at', null)
+        .in('instancia_id', allowedInstanciaIds)
         .order('last_message_time', { ascending: false, nullsFirst: false })
-        .limit(1000); // Ensure we don't hit query limits
-        
+        .limit(1000);
+
       if (error) throw error;
       const deduped = dedupeChatsByInstanceAndPhone(data || []);
 
       // Filter: only show chats where the message time (or creation) is after the instance was created
       // This prevents showing old conversations that existed before Disparos was configured
       const visible = deduped.filter((chat) => {
-        // Get the instance creation date for this chat's instance
         const instancia = instanciasMap[chat.instancia_id];
-        if (!instancia) return true; // If no instance info, show chat
-        
+        if (!instancia) return false;
+
         const instanciaCreatedAt = (instancia as any).created_at;
-        if (!instanciaCreatedAt) return true; // If no creation date, show chat
-        
+        if (!instanciaCreatedAt) return true;
+
         const instanciaCreatedMs = new Date(instanciaCreatedAt).getTime();
         if (!Number.isFinite(instanciaCreatedMs)) return true;
-        
+
         const chatTime = Math.max(
           chat.last_message_time ? new Date(chat.last_message_time).getTime() : 0,
           chat.created_at ? new Date(chat.created_at).getTime() : 0
         );
-        
+
         return chatTime >= instanciaCreatedMs;
       });
 
@@ -215,8 +237,9 @@ export default function Disparos() {
   };
 
   // Sync chats from UAZapi (Disparos instance)
-  const syncChats = async (opts?: { silent?: boolean }) => {
+  const syncChats = async (opts?: { silent?: boolean; allowedInstanciaIds?: string[] }) => {
     const silent = opts?.silent ?? false;
+    const allowedInstanciaIds = opts?.allowedInstanciaIds;
 
     // Prevent overlapping syncs (interval + manual click)
     if (isSyncing) return;
@@ -296,14 +319,14 @@ export default function Disparos() {
       }
 
       // Always load chats from database (even if sync failed, show cached data)
-      await loadChats();
+      await loadChats(allowedInstanciaIds);
       // With webhook configured, real-time updates handle message arrival.
       // This sync is just a fallback to catch any missed data.
     } catch (error: any) {
       console.log('Sync error (using cache):', error.message || error);
       // Don't show error toast for expected network failures, just use cache silently
       // Still try to load cached chats on error
-      await loadChats();
+      await loadChats(allowedInstanciaIds);
     } finally {
       setIsSyncing(false);
     }
@@ -341,28 +364,37 @@ export default function Disparos() {
 
   // Load instancias (just load data, don't auto-check connection status)
   // IMPORTANT: Exclude the main WhatsApp instance (linked via uazapi_config.whatsapp_instancia_id)
-  const loadInstancias = async () => {
+  const loadInstancias = async (): Promise<DisparosInstancia[]> => {
     try {
+      if (!user?.id) {
+        setInstanciasMap({});
+        setInstanciasList([]);
+        setFullInstancias([]);
+        return [];
+      }
+
       // First, get the main WhatsApp instance ID to exclude it
       const { data: uazapiConfig } = await supabase
         .from("uazapi_config")
         .select("whatsapp_instancia_id")
+        .eq("user_id", user.id)
         .maybeSingle();
-      
+
       const mainWhatsappId = uazapiConfig?.whatsapp_instancia_id || null;
-      
+
       // Load ALL instances (regardless of is_active) to ensure visibility in manager
       // Only the main WhatsApp instance is filtered out
       const { data } = await supabase
         .from("disparos_instancias")
-        .select("*");
-      
+        .select("*")
+        .eq("user_id", user.id);
+
       if (data) {
         // Filter out the main WhatsApp instance - it should only appear in the WhatsApp tab
-        const filteredInstancias = mainWhatsappId 
+        const filteredInstancias = mainWhatsappId
           ? data.filter(inst => inst.id !== mainWhatsappId)
           : data;
-        
+
         const map: Record<string, DisparosInstancia> = {};
         filteredInstancias.forEach(inst => {
           map[inst.id] = inst;
@@ -370,14 +402,22 @@ export default function Disparos() {
         setInstanciasMap(map);
         setInstanciasList(filteredInstancias);
         setFullInstancias(filteredInstancias);
+
         // Set default selection to first instance
         if (filteredInstancias.length > 0 && !selectedInstanciaId) {
           setSelectedInstanciaId(filteredInstancias[0].id);
         }
-        // DON'T auto-check connection status - only check when user opens manager
+
+        return filteredInstancias;
       }
+
+      setInstanciasMap({});
+      setInstanciasList([]);
+      setFullInstancias([]);
+      return [];
     } catch (error) {
       console.error("Error loading instancias:", error);
+      return [];
     }
   };
 
@@ -650,11 +690,14 @@ export default function Disparos() {
   useEffect(() => {
     (async () => {
       // Run config + instancias in parallel for faster startup
-      await Promise.all([checkConfig(), loadInstancias()]);
+      const [, loadedInstancias] = await Promise.all([checkConfig(), loadInstancias()]);
+      const allowedInstanciaIds = (loadedInstancias || []).map((inst) => inst.id);
+
       // Load cached chats immediately (DB query, very fast)
-      await loadChats();
+      await loadChats(allowedInstanciaIds);
+
       // Sync with external API in background (doesn't block UI)
-      syncChats({ silent: true });
+      syncChats({ silent: true, allowedInstanciaIds });
     })();
   }, []);
 
@@ -778,6 +821,8 @@ export default function Disparos() {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    const allowedInstanciaIds = new Set(instanciasList.map((inst) => inst.id));
+
     const channel = supabase
       .channel("disparos-chats-realtime")
       .on(
@@ -791,6 +836,7 @@ export default function Disparos() {
         (payload) => {
           const inserted = (payload as any).new as any;
           if (!inserted?.id) return;
+          if (!inserted?.instancia_id || !allowedInstanciaIds.has(inserted.instancia_id)) return;
           pendingRef.current.set(inserted.id, inserted);
           scheduleFlush();
         }
@@ -806,6 +852,7 @@ export default function Disparos() {
         (payload) => {
           const updated = payload.new as any;
           if (!updated?.id) return;
+          if (!updated?.instancia_id || !allowedInstanciaIds.has(updated.instancia_id)) return;
           pendingRef.current.set(updated.id, updated);
           scheduleFlush();
         }
@@ -817,7 +864,7 @@ export default function Disparos() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, instanciasList]);
 
   // Clear unread count and lock provider baseline to prevent badge from reappearing
   const clearUnreadCount = async (chatId: string) => {
