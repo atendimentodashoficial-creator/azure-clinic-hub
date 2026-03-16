@@ -652,7 +652,7 @@ export default function ProdutosTarefas() {
       ) : (
         <DndContext sensors={productSensors} collisionDetection={closestCenter} onDragEnd={handleProductDragEnd}>
           <SortableContext items={filtrados.map(t => t.id)} strategy={verticalListSortingStrategy}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtrados.map(template => (
                 <SortableProdutoCard
                   key={template.id}
