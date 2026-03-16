@@ -237,8 +237,9 @@ export default function Disparos() {
   };
 
   // Sync chats from UAZapi (Disparos instance)
-  const syncChats = async (opts?: { silent?: boolean }) => {
+  const syncChats = async (opts?: { silent?: boolean; allowedInstanciaIds?: string[] }) => {
     const silent = opts?.silent ?? false;
+    const allowedInstanciaIds = opts?.allowedInstanciaIds;
 
     // Prevent overlapping syncs (interval + manual click)
     if (isSyncing) return;
