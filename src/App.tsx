@@ -85,8 +85,8 @@ const App = () => (
               </RoleProtectedRoute>
             }
           >
-            <Route index element={<AdminWhatsApp />} />
-            <Route path="whatsapp" element={<AdminWhatsApp />} />
+            <Route index element={<AdminHomeDashboard />} />
+            <Route path="dashboard" element={<AdminHomeDashboard />} />
             <Route path="whatsapp" element={<AdminWhatsApp />} />
             <Route path="disparos" element={<Disparos />} />
             <Route path="extrator" element={<Extrator />} />
