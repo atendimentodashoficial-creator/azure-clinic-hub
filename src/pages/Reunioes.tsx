@@ -366,6 +366,11 @@ export default function Reunioes() {
         </TabsList>
 
         <TabsContent value="reunioes" className="space-y-6 mt-6">
+          {/* Dashboard colapsável */}
+          {reunioes && reunioes.length > 0 && (
+            <ReunioesDashboard reunioes={reunioes} />
+          )}
+
           {/* Period filter chips */}
           <ReunioesPeriodFilter
             value={periodFilter.filterValue}
