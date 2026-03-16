@@ -1463,60 +1463,39 @@ export const ChatWindow = ({ chat, onMessagesRead, onChatDeleted, onChatUpdated,
 
   const handleCreateAgendamento = async () => {
     try {
-      // Aqui a gente NÃO cria lead ao clicar em "agendar".
-      // Isso evita conflito com leads já existentes (inclusive excluídos/soft-deleted).
-      // O NovoAgendamentoDialog fará a busca/restauração/criação no momento de salvar.
-
       const all = chat.contact_number.replace(/\D/g, "");
       if (all.length < 10) throw new Error("Número inválido");
 
+      const formatPhoneForDisplay = (phoneNumber: string) => {
+        if (all.length >= 12 && all.startsWith("55")) {
+          const ddd = all.slice(2, 4);
+          const numero = all.slice(4);
+          if (numero.length === 9) return `(${ddd}) ${numero.slice(0, 5)}-${numero.slice(5)}`;
+          return `(${ddd}) ${numero.slice(0, 4)}-${numero.slice(4)}`;
+        }
+        if (all.length === 11) {
+          const ddd = all.slice(0, 2);
+          const numero = all.slice(2);
+          return `(${ddd}) ${numero.slice(0, 5)}-${numero.slice(5)}`;
+        }
+        return phoneNumber;
+      };
+
       const formattedPhone = formatPhoneForDisplay(all);
-      const last8Digits = getLast8Digits(all);
-      
-      // Buscar nome do cliente existente se houver
-      // Função para verificar se uma string parece ser um número de telefone
       const pareceNumeroTelefone = (str: string) => {
         const apenasDigitos = str.replace(/\D/g, "");
-        // Se tem mais de 8 dígitos e o texto limpo é só números, é telefone
         return apenasDigitos.length >= 8 && /^[\d\s\-\+\(\)]+$/.test(str);
       };
-      
-      // Se o contact_name parece ser um número de telefone, usar string vazia
-      let nomeParaUsar = pareceNumeroTelefone(chat.contact_name) ? "" : chat.contact_name;
-      
-      if (last8Digits && last8Digits.length >= 8) {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const { data: allClientes } = await supabase
-              .from("leads")
-              .select("nome, telefone")
-              .eq("user_id", user.id)
-              .eq("status", "cliente")
-              .is("deleted_at", null);
-
-            const clienteExistente = allClientes?.find(cliente => 
-              getLast8Digits(cliente.telefone) === last8Digits
-            );
-
-            if (clienteExistente && !pareceNumeroTelefone(clienteExistente.nome)) {
-              nomeParaUsar = clienteExistente.nome;
-            }
-          }
-        } catch (error) {
-          // Fallback para nome do chat
-        }
-      }
+      const nomeParaUsar = pareceNumeroTelefone(chat.contact_name) ? "" : chat.contact_name;
 
       setClienteData({
-        // clienteId fica indefinido (opcional) quando não sabemos o id ainda
         nome: nomeParaUsar,
         telefone: formattedPhone,
       });
       setAgendamentoDialogOpen(true);
     } catch (error: any) {
-      console.error("Erro ao preparar agendamento:", error);
-      toast.error(error.message || "Erro ao abrir agendamento");
+      console.error("Erro ao preparar reunião:", error);
+      toast.error(error.message || "Erro ao abrir reunião");
     }
   };
 
@@ -1642,7 +1621,7 @@ export const ChatWindow = ({ chat, onMessagesRead, onChatDeleted, onChatUpdated,
             size="icon"
             className="h-8 w-8"
             onClick={handleCreateAgendamento}
-            title="Criar Agendamento"
+            title="Criar Reunião"
           >
             <Calendar className="w-4 h-4" />
           </Button>
