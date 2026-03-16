@@ -200,6 +200,13 @@ export function ComparecimentoDialog({
                   <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />
                 )}
               </button>
+            </div>
+          ) : (
+            <div className="text-center py-6 text-sm text-muted-foreground">
+              <Columns3 className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p>Nenhuma coluna do Kanban encontrada.</p>
+              <p className="text-xs mt-1">Configure as colunas na aba WhatsApp.</p>
+            </div>
           )}
 
           <div className="flex gap-2 pt-2">
@@ -212,7 +219,7 @@ export function ComparecimentoDialog({
                   ? "bg-green-600 hover:bg-green-700 text-white"
                   : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               }`}
-              disabled={!selectedColumnId || confirmMutation.isPending}
+              disabled={(!selectedColumnId && !skipMove) || confirmMutation.isPending}
               onClick={() => confirmMutation.mutate()}
             >
               {isCompareceu ? (
