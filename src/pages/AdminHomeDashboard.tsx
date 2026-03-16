@@ -141,7 +141,7 @@ export default function AdminHomeDashboard() {
 
     // Reuniões hoje
     const reunioesHoje = reunioes.filter(r => {
-      const d = new Date(r.data_hora);
+      const d = new Date(r.data_reuniao);
       return isToday(d);
     });
 
