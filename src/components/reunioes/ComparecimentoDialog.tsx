@@ -76,6 +76,7 @@ export function ComparecimentoDialog({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
+  const [skipMove, setSkipMove] = useState(false);
 
   const { data: columns, isLoading } = useQuery({
     queryKey: ["whatsapp-kanban-columns", user?.id],
@@ -94,9 +95,9 @@ export function ComparecimentoDialog({
 
   const confirmMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedColumnId || !reuniao || !user) throw new Error("Dados incompletos");
+      if (!reuniao || !user) throw new Error("Dados incompletos");
 
-      if (reuniao.cliente_telefone) {
+      if (!skipMove && selectedColumnId && reuniao.cliente_telefone) {
         await moveKanbanCard(user.id, reuniao.cliente_telefone, selectedColumnId);
       }
 
@@ -116,6 +117,7 @@ export function ComparecimentoDialog({
           : "Não comparecimento registrado!"
       );
       setSelectedColumnId(null);
+      setSkipMove(false);
       onOpenChange(false);
     },
     onError: (error) => {
@@ -126,6 +128,7 @@ export function ComparecimentoDialog({
 
   const handleClose = () => {
     setSelectedColumnId(null);
+    setSkipMove(false);
     onOpenChange(false);
   };
 
@@ -166,9 +169,9 @@ export function ComparecimentoDialog({
               {columns.map((col) => (
                 <button
                   key={col.id}
-                  onClick={() => setSelectedColumnId(col.id)}
+                  onClick={() => { setSelectedColumnId(col.id); setSkipMove(false); }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all ${
-                    selectedColumnId === col.id
+                    selectedColumnId === col.id && !skipMove
                       ? "border-primary bg-primary/10 ring-1 ring-primary"
                       : "border-border hover:bg-muted/50"
                   }`}
@@ -178,11 +181,25 @@ export function ComparecimentoDialog({
                     style={{ backgroundColor: col.cor }}
                   />
                   <span className="font-medium text-sm">{col.nome}</span>
-                  {selectedColumnId === col.id && (
+                  {selectedColumnId === col.id && !skipMove && (
                     <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />
                   )}
                 </button>
               ))}
+              <button
+                onClick={() => { setSkipMove(true); setSelectedColumnId(null); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all ${
+                  skipMove
+                    ? "border-primary bg-primary/10 ring-1 ring-primary"
+                    : "border-border hover:bg-muted/50"
+                }`}
+              >
+                <XCircle className="w-3 h-3 flex-shrink-0 text-muted-foreground" />
+                <span className="font-medium text-sm text-muted-foreground">Não movimentar card</span>
+                {skipMove && (
+                  <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />
+                )}
+              </button>
             </div>
           ) : (
             <div className="text-center py-6 text-sm text-muted-foreground">
@@ -202,7 +219,7 @@ export function ComparecimentoDialog({
                   ? "bg-green-600 hover:bg-green-700 text-white"
                   : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               }`}
-              disabled={!selectedColumnId || confirmMutation.isPending}
+              disabled={(!selectedColumnId && !skipMove) || confirmMutation.isPending}
               onClick={() => confirmMutation.mutate()}
             >
               {isCompareceu ? (
