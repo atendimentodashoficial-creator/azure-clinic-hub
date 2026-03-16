@@ -1621,7 +1621,7 @@ export const ChatWindow = ({ chat, onMessagesRead, onChatDeleted, onChatUpdated,
             size="icon"
             className="h-8 w-8"
             onClick={handleCreateAgendamento}
-            title="Criar Agendamento"
+            title="Criar Reunião"
           >
             <Calendar className="w-4 h-4" />
           </Button>
