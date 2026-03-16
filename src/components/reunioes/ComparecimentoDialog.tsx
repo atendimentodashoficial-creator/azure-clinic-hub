@@ -95,9 +95,9 @@ export function ComparecimentoDialog({
 
   const confirmMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedColumnId || !reuniao || !user) throw new Error("Dados incompletos");
+      if (!reuniao || !user) throw new Error("Dados incompletos");
 
-      if (reuniao.cliente_telefone) {
+      if (!skipMove && selectedColumnId && reuniao.cliente_telefone) {
         await moveKanbanCard(user.id, reuniao.cliente_telefone, selectedColumnId);
       }
 
