@@ -124,6 +124,10 @@ export function WhatsAppKanban({
   const [reuniaoSelectorOpen, setReuniaoSelectorOpen] = useState(false);
   const [reuniaoSelectorList, setReuniaoSelectorList] = useState<ChatReuniao[]>([]);
 
+  // Auto-move config
+  const [autoMoveColumnId, setAutoMoveColumnId] = useState<string>("none");
+  const [autoMoveReuniaoColumnId, setAutoMoveReuniaoColumnId] = useState<string>("none");
+
   // Selection state
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedChats, setSelectedChats] = useState<Set<string>>(new Set());
