@@ -67,9 +67,9 @@ export default function FuncionarioDashboard() {
       return col === "concluido";
     });
     const atrasadas = tarefas.filter((t: any) => {
-      if (!t.data_entrega) return false;
+      if (!t.data_limite) return false;
       const col = t.tarefas_colunas?.nome?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-      return col !== "concluido" && isPast(parseISO(t.data_entrega));
+      return col !== "concluido" && isPast(parseISO(t.data_limite));
     });
     const urgentes = tarefas.filter((t: any) => {
       const col = t.tarefas_colunas?.nome?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
