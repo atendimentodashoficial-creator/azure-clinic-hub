@@ -5067,7 +5067,10 @@ export type Database = {
       tarefas_clientes: {
         Row: {
           cnpj: string | null
+          contrato_url: string | null
           created_at: string
+          data_inicio_contrato: string | null
+          dia_vencimento: number | null
           email: string | null
           empresa: string | null
           foto_perfil_url: string | null
@@ -5085,11 +5088,15 @@ export type Database = {
           tipo: string
           updated_at: string
           user_id: string
+          valor_contrato: number | null
           whatsapp_grupo: string | null
         }
         Insert: {
           cnpj?: string | null
+          contrato_url?: string | null
           created_at?: string
+          data_inicio_contrato?: string | null
+          dia_vencimento?: number | null
           email?: string | null
           empresa?: string | null
           foto_perfil_url?: string | null
@@ -5107,11 +5114,15 @@ export type Database = {
           tipo?: string
           updated_at?: string
           user_id: string
+          valor_contrato?: number | null
           whatsapp_grupo?: string | null
         }
         Update: {
           cnpj?: string | null
+          contrato_url?: string | null
           created_at?: string
+          data_inicio_contrato?: string | null
+          dia_vencimento?: number | null
           email?: string | null
           empresa?: string | null
           foto_perfil_url?: string | null
@@ -5129,6 +5140,7 @@ export type Database = {
           tipo?: string
           updated_at?: string
           user_id?: string
+          valor_contrato?: number | null
           whatsapp_grupo?: string | null
         }
         Relationships: [
