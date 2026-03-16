@@ -18,7 +18,7 @@ export default function FuncionarioDashboard() {
   const { ownerId } = useOwnerId();
 
   // Fetch tarefas assigned to this member
-  const { data: tarefas = [], isLoading: tarefasLoading } = useQuery({
+  const { data: tarefas = [], isLoading: tarefasLoading, fetchStatus: tarefasFetchStatus } = useQuery({
     queryKey: ["func-dashboard-tarefas", ownerId, membro?.nome],
     queryFn: async () => {
       if (!ownerId || !membro?.nome) return [];
