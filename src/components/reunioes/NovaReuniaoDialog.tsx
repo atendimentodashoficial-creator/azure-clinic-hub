@@ -21,105 +21,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatInTimeZone } from "date-fns-tz";
 import { timeToMinutes, minutesToTime, rangesOverlap } from "@/utils/timeSlots";
 import { useTiposReuniao, useTipoReuniaoMembros } from "@/hooks/useTiposReuniao";
-import { getLast8Digits } from "@/utils/phoneFormat";
+import { autoMoveKanbanOnReuniao } from "@/utils/kanbanAutoMove";
 
-// Auto-move WhatsApp kanban card when meeting is created
-async function autoMoveWhatsAppKanbanOnReuniao(userId: string, telefone: string) {
-  try {
-    const { data: config } = await supabase
-      .from("whatsapp_kanban_config")
-      .select("auto_move_reuniao_column_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const targetColumnId = (config as any)?.auto_move_reuniao_column_id;
-    if (!targetColumnId) return;
-
-    const last8 = getLast8Digits(telefone);
-    if (!last8) return;
-
-    const { data: chats } = await supabase
-      .from("whatsapp_chats")
-      .select("id")
-      .eq("user_id", userId)
-      .is("deleted_at", null)
-      .like("normalized_number", `%${last8}`);
-
-    if (!chats || chats.length === 0) return;
-
-    for (const chat of chats) {
-      const { data: entry } = await supabase
-        .from("whatsapp_chat_kanban")
-        .select("id")
-        .eq("chat_id", chat.id)
-        .maybeSingle();
-
-      if (entry) {
-        await supabase
-          .from("whatsapp_chat_kanban")
-          .update({ column_id: targetColumnId, updated_at: new Date().toISOString() })
-          .eq("id", entry.id);
-      } else {
-        await supabase.from("whatsapp_chat_kanban").insert({
-          user_id: userId,
-          chat_id: chat.id,
-          column_id: targetColumnId,
-        });
-      }
-    }
-  } catch (err) {
-    console.error("[WA-AutoMove] Error in autoMoveWhatsAppKanbanOnReuniao:", err);
-  }
-}
-
-// Auto-move Disparos kanban card when meeting is created
-async function autoMoveDisparosKanbanOnReuniao(userId: string, telefone: string) {
-  try {
-    const { data: config } = await supabase
-      .from("disparos_kanban_config")
-      .select("auto_move_reuniao_column_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const targetColumnId = (config as any)?.auto_move_reuniao_column_id;
-    if (!targetColumnId) return;
-
-    const last8 = getLast8Digits(telefone);
-    if (!last8) return;
-
-    const { data: chats } = await supabase
-      .from("disparos_chats")
-      .select("id")
-      .eq("user_id", userId)
-      .is("deleted_at", null)
-      .like("normalized_number", `%${last8}`);
-
-    if (!chats || chats.length === 0) return;
-
-    for (const chat of chats) {
-      const { data: entry } = await supabase
-        .from("disparos_chat_kanban")
-        .select("id")
-        .eq("chat_id", chat.id)
-        .maybeSingle();
-
-      if (entry) {
-        await supabase
-          .from("disparos_chat_kanban")
-          .update({ column_id: targetColumnId, updated_at: new Date().toISOString() })
-          .eq("id", entry.id);
-      } else {
-        await supabase.from("disparos_chat_kanban").insert({
-          user_id: userId,
-          chat_id: chat.id,
-          column_id: targetColumnId,
-        });
-      }
-    }
-  } catch (err) {
-    console.error("[AutoMove] Error in autoMoveDisparosKanbanOnReuniao:", err);
-  }
-}
 
 function computeSlots(
   escalas: EscalaMembro[],
@@ -347,12 +250,10 @@ export function NovaReuniaoDialog({ open, onOpenChange, initialClienteNome, init
       if (error) throw error;
       if (result?.success === false) throw new Error(result.error || "Erro ao criar reunião");
 
-      // Auto-move kanban cards when meeting is scheduled
-      if (clienteTelefone && user?.id) {
-        await Promise.all([
-          autoMoveWhatsAppKanbanOnReuniao(user.id, clienteTelefone),
-          autoMoveDisparosKanbanOnReuniao(user.id, clienteTelefone),
-        ]);
+      // Auto-move kanban cards when meeting is scheduled (use targetUserId for funcionário support)
+      const effectiveUserId = result?.targetUserId || user?.id;
+      if (clienteTelefone && effectiveUserId) {
+        autoMoveKanbanOnReuniao(effectiveUserId, clienteTelefone).catch(console.error);
       }
 
       queryClient.invalidateQueries({ queryKey: ["reunioes"] });
