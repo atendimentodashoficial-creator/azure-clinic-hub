@@ -277,6 +277,7 @@ export default function TarefasMembrosTab() {
   const { membros, isLoading, criarMembro, atualizarMembro, excluirMembro } = useTarefasMembros();
   const [editando, setEditando] = useState<TarefaMembro | null>(null);
   const [busca, setBusca] = useState("");
+  const navigate = useNavigate();
 
   const filtrados = membros.filter(m =>
     m.nome.toLowerCase().includes(busca.toLowerCase()) ||
