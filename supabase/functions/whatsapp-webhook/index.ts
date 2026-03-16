@@ -1694,7 +1694,7 @@ Deno.serve(async (req) => {
                 // Check if user has auto-move configured
                 const { data: kanbanConfig } = await supabase
                   .from('disparos_kanban_config')
-                  .select('auto_move_column_id')
+                  .select('auto_move_column_id, auto_move_reuniao_column_id')
                   .eq('user_id', effectiveUserId)
                   .maybeSingle();
 
