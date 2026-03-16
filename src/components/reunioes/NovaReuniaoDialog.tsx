@@ -73,6 +73,8 @@ function computeSlots(
 interface NovaReuniaoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialClienteNome?: string;
+  initialClienteTelefone?: string;
 }
 
 export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps) {
