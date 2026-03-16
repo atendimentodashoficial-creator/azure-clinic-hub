@@ -268,7 +268,7 @@ export default function FuncionarioDashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{t.titulo}</p>
                     <p className="text-xs text-muted-foreground">
-                      {t.data_entrega ? format(parseISO(t.data_entrega), "dd/MM/yyyy") : "Sem prazo"}
+                      {t.data_limite ? format(parseISO(t.data_limite), "dd/MM/yyyy") : "Sem prazo"}
                     </p>
                   </div>
                   <Badge variant="outline" className={cn(
