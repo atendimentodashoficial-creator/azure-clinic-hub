@@ -104,7 +104,7 @@ export default function ConfigurarPaineis() {
     // Add missing tabs at the end
     const existingKeys = new Set(result.filter(r => !r.is_divider).map(r => r.tab_key));
     const maxOrdem = Math.max(...result.map(r => r.ordem), -1);
-    defaultTabs.forEach((tab, i) => {
+    getDefaultTabsForPanel(panelType).forEach((tab, i) => {
       if (!existingKeys.has(tab.key)) {
         result.push({
           tab_key: tab.key,
