@@ -521,12 +521,12 @@ export default function Reunioes() {
                               ) : null;
                             })()}
 
-                            {/* Assunto/Título da Reunião */}
-                            {reuniao.titulo && (
+                            {/* Tipo de Reunião */}
+                            {(reuniao as any).tipos_reuniao?.nome && (
                               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                 <FileText className="h-3.5 w-3.5 flex-shrink-0" />
                                 <span className="truncate">
-                                  {reuniao.titulo.replace(/^Reunião com\s+[^-–]+\s*[-–]\s*/i, "").trim() || reuniao.titulo}
+                                  {(reuniao as any).tipos_reuniao.nome}
                                 </span>
                               </div>
                             )}
