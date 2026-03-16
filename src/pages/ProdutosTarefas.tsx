@@ -652,7 +652,7 @@ export default function ProdutosTarefas() {
       ) : (
         <DndContext sensors={productSensors} collisionDetection={closestCenter} onDragEnd={handleProductDragEnd}>
           <SortableContext items={filtrados.map(t => t.id)} strategy={verticalListSortingStrategy}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtrados.map(template => (
                 <SortableProdutoCard
                   key={template.id}
@@ -749,36 +749,36 @@ function ProdutoCard({
   const remaining = tarefas.length - MAX_VISIBLE;
 
   return (
-    <Card className="p-5 flex flex-col gap-3 hover:bg-accent/30 transition-colors h-full">
-      <div className="flex items-start gap-2 mb-1">
+    <Card className="p-4 flex flex-col gap-2 hover:bg-accent/30 transition-colors h-full">
+      <div className="flex items-start gap-2">
         {dragHandleProps && (
-          <button type="button" {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none mt-1">
+          <button type="button" {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none mt-0.5">
             <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
           </button>
         )}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-base leading-tight">{template.nome}</p>
+          <p className="font-semibold text-sm leading-tight">{template.nome}</p>
           {template.descricao && (
-            <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{template.descricao}</p>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.descricao}</p>
           )}
         </div>
       </div>
 
       {tarefas.length > 0 && (
-        <div className="space-y-2 flex-1">
+        <div className="space-y-1.5 flex-1">
           <p className="text-xs text-primary font-medium">
             {tarefas.length} tarefa{tarefas.length !== 1 ? "s" : ""} incluída{tarefas.length !== 1 ? "s" : ""}:
           </p>
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             {visibleTarefas.map(t => (
-              <li key={t.id} className="text-sm text-foreground flex items-center gap-2">
+              <li key={t.id} className="text-xs text-foreground flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
                 <span className="truncate">{t.titulo}</span>
               </li>
             ))}
           </ul>
           {remaining > 0 && (
-            <p className="text-xs text-muted-foreground pl-3.5">+{remaining} mais...</p>
+            <p className="text-xs text-muted-foreground pl-3">+{remaining} mais...</p>
           )}
         </div>
       )}
@@ -789,22 +789,22 @@ function ProdutoCard({
         <Button
           variant="secondary"
           size="sm"
-          className="h-8 gap-1.5 px-3 text-xs font-medium"
+          className="h-7 gap-1.5 px-2.5 text-xs font-medium"
           onClick={onAtribuir}
         >
-          <Play className="h-3.5 w-3.5 fill-current" />
+          <Play className="h-3 w-3 fill-current" />
           Atribuir
         </Button>
-        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2.5 text-xs" onClick={onEdit}>
-          <Edit className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={onEdit}>
+          <Edit className="h-3 w-3" />
           Editar
         </Button>
-        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2.5 text-xs" onClick={onDuplicar}>
-          <Copy className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={onDuplicar}>
+          <Copy className="h-3 w-3" />
           Duplicar
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive ml-auto" onClick={onDelete}>
-          <Trash2 className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive ml-auto" onClick={onDelete}>
+          <Trash2 className="h-3 w-3" />
         </Button>
       </div>
     </Card>
