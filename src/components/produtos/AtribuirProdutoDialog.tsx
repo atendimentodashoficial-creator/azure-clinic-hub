@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { getLast8Digits } from "@/utils/phoneFormat";
 import { sendTaskNotification } from "@/utils/taskNotifications";
+import { autoMoveKanbanOnReuniao } from "@/utils/kanbanAutoMove";
 import {
   Dialog,
   DialogContent,
@@ -233,6 +234,12 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
             await sendTaskNotification({ evento, tarefa_id: result.id, user_id: result.user_id });
           }
         }
+      }
+
+      // Auto-move kanban card using the targetUserId from the edge function
+      const effectiveUserId = reuniaoResponse?.targetUserId;
+      if (effectiveUserId && selectedClient.telefone) {
+        autoMoveKanbanOnReuniao(effectiveUserId, selectedClient.telefone).catch(console.error);
       }
 
       toast.success(`Produto atribuído e reunião agendada com ${selectedClient.nome}`);
