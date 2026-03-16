@@ -628,7 +628,9 @@ export default function Reunioes() {
                                   className="w-full h-9 p-0 flex items-center justify-center text-green-600 hover:text-green-700 hover:bg-green-50" 
                                   onClick={() => {
                                     const phone = reuniao.cliente_telefone?.replace(/\D/g, "") || "";
-                                    navigateToChat(navigate, phone);
+                                    if (phone) {
+                                      navigate(`/whatsapp?chat=${encodeURIComponent(phone)}`);
+                                    }
                                   }}
                                   title="WhatsApp / Chat"
                                 >
