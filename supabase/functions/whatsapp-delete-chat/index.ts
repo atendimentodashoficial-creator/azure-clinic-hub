@@ -235,7 +235,7 @@ serve(async (req) => {
       .from("whatsapp_chats")
       .delete()
       .in("id", chatIdsToDeleteDb)
-      .eq("user_id", user.id);
+      .eq("user_id", effectiveUserId);
 
     if (deleteError) {
       console.error("Error deleting chats:", deleteError);
