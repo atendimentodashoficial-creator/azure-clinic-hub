@@ -1,17 +1,18 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTarefasMembros, TarefaMembro } from "@/hooks/useTarefasMembros";
+import { useCargos } from "@/hooks/useCargos";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
 import { extractCountryCode, formatPhoneByCountry, getPhonePlaceholder, normalizePhone, stripCountryCode } from "@/utils/phoneFormat";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +26,7 @@ export function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
   membroEditando?: TarefaMembro | null;
   onClose?: () => void;
 }) {
+  const { cargos } = useCargos();
   const [open, setOpen] = useState(false);
   const isEditing = !!membroEditando;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -185,7 +187,19 @@ export function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
           </div>
           <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></div>
           <div className="space-y-2"><Label>Senha</Label><Input type="password" value={senha} onChange={e => setSenha(e.target.value)} placeholder="••••••" /></div>
-          <div className="space-y-2"><Label>Cargo / Função</Label><Input value={cargo} onChange={e => setCargo(e.target.value)} placeholder="Ex: Designer, Gestor de Tráfego..." /></div>
+          <div className="space-y-2">
+            <Label>Cargo / Função</Label>
+            <Select value={cargo} onValueChange={setCargo}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um cargo" />
+              </SelectTrigger>
+              <SelectContent>
+                {cargos.map((c) => (
+                  <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label>Salário</Label>
             <div className="relative">
