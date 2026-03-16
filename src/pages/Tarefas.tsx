@@ -396,6 +396,11 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
             </div>
           </div>
 
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5 flex items-center gap-1">
+            <Clock className="h-2.5 w-2.5" />
+            Atribuída em {format(new Date(tarefa.created_at), "dd/MM/yyyy 'às' HH:mm")}
+          </p>
+
           {/* Always show meeting info, even in "A Fazer" for employees */}
           {reuniao && (
             <p className="text-xs mt-1 flex items-center gap-1 text-primary">
