@@ -1,18 +1,20 @@
 import { useMemo, useState } from "react";
 import { useTarefasMembros, TarefaMembro } from "@/hooks/useTarefasMembros";
 import { useTarefas, TarefaColuna } from "@/hooks/useTarefas";
+import { useCargos } from "@/hooks/useCargos";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
 import {
   BarChart3, ChevronUp, ChevronDown, Users, CheckCircle2, Activity, CalendarDays,
-  TrendingUp, Trophy,
+  TrendingUp, Trophy, Filter,
 } from "lucide-react";
 import { differenceInMonths } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -30,7 +32,9 @@ const RANKING_ICONS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" 
 export default function EquipeAnalytics() {
   const { membros } = useTarefasMembros();
   const { tarefas, colunas } = useTarefas();
+  const { cargos } = useCargos();
   const [open, setOpen] = useState(true);
+  const [cargoFilter, setCargoFilter] = useState<string>("todos");
   const navigate = useNavigate();
 
   const colunasMap = useMemo(() => {
@@ -39,9 +43,16 @@ export default function EquipeAnalytics() {
     return map;
   }, [colunas]);
 
+  // Filter members by cargo
+  const filteredMembros = useMemo(() => {
+    if (cargoFilter === "todos") return membros;
+    if (cargoFilter === "sem-cargo") return membros.filter((m: TarefaMembro) => !m.cargo);
+    return membros.filter((m: TarefaMembro) => m.cargo === cargoFilter);
+  }, [membros, cargoFilter]);
+
   // Per-member task stats
   const membroStats = useMemo(() => {
-    return membros.map((m: TarefaMembro) => {
+    return filteredMembros.map((m: TarefaMembro) => {
       const mTarefas = tarefas.filter(t =>
         t.responsavel_nome?.split(",").map(n => n.trim()).includes(m.nome)
       );
@@ -54,43 +65,43 @@ export default function EquipeAnalytics() {
       const taxa = total > 0 ? Math.round((concluidas / total) * 100) : 0;
       return { ...m, concluidas, emAndamento, total, taxa };
     }).sort((a, b) => b.concluidas - a.concluidas);
-  }, [membros, tarefas, colunasMap]);
+  }, [filteredMembros, tarefas, colunasMap]);
 
   // Global stats
   const globalStats = useMemo(() => {
-    const totalAtivos = membros.length;
-    const gerentes = membros.filter((m: TarefaMembro) => m.cargo?.toLowerCase().includes("gerente")).length;
+    const totalAtivos = filteredMembros.length;
+    const gerentes = filteredMembros.filter((m: TarefaMembro) => m.cargo?.toLowerCase().includes("gerente")).length;
     const colaboradores = totalAtivos - gerentes;
     const totalConcluidas = membroStats.reduce((acc, m) => acc + m.concluidas, 0);
     const totalEmAndamento = membroStats.reduce((acc, m) => acc + m.emAndamento, 0);
     const totalTarefas = membroStats.reduce((acc, m) => acc + m.total, 0);
     const taxaOcupacao = totalTarefas > 0 ? Math.round((totalEmAndamento / totalTarefas) * 100) : 0;
 
-    // Average time in company
-    const membrosComData = membros.filter((m: TarefaMembro) => m.data_contratacao);
+    const membrosComData = filteredMembros.filter((m: TarefaMembro) => m.data_contratacao);
     const avgMonths = membrosComData.length > 0
       ? Math.round(membrosComData.reduce((acc, m: TarefaMembro) => acc + differenceInMonths(new Date(), new Date(m.data_contratacao!)), 0) / membrosComData.length)
       : 0;
 
     return { totalAtivos, gerentes, colaboradores, totalConcluidas, totalEmAndamento, taxaOcupacao, avgMonths };
-  }, [membros, membroStats]);
+  }, [filteredMembros, membroStats]);
 
   // Salary summary
   const salarioStats = useMemo(() => {
-    const total = membros.reduce((acc, m: TarefaMembro) => acc + (m.salario || 0), 0);
-    const avg = membros.length > 0 ? total / membros.length : 0;
+    const total = filteredMembros.reduce((acc, m: TarefaMembro) => acc + (m.salario || 0), 0);
+    const avg = filteredMembros.length > 0 ? total / filteredMembros.length : 0;
     return { total, avg };
-  }, [membros]);
+  }, [filteredMembros]);
 
   // Pie chart: distribution by cargo
   const cargoData = useMemo(() => {
+    const source = cargoFilter === "todos" ? membros : filteredMembros;
     const map: Record<string, number> = {};
-    membros.forEach((m: TarefaMembro) => {
+    source.forEach((m: TarefaMembro) => {
       const cargo = m.cargo || "Sem cargo";
       map[cargo] = (map[cargo] || 0) + 1;
     });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
-  }, [membros]);
+  }, [membros, filteredMembros, cargoFilter]);
 
   // Bar chart: top 5
   const top5Data = useMemo(() =>
@@ -109,6 +120,13 @@ export default function EquipeAnalytics() {
     return `${months} meses`;
   };
 
+  // Get unique cargos from members for filter
+  const uniqueCargos = useMemo(() => {
+    const set = new Set<string>();
+    membros.forEach((m: TarefaMembro) => { if (m.cargo) set.add(m.cargo); });
+    return Array.from(set).sort();
+  }, [membros]);
+
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <Card className="p-5">
@@ -121,6 +139,29 @@ export default function EquipeAnalytics() {
         </CollapsibleTrigger>
 
         <CollapsibleContent className="mt-5 space-y-5">
+          {/* Cargo Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground font-medium">Filtrar por cargo:</span>
+            <Select value={cargoFilter} onValueChange={setCargoFilter}>
+              <SelectTrigger className="w-[200px] h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os cargos</SelectItem>
+                {uniqueCargos.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+                <SelectItem value="sem-cargo">Sem cargo</SelectItem>
+              </SelectContent>
+            </Select>
+            {cargoFilter !== "todos" && (
+              <Badge variant="secondary" className="text-xs">
+                {filteredMembros.length} membro(s)
+              </Badge>
+            )}
+          </div>
+
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Card className="p-4 border">
@@ -194,6 +235,7 @@ export default function EquipeAnalytics() {
               <h4 className="font-semibold text-sm flex items-center gap-2 mb-4">
                 <Trophy className="h-4 w-4 text-amber-500" />
                 Top 5 por Tarefas Concluídas
+                {cargoFilter !== "todos" && <Badge variant="outline" className="text-xs ml-1">{cargoFilter}</Badge>}
               </h4>
               {top5Data.length > 0 ? (
                 <ResponsiveContainer width="100%" height={220}>
@@ -216,6 +258,7 @@ export default function EquipeAnalytics() {
             <h4 className="font-semibold text-sm flex items-center gap-2 mb-3">
               <TrendingUp className="h-4 w-4 text-primary" />
               Resumo Salarial
+              {cargoFilter !== "todos" && <Badge variant="outline" className="text-xs ml-1">{cargoFilter}</Badge>}
             </h4>
             <div className="flex gap-10">
               <div>
@@ -231,11 +274,12 @@ export default function EquipeAnalytics() {
 
           {/* Metrics Table */}
           <Card className="border overflow-hidden">
-            <div className="p-4 border-b">
+            <div className="p-4 border-b flex items-center justify-between">
               <h4 className="font-semibold text-sm flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 Métricas por Colaborador
               </h4>
+              {cargoFilter !== "todos" && <Badge variant="outline" className="text-xs">{cargoFilter} • {filteredMembros.length}</Badge>}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
