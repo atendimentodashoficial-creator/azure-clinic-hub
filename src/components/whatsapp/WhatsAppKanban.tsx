@@ -175,27 +175,73 @@ export function WhatsAppKanban({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Load columns
-      const {
-        data: columnsData
-      } = await supabase.from("whatsapp_kanban_columns").select("*").eq("ativo", true).order("ordem", {
-        ascending: true
-      });
-      setColumns(columnsData || []);
+      const { data: { user } } = await supabase.auth.getUser();
 
-      // Load chat-column assignments
-      const {
-        data: assignmentsData
-      } = await supabase.from("whatsapp_chat_kanban").select("chat_id, column_id");
+      const [columnsResult, assignmentsResult, configResult] = await Promise.all([
+        supabase.from("whatsapp_kanban_columns").select("*").eq("ativo", true).order("ordem", { ascending: true }),
+        supabase.from("whatsapp_chat_kanban").select("chat_id, column_id"),
+        user
+          ? supabase
+              .from("whatsapp_kanban_config")
+              .select("auto_move_column_id, auto_move_reuniao_column_id")
+              .eq("user_id", user.id)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+
+      setColumns(columnsResult.data || []);
+
       const map: Record<string, string> = {};
-      assignmentsData?.forEach(a => {
+      assignmentsResult.data?.forEach(a => {
         map[a.chat_id] = a.column_id;
       });
       setChatColumnMap(map);
+
+      const cfg = configResult.data as any;
+      setAutoMoveColumnId(cfg?.auto_move_column_id || "none");
+      setAutoMoveReuniaoColumnId(cfg?.auto_move_reuniao_column_id || "none");
     } catch (error) {
       console.error("Error loading kanban data:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const saveAutoMoveColumn = async (columnId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const value = columnId === "none" ? null : columnId;
+      await supabase
+        .from("whatsapp_kanban_config")
+        .upsert(
+          { user_id: user.id, auto_move_column_id: value, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
+      setAutoMoveColumnId(columnId);
+      toast.success(columnId === "none" ? "Auto-movimentação desativada" : "Coluna salva!");
+    } catch (error) {
+      console.error("Error saving auto-move config:", error);
+      toast.error("Erro ao salvar configuração");
+    }
+  };
+
+  const saveAutoMoveReuniaoColumn = async (columnId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const value = columnId === "none" ? null : columnId;
+      await supabase
+        .from("whatsapp_kanban_config")
+        .upsert(
+          { user_id: user.id, auto_move_reuniao_column_id: value, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
+      setAutoMoveReuniaoColumnId(columnId);
+      toast.success(columnId === "none" ? "Auto-movimentação por reunião desativada" : "Coluna salva!");
+    } catch (error) {
+      console.error("Error saving auto-move reuniao config:", error);
+      toast.error("Erro ao salvar configuração");
     }
   };
 
