@@ -135,7 +135,7 @@ serve(async (req) => {
         .from("whatsapp_chat_deletions")
         .upsert(
           {
-            user_id: user.id,
+            user_id: effectiveUserId,
             phone_last8: last8,
             deleted_at: nowIso,
           },
