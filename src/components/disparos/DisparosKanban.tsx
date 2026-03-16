@@ -713,8 +713,17 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
     );
 
     try {
-      // Call edge function to delete from UAZapi, delete messages, and soft-delete chat
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+
       const { error } = await supabase.functions.invoke("disparos-delete-chat", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
         body: { chat_ids: chatIdsToDelete },
       });
 

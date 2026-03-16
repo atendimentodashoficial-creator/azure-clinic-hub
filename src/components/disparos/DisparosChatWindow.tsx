@@ -1006,20 +1006,28 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
 
   const handleDeleteChat = async () => {
     try {
-      // Call edge function to delete from UAZapi, delete messages, and soft-delete chat
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        toast.error('Sessão expirada. Faça login novamente.');
+        return;
+      }
+
       const { error } = await supabase.functions.invoke("disparos-delete-chat", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
         body: { chat_ids: [chat.id] },
       });
 
       if (error) throw error;
 
       toast.success('Conversa excluída com sucesso!');
-      if (onChatDeleted) {
-        onChatDeleted();
-      }
+      onChatDeleted?.();
     } catch (error: any) {
       console.error('Erro ao excluir conversa:', error);
-      toast.error('Erro ao excluir conversa');
+      toast.error(error?.message || 'Erro ao excluir conversa');
     }
   };
 
