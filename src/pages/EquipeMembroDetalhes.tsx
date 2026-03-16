@@ -176,11 +176,16 @@ export default function EquipeMembroDetalhes() {
             </p>
           )}
         </div>
-        {m.salario != null && (
-          <div className="shrink-0 bg-primary/10 text-primary rounded-lg px-3 py-1.5 font-semibold text-sm">
-            {formatCurrency(m.salario)}
-          </div>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {m.salario != null && (
+            <div className="bg-primary/10 text-primary rounded-lg px-3 py-1.5 font-semibold text-sm">
+              {formatCurrency(m.salario)}
+            </div>
+          )}
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditando(true)}>
+            <Edit className="h-3.5 w-3.5" /> Editar
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
