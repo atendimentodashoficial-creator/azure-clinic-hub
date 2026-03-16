@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MensagensPredefinidas from "./MensagensPredefinidas";
-import Produtos from "./Produtos";
+
 import Conexoes from "./Conexoes";
 import { ResetDataConfig } from "@/components/configuracoes/ResetDataConfig";
 import { TiposReuniaoConfig } from "@/components/configuracoes/TiposReuniaoConfig";
@@ -11,7 +11,7 @@ import { useTabPersistence } from "@/hooks/useTabPersistence";
 
 const tabOptions = [
   { value: "tipos-reuniao", label: "Tipos Reunião" },
-  { value: "produtos", label: "Produtos" },
+  { value: "conexoes", label: "Conexões" },
   { value: "mensagens", label: "Mensagens" },
   { value: "conexoes", label: "Conexões" },
   { value: "reset", label: "Reset" },
@@ -60,9 +60,7 @@ export default function Configuracoes() {
           <TiposReuniaoConfig />
         </TabsContent>
         
-        <TabsContent value="produtos">
-          <Produtos />
-        </TabsContent>
+        
         
         <TabsContent value="mensagens">
           <MensagensPredefinidas />
