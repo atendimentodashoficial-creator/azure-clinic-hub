@@ -26,6 +26,7 @@ export function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
   membroEditando?: TarefaMembro | null;
   onClose?: () => void;
 }) {
+  const { cargos } = useCargos();
   const [open, setOpen] = useState(false);
   const isEditing = !!membroEditando;
   const fileInputRef = useRef<HTMLInputElement>(null);
