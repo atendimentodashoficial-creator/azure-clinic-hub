@@ -530,14 +530,20 @@ Deno.serve(async (req) => {
         // Fetch uazapiConfig for the resolved user
         const { data: userUazapiConfig } = await supabase
           .from('uazapi_config')
-          .select('whatsapp_instancia_id')
+          .select('whatsapp_instancia_id, api_key')
           .eq('user_id', effectiveUserId)
           .eq('is_active', true)
           .maybeSingle();
         
         effectiveUazapiConfig = userUazapiConfig;
+        // The instance is the main WhatsApp instance if:
+        // 1. It matches the configured whatsapp_instancia_id, OR
+        // 2. The uazapi_config uses the same api_key (same physical WhatsApp connection)
         isMainWhatsAppInstance = Boolean(
-          userUazapiConfig?.whatsapp_instancia_id && userUazapiConfig.whatsapp_instancia_id === instanciaId
+          userUazapiConfig && (
+            (userUazapiConfig.whatsapp_instancia_id && userUazapiConfig.whatsapp_instancia_id === instanciaId) ||
+            (userUazapiConfig.api_key === payloadToken)
+          )
         );
 
         // Update last_webhook_at for this instance
