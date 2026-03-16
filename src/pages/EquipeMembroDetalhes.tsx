@@ -18,7 +18,7 @@ import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft, Mail, Phone, Briefcase, CalendarIcon,
   DollarSign, CheckCircle2, Clock, FileText, AlertCircle,
-  Layers, Calendar, MessageSquare, Edit,
+  Layers, Calendar, MessageSquare, Edit, User, ListChecks, Wallet,
 } from "lucide-react";
 import { NovoMembroDialog } from "@/components/tarefas/TarefasMembrosTab";
 import { toast } from "sonner";
