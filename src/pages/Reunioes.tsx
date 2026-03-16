@@ -53,8 +53,10 @@ interface Reuniao {
   cliente_id: string | null;
   cliente_telefone: string | null;
   profissional_id: string | null;
+  tipo_reuniao_id: string | null;
   profissionais?: { nome: string } | null;
   leads?: { nome: string; telefone: string } | null;
+  tipos_reuniao?: { nome: string } | null;
 }
 
 export default function Reunioes() {
