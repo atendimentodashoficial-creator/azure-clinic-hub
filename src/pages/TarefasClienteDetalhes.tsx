@@ -436,6 +436,11 @@ export default function TarefasClienteDetalhes() {
           )}
         </TabsContent>
 
+        {/* ── Cobranças ── */}
+        <TabsContent value="cobrancas">
+          <CobrancasTab clienteId={cliente.id} valorContrato={financeiro.valorContrato} />
+        </TabsContent>
+
         {/* ── Contrato ── */}
         <TabsContent value="contrato">
           <Card className="p-6">
