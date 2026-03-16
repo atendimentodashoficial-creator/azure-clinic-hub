@@ -77,7 +77,7 @@ interface NovaReuniaoDialogProps {
   initialClienteTelefone?: string;
 }
 
-export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps) {
+export function NovaReuniaoDialog({ open, onOpenChange, initialClienteNome, initialClienteTelefone }: NovaReuniaoDialogProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { membros } = useTarefasMembros();
