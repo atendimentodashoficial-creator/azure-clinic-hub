@@ -105,8 +105,8 @@ export const SidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse
     const featureKey = hrefToFeatureKey[item.href];
     if (featureKey && !isFeatureEnabled(featureKey)) return false;
     
-    // Check panel_tabs_config for admin - "usuarios" and "paineis" always visible
-    if (featureKey === "usuarios" || featureKey === "paineis") return true;
+    // Check panel_tabs_config for admin - "paineis" always visible
+    if (featureKey === "paineis") return true;
     if (panelConfigs && panelConfigs.length > 0) {
       const stripped = item.href.replace(/^\/admin\/?/, "");
       const tabKey = stripped || "calendario";
