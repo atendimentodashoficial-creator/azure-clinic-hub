@@ -765,12 +765,27 @@ export default function Disparos() {
   // Manual sync only - no automatic interval or focus sync
   // User can trigger sync via refresh button when needed
 
-  // Realtime updates (batched to avoid flickering while instances sync)
+  // Realtime updates (batched) + fallback polling when realtime misses events
   useEffect(() => {
     if (!user?.id) return;
 
     const pendingRef = { current: new Map<string, any>() };
     let flushTimer: number | null = null;
+    let fallbackPollTimer: number | null = null;
+    let isActive = true;
+    let pollIntervalMs = 2000;
+    const MAX_POLL_INTERVAL_MS = 15000;
+
+    const allowedInstanciaIdList = instanciasList.map((inst) => inst.id).filter(Boolean);
+    const allowedInstanciaIds = new Set(allowedInstanciaIdList);
+
+    const getUpdateTimeMs = (row: any) =>
+      Math.max(
+        new Date(row?.last_message_time || 0).getTime(),
+        new Date(row?.updated_at || 0).getTime(),
+      );
+
+    let lastSeenUpdateMs = chats.reduce((max, chat) => Math.max(max, getUpdateTimeMs(chat)), 0);
 
     const flush = () => {
       flushTimer = null;
@@ -781,17 +796,15 @@ export default function Disparos() {
       setChats((prev) => {
         const prevById = new Map(prev.map((c) => [c.id, c]));
         for (const u of updates) {
-          // If chat was soft-deleted, remove it from local state immediately
           if (u?.deleted_at) {
             prevById.delete(u.id);
             continue;
           }
-          // Only update if the incoming data is newer (based on updated_at or last_message_time)
+
           const existing = prevById.get(u.id);
           if (existing) {
-            const existingTime = new Date(existing.last_message_time || existing.updated_at || 0).getTime();
-            const incomingTime = new Date(u.last_message_time || u.updated_at || 0).getTime();
-            // Skip if incoming data is older or same
+            const existingTime = getUpdateTimeMs(existing);
+            const incomingTime = getUpdateTimeMs(u);
             if (incomingTime < existingTime) continue;
           }
           prevById.set(u.id, { ...(existing || {}), ...u });
@@ -802,7 +815,6 @@ export default function Disparos() {
       setSelectedChat((prev) => {
         if (!prev?.id) return prev;
         const updated = updates.find((u) => u.id === prev.id);
-        // If the currently open chat was deleted, close it
         if (updated?.deleted_at) {
           setShowChatWindow(false);
           return null;
@@ -812,24 +824,60 @@ export default function Disparos() {
     };
 
     const scheduleFlush = () => {
-      // Reset timer on each new update to batch rapid updates together
       if (flushTimer != null) {
         window.clearTimeout(flushTimer);
       }
-      // Debounce to 200ms for faster mobile updates
       flushTimer = window.setTimeout(flush, 200);
     };
 
-    // Flush immediately when tab becomes visible (mobile browsers pause timers in background)
+    const scheduleFallbackPoll = () => {
+      if (!isActive || fallbackPollTimer != null || allowedInstanciaIdList.length === 0) return;
+      fallbackPollTimer = window.setTimeout(pollMissedUpdates, pollIntervalMs);
+    };
+
+    const pollMissedUpdates = async () => {
+      fallbackPollTimer = null;
+      if (!isActive || allowedInstanciaIdList.length === 0) return;
+
+      try {
+        const { data: latestRows, error } = await supabase
+          .from('disparos_chats')
+          .select('id, last_message_time, updated_at')
+          .eq('user_id', user.id)
+          .is('deleted_at', null)
+          .in('instancia_id', allowedInstanciaIdList)
+          .order('updated_at', { ascending: false, nullsFirst: false })
+          .limit(1);
+
+        if (error) throw error;
+
+        const latestMs = getUpdateTimeMs(latestRows?.[0]);
+        if (latestMs > lastSeenUpdateMs) {
+          await loadChats(allowedInstanciaIdList);
+          lastSeenUpdateMs = latestMs;
+          pollIntervalMs = 2000;
+        } else {
+          pollIntervalMs = Math.min(Math.floor(pollIntervalMs * 1.5), MAX_POLL_INTERVAL_MS);
+        }
+      } catch (error) {
+        console.warn('[Disparos Fallback Poll] error:', error);
+        pollIntervalMs = Math.min(Math.floor(pollIntervalMs * 1.5), MAX_POLL_INTERVAL_MS);
+      } finally {
+        if (isActive) scheduleFallbackPoll();
+      }
+    };
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && pendingRef.current.size > 0) {
         if (flushTimer != null) window.clearTimeout(flushTimer);
         flush();
       }
+      if (document.visibilityState === 'visible') {
+        pollIntervalMs = 1200;
+        scheduleFallbackPoll();
+      }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    const allowedInstanciaIds = new Set(instanciasList.map((inst) => inst.id));
 
     const channel = supabase
       .channel("disparos-chats-realtime")
@@ -845,6 +893,8 @@ export default function Disparos() {
           const inserted = (payload as any).new as any;
           if (!inserted?.id) return;
           if (!inserted?.instancia_id || !allowedInstanciaIds.has(inserted.instancia_id)) return;
+          lastSeenUpdateMs = Math.max(lastSeenUpdateMs, getUpdateTimeMs(inserted));
+          pollIntervalMs = 2000;
           pendingRef.current.set(inserted.id, inserted);
           scheduleFlush();
         }
@@ -861,14 +911,25 @@ export default function Disparos() {
           const updated = payload.new as any;
           if (!updated?.id) return;
           if (!updated?.instancia_id || !allowedInstanciaIds.has(updated.instancia_id)) return;
+          lastSeenUpdateMs = Math.max(lastSeenUpdateMs, getUpdateTimeMs(updated));
+          pollIntervalMs = 2000;
           pendingRef.current.set(updated.id, updated);
           scheduleFlush();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          pollIntervalMs = 1200;
+          scheduleFallbackPoll();
+        }
+      });
+
+    scheduleFallbackPoll();
 
     return () => {
+      isActive = false;
       if (flushTimer != null) window.clearTimeout(flushTimer);
+      if (fallbackPollTimer != null) window.clearTimeout(fallbackPollTimer);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       supabase.removeChannel(channel);
     };
