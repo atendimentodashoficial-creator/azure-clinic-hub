@@ -60,9 +60,7 @@ export default function Configuracoes() {
           <TiposReuniaoConfig />
         </TabsContent>
         
-        <TabsContent value="produtos">
-          <Produtos />
-        </TabsContent>
+        
         
         <TabsContent value="mensagens">
           <MensagensPredefinidas />
