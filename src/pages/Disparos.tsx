@@ -1176,21 +1176,21 @@ export default function Disparos() {
 
             {/* Tabs inline */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="h-8">
-                <TabsTrigger value="conversas" className="gap-1.5 text-xs px-3 h-7">
-                  <MessageSquare className="h-3.5 w-3.5" />
+              <TabsList>
+                <TabsTrigger value="conversas" className="gap-1.5">
+                  <MessageSquare className="h-4 w-4" />
                   Conversas
                 </TabsTrigger>
-                <TabsTrigger value="campanhas" className="gap-1.5 text-xs px-3 h-7">
-                  <Megaphone className="h-3.5 w-3.5" />
+                <TabsTrigger value="campanhas" className="gap-1.5">
+                  <Send className="h-4 w-4" />
                   Campanhas
                 </TabsTrigger>
-                <TabsTrigger value="templates" className="gap-1.5 text-xs px-3 h-7">
-                  <FileText className="h-3.5 w-3.5" />
+                <TabsTrigger value="templates" className="gap-1.5">
+                  <FileText className="h-4 w-4" />
                   Templates
                 </TabsTrigger>
-                <TabsTrigger value="listas" className="gap-1.5 text-xs px-3 h-7">
-                  <List className="h-3.5 w-3.5" />
+                <TabsTrigger value="listas" className="gap-1.5">
+                  <ListFilter className="h-4 w-4" />
                   Listas
                 </TabsTrigger>
               </TabsList>
