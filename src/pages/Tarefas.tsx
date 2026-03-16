@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play, ChevronRight, ShieldCheck, Copy, ExternalLink, RotateCcw, Settings } from "lucide-react";
+import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play, ChevronRight, ShieldCheck, Copy, ExternalLink, RotateCcw, Settings, Clock } from "lucide-react";
 const TiposTarefas = lazy(() => import("@/pages/TiposTarefas"));
 import { TipoTarefa } from "@/hooks/useTiposTarefas";
 import { format } from "date-fns";
