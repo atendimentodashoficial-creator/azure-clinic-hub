@@ -1,4 +1,4 @@
-import { UsersRound } from "lucide-react";
+import { UsersRound, Users, Shield } from "lucide-react";
 import TarefasMembrosTab from "@/components/tarefas/TarefasMembrosTab";
 import EquipeAnalytics from "@/components/equipe/EquipeAnalytics";
 import CargosConfig from "@/components/equipe/CargosConfig";
@@ -16,9 +16,15 @@ export default function EquipePage() {
       </div>
 
       <Tabs defaultValue="membros" className="space-y-4">
-        <TabsList className="h-8">
-          <TabsTrigger value="membros" className="text-xs px-3 h-7">Membros</TabsTrigger>
-          <TabsTrigger value="cargos" className="text-xs px-3 h-7">Cargos</TabsTrigger>
+        <TabsList>
+          <TabsTrigger value="membros" className="gap-1.5">
+            <Users className="h-4 w-4" />
+            Membros
+          </TabsTrigger>
+          <TabsTrigger value="cargos" className="gap-1.5">
+            <Shield className="h-4 w-4" />
+            Cargos
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="membros" className="space-y-6">

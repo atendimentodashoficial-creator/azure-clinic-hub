@@ -265,9 +265,15 @@ export default function Leads() {
         setOrigemFilter(v as "whatsapp" | "disparos");
         setSelectedLeadIds(new Set());
       }}>
-        <TabsList className="h-8">
-          <TabsTrigger value="whatsapp" className="text-xs px-3 h-7">WhatsApp</TabsTrigger>
-          <TabsTrigger value="disparos" className="text-xs px-3 h-7">Disparos</TabsTrigger>
+        <TabsList>
+          <TabsTrigger value="whatsapp" className="gap-1.5">
+            <MessageSquare className="h-4 w-4" />
+            WhatsApp
+          </TabsTrigger>
+          <TabsTrigger value="disparos" className="gap-1.5">
+            <Send className="h-4 w-4" />
+            Disparos
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 

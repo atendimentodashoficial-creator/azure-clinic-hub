@@ -565,21 +565,21 @@ export default function MetricasCampanhas() {
 
       {/* Tabs */}
       <Tabs value={activeMetaTab} onValueChange={setActiveMetaTab} className="space-y-6">
-        <TabsList className="h-8">
-          <TabsTrigger value="accounts" className="gap-1.5 text-xs px-3 h-7">
-            <Wallet className="h-3.5 w-3.5" />
+        <TabsList>
+          <TabsTrigger value="accounts" className="gap-1.5">
+            <Wallet className="h-4 w-4" />
             Saldo
           </TabsTrigger>
-          <TabsTrigger value="metrics" className="gap-1.5 text-xs px-3 h-7">
-            <BarChart3 className="h-3.5 w-3.5" />
+          <TabsTrigger value="metrics" className="gap-1.5">
+            <BarChart3 className="h-4 w-4" />
             Campanhas
           </TabsTrigger>
-          <TabsTrigger value="funnel" className="gap-1.5 text-xs px-3 h-7">
-            <TrendingDown className="h-3.5 w-3.5" />
+          <TabsTrigger value="funnel" className="gap-1.5">
+            <TrendingDown className="h-4 w-4" />
             Funil
           </TabsTrigger>
-          <TabsTrigger value="ai-reports" className="gap-1.5 text-xs px-3 h-7">
-            <Brain className="h-3.5 w-3.5" />
+          <TabsTrigger value="ai-reports" className="gap-1.5">
+            <Brain className="h-4 w-4" />
             Relatórios IA
           </TabsTrigger>
         </TabsList>

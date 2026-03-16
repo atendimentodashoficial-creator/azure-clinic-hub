@@ -470,13 +470,13 @@ export default function Extrator() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="h-8">
-          <TabsTrigger value="extrator" className="gap-1.5 text-xs px-3 h-7">
-            <MapPin className="h-3.5 w-3.5" />
+        <TabsList>
+          <TabsTrigger value="extrator" className="gap-1.5">
+            <MapPin className="h-4 w-4" />
             Extrator
           </TabsTrigger>
-          <TabsTrigger value="listas" className="gap-1.5 text-xs px-3 h-7">
-            <Database className="h-3.5 w-3.5" />
+          <TabsTrigger value="listas" className="gap-1.5">
+            <Database className="h-4 w-4" />
             Listas Salvas
           </TabsTrigger>
         </TabsList>
