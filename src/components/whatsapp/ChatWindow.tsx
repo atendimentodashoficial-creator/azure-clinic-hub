@@ -1413,8 +1413,19 @@ export const ChatWindow = ({ chat, onMessagesRead, onChatDeleted, onChatUpdated,
 
   const handleDeleteChat = async () => {
     try {
-      // Call edge function to delete from UAZapi, delete messages, and soft-delete chat
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        toast.error('Sessão expirada. Faça login novamente.');
+        return;
+      }
+
+      // Call edge function to delete from UAZapi, delete messages, and delete chat
       const { error } = await supabase.functions.invoke("whatsapp-delete-chat", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
         body: { chat_id: chat.id },
       });
 

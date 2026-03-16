@@ -1337,15 +1337,15 @@ Deno.serve(async (req) => {
 
             if (tombstone?.deleted_at) {
               const tombstoneMs = new Date(tombstone.deleted_at).getTime();
+              const REOPEN_GRACE_MS = 120000; // 2 min grace to absorb delayed/queued webhook events
 
-              if (Number.isFinite(tombstoneMs) && msgTimeMs <= tombstoneMs) {
+              if (Number.isFinite(tombstoneMs) && msgTimeMs <= tombstoneMs + REOPEN_GRACE_MS) {
                 console.log(
-                  '[WhatsApp] Ignoring old webhook message for a deleted chat (tombstone check)',
-                  { last8Incoming, msgTimeMs, tombstoneMs }
+                  '[WhatsApp] Ignoring webhook message for a recently deleted chat (tombstone grace)',
+                  { last8Incoming, msgTimeMs, tombstoneMs, reopenAtMs: tombstoneMs + REOPEN_GRACE_MS }
                 );
 
-                // Old message before deletion - ignore
-                return new Response(JSON.stringify({ ok: true, ignored: true }), {
+                return new Response(JSON.stringify({ ok: true, ignored: true, reason: 'tombstone_grace' }), {
                   headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 });
               }
