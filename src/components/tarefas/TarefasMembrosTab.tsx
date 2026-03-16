@@ -342,7 +342,7 @@ export default function TarefasMembrosTab() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtrados.map(membro => (
-            <Card key={membro.id} className="p-4 flex flex-col gap-3 relative h-full">
+            <Card key={membro.id} className="p-4 flex flex-col gap-3 relative h-full cursor-pointer hover:border-primary/40 transition-colors" onClick={() => navigate(`/admin/equipe/${membro.id}`)}>
               {/* Actions top-right */}
               <div className="absolute top-2 right-2 flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditando(membro)}>
