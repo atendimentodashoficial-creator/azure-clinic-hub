@@ -186,7 +186,19 @@ export function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
           </div>
           <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></div>
           <div className="space-y-2"><Label>Senha</Label><Input type="password" value={senha} onChange={e => setSenha(e.target.value)} placeholder="••••••" /></div>
-          <div className="space-y-2"><Label>Cargo / Função</Label><Input value={cargo} onChange={e => setCargo(e.target.value)} placeholder="Ex: Designer, Gestor de Tráfego..." /></div>
+          <div className="space-y-2">
+            <Label>Cargo / Função</Label>
+            <Select value={cargo} onValueChange={setCargo}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um cargo" />
+              </SelectTrigger>
+              <SelectContent>
+                {cargos.map((c) => (
+                  <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label>Salário</Label>
             <div className="relative">
