@@ -39,6 +39,7 @@ import Tarefas from "./pages/Tarefas";
 import TarefasClientes from "./pages/TarefasClientes";
 import TarefasClienteDetalhes from "./pages/TarefasClienteDetalhes";
 import Equipe from "./pages/Equipe";
+import EquipeMembroDetalhes from "./pages/EquipeMembroDetalhes";
 import ProdutosTarefas from "./pages/ProdutosTarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import ClienteAprovacoes from "./pages/ClienteAprovacoes";
@@ -115,6 +116,7 @@ const App = () => (
             <Route path="tarefas-clientes/:id" element={<TarefasClienteDetalhes />} />
             <Route path="tipos-tarefas" element={<TiposTarefas />} />
             <Route path="equipe" element={<Equipe />} />
+            <Route path="equipe/:id" element={<EquipeMembroDetalhes />} />
             <Route path="produtos-tarefas" element={<ProdutosTarefas />} />
             <Route path="configuracoes" element={<Configuracoes />} />
           </Route>

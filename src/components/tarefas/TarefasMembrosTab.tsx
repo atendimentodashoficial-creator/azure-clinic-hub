@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTarefasMembros, TarefaMembro } from "@/hooks/useTarefasMembros";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -276,6 +277,7 @@ export default function TarefasMembrosTab() {
   const { membros, isLoading, criarMembro, atualizarMembro, excluirMembro } = useTarefasMembros();
   const [editando, setEditando] = useState<TarefaMembro | null>(null);
   const [busca, setBusca] = useState("");
+  const navigate = useNavigate();
 
   const filtrados = membros.filter(m =>
     m.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -340,13 +342,13 @@ export default function TarefasMembrosTab() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtrados.map(membro => (
-            <Card key={membro.id} className="p-4 flex flex-col gap-3 relative h-full">
+            <Card key={membro.id} className="p-4 flex flex-col gap-3 relative h-full cursor-pointer hover:border-primary/40 transition-colors" onClick={() => navigate(`/admin/equipe/${membro.id}`)}>
               {/* Actions top-right */}
               <div className="absolute top-2 right-2 flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditando(membro)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setEditando(membro); }}>
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleExcluir(membro.id)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleExcluir(membro.id); }}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
