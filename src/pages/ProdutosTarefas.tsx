@@ -749,17 +749,17 @@ function ProdutoCard({
   const remaining = tarefas.length - MAX_VISIBLE;
 
   return (
-    <Card className="p-5 flex flex-col gap-3 hover:bg-accent/30 transition-colors h-full">
-      <div className="flex items-start gap-2 mb-1">
+    <Card className="p-4 flex flex-col gap-2 hover:bg-accent/30 transition-colors h-full">
+      <div className="flex items-start gap-2">
         {dragHandleProps && (
-          <button type="button" {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none mt-1">
+          <button type="button" {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none mt-0.5">
             <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
           </button>
         )}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-base leading-tight">{template.nome}</p>
+          <p className="font-semibold text-sm leading-tight">{template.nome}</p>
           {template.descricao && (
-            <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{template.descricao}</p>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.descricao}</p>
           )}
         </div>
       </div>
