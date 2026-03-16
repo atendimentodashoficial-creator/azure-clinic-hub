@@ -20,7 +20,7 @@ import { Plus, Trash2, Edit, Mail, Phone, Briefcase, CalendarIcon, DollarSign, C
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 
-function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
+export function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
   onSubmit: (data: any) => void;
   membroEditando?: TarefaMembro | null;
   onClose?: () => void;

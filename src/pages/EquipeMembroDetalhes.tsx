@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,8 +18,10 @@ import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft, Mail, Phone, Briefcase, CalendarIcon,
   DollarSign, CheckCircle2, Clock, FileText, AlertCircle,
-  Layers, Calendar, MessageSquare,
+  Layers, Calendar, MessageSquare, Edit,
 } from "lucide-react";
+import { NovoMembroDialog } from "@/components/tarefas/TarefasMembrosTab";
+import { toast } from "sonner";
 
 const colunaIconMap: Record<string, React.ReactNode> = {
   "Concluído": <CheckCircle2 className="h-4 w-4 text-green-500" />,
@@ -32,10 +34,11 @@ const colunaIconMap: Record<string, React.ReactNode> = {
 export default function EquipeMembroDetalhes() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { membros, isLoading: membrosLoading } = useTarefasMembros();
+  const { membros, isLoading: membrosLoading, atualizarMembro } = useTarefasMembros();
   const { tarefas, colunas } = useTarefas();
   const { tipos } = useTiposTarefas();
   const { clientes } = useTarefasClientes();
+  const [editando, setEditando] = useState(false);
 
   const membro = useMemo(() => membros.find((m: any) => m.id === id), [membros, id]);
 
@@ -173,11 +176,16 @@ export default function EquipeMembroDetalhes() {
             </p>
           )}
         </div>
-        {m.salario != null && (
-          <div className="shrink-0 bg-primary/10 text-primary rounded-lg px-3 py-1.5 font-semibold text-sm">
-            {formatCurrency(m.salario)}
-          </div>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {m.salario != null && (
+            <div className="bg-primary/10 text-primary rounded-lg px-3 py-1.5 font-semibold text-sm">
+              {formatCurrency(m.salario)}
+            </div>
+          )}
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditando(true)}>
+            <Edit className="h-3.5 w-3.5" /> Editar
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -372,6 +380,20 @@ export default function EquipeMembroDetalhes() {
           )}
         </TabsContent>
       </Tabs>
+
+      {editando && membro && (
+        <NovoMembroDialog
+          membroEditando={membro as any}
+          onSubmit={(data: any) => {
+            const { id: mid, ...rest } = data;
+            atualizarMembro.mutate({ id: mid, ...rest }, {
+              onSuccess: () => { toast.success("Membro atualizado!"); setEditando(false); },
+              onError: (e: any) => toast.error(e.message),
+            });
+          }}
+          onClose={() => setEditando(false)}
+        />
+      )}
     </div>
   );
 }

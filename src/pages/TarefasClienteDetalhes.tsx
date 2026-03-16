@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef } from "react";
+import { Edit } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ import {
   Link2, ExternalLink, Users, Calendar, DollarSign,
   Upload, Download, Trash2, Paperclip,
 } from "lucide-react";
+import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
 
 const colunaIconMap: Record<string, React.ReactNode> = {
   "Concluído": <CheckCircle2 className="h-4 w-4 text-green-500" />,
@@ -40,6 +42,7 @@ export default function TarefasClienteDetalhes() {
   const { ownerId } = useOwnerId();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [editando, setEditando] = useState(false);
 
   const cliente = useMemo(() => clientes.find(c => c.id === id), [clientes, id]);
 
@@ -215,6 +218,9 @@ export default function TarefasClienteDetalhes() {
             </p>
           )}
         </div>
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setEditando(true)}>
+          <Edit className="h-3.5 w-3.5" /> Editar
+        </Button>
       </div>
 
       {/* Stats row */}
@@ -476,6 +482,21 @@ export default function TarefasClienteDetalhes() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {editando && cliente && (
+        <NovoClienteDialog
+          clienteEditando={cliente}
+          onSubmit={(data: any) => {
+            const { id: cid, ...rest } = data;
+            atualizarCliente.mutate({ id: cid, ...rest }, {
+              onSuccess: () => { toast.success("Cliente atualizado!"); setEditando(false); },
+              onError: (e: any) => toast.error(e.message),
+            });
+          }}
+          onClose={() => setEditando(false)}
+          externalOpen={true}
+        />
+      )}
     </div>
   );
 }
