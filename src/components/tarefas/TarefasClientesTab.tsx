@@ -16,7 +16,7 @@ export default function TarefasClientesTab() {
   const [editando, setEditando] = useState<TarefaCliente | null>(null);
   const [busca, setBusca] = useState("");
   const [subTab, setSubTab] = useState("interno");
-  const [clienteDetalhe, setClienteDetalhe] = useState<TarefaCliente | null>(null);
+  const navigate = useNavigate();
 
   const filtrados = clientes.filter(c =>
     (c.nome.toLowerCase().includes(busca.toLowerCase()) ||
