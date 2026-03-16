@@ -1822,6 +1822,15 @@ export default function AdminWhatsApp() {
                     if (selectedChat?.id && selectedChat.id !== "temp") {
                       void clearUnreadCount(selectedChat.id);
                     }
+                  }} onChatDeleted={() => {
+                    const deletedId = selectedChat?.id;
+                    const deletedNorm = (selectedChat?.normalized_number || '').toString();
+                    setChats((prev) => prev.filter((c) => c.id !== deletedId && (c.normalized_number || '').toString() !== deletedNorm));
+                    setFilteredChats((prev) => prev.filter((c) => c.id !== deletedId && (c.normalized_number || '').toString() !== deletedNorm));
+                    setSelectedChat(null);
+                    setShowChatWindow(false);
+                    setPrefillMessage(null);
+                    loadChats();
                   }} onChatUpdated={handleChatUpdated} availableChats={chats} onBack={() => { setSelectedChat(null); setPrefillMessage(null); }} />
                 </div>
               </ResizablePanel>
