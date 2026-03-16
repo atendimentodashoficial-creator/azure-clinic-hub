@@ -24,13 +24,14 @@ export default function FuncionarioDashboard() {
       if (!ownerId || !membro?.nome) return [];
       const { data, error } = await supabase
         .from("tarefas")
-        .select("id, titulo, prioridade, data_entrega, coluna_id, responsavel_nome, created_at, updated_at, cliente_id, tarefas_colunas!inner(nome)")
+        .select("id, titulo, prioridade, data_limite, coluna_id, responsavel_nome, created_at, updated_at, cliente_id, tarefas_colunas!inner(nome)")
         .eq("user_id", ownerId)
         .ilike("responsavel_nome", `%${(membro as any).nome}%`);
       if (error) throw error;
       return (data || []) as any[];
     },
     enabled: !!ownerId && !!(membro as any)?.nome,
+    staleTime: 2 * 60 * 1000,
   });
 
   // Fetch reunioes for this member
@@ -49,6 +50,7 @@ export default function FuncionarioDashboard() {
       return (data || []) as any[];
     },
     enabled: !!ownerId && !!(membro as any)?.id,
+    staleTime: 2 * 60 * 1000,
   });
 
   const stats = useMemo(() => {
@@ -65,9 +67,9 @@ export default function FuncionarioDashboard() {
       return col === "concluido";
     });
     const atrasadas = tarefas.filter((t: any) => {
-      if (!t.data_entrega) return false;
+      if (!t.data_limite) return false;
       const col = t.tarefas_colunas?.nome?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-      return col !== "concluido" && isPast(parseISO(t.data_entrega));
+      return col !== "concluido" && isPast(parseISO(t.data_limite));
     });
     const urgentes = tarefas.filter((t: any) => {
       const col = t.tarefas_colunas?.nome?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -85,9 +87,9 @@ export default function FuncionarioDashboard() {
     return tarefas
       .filter((t: any) => {
         const col = t.tarefas_colunas?.nome?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-        return col !== "concluido" && t.data_entrega;
+        return col !== "concluido" && t.data_limite;
       })
-      .sort((a: any, b: any) => new Date(a.data_entrega).getTime() - new Date(b.data_entrega).getTime())
+      .sort((a: any, b: any) => new Date(a.data_limite).getTime() - new Date(b.data_limite).getTime())
       .slice(0, 5);
   }, [tarefas]);
 
@@ -160,7 +162,7 @@ export default function FuncionarioDashboard() {
               <p className="text-sm text-muted-foreground py-4 text-center">Nenhuma entrega pendente</p>
             ) : (
               proximasTarefas.map((t: any) => {
-                const date = parseISO(t.data_entrega);
+                const date = parseISO(t.data_limite);
                 const overdue = isPast(date);
                 const today = isToday(date);
                 const tomorrow = isTomorrow(date);
@@ -266,7 +268,7 @@ export default function FuncionarioDashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{t.titulo}</p>
                     <p className="text-xs text-muted-foreground">
-                      {t.data_entrega ? format(parseISO(t.data_entrega), "dd/MM/yyyy") : "Sem prazo"}
+                      {t.data_limite ? format(parseISO(t.data_limite), "dd/MM/yyyy") : "Sem prazo"}
                     </p>
                   </div>
                   <Badge variant="outline" className={cn(
