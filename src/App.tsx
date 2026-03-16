@@ -51,7 +51,7 @@ import FuncionarioWhatsApp from "./pages/FuncionarioWhatsApp";
 import FuncionarioReunioes from "./pages/FuncionarioReunioes";
 import AdminFinanceiro from "./pages/AdminFinanceiro";
 import FuncionarioFinanceiro from "./pages/FuncionarioFinanceiro";
-import TiposTarefas from "./pages/TiposTarefas";
+
 import AprovacaoMockup from "./pages/AprovacaoMockup";
 import AprovacaoInterna from "./pages/AprovacaoInterna";
 
@@ -114,7 +114,7 @@ const App = () => (
             <Route path="tarefas" element={<Tarefas />} />
             <Route path="tarefas-clientes" element={<TarefasClientes />} />
             <Route path="tarefas-clientes/:id" element={<TarefasClienteDetalhes />} />
-            <Route path="tipos-tarefas" element={<TiposTarefas />} />
+            
             <Route path="equipe" element={<Equipe />} />
             <Route path="equipe/:id" element={<EquipeMembroDetalhes />} />
             <Route path="produtos-tarefas" element={<ProdutosTarefas />} />

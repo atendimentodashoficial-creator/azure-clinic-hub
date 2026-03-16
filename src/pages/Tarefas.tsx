@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useTarefas, Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTiposTarefas } from "@/hooks/useTiposTarefas";
 import { useTarefasClientes } from "@/hooks/useTarefasClientes";
@@ -22,9 +22,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play, ChevronRight, ShieldCheck, Copy, ExternalLink, RotateCcw } from "lucide-react";
+import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play, ChevronRight, ShieldCheck, Copy, ExternalLink, RotateCcw, Settings } from "lucide-react";
+const TiposTarefas = lazy(() => import("@/pages/TiposTarefas"));
 import { TipoTarefa } from "@/hooks/useTiposTarefas";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -521,6 +522,7 @@ export default function Tarefas() {
   const { role } = useUserRole();
   const { ownerId } = useOwnerId();
   const [activeTarefa, setActiveTarefa] = useState<Tarefa | null>(null);
+  const [activeTab, setActiveTab] = useState("kanban");
   const [detalheTarefa, setDetalheTarefa] = useState<Tarefa | null>(null);
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
@@ -769,6 +771,7 @@ export default function Tarefas() {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
   }
 
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -780,7 +783,7 @@ export default function Tarefas() {
           <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
         </div>
         <div className="flex items-center gap-3">
-          {isFuncionario && (
+          {isFuncionario && activeTab === "kanban" && (
             <Tabs value={filtro} onValueChange={(v) => setFiltro(v as "minhas" | "todas")}>
               <TabsList>
                 <TabsTrigger value="minhas" className="gap-1.5">
@@ -794,10 +797,25 @@ export default function Tarefas() {
               </TabsList>
             </Tabs>
           )}
-          <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />
+          {activeTab === "kanban" && <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />}
         </div>
       </div>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="kanban" className="gap-1.5">
+            <ListChecks className="h-3.5 w-3.5" />
+            Kanban
+          </TabsTrigger>
+          {!isFuncionario && (
+            <TabsTrigger value="configuracoes" className="gap-1.5">
+              <Settings className="h-3.5 w-3.5" />
+              Configurações
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="kanban" className="mt-4">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: "calc(100vh - 220px)" }}>
           {colunas.map(coluna => {
@@ -883,6 +901,16 @@ export default function Tarefas() {
         open={!!detalheTarefa}
         onOpenChange={(open) => { if (!open) setDetalheTarefa(null); }}
       />
+        </TabsContent>
+
+        {!isFuncionario && (
+          <TabsContent value="configuracoes" className="mt-4">
+            <Suspense fallback={<div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>}>
+              <TiposTarefas />
+            </Suspense>
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }
