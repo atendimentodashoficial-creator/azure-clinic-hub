@@ -118,7 +118,7 @@ export function NovaCobrancaDialog({ onSubmit, clienteId, editando, onClose, ext
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Valor *</Label>
-            <CurrencyInput value={valor} onValueChange={setValor} />
+            <CurrencyInput value={valor} onChange={setValor} />
           </div>
           <div>
             <Label>Tipo *</Label>
