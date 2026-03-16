@@ -76,6 +76,7 @@ export function ComparecimentoDialog({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
+  const [skipMove, setSkipMove] = useState(false);
 
   const { data: columns, isLoading } = useQuery({
     queryKey: ["whatsapp-kanban-columns", user?.id],
