@@ -201,44 +201,37 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
                 </RadioGroup>
               </div>
               {/* Profile photo */}
-              <div className="space-y-2">
-                <Label>Foto de Perfil</Label>
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Avatar className="h-14 w-14">
-                      <AvatarImage src={fotoPerfilUrl || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                        {nome ? nome.slice(0, 2).toUpperCase() : <Camera className="h-5 w-5" />}
-                      </AvatarFallback>
-                    </Avatar>
-                    {fotoPerfilUrl && (
-                      <button
-                        type="button"
-                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
-                        onClick={() => setFotoPerfilUrl("")}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative group cursor-pointer" onClick={() => fotoInputRef.current?.click()}>
+                  <Avatar className="h-20 w-20">
+                    {fotoPerfilUrl ? (
+                      <AvatarImage src={fotoPerfilUrl} className="object-cover" />
+                    ) : null}
+                    <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
+                      {nome ? nome.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : <Camera className="h-6 w-6" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="h-5 w-5 text-white" />
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={uploadingFoto}
-                    onClick={() => fotoInputRef.current?.click()}
-                  >
-                    <Camera className="h-4 w-4 mr-1.5" />
-                    {uploadingFoto ? "Enviando..." : fotoPerfilUrl ? "Trocar" : "Enviar foto"}
-                  </Button>
-                  <input
-                    ref={fotoInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFotoUpload}
-                  />
+                  {fotoPerfilUrl && (
+                    <button
+                      type="button"
+                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                      onClick={(e) => { e.stopPropagation(); setFotoPerfilUrl(""); }}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
+                <input
+                  ref={fotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFotoUpload}
+                />
+                <span className="text-xs text-muted-foreground">{uploadingFoto ? "Enviando..." : "Clique para adicionar foto"}</span>
               </div>
               <div className="space-y-2"><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} /></div>
               <div className="space-y-2">
