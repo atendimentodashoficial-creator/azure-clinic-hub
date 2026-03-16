@@ -42,6 +42,7 @@ export default function TarefasClienteDetalhes() {
   const { ownerId } = useOwnerId();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [editando, setEditando] = useState(false);
 
   const cliente = useMemo(() => clientes.find(c => c.id === id), [clientes, id]);
 
