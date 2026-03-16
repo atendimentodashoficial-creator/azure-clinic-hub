@@ -482,6 +482,21 @@ export default function TarefasClienteDetalhes() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {editando && cliente && (
+        <NovoClienteDialog
+          clienteEditando={cliente}
+          onSubmit={(data: any) => {
+            const { id: cid, ...rest } = data;
+            atualizarCliente.mutate({ id: cid, ...rest }, {
+              onSuccess: () => { toast.success("Cliente atualizado!"); setEditando(false); },
+              onError: (e: any) => toast.error(e.message),
+            });
+          }}
+          onClose={() => setEditando(false)}
+          externalOpen={true}
+        />
+      )}
     </div>
   );
 }
