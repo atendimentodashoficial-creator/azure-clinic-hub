@@ -347,7 +347,17 @@ export function NovaReuniaoDialog({ open, onOpenChange, initialClienteNome, init
       if (error) throw error;
       if (result?.success === false) throw new Error(result.error || "Erro ao criar reunião");
 
+      // Auto-move kanban cards when meeting is scheduled
+      if (clienteTelefone && user?.id) {
+        await Promise.all([
+          autoMoveWhatsAppKanbanOnReuniao(user.id, clienteTelefone),
+          autoMoveDisparosKanbanOnReuniao(user.id, clienteTelefone),
+        ]);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["reunioes"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-chat-kanban"] });
       toast.success("Reunião criada com sucesso!");
       onOpenChange(false);
     } catch (error) {
