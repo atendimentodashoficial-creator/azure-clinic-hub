@@ -34,10 +34,11 @@ const colunaIconMap: Record<string, React.ReactNode> = {
 export default function EquipeMembroDetalhes() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { membros, isLoading: membrosLoading } = useTarefasMembros();
+  const { membros, isLoading: membrosLoading, atualizarMembro } = useTarefasMembros();
   const { tarefas, colunas } = useTarefas();
   const { tipos } = useTiposTarefas();
   const { clientes } = useTarefasClientes();
+  const [editando, setEditando] = useState(false);
 
   const membro = useMemo(() => membros.find((m: any) => m.id === id), [membros, id]);
 
