@@ -1311,6 +1311,8 @@ Deno.serve(async (req) => {
                       } else {
                         console.log('[WA-AutoMove] Chat auto-moved (existing entry) to column', waKanbanConfig.auto_move_column_id);
                       }
+                    } else if (waKanbanConfig.auto_move_reuniao_column_id && waKanbanEntry.column_id === waKanbanConfig.auto_move_reuniao_column_id) {
+                      console.log('[WA-AutoMove] Chat is in reunião column, skipping first-reply auto-move.');
                     } else {
                       console.log('[WA-AutoMove] Chat already auto-moved once, skipping.');
                     }
