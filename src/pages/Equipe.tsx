@@ -1,5 +1,6 @@
 import { UsersRound } from "lucide-react";
 import TarefasMembrosTab from "@/components/tarefas/TarefasMembrosTab";
+import EquipeAnalytics from "@/components/equipe/EquipeAnalytics";
 
 export default function EquipePage() {
   return (
@@ -11,6 +12,7 @@ export default function EquipePage() {
         </h1>
         <p className="text-muted-foreground">Gerencie os membros da sua equipe</p>
       </div>
+      <EquipeAnalytics />
       <TarefasMembrosTab />
     </div>
   );
