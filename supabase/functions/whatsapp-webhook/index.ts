@@ -1247,6 +1247,59 @@ Deno.serve(async (req) => {
                 console.log('Saved WhatsApp message:', messageId, 'to chat:', matchingChat.id);
               }
             }
+
+            // === Auto-move WhatsApp kanban card on first customer reply ===
+            if (!isFromMe && !wasSentByApi && !isOutboundBySender) {
+              try {
+                const { data: waKanbanConfig } = await supabase
+                  .from('whatsapp_kanban_config')
+                  .select('auto_move_column_id')
+                  .eq('user_id', effectiveUserId)
+                  .maybeSingle();
+
+                if (waKanbanConfig?.auto_move_column_id) {
+                  const { data: waKanbanEntry } = await supabase
+                    .from('whatsapp_chat_kanban')
+                    .select('id, column_id, first_reply_moved')
+                    .eq('chat_id', matchingChat.id)
+                    .maybeSingle();
+
+                  if (!waKanbanEntry) {
+                    const { error: insertErr } = await supabase
+                      .from('whatsapp_chat_kanban')
+                      .insert({
+                        user_id: effectiveUserId,
+                        chat_id: matchingChat.id,
+                        column_id: waKanbanConfig.auto_move_column_id,
+                        first_reply_moved: true,
+                      });
+                    if (insertErr) {
+                      console.error('[WA-AutoMove] Error inserting kanban entry:', insertErr);
+                    } else {
+                      console.log('[WA-AutoMove] Chat auto-moved (new entry) to column', waKanbanConfig.auto_move_column_id);
+                    }
+                  } else if (!waKanbanEntry.first_reply_moved) {
+                    const { error: updateErr } = await supabase
+                      .from('whatsapp_chat_kanban')
+                      .update({
+                        column_id: waKanbanConfig.auto_move_column_id,
+                        first_reply_moved: true,
+                        updated_at: new Date().toISOString(),
+                      })
+                      .eq('id', waKanbanEntry.id);
+                    if (updateErr) {
+                      console.error('[WA-AutoMove] Error updating kanban entry:', updateErr);
+                    } else {
+                      console.log('[WA-AutoMove] Chat auto-moved (existing entry) to column', waKanbanConfig.auto_move_column_id);
+                    }
+                  } else {
+                    console.log('[WA-AutoMove] Chat already auto-moved once, skipping.');
+                  }
+                }
+              } catch (autoMoveError) {
+                console.error('[WA-AutoMove] Unexpected error:', autoMoveError);
+              }
+            }
           } else {
             // Chat doesn't exist yet. If the user deleted it recently, do NOT recreate it from old history.
             // We only bring it back when the contact sends a message AFTER the deletion moment.
