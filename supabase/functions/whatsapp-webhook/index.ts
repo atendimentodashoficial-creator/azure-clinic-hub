@@ -1272,7 +1272,7 @@ Deno.serve(async (req) => {
                 } else {
                   const { data: waKanbanConfig } = await supabase
                     .from('whatsapp_kanban_config')
-                    .select('auto_move_column_id')
+                    .select('auto_move_column_id, auto_move_reuniao_column_id')
                     .eq('user_id', effectiveUserId)
                     .maybeSingle();
 
