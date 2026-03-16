@@ -770,6 +770,8 @@ export default function Tarefas() {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
   }
 
+  const [activeTab, setActiveTab] = useState("kanban");
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -781,7 +783,7 @@ export default function Tarefas() {
           <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
         </div>
         <div className="flex items-center gap-3">
-          {isFuncionario && (
+          {isFuncionario && activeTab === "kanban" && (
             <Tabs value={filtro} onValueChange={(v) => setFiltro(v as "minhas" | "todas")}>
               <TabsList>
                 <TabsTrigger value="minhas" className="gap-1.5">
@@ -795,10 +797,25 @@ export default function Tarefas() {
               </TabsList>
             </Tabs>
           )}
-          <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />
+          {activeTab === "kanban" && <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />}
         </div>
       </div>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="kanban" className="gap-1.5">
+            <ListChecks className="h-3.5 w-3.5" />
+            Kanban
+          </TabsTrigger>
+          {!isFuncionario && (
+            <TabsTrigger value="configuracoes" className="gap-1.5">
+              <Settings className="h-3.5 w-3.5" />
+              Configurações
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="kanban" className="mt-4">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: "calc(100vh - 220px)" }}>
           {colunas.map(coluna => {
