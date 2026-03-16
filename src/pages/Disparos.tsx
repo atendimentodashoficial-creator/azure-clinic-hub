@@ -363,28 +363,29 @@ export default function Disparos() {
 
   // Load instancias (just load data, don't auto-check connection status)
   // IMPORTANT: Exclude the main WhatsApp instance (linked via uazapi_config.whatsapp_instancia_id)
-  const loadInstancias = async () => {
+  const loadInstancias = async (): Promise<DisparosInstancia[]> => {
     try {
       // First, get the main WhatsApp instance ID to exclude it
       const { data: uazapiConfig } = await supabase
         .from("uazapi_config")
         .select("whatsapp_instancia_id")
         .maybeSingle();
-      
+
       const mainWhatsappId = uazapiConfig?.whatsapp_instancia_id || null;
-      
+
       // Load ALL instances (regardless of is_active) to ensure visibility in manager
       // Only the main WhatsApp instance is filtered out
       const { data } = await supabase
         .from("disparos_instancias")
-        .select("*");
-      
+        .select("*")
+        .eq("user_id", user?.id || "");
+
       if (data) {
         // Filter out the main WhatsApp instance - it should only appear in the WhatsApp tab
-        const filteredInstancias = mainWhatsappId 
+        const filteredInstancias = mainWhatsappId
           ? data.filter(inst => inst.id !== mainWhatsappId)
           : data;
-        
+
         const map: Record<string, DisparosInstancia> = {};
         filteredInstancias.forEach(inst => {
           map[inst.id] = inst;
@@ -392,14 +393,22 @@ export default function Disparos() {
         setInstanciasMap(map);
         setInstanciasList(filteredInstancias);
         setFullInstancias(filteredInstancias);
+
         // Set default selection to first instance
         if (filteredInstancias.length > 0 && !selectedInstanciaId) {
           setSelectedInstanciaId(filteredInstancias[0].id);
         }
-        // DON'T auto-check connection status - only check when user opens manager
+
+        return filteredInstancias;
       }
+
+      setInstanciasMap({});
+      setInstanciasList([]);
+      setFullInstancias([]);
+      return [];
     } catch (error) {
       console.error("Error loading instancias:", error);
+      return [];
     }
   };
 
