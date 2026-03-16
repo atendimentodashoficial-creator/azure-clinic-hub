@@ -1,19 +1,25 @@
-import { useMemo } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useTarefasClientes } from "@/hooks/useTarefasClientes";
 import { useTarefas, Tarefa, TarefaColuna } from "@/hooks/useTarefas";
 import { useTiposTarefas } from "@/hooks/useTiposTarefas";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
+import { useOwnerId } from "@/hooks/useOwnerId";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { extractCountryCode, formatPhoneByCountry } from "@/utils/phoneFormat";
+import { toast } from "sonner";
 import {
   ArrowLeft, Building2, Mail, Phone, Globe, Instagram,
   FileText, Layers, CheckCircle2, Clock, AlertCircle,
-  Link2, ExternalLink, Users, Calendar,
+  Link2, ExternalLink, Users, Calendar, DollarSign,
+  Upload, Download, Trash2, Paperclip,
 } from "lucide-react";
 
 const colunaIconMap: Record<string, React.ReactNode> = {
@@ -27,17 +33,37 @@ const colunaIconMap: Record<string, React.ReactNode> = {
 export default function TarefasClienteDetalhes() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { clientes, isLoading: clientesLoading } = useTarefasClientes();
+  const { clientes, isLoading: clientesLoading, atualizarCliente } = useTarefasClientes();
   const { tarefas, colunas } = useTarefas();
   const { tipos } = useTiposTarefas();
   const { membros } = useTarefasMembros();
+  const { ownerId } = useOwnerId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const cliente = useMemo(() => clientes.find(c => c.id === id), [clientes, id]);
 
+  // Fetch comissões for this client's tasks
   const clienteTarefas = useMemo(() => {
     if (!cliente) return [];
     return tarefas.filter(t => t.cliente_id === cliente.id);
   }, [tarefas, cliente]);
+
+  const tarefaIds = useMemo(() => clienteTarefas.map(t => t.id), [clienteTarefas]);
+
+  const { data: comissoes = [] } = useQuery({
+    queryKey: ["cliente-comissoes", id],
+    queryFn: async () => {
+      if (!tarefaIds.length) return [];
+      const { data, error } = await supabase
+        .from("comissoes")
+        .select("*")
+        .in("tarefa_id", tarefaIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: tarefaIds.length > 0,
+  });
 
   const colunasMap = useMemo(() => {
     const map: Record<string, TarefaColuna> = {};
@@ -68,14 +94,8 @@ export default function TarefasClienteDetalhes() {
 
   const stats = useMemo(() => {
     const total = clienteTarefas.length;
-    const concluidas = clienteTarefas.filter(t => {
-      const col = colunasMap[t.coluna_id];
-      return col?.nome === "Concluído";
-    }).length;
-    const emProgresso = clienteTarefas.filter(t => {
-      const col = colunasMap[t.coluna_id];
-      return col?.nome === "Em Progresso";
-    }).length;
+    const concluidas = clienteTarefas.filter(t => colunasMap[t.coluna_id]?.nome === "Concluído").length;
+    const emProgresso = clienteTarefas.filter(t => colunasMap[t.coluna_id]?.nome === "Em Progresso").length;
     const atrasadas = clienteTarefas.filter(t => {
       const col = colunasMap[t.coluna_id];
       return col?.nome !== "Concluído" && t.data_limite && new Date(t.data_limite) < new Date();
@@ -83,12 +103,20 @@ export default function TarefasClienteDetalhes() {
     return { total, concluidas, emProgresso, atrasadas };
   }, [clienteTarefas, colunasMap]);
 
+  const financeiro = useMemo(() => {
+    const valorContrato = (cliente as any)?.valor_contrato || 0;
+    const totalComissoes = comissoes.reduce((acc: number, c: any) => acc + (c.valor || 0), 0);
+    const comissoesPendentes = comissoes.filter((c: any) => c.status === "pendente").reduce((acc: number, c: any) => acc + (c.valor || 0), 0);
+    const comissoesAprovadas = comissoes.filter((c: any) => c.status === "aprovado").reduce((acc: number, c: any) => acc + (c.valor || 0), 0);
+    return { valorContrato, totalComissoes, comissoesPendentes, comissoesAprovadas };
+  }, [cliente, comissoes]);
+
   const getColunaBadge = (coluna_id: string) => {
     const col = colunasMap[coluna_id];
     if (!col) return null;
     const icon = colunaIconMap[col.nome] || <FileText className="h-3.5 w-3.5" />;
     return (
-      <Badge variant="outline" className="text-xs gap-1 font-normal" style={{ borderColor: col.cor, color: col.cor }}>
+      <Badge variant="outline" className="text-xs gap-1 font-normal shrink-0" style={{ borderColor: col.cor, color: col.cor }}>
         {icon}
         {col.nome}
       </Badge>
@@ -100,6 +128,49 @@ export default function TarefasClienteDetalhes() {
     const { countryCode, phoneWithoutCountry } = extractCountryCode(phone);
     const formattedPhone = formatPhoneByCountry(phoneWithoutCountry, countryCode);
     return formattedPhone ? `+${countryCode} ${formattedPhone}` : `+${countryCode} ${phoneWithoutCountry}`;
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  };
+
+  const handleUploadContrato = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !cliente) return;
+
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const filePath = `contratos/${cliente.id}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("public-assets")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("public-assets")
+        .getPublicUrl(filePath);
+
+      await atualizarCliente.mutateAsync({ id: cliente.id, contrato_url: urlData.publicUrl } as any);
+      toast.success("Contrato anexado com sucesso!");
+    } catch (err: any) {
+      toast.error("Erro ao enviar contrato: " + err.message);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoverContrato = async () => {
+    if (!cliente) return;
+    try {
+      await atualizarCliente.mutateAsync({ id: cliente.id, contrato_url: null } as any);
+      toast.success("Contrato removido");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   if (clientesLoading) {
@@ -118,121 +189,145 @@ export default function TarefasClienteDetalhes() {
   }
 
   const initials = cliente.nome.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  const contratoUrl = (cliente as any).contrato_url as string | null;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <Avatar className="h-14 w-14">
-          <AvatarImage src={cliente.foto_perfil_url || undefined} className="object-cover" />
-          <AvatarFallback className="bg-primary/10 text-primary font-semibold">{initials}</AvatarFallback>
-        </Avatar>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{cliente.nome}</h1>
+        <div className="h-16 w-16 shrink-0">
+          <Avatar className="h-16 w-16 ring-2 ring-border">
+            <AvatarImage src={cliente.foto_perfil_url || undefined} className="object-cover" />
+            <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">{initials}</AvatarFallback>
+          </Avatar>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-foreground truncate">{cliente.nome}</h1>
+            <Badge variant="secondary" className="shrink-0 text-xs">{cliente.tipo === "interno" ? "Interno" : "Preview"}</Badge>
+          </div>
           {cliente.empresa && (
-            <p className="text-muted-foreground flex items-center gap-1.5">
-              <Building2 className="h-4 w-4" /> {cliente.empresa}
+            <p className="text-muted-foreground flex items-center gap-1.5 mt-0.5">
+              <Building2 className="h-4 w-4 shrink-0" /> {cliente.empresa}
             </p>
           )}
         </div>
-        <Badge variant="secondary" className="ml-auto text-xs">{cliente.tipo === "interno" ? "Interno" : "Preview"}</Badge>
       </div>
 
-      {/* Stats */}
+      {/* Stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Total", value: stats.total, color: "text-foreground" },
-          { label: "Concluídas", value: stats.concluidas, color: "text-green-500" },
-          { label: "Em Progresso", value: stats.emProgresso, color: "text-blue-500" },
+          { label: "Concluídas", value: stats.concluidas, color: "text-green-600" },
+          { label: "Em Progresso", value: stats.emProgresso, color: "text-blue-600" },
           { label: "Atrasadas", value: stats.atrasadas, color: "text-destructive" },
         ].map(s => (
-          <Card key={s.label} className="p-4 text-center">
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
+          <Card key={s.label} className="p-3 text-center">
+            <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+            <p className="text-xs text-muted-foreground">{s.label}</p>
           </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Info sidebar */}
-        <Card className="p-5 space-y-4 lg:col-span-1">
-          <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Informações</h3>
-          <div className="space-y-3">
-            {cliente.email && (
-              <div className="flex items-center gap-3 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="truncate">{cliente.email}</span>
+      {/* Tabs */}
+      <Tabs defaultValue="geral" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="geral">Geral</TabsTrigger>
+          <TabsTrigger value="tarefas">Tarefas ({clienteTarefas.length})</TabsTrigger>
+          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="contrato">Contrato</TabsTrigger>
+        </TabsList>
+
+        {/* ── Geral ── */}
+        <TabsContent value="geral">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-5 space-y-3">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Contato</h3>
+              <div className="space-y-2.5">
+                {cliente.email && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="truncate">{cliente.email}</span>
+                  </div>
+                )}
+                {cliente.telefone && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span>{getFormattedPhone(cliente.telefone)}</span>
+                  </div>
+                )}
+                {cliente.cnpj && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span>CNPJ: {cliente.cnpj}</span>
+                  </div>
+                )}
               </div>
+            </Card>
+
+            <Card className="p-5 space-y-3">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Links</h3>
+              <div className="space-y-2.5">
+                {cliente.site && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <a href={cliente.site.startsWith("http") ? cliente.site : `https://${cliente.site}`} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{cliente.site}</a>
+                  </div>
+                )}
+                {cliente.instagram && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Instagram className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <a href={`https://instagram.com/${cliente.instagram.replace("@", "")}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">{cliente.instagram}</a>
+                  </div>
+                )}
+                {cliente.linktree && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <a href={cliente.linktree.startsWith("http") ? cliente.linktree : `https://${cliente.linktree}`} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{cliente.linktree}</a>
+                  </div>
+                )}
+                {cliente.google_meu_negocio && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <a href={cliente.google_meu_negocio.startsWith("http") ? cliente.google_meu_negocio : `https://${cliente.google_meu_negocio}`} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Google Meu Negócio</a>
+                  </div>
+                )}
+                {!cliente.site && !cliente.instagram && !cliente.linktree && !cliente.google_meu_negocio && (
+                  <p className="text-sm text-muted-foreground">Nenhum link cadastrado</p>
+                )}
+              </div>
+            </Card>
+
+            {gestor && (
+              <Card className="p-5 space-y-3">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Gestor</h3>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={(gestor as any).foto_url || undefined} className="object-cover" />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">{(gestor as any).nome?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{(gestor as any).nome}</p>
+                    {(gestor as any).cargo && <p className="text-xs text-muted-foreground">{(gestor as any).cargo}</p>}
+                  </div>
+                </div>
+              </Card>
             )}
-            {cliente.telefone && (
-              <div className="flex items-center gap-3 text-sm">
-                <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span>{getFormattedPhone(cliente.telefone)}</span>
-              </div>
-            )}
-            {cliente.cnpj && (
-              <div className="flex items-center gap-3 text-sm">
-                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span>CNPJ: {cliente.cnpj}</span>
-              </div>
-            )}
-            {cliente.site && (
-              <div className="flex items-center gap-3 text-sm">
-                <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                <a href={cliente.site.startsWith("http") ? cliente.site : `https://${cliente.site}`} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{cliente.site}</a>
-              </div>
-            )}
-            {cliente.instagram && (
-              <div className="flex items-center gap-3 text-sm">
-                <Instagram className="h-4 w-4 text-muted-foreground shrink-0" />
-                <a href={`https://instagram.com/${cliente.instagram.replace("@", "")}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">{cliente.instagram}</a>
-              </div>
-            )}
-            {cliente.linktree && (
-              <div className="flex items-center gap-3 text-sm">
-                <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                <a href={cliente.linktree.startsWith("http") ? cliente.linktree : `https://${cliente.linktree}`} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{cliente.linktree}</a>
-              </div>
-            )}
-            {cliente.google_meu_negocio && (
-              <div className="flex items-center gap-3 text-sm">
-                <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
-                <a href={cliente.google_meu_negocio.startsWith("http") ? cliente.google_meu_negocio : `https://${cliente.google_meu_negocio}`} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Google Meu Negócio</a>
-              </div>
+
+            {cliente.observacoes && (
+              <Card className="p-5 space-y-3">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Observações</h3>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{cliente.observacoes}</p>
+              </Card>
             )}
           </div>
+        </TabsContent>
 
-          {gestor && (
-            <>
-              <Separator />
-              <div>
-                <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Gestor</h4>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{(gestor as any).nome}</span>
-                </div>
-              </div>
-            </>
-          )}
-
-          {cliente.observacoes && (
-            <>
-              <Separator />
-              <div>
-                <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Observações</h4>
-                <p className="text-sm whitespace-pre-wrap">{cliente.observacoes}</p>
-              </div>
-            </>
-          )}
-        </Card>
-
-        {/* Tasks */}
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Tarefas ({clienteTarefas.length})</h3>
-          
+        {/* ── Tarefas ── */}
+        <TabsContent value="tarefas">
           {clienteTarefas.length === 0 ? (
             <Card className="p-8 text-center text-muted-foreground">
               Nenhuma tarefa vinculada a este cliente
@@ -274,8 +369,113 @@ export default function TarefasClienteDetalhes() {
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </TabsContent>
+
+        {/* ── Financeiro ── */}
+        <TabsContent value="financeiro">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            {[
+              { label: "Valor do Contrato", value: formatCurrency(financeiro.valorContrato), icon: <DollarSign className="h-4 w-4" /> },
+              { label: "Total Comissões", value: formatCurrency(financeiro.totalComissoes), icon: <DollarSign className="h-4 w-4" /> },
+              { label: "Comissões Pendentes", value: formatCurrency(financeiro.comissoesPendentes), icon: <Clock className="h-4 w-4" /> },
+              { label: "Comissões Aprovadas", value: formatCurrency(financeiro.comissoesAprovadas), icon: <CheckCircle2 className="h-4 w-4" /> },
+            ].map(item => (
+              <Card key={item.label} className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  {item.icon}
+                  <span className="text-xs">{item.label}</span>
+                </div>
+                <p className="text-lg font-bold">{item.value}</p>
+              </Card>
+            ))}
+          </div>
+
+          {comissoes.length > 0 ? (
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b">
+                <h3 className="font-semibold text-sm">Histórico de Comissões</h3>
+              </div>
+              <div className="divide-y">
+                {comissoes.map((c: any) => {
+                  const tarefa = clienteTarefas.find(t => t.id === c.tarefa_id);
+                  return (
+                    <div key={c.id} className="p-4 flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{tarefa?.titulo || "Tarefa removida"}</p>
+                        <p className="text-xs text-muted-foreground">{c.membro_nome} · {new Date(c.created_at).toLocaleDateString("pt-BR")}</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <Badge variant={c.status === "aprovado" ? "default" : "secondary"} className="text-xs">
+                          {c.status === "aprovado" ? "Aprovado" : "Pendente"}
+                        </Badge>
+                        <span className="text-sm font-semibold">{formatCurrency(c.valor)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          ) : (
+            <Card className="p-8 text-center text-muted-foreground">
+              Nenhuma comissão registrada para este cliente
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* ── Contrato ── */}
+        <TabsContent value="contrato">
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Paperclip className="h-5 w-5 text-muted-foreground" />
+              <h3 className="font-semibold">Contrato</h3>
+            </div>
+
+            {contratoUrl ? (
+              <div className="flex items-center gap-3 p-4 rounded-lg border bg-muted/30">
+                <FileText className="h-10 w-10 text-primary shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">Contrato anexado</p>
+                  <p className="text-xs text-muted-foreground truncate">{contratoUrl.split("/").pop()}</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={contratoUrl} target="_blank" rel="noreferrer" className="gap-1.5">
+                      <Download className="h-3.5 w-3.5" /> Baixar
+                    </a>
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={handleRemoverContrato}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/40 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                <p className="text-sm font-medium">Clique para anexar o contrato</p>
+                <p className="text-xs text-muted-foreground mt-1">PDF, DOC, DOCX ou imagem</p>
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              onChange={handleUploadContrato}
+              disabled={uploading}
+            />
+
+            {contratoUrl && (
+              <Button variant="outline" size="sm" className="mt-3 gap-1.5" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                <Upload className="h-3.5 w-3.5" /> {uploading ? "Enviando..." : "Substituir contrato"}
+              </Button>
+            )}
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
