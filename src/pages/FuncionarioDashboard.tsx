@@ -18,7 +18,7 @@ export default function FuncionarioDashboard() {
   const { ownerId } = useOwnerId();
 
   // Fetch tarefas assigned to this member
-  const { data: tarefas = [], isLoading: tarefasLoading } = useQuery({
+  const { data: tarefas = [], isLoading: tarefasLoading, fetchStatus: tarefasFetchStatus } = useQuery({
     queryKey: ["func-dashboard-tarefas", ownerId, membro?.nome],
     queryFn: async () => {
       if (!ownerId || !membro?.nome) return [];
@@ -34,7 +34,7 @@ export default function FuncionarioDashboard() {
   });
 
   // Fetch reunioes for this member
-  const { data: reunioes = [], isLoading: reunioesLoading } = useQuery({
+  const { data: reunioes = [], isLoading: reunioesLoading, fetchStatus: reunioesFetchStatus } = useQuery({
     queryKey: ["func-dashboard-reunioes", ownerId, membro?.id],
     queryFn: async () => {
       if (!ownerId || !membro?.id) return [];
@@ -91,7 +91,10 @@ export default function FuncionarioDashboard() {
       .slice(0, 5);
   }, [tarefas]);
 
-  const isLoading = membroLoading || tarefasLoading || reunioesLoading;
+  // Only consider truly loading when actually fetching, not when disabled/idle
+  const isLoading = membroLoading || 
+    (tarefasLoading && tarefasFetchStatus !== 'idle') || 
+    (reunioesLoading && reunioesFetchStatus !== 'idle');
 
   const firstName = (membro as any)?.nome?.split(" ")[0] || user?.user_metadata?.full_name?.split(" ")[0] || "Funcionário";
 
