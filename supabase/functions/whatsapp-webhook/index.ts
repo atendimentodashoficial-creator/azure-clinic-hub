@@ -1721,7 +1721,7 @@ Deno.serve(async (req) => {
                     } else {
                       console.log('[AutoMove] Chat auto-moved (new entry) to column', kanbanConfig.auto_move_column_id);
                     }
-                  } else if (!kanbanEntry.first_reply_moved) {
+                  } else if (!kanbanEntry.first_reply_moved && (!kanbanConfig.auto_move_reuniao_column_id || kanbanEntry.column_id !== kanbanConfig.auto_move_reuniao_column_id)) {
                     // Chat already exists in kanban but was NOT yet auto-moved - move it now
                     const { error: updateErr } = await supabase
                       .from('disparos_chat_kanban')
