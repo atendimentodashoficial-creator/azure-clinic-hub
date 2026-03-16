@@ -546,7 +546,7 @@ export default function Reunioes() {
                           </div>
 
                           {/* Ações - Botões */}
-                          <div className="mt-4 pt-3 border-t border-border space-y-2">
+                          <div className="mt-3 pt-3 border-t border-border space-y-2">
                             <div className="flex flex-wrap gap-2">
                               <Button 
                                 variant="outline" 
