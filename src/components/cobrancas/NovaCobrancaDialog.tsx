@@ -56,7 +56,7 @@ export function NovaCobrancaDialog({ onSubmit, clienteId, editando, onClose, ext
 
   const resetForm = () => {
     setDescricao("");
-    setValor(0);
+    setValor("");
     setTipo("unico");
     setStatus("pendente");
     setDataVencimento("");
