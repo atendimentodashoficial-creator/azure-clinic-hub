@@ -33,7 +33,7 @@ export default function EquipeAnalytics() {
   const { membros } = useTarefasMembros();
   const { tarefas, colunas } = useTarefas();
   const { cargos } = useCargos();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [cargoFilter, setCargoFilter] = useState<string>("todos");
   const navigate = useNavigate();
 
