@@ -54,54 +54,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { formatInTimeZone } from "date-fns-tz";
 
-// Auto-move disparo kanban card when a meeting is scheduled for this contact
-async function autoMoveKanbanOnReuniao(userId: string, telefone: string) {
-  try {
-    const { data: config } = await supabase
-      .from("disparos_kanban_config")
-      .select("auto_move_reuniao_column_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const targetColumnId = (config as any)?.auto_move_reuniao_column_id;
-    if (!targetColumnId) return;
-
-    const last8 = getLast8Digits(telefone);
-    if (!last8) return;
-
-    const { data: chats } = await supabase
-      .from("disparos_chats")
-      .select("id")
-      .eq("user_id", userId)
-      .is("deleted_at", null)
-      .like("normalized_number", `%${last8}`);
-
-    if (!chats || chats.length === 0) return;
-
-    for (const chat of chats) {
-      const { data: entry } = await supabase
-        .from("disparos_chat_kanban")
-        .select("id")
-        .eq("chat_id", chat.id)
-        .maybeSingle();
-
-      if (entry) {
-        await supabase
-          .from("disparos_chat_kanban")
-          .update({ column_id: targetColumnId, updated_at: new Date().toISOString() })
-          .eq("id", entry.id);
-      } else {
-        await supabase.from("disparos_chat_kanban").insert({
-          user_id: userId,
-          chat_id: chat.id,
-          column_id: targetColumnId,
-        });
-      }
-    }
-  } catch (err) {
-    console.error("[AutoMove] Error in autoMoveKanbanOnReuniao:", err);
-  }
-}
+import { autoMoveKanbanOnReuniao } from "@/utils/kanbanAutoMove";
 import { CountryCodeSelect, countries } from "@/components/whatsapp/CountryCodeSelect";
 import { buildCandidateStartTimes, rangesOverlap, timeToMinutes, type MinuteRange, type TimeRange } from "@/utils/timeSlots";
 // Calcular próxima data disponível para um profissional
