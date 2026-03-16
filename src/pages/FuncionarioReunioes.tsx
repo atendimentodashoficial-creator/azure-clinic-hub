@@ -439,7 +439,9 @@ export default function FuncionarioReunioes() {
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
                   <SelectItem value="meus">Minhas reuniões</SelectItem>
-                  {membros.map((m: any) => (
+                  {membros
+                    .filter((m: any) => m.auth_user_id !== user?.id && m.email !== user?.email)
+                    .map((m: any) => (
                     <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
                   ))}
                 </SelectContent>
