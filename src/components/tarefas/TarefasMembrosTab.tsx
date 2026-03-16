@@ -338,9 +338,9 @@ export default function TarefasMembrosTab() {
           Nenhum membro da equipe cadastrado
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtrados.map(membro => (
-            <Card key={membro.id} className="p-5 flex flex-col gap-4 relative">
+            <Card key={membro.id} className="p-4 flex flex-col gap-3 relative h-full">
               {/* Actions top-right */}
               <div className="absolute top-2 right-2 flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditando(membro)}>
@@ -353,24 +353,24 @@ export default function TarefasMembrosTab() {
 
               {/* Avatar + Name centered */}
               <div className="flex flex-col items-center gap-2 pt-2">
-                <Avatar className="h-16 w-16 ring-2 ring-primary/20">
+                <Avatar className="h-14 w-14 ring-2 ring-primary/20">
                   {membro.foto_url ? (
                     <AvatarImage src={membro.foto_url} alt={membro.nome} className="object-cover" />
                   ) : null}
-                  <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
+                  <AvatarFallback className="bg-primary/10 text-primary text-base font-medium">
                     {getInitials(membro.nome)}
                   </AvatarFallback>
                 </Avatar>
-                <p className="font-semibold text-lg">{membro.nome}</p>
+                <p className="font-semibold text-sm text-center leading-tight">{membro.nome}</p>
                 {membro.cargo && (
-                  <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2.5 py-0.5">
+                  <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-md px-2 py-0.5">
                     <Briefcase className="h-3 w-3" /> {membro.cargo}
                   </span>
                 )}
               </div>
 
               {/* Info */}
-              <div className="space-y-2 text-sm text-muted-foreground border-t border-border pt-3">
+              <div className="space-y-1.5 text-xs text-muted-foreground border-t border-border pt-3 flex-1">
                 {membro.email && (
                   <p className="flex items-center gap-2 truncate">
                     <Mail className="h-3.5 w-3.5 shrink-0" /> {membro.email}
@@ -390,7 +390,7 @@ export default function TarefasMembrosTab() {
 
               {/* Salary */}
               {membro.salario != null && (
-                <div className="flex items-center gap-2 bg-primary/10 text-primary rounded-md px-2.5 py-1.5 font-medium text-sm w-fit mt-auto">
+                <div className="flex items-center gap-2 bg-primary/10 text-primary rounded-md px-2 py-1 font-medium text-xs w-fit mt-auto">
                   Salário: R$ {membro.salario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </div>
               )}
