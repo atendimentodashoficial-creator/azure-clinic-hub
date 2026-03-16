@@ -115,6 +115,28 @@ serve(async (req) => {
       `Matched ${chatIdsToDeleteDb.length} DB chat row(s) for deletion (selected=${chatIdsToProcess.length}, phones=${phoneLast8List.length})`
     );
 
+    // ===== Create deletion tombstones FIRST to prevent webhook race conditions =====
+    const nowIso = new Date().toISOString();
+
+    for (const last8 of phoneLast8List) {
+      const { error: tombstoneError } = await supabase
+        .from("whatsapp_chat_deletions")
+        .upsert(
+          {
+            user_id: user.id,
+            phone_last8: last8,
+            deleted_at: nowIso,
+          },
+          { onConflict: "user_id,phone_last8" }
+        );
+
+      if (tombstoneError) {
+        console.error("Error creating tombstone for", last8, tombstoneError);
+      }
+    }
+
+    console.log(`Created ${phoneLast8List.length} tombstone(s) before deletion`);
+
     // Get UAZapi config for this user
     const { data: config } = await supabase
       .from("uazapi_config")
