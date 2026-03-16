@@ -50,6 +50,7 @@ export default function FuncionarioDashboard() {
       return (data || []) as any[];
     },
     enabled: !!ownerId && !!(membro as any)?.id,
+    staleTime: 2 * 60 * 1000,
   });
 
   const stats = useMemo(() => {
