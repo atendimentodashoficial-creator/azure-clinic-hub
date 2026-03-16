@@ -113,13 +113,13 @@ export function NovaReuniaoDialog({ open, onOpenChange, initialClienteNome, init
       setSelectedDate(new Date().toISOString().split("T")[0]);
       setSelectedMemberId("");
       setSelectedTime("");
-      setClienteNome("");
-      setClienteTelefone("");
+      setClienteNome(initialClienteNome || "");
+      setClienteTelefone(initialClienteTelefone || "");
       setClienteSearch("");
       setSelectedTipoId("");
       setShowLeadsList(false);
     }
-  }, [open]);
+  }, [open, initialClienteNome, initialClienteTelefone]);
 
   // Fetch meetings
   useEffect(() => {
