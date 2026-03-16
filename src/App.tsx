@@ -15,7 +15,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Configuracoes from "./pages/Configuracoes";
 import AdminWhatsApp from "./pages/AdminWhatsApp";
-import NaoCompareceu from "./pages/NaoCompareceu";
+import AdminWhatsApp from "./pages/AdminWhatsApp";
 import MetricasCampanhas from "./pages/MetricasCampanhas";
 import GoogleAdsMetrics from "./pages/GoogleAdsMetrics";
 import Disparos from "./pages/Disparos";
