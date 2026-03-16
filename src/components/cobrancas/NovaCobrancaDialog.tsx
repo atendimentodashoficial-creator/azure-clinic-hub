@@ -29,7 +29,7 @@ const metodoOptions = [
 export function NovaCobrancaDialog({ onSubmit, clienteId, editando, onClose, externalOpen }: Props) {
   const [open, setOpen] = useState(false);
   const [descricao, setDescricao] = useState("");
-  const [valor, setValor] = useState(0);
+  const [valor, setValor] = useState("");
   const [tipo, setTipo] = useState<"mrr" | "unico">("unico");
   const [status, setStatus] = useState<string>("pendente");
   const [dataVencimento, setDataVencimento] = useState("");
