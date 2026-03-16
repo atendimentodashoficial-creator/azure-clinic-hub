@@ -18,8 +18,10 @@ import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft, Mail, Phone, Briefcase, CalendarIcon,
   DollarSign, CheckCircle2, Clock, FileText, AlertCircle,
-  Layers, Calendar, MessageSquare,
+  Layers, Calendar, MessageSquare, Edit,
 } from "lucide-react";
+import { NovoMembroDialog } from "@/components/tarefas/TarefasMembrosTab";
+import { toast } from "sonner";
 
 const colunaIconMap: Record<string, React.ReactNode> = {
   "Concluído": <CheckCircle2 className="h-4 w-4 text-green-500" />,
