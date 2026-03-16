@@ -369,7 +369,7 @@ export default function TarefasMembrosTab() {
 
               {/* Avatar + Name centered */}
               <div className="flex flex-col items-center gap-2 pt-2">
-                <Avatar className="h-16 w-16 ring-2 ring-primary/20">
+                <Avatar className="h-14 w-14 ring-2 ring-primary/20">
                   {membro.foto_url ? (
                     <AvatarImage src={membro.foto_url} alt={membro.nome} className="object-cover" />
                   ) : null}
