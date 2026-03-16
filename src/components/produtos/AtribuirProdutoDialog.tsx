@@ -236,6 +236,12 @@ export function AtribuirProdutoDialog({ template, open, onClose, initialContactD
         }
       }
 
+      // Auto-move kanban card using the targetUserId from the edge function
+      const effectiveUserId = reuniaoResponse?.targetUserId;
+      if (effectiveUserId && selectedClient.telefone) {
+        autoMoveKanbanOnReuniao(effectiveUserId, selectedClient.telefone).catch(console.error);
+      }
+
       toast.success(`Produto atribuído e reunião agendada com ${selectedClient.nome}`);
       handleClose();
     } catch (e: any) {
