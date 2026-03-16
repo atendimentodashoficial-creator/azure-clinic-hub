@@ -2,24 +2,14 @@ import { Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
-import Procedimentos from "./Procedimentos";
-import Profissionais from "./Profissionais";
 import MensagensPredefinidas from "./MensagensPredefinidas";
-import Escala from "./Escala";
-import VinculosProcedimentos from "./VinculosProcedimentos";
 import Produtos from "./Produtos";
 import Conexoes from "./Conexoes";
-import TiposAgendamento from "./TiposAgendamento";
 import { ResetDataConfig } from "@/components/configuracoes/ResetDataConfig";
 import { TiposReuniaoConfig } from "@/components/configuracoes/TiposReuniaoConfig";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
 
 const tabOptions = [
-  { value: "procedimentos", label: "Procedimentos" },
-  { value: "profissionais", label: "Profissionais" },
-  { value: "vinculos", label: "Vínculos" },
-  { value: "escala", label: "Escala" },
-  { value: "tipos", label: "Tipos Agendamento" },
   { value: "tipos-reuniao", label: "Tipos Reunião" },
   { value: "produtos", label: "Produtos" },
   { value: "mensagens", label: "Mensagens" },
@@ -28,14 +18,13 @@ const tabOptions = [
 ];
 
 export default function Configuracoes() {
-  const [activeTab, setActiveTab] = useTabPersistence("tab", "procedimentos");
+  const [activeTab, setActiveTab] = useTabPersistence("tab", "tipos-reuniao");
   const isMobile = useIsMobile();
   const isTablet = typeof window !== 'undefined' && window.innerWidth < 1024 && window.innerWidth >= 768;
   const useDropdown = isMobile || isTablet;
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <Settings className="w-6 h-6" />
@@ -43,7 +32,6 @@ export default function Configuracoes() {
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         {useDropdown ? (
           <Select value={activeTab} onValueChange={setActiveTab}>
@@ -67,26 +55,6 @@ export default function Configuracoes() {
             ))}
           </TabsList>
         )}
-        
-        <TabsContent value="procedimentos">
-          <Procedimentos />
-        </TabsContent>
-        
-        <TabsContent value="profissionais">
-          <Profissionais />
-        </TabsContent>
-        
-        <TabsContent value="vinculos">
-          <VinculosProcedimentos />
-        </TabsContent>
-        
-        <TabsContent value="escala">
-          <Escala />
-        </TabsContent>
-
-        <TabsContent value="tipos">
-          <TiposAgendamento />
-        </TabsContent>
 
         <TabsContent value="tipos-reuniao">
           <TiposReuniaoConfig />
