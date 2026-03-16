@@ -345,10 +345,10 @@ export default function TarefasMembrosTab() {
             <Card key={membro.id} className="p-4 flex flex-col gap-3 relative h-full cursor-pointer hover:border-primary/40 transition-colors" onClick={() => navigate(`/admin/equipe/${membro.id}`)}>
               {/* Actions top-right */}
               <div className="absolute top-2 right-2 flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditando(membro)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setEditando(membro); }}>
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleExcluir(membro.id)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleExcluir(membro.id); }}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
