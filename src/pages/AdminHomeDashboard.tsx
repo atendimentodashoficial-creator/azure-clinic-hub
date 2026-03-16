@@ -74,11 +74,11 @@ export default function AdminHomeDashboard() {
       sevenDaysLater.setDate(today.getDate() + 7);
       const { data } = await supabase
         .from("reunioes")
-        .select("id, titulo, data_hora, status, tipo_reuniao_id, participantes")
+        .select("id, titulo, data_reuniao, status, tipo_reuniao_id, participantes")
         .eq("user_id", effectiveUserId)
-        .gte("data_hora", today.toISOString())
-        .lte("data_hora", sevenDaysLater.toISOString())
-        .order("data_hora");
+        .gte("data_reuniao", today.toISOString())
+        .lte("data_reuniao", sevenDaysLater.toISOString())
+        .order("data_reuniao");
       return data || [];
     },
     enabled: !!effectiveUserId,
