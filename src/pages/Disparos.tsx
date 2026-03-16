@@ -139,7 +139,7 @@ export default function Disparos() {
 
   // Load chats from database (excluding deleted ones)
   // Only include chats from connected Disparos instances (never from WhatsApp main instance)
-  const loadChats = async (allowedInstanciaIdsParam?: string[]): Promise<any[]> => {
+  const loadChats = async (allowedInstanciaIdsParam?: string[], instanciasMapOverride?: Record<string, DisparosInstancia>): Promise<any[]> => {
     try {
       if (!user?.id) {
         setChats([]);
@@ -174,11 +174,15 @@ export default function Disparos() {
       if (error) throw error;
       const deduped = dedupeChatsByInstanceAndPhone(data || []);
 
+      // Use the override map (fresh from loadInstancias) or fall back to state
+      const effectiveMap = instanciasMapOverride || instanciasMap;
+
       // Filter: only show chats where the message time (or creation) is after the instance was created
-      // This prevents showing old conversations that existed before Disparos was configured
       const visible = deduped.filter((chat) => {
-        const instancia = instanciasMap[chat.instancia_id];
-        if (!instancia) return false;
+        const instancia = effectiveMap[chat.instancia_id];
+        // If we have allowedInstanciaIdsParam, the DB query already filtered by instance
+        // so don't reject chats just because the map isn't populated yet
+        if (!instancia) return !!allowedInstanciaIdsParam;
 
         const instanciaCreatedAt = (instancia as any).created_at;
         if (!instanciaCreatedAt) return true;
