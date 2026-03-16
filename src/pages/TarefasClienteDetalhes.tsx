@@ -218,6 +218,9 @@ export default function TarefasClienteDetalhes() {
             </p>
           )}
         </div>
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setEditando(true)}>
+          <Edit className="h-3.5 w-3.5" /> Editar
+        </Button>
       </div>
 
       {/* Stats row */}
