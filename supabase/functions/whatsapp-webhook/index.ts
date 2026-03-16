@@ -1253,49 +1253,61 @@ Deno.serve(async (req) => {
             // === Auto-move WhatsApp kanban card on first customer reply ===
             if (!isFromMe && !wasSentByApi && !isOutboundBySender) {
               try {
-                const { data: waKanbanConfig } = await supabase
-                  .from('whatsapp_kanban_config')
-                  .select('auto_move_column_id')
+                // Check if there's an active tombstone — if so, this chat is being deleted right now
+                const { data: activeTombstone } = await supabase
+                  .from('whatsapp_chat_deletions')
+                  .select('deleted_at')
                   .eq('user_id', effectiveUserId)
+                  .eq('phone_last8', last8Incoming)
                   .maybeSingle();
 
-                if (waKanbanConfig?.auto_move_column_id) {
-                  const { data: waKanbanEntry } = await supabase
-                    .from('whatsapp_chat_kanban')
-                    .select('id, column_id, first_reply_moved')
-                    .eq('chat_id', matchingChat.id)
+                if (activeTombstone?.deleted_at) {
+                  console.log('[WA-AutoMove] Skipped — active tombstone found for', last8Incoming);
+                } else {
+                  const { data: waKanbanConfig } = await supabase
+                    .from('whatsapp_kanban_config')
+                    .select('auto_move_column_id')
+                    .eq('user_id', effectiveUserId)
                     .maybeSingle();
 
-                  if (!waKanbanEntry) {
-                    const { error: insertErr } = await supabase
+                  if (waKanbanConfig?.auto_move_column_id) {
+                    const { data: waKanbanEntry } = await supabase
                       .from('whatsapp_chat_kanban')
-                      .insert({
-                        user_id: effectiveUserId,
-                        chat_id: matchingChat.id,
-                        column_id: waKanbanConfig.auto_move_column_id,
-                        first_reply_moved: true,
-                      });
-                    if (insertErr) {
-                      console.error('[WA-AutoMove] Error inserting kanban entry:', insertErr);
+                      .select('id, column_id, first_reply_moved')
+                      .eq('chat_id', matchingChat.id)
+                      .maybeSingle();
+
+                    if (!waKanbanEntry) {
+                      const { error: insertErr } = await supabase
+                        .from('whatsapp_chat_kanban')
+                        .insert({
+                          user_id: effectiveUserId,
+                          chat_id: matchingChat.id,
+                          column_id: waKanbanConfig.auto_move_column_id,
+                          first_reply_moved: true,
+                        });
+                      if (insertErr) {
+                        console.error('[WA-AutoMove] Error inserting kanban entry:', insertErr);
+                      } else {
+                        console.log('[WA-AutoMove] Chat auto-moved (new entry) to column', waKanbanConfig.auto_move_column_id);
+                      }
+                    } else if (!waKanbanEntry.first_reply_moved) {
+                      const { error: updateErr } = await supabase
+                        .from('whatsapp_chat_kanban')
+                        .update({
+                          column_id: waKanbanConfig.auto_move_column_id,
+                          first_reply_moved: true,
+                          updated_at: new Date().toISOString(),
+                        })
+                        .eq('id', waKanbanEntry.id);
+                      if (updateErr) {
+                        console.error('[WA-AutoMove] Error updating kanban entry:', updateErr);
+                      } else {
+                        console.log('[WA-AutoMove] Chat auto-moved (existing entry) to column', waKanbanConfig.auto_move_column_id);
+                      }
                     } else {
-                      console.log('[WA-AutoMove] Chat auto-moved (new entry) to column', waKanbanConfig.auto_move_column_id);
+                      console.log('[WA-AutoMove] Chat already auto-moved once, skipping.');
                     }
-                  } else if (!waKanbanEntry.first_reply_moved) {
-                    const { error: updateErr } = await supabase
-                      .from('whatsapp_chat_kanban')
-                      .update({
-                        column_id: waKanbanConfig.auto_move_column_id,
-                        first_reply_moved: true,
-                        updated_at: new Date().toISOString(),
-                      })
-                      .eq('id', waKanbanEntry.id);
-                    if (updateErr) {
-                      console.error('[WA-AutoMove] Error updating kanban entry:', updateErr);
-                    } else {
-                      console.log('[WA-AutoMove] Chat auto-moved (existing entry) to column', waKanbanConfig.auto_move_column_id);
-                    }
-                  } else {
-                    console.log('[WA-AutoMove] Chat already auto-moved once, skipping.');
                   }
                 }
               } catch (autoMoveError) {
