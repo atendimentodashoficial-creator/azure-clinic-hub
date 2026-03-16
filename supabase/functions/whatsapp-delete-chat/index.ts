@@ -60,7 +60,7 @@ serve(async (req) => {
       throw new Error("chat_id or chat_ids is required");
     }
 
-    console.log(`=== Deleting ${chatIdsToProcess.length} chat(s) for user ${user.id} ===`);
+    console.log(`=== Deleting ${chatIdsToProcess.length} chat(s) for user ${effectiveUserId} ===`);
 
     // Fetch the chats to get their chat_id (WhatsApp ID) and normalized_number
     const { data: chats, error: chatsError } = await supabase
