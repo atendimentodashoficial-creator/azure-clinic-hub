@@ -34,7 +34,7 @@ export default function FuncionarioDashboard() {
   });
 
   // Fetch reunioes for this member
-  const { data: reunioes = [], isLoading: reunioesLoading } = useQuery({
+  const { data: reunioes = [], isLoading: reunioesLoading, fetchStatus: reunioesFetchStatus } = useQuery({
     queryKey: ["func-dashboard-reunioes", ownerId, membro?.id],
     queryFn: async () => {
       if (!ownerId || !membro?.id) return [];
