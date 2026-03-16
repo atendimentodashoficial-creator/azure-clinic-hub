@@ -109,7 +109,6 @@ const App = () => (
             <Route path="financeiro" element={<AdminFinanceiro />} />
             <Route path="metricas-campanhas" element={<MetricasCampanhas />} />
             <Route path="google-ads" element={<GoogleAdsMetrics />} />
-            <Route path="usuarios" element={<GerenciarUsuarios />} />
             <Route path="paineis" element={<ConfigurarPaineis />} />
             <Route path="tarefas" element={<Tarefas />} />
             <Route path="tarefas-clientes" element={<TarefasClientes />} />
