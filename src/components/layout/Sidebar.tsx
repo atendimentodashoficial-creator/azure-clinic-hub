@@ -42,16 +42,12 @@ const hrefToFeatureKey: Record<string, string> = {
 };
 
 export const navigation = [
-  { name: "Calendário", href: "/admin", icon: Calendar },
-  { name: "Não Compareceu", href: "/admin/nao-compareceu", icon: UserX },
-  { name: "Leads", href: "/admin/leads", icon: UserPlus },
-  { name: "Clientes", href: "/admin/clientes", icon: Users },
-  { name: "Negociação", href: "/admin/em-negociacao", icon: Handshake },
-  { name: "Faturas", href: "/admin/faturas", icon: FileText },
-  { name: "Despesas", href: "/admin/despesas", icon: Wallet },
-  { name: "Relatórios", href: "/admin/relatorios", icon: TrendingUp },
-  { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare, separator: true },
+  { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare },
   { name: "Disparos", href: "/admin/disparos", icon: Send },
+  { name: "Extrator", href: "/admin/extrator", icon: Database },
+  { name: "Instagram", href: "/admin/instagram", icon: Instagram },
+  { name: "Formulários", href: "/admin/formularios", icon: ClipboardList },
+  { name: "Meta Ads", href: "/admin/metricas-campanhas", icon: MetaIcon },
   { name: "Extrator", href: "/admin/extrator", icon: Database },
   { name: "Instagram", href: "/admin/instagram", icon: Instagram },
   { name: "Formulários", href: "/admin/formularios", icon: ClipboardList },

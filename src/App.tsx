@@ -85,15 +85,8 @@ const App = () => (
               </RoleProtectedRoute>
             }
           >
-            <Route index element={<Agenda />} />
-            <Route path="nao-compareceu" element={<NaoCompareceu />} />
-            <Route path="relatorios" element={<Dashboard />} />
-            <Route path="leads" element={<Leads />} />
-            <Route path="clientes" element={<Clientes />} />
-            <Route path="clientes/:id" element={<ClienteDetalhes />} />
-            <Route path="em-negociacao" element={<EmNegociacao />} />
-            <Route path="faturas" element={<Faturas />} />
-            <Route path="despesas" element={<Despesas />} />
+            <Route index element={<AdminWhatsApp />} />
+            <Route path="whatsapp" element={<AdminWhatsApp />} />
             <Route path="whatsapp" element={<AdminWhatsApp />} />
             <Route path="disparos" element={<Disparos />} />
             <Route path="extrator" element={<Extrator />} />
