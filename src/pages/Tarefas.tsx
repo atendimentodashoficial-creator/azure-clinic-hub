@@ -901,6 +901,16 @@ export default function Tarefas() {
         open={!!detalheTarefa}
         onOpenChange={(open) => { if (!open) setDetalheTarefa(null); }}
       />
+        </TabsContent>
+
+        {!isFuncionario && (
+          <TabsContent value="configuracoes" className="mt-4">
+            <Suspense fallback={<div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>}>
+              <TiposTarefas />
+            </Suspense>
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }
