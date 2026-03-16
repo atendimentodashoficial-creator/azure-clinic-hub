@@ -230,27 +230,7 @@ serve(async (req) => {
       throw new Error("Error deleting chats");
     }
 
-    // Create deletion tombstones so sync/webhook never re-imports these phones
-    const nowIso = new Date().toISOString();
-
-    for (const last8 of phoneLast8List) {
-      const { error: tombstoneError } = await supabase
-        .from("whatsapp_chat_deletions")
-        .upsert(
-          {
-            user_id: user.id,
-            phone_last8: last8,
-            deleted_at: nowIso,
-          },
-          { onConflict: "user_id,phone_last8" }
-        );
-
-      if (tombstoneError) {
-        console.error("Error creating tombstone for", last8, tombstoneError);
-      }
-    }
-
-    console.log(`=== Successfully deleted ${chatIdsToProcess.length} chat(s) and created ${phoneLast8List.length} tombstone(s) ===`);
+    console.log(`=== Successfully deleted ${chatIdsToProcess.length} chat(s) (tombstones created earlier) ===`);
 
     return new Response(
       JSON.stringify({ success: true, deleted: chatIdsToProcess.length }),
