@@ -707,112 +707,27 @@ Deno.serve(async (req) => {
           config = null as any;
         }
 
+        // Always use main WhatsApp instance (uazapi_config)
         if (!config) {
-          // PRIORITY 1: Check main WhatsApp (whatsapp_chats + uazapi_config)
           if (mainWhatsAppConfig) {
-            const phoneLast8 = pending.telefone.replace(/\D/g, "").slice(-8);
-            const { data: mainChats } = await supabase
-              .from("whatsapp_chats")
-              .select("id")
-              .eq("user_id", userId)
-              .is("deleted_at", null)
-              .like("normalized_number", `%${phoneLast8}`)
-              .limit(1);
-            
-            if (mainChats && mainChats.length > 0) {
-              console.log(`Using MAIN WhatsApp instance for ${pending.telefone} (chat found)`);
-              config = {
-                base_url: mainWhatsAppConfig.base_url.replace(/\/+$/, ""),
-                api_key: mainWhatsAppConfig.api_key,
-                instancia_id: mainWhatsAppConfig.id,
-                instancia_nome: mainWhatsAppConfig.instance_name || "WhatsApp Principal",
-              };
-            }
-          }
-
-          // PRIORITY 2: Even without chat, prefer main WhatsApp if no disparos chat exists
-          if (!config && mainWhatsAppConfig) {
-            const chatsWithInstance = (existingChats || []).filter((c: any) => c?.instancia_id);
-            if (chatsWithInstance.length === 0) {
-              console.log(`No disparos chat found, using MAIN WhatsApp instance for ${pending.telefone}`);
-              config = {
-                base_url: mainWhatsAppConfig.base_url.replace(/\/+$/, ""),
-                api_key: mainWhatsAppConfig.api_key,
-                instancia_id: mainWhatsAppConfig.id,
-                instancia_nome: mainWhatsAppConfig.instance_name || "WhatsApp Principal",
-              };
-            }
-          }
-
-          // PRIORITY 3: Check disparos_chats for chat history
-          if (!config) {
-            const chatsWithInstance = (existingChats || []).filter((c: any) => c?.instancia_id);
-
-            if (chatsWithInstance.length > 0) {
-              let selectedInstanceId: string | null = null;
-
-              const chatWithOriginal = chatsWithInstance.find((c: any) => c?.instancia_original_id);
-              if (chatWithOriginal?.instancia_original_id) {
-                selectedInstanceId = chatWithOriginal.instancia_original_id;
-                console.log(`Using instancia_original_id for ${pending.telefone}: ${selectedInstanceId}`);
-              } else {
-                const oldestChat = [...chatsWithInstance].sort(
-                  (a: any, b: any) =>
-                    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                )[0];
-                selectedInstanceId = oldestChat?.instancia_id ?? null;
-                console.log(`Using oldest chat instance for ${pending.telefone}: ${selectedInstanceId}`);
-              }
-
-              let matchedInstance = selectedInstanceId && disparosInstances
-                ? disparosInstances.find((inst) => inst.id === selectedInstanceId)
-                : null;
-
-              if (!matchedInstance && chatWithOriginal && disparosInstances) {
-                const currentInstId = chatWithOriginal.instancia_id;
-                if (currentInstId) {
-                  matchedInstance = disparosInstances.find((inst) => inst.id === currentInstId) ?? null;
-                }
-              }
-
-              if (!matchedInstance && disparosInstances) {
-                const oldestChatInstId = chatsWithInstance[0]?.instancia_id;
-                if (oldestChatInstId) {
-                  matchedInstance = disparosInstances.find((inst) => inst.id === oldestChatInstId) ?? null;
-                }
-              }
-
-              if (matchedInstance) {
-                config = {
-                  base_url: matchedInstance.base_url.replace(/\/+$/, ""),
-                  api_key: matchedInstance.api_key,
-                  instancia_id: matchedInstance.id,
-                  instancia_nome: matchedInstance.nome,
-                };
-              }
-            }
-          }
-
-          // PRIORITY 4: Fallback to main WhatsApp or first disparos instance
-          if (!config) {
-            if (mainWhatsAppConfig) {
-              config = {
-                base_url: mainWhatsAppConfig.base_url.replace(/\/+$/, ""),
-                api_key: mainWhatsAppConfig.api_key,
-                instancia_id: mainWhatsAppConfig.id,
-                instancia_nome: mainWhatsAppConfig.instance_name || "WhatsApp Principal",
-              };
-            } else if (disparosInstances && disparosInstances.length > 0) {
-              config = {
-                base_url: disparosInstances[0].base_url.replace(/\/+$/, ""),
-                api_key: disparosInstances[0].api_key,
-                instancia_id: disparosInstances[0].id,
-                instancia_nome: disparosInstances[0].nome,
-              };
-            } else {
-              console.log(`No instance available for ${pending.telefone}, skipping`);
-              continue;
-            }
+            console.log(`Using MAIN WhatsApp instance for ${pending.telefone}`);
+            config = {
+              base_url: mainWhatsAppConfig.base_url.replace(/\/+$/, ""),
+              api_key: mainWhatsAppConfig.api_key,
+              instancia_id: mainWhatsAppConfig.id,
+              instancia_nome: mainWhatsAppConfig.instance_name || "WhatsApp Principal",
+            };
+          } else if (disparosInstances && disparosInstances.length > 0) {
+            console.log(`No main WhatsApp, falling back to first disparos instance for ${pending.telefone}`);
+            config = {
+              base_url: disparosInstances[0].base_url.replace(/\/+$/, ""),
+              api_key: disparosInstances[0].api_key,
+              instancia_id: disparosInstances[0].id,
+              instancia_nome: disparosInstances[0].nome,
+            };
+          } else {
+            console.log(`No instance available for ${pending.telefone}, skipping`);
+            continue;
           }
         }
 
