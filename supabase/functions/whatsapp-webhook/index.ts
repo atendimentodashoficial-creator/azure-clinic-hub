@@ -1272,7 +1272,7 @@ Deno.serve(async (req) => {
                 } else {
                   const { data: waKanbanConfig } = await supabase
                     .from('whatsapp_kanban_config')
-                    .select('auto_move_column_id')
+                    .select('auto_move_column_id, auto_move_reuniao_column_id')
                     .eq('user_id', effectiveUserId)
                     .maybeSingle();
 
@@ -1297,7 +1297,7 @@ Deno.serve(async (req) => {
                       } else {
                         console.log('[WA-AutoMove] Chat auto-moved (new entry) to column', waKanbanConfig.auto_move_column_id);
                       }
-                    } else if (!waKanbanEntry.first_reply_moved) {
+                    } else if (!waKanbanEntry.first_reply_moved && (!waKanbanConfig.auto_move_reuniao_column_id || waKanbanEntry.column_id !== waKanbanConfig.auto_move_reuniao_column_id)) {
                       const { error: updateErr } = await supabase
                         .from('whatsapp_chat_kanban')
                         .update({
@@ -1311,6 +1311,8 @@ Deno.serve(async (req) => {
                       } else {
                         console.log('[WA-AutoMove] Chat auto-moved (existing entry) to column', waKanbanConfig.auto_move_column_id);
                       }
+                    } else if (waKanbanConfig.auto_move_reuniao_column_id && waKanbanEntry.column_id === waKanbanConfig.auto_move_reuniao_column_id) {
+                      console.log('[WA-AutoMove] Chat is in reunião column, skipping first-reply auto-move.');
                     } else {
                       console.log('[WA-AutoMove] Chat already auto-moved once, skipping.');
                     }
@@ -1692,7 +1694,7 @@ Deno.serve(async (req) => {
                 // Check if user has auto-move configured
                 const { data: kanbanConfig } = await supabase
                   .from('disparos_kanban_config')
-                  .select('auto_move_column_id')
+                  .select('auto_move_column_id, auto_move_reuniao_column_id')
                   .eq('user_id', effectiveUserId)
                   .maybeSingle();
 
@@ -1719,7 +1721,7 @@ Deno.serve(async (req) => {
                     } else {
                       console.log('[AutoMove] Chat auto-moved (new entry) to column', kanbanConfig.auto_move_column_id);
                     }
-                  } else if (!kanbanEntry.first_reply_moved) {
+                  } else if (!kanbanEntry.first_reply_moved && (!kanbanConfig.auto_move_reuniao_column_id || kanbanEntry.column_id !== kanbanConfig.auto_move_reuniao_column_id)) {
                     // Chat already exists in kanban but was NOT yet auto-moved - move it now
                     const { error: updateErr } = await supabase
                       .from('disparos_chat_kanban')
@@ -1734,6 +1736,8 @@ Deno.serve(async (req) => {
                     } else {
                       console.log('[AutoMove] Chat auto-moved (existing entry) to column', kanbanConfig.auto_move_column_id);
                     }
+                  } else if (kanbanConfig.auto_move_reuniao_column_id && kanbanEntry.column_id === kanbanConfig.auto_move_reuniao_column_id) {
+                    console.log('[AutoMove] Chat is in reunião column, skipping first-reply auto-move.');
                   } else {
                     console.log('[AutoMove] Chat already auto-moved once, skipping.');
                   }
