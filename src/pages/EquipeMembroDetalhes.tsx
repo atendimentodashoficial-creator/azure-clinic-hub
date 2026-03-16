@@ -206,9 +206,18 @@ export default function EquipeMembroDetalhes() {
       {/* Tabs */}
       <Tabs defaultValue="geral" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="geral">Geral</TabsTrigger>
-          <TabsTrigger value="tarefas">Tarefas ({membroTarefas.length})</TabsTrigger>
-          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="geral" className="gap-1.5">
+            <User className="h-4 w-4" />
+            Geral
+          </TabsTrigger>
+          <TabsTrigger value="tarefas" className="gap-1.5">
+            <ListChecks className="h-4 w-4" />
+            Tarefas ({membroTarefas.length})
+          </TabsTrigger>
+          <TabsTrigger value="financeiro" className="gap-1.5">
+            <Wallet className="h-4 w-4" />
+            Financeiro
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Geral ── */}
