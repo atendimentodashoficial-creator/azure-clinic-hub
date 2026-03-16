@@ -34,6 +34,18 @@ serve(async (req) => {
       throw new Error("Unauthorized");
     }
 
+    // Resolve owner_id: if user is a funcionario, use the admin's user_id
+    let effectiveUserId = user.id;
+    const { data: membro } = await supabase
+      .from("tarefas_membros")
+      .select("user_id")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+    if (membro?.user_id) {
+      effectiveUserId = membro.user_id;
+      console.log(`Funcionario detected, using owner_id: ${effectiveUserId}`);
+    }
+
     const body = await req.json();
     
     // Support both single chat_id and array of chat_ids
