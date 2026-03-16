@@ -128,6 +128,7 @@ export function ComparecimentoDialog({
 
   const handleClose = () => {
     setSelectedColumnId(null);
+    setSkipMove(false);
     onOpenChange(false);
   };
 
