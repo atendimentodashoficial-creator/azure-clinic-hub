@@ -32,7 +32,6 @@ const hrefToFeatureKey: Record<string, string> = {
   "/admin/metricas-campanhas": "meta-ads",
   "/admin/google-ads": "google-ads",
   "/admin/configuracoes": "configuracoes",
-  "/admin/usuarios": "usuarios",
   "/admin/paineis": "paineis",
   "/admin/tarefas": "tarefas",
   "/admin/tipos-tarefas": "tarefas",
@@ -64,8 +63,7 @@ export const navigation = [
   { name: "Clientes *", href: "/admin/tarefas-clientes", icon: Building2 },
   { name: "Equipe", href: "/admin/equipe", icon: UsersRound },
   { name: "Produtos", href: "/admin/produtos-tarefas", icon: Package },
-  { name: "Financeiro", href: "/admin/financeiro", icon: DollarSign },
-  { name: "Usuários", href: "/admin/usuarios", icon: Shield, separator: true },
+  { name: "Financeiro", href: "/admin/financeiro", icon: DollarSign, separator: true },
   { name: "Painéis", href: "/admin/paineis", icon: Settings2 },
   { name: "Configurações", href: "/admin/configuracoes", icon: Settings },
 ];
@@ -107,8 +105,8 @@ export const SidebarContent = ({ onNavigate, collapsed = false, onToggleCollapse
     const featureKey = hrefToFeatureKey[item.href];
     if (featureKey && !isFeatureEnabled(featureKey)) return false;
     
-    // Check panel_tabs_config for admin - "usuarios" and "paineis" always visible
-    if (featureKey === "usuarios" || featureKey === "paineis") return true;
+    // Check panel_tabs_config for admin - "paineis" always visible
+    if (featureKey === "paineis") return true;
     if (panelConfigs && panelConfigs.length > 0) {
       const stripped = item.href.replace(/^\/admin\/?/, "");
       const tabKey = stripped || "calendario";
