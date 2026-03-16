@@ -162,7 +162,7 @@ export default function FuncionarioDashboard() {
               <p className="text-sm text-muted-foreground py-4 text-center">Nenhuma entrega pendente</p>
             ) : (
               proximasTarefas.map((t: any) => {
-                const date = parseISO(t.data_entrega);
+                const date = parseISO(t.data_limite);
                 const overdue = isPast(date);
                 const today = isToday(date);
                 const tomorrow = isTomorrow(date);
