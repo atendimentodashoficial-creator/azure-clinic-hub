@@ -11,7 +11,7 @@ import { useTabPersistence } from "@/hooks/useTabPersistence";
 
 const tabOptions = [
   { value: "tipos-reuniao", label: "Tipos Reunião" },
-  { value: "produtos", label: "Produtos" },
+  { value: "mensagens", label: "Mensagens" },
   { value: "mensagens", label: "Mensagens" },
   { value: "conexoes", label: "Conexões" },
   { value: "reset", label: "Reset" },
