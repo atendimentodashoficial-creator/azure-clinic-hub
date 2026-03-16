@@ -319,14 +319,14 @@ export default function Disparos() {
       }
 
       // Always load chats from database (even if sync failed, show cached data)
-      await loadChats();
+      await loadChats(allowedInstanciaIds);
       // With webhook configured, real-time updates handle message arrival.
       // This sync is just a fallback to catch any missed data.
     } catch (error: any) {
       console.log('Sync error (using cache):', error.message || error);
       // Don't show error toast for expected network failures, just use cache silently
       // Still try to load cached chats on error
-      await loadChats();
+      await loadChats(allowedInstanciaIds);
     } finally {
       setIsSyncing(false);
     }
