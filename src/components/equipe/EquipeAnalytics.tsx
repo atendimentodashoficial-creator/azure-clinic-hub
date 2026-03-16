@@ -141,10 +141,8 @@ export default function EquipeAnalytics() {
         <CollapsibleContent className="mt-5 space-y-5">
           {/* Cargo Filter */}
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground font-medium">Filtrar por cargo:</span>
             <Select value={cargoFilter} onValueChange={setCargoFilter}>
-              <SelectTrigger className="w-[200px] h-8 text-sm">
+              <SelectTrigger className="w-[180px] h-8 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
