@@ -1534,6 +1534,31 @@ Deno.serve(async (req) => {
                 console.log('Saved first WhatsApp message:', messageId, 'to new chat:', chatIdForMessage);
               }
             }
+
+            // Auto-move new chat to kanban column on first message
+            if (!isFromMe && !wasSentByApi && !isOutboundBySender && chatIdForMessage) {
+              try {
+                const { data: waKanbanConfig } = await supabase
+                  .from('whatsapp_kanban_config')
+                  .select('auto_move_column_id')
+                  .eq('user_id', effectiveUserId)
+                  .maybeSingle();
+
+                if (waKanbanConfig?.auto_move_column_id) {
+                  await supabase
+                    .from('whatsapp_chat_kanban')
+                    .upsert({
+                      user_id: effectiveUserId,
+                      chat_id: chatIdForMessage,
+                      column_id: waKanbanConfig.auto_move_column_id,
+                      first_reply_moved: true,
+                    }, { onConflict: 'chat_id' });
+                  console.log('[WA-AutoMove] New chat auto-moved to column', waKanbanConfig.auto_move_column_id);
+                }
+              } catch (e) {
+                console.error('[WA-AutoMove] Error on new chat:', e);
+              }
+            }
           }
         }
 
