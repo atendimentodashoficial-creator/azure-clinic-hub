@@ -73,9 +73,11 @@ function computeSlots(
 interface NovaReuniaoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialClienteNome?: string;
+  initialClienteTelefone?: string;
 }
 
-export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps) {
+export function NovaReuniaoDialog({ open, onOpenChange, initialClienteNome, initialClienteTelefone }: NovaReuniaoDialogProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { membros } = useTarefasMembros();
@@ -111,13 +113,13 @@ export function NovaReuniaoDialog({ open, onOpenChange }: NovaReuniaoDialogProps
       setSelectedDate(new Date().toISOString().split("T")[0]);
       setSelectedMemberId("");
       setSelectedTime("");
-      setClienteNome("");
-      setClienteTelefone("");
+      setClienteNome(initialClienteNome || "");
+      setClienteTelefone(initialClienteTelefone || "");
       setClienteSearch("");
       setSelectedTipoId("");
       setShowLeadsList(false);
     }
-  }, [open]);
+  }, [open, initialClienteNome, initialClienteTelefone]);
 
   // Fetch meetings
   useEffect(() => {
