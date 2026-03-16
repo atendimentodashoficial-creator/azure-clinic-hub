@@ -43,6 +43,7 @@ import FuncionarioWhatsApp from "./pages/FuncionarioWhatsApp";
 import FuncionarioReunioes from "./pages/FuncionarioReunioes";
 import AdminFinanceiro from "./pages/AdminFinanceiro";
 import FuncionarioFinanceiro from "./pages/FuncionarioFinanceiro";
+import AdminHomeDashboard from "./pages/AdminHomeDashboard";
 
 import AprovacaoMockup from "./pages/AprovacaoMockup";
 import AprovacaoInterna from "./pages/AprovacaoInterna";
@@ -84,8 +85,8 @@ const App = () => (
               </RoleProtectedRoute>
             }
           >
-            <Route index element={<AdminWhatsApp />} />
-            <Route path="whatsapp" element={<AdminWhatsApp />} />
+            <Route index element={<AdminHomeDashboard />} />
+            <Route path="dashboard" element={<AdminHomeDashboard />} />
             <Route path="whatsapp" element={<AdminWhatsApp />} />
             <Route path="disparos" element={<Disparos />} />
             <Route path="extrator" element={<Extrator />} />

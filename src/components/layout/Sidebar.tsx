@@ -1,4 +1,4 @@
-import { Calendar, DollarSign, TrendingUp, Settings, UserCog, FileText, LogOut, MessageSquare, UserX, Handshake, UserPlus, Users, ChevronLeft, ChevronRight, Send, Database, Instagram, Wallet, ClipboardList, Video, Shield, Settings2, ListChecks, Building2, UsersRound, Package } from "lucide-react";
+import { Calendar, DollarSign, TrendingUp, Settings, UserCog, FileText, LogOut, MessageSquare, UserX, Handshake, UserPlus, Users, ChevronLeft, ChevronRight, Send, Database, Instagram, Wallet, ClipboardList, Video, Shield, Settings2, ListChecks, Building2, UsersRound, Package, LayoutDashboard } from "lucide-react";
 import { MetaIcon } from "@/components/icons/MetaIcon";
 import { NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +15,7 @@ import { useUserFeatureAccess } from "@/hooks/useUserFeatureAccess";
 
 // Mapeamento de href para feature_key
 const hrefToFeatureKey: Record<string, string> = {
+  "/admin/dashboard": "dashboard",
   "/admin/whatsapp": "whatsapp",
   "/admin/disparos": "disparos",
   "/admin/extrator": "extrator",
@@ -34,6 +35,7 @@ const hrefToFeatureKey: Record<string, string> = {
 };
 
 export const navigation = [
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare },
   { name: "Disparos", href: "/admin/disparos", icon: Send },
   { name: "Extrator", href: "/admin/extrator", icon: Database },
@@ -54,7 +56,7 @@ export const navigation = [
 // Map tab_key -> navigation item
 const getTabKey = (href: string) => {
   const stripped = href.replace(/^\/admin\/?/, "");
-  return stripped || "calendario";
+  return stripped || "dashboard";
 };
 
 const navByKey = new Map(navigation.map((item) => [getTabKey(item.href), item]));
