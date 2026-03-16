@@ -535,6 +535,48 @@ serve(async (req) => {
         console.log(`Successfully sent ${isReagendamento ? 'rescheduling' : 'immediate'} notification "${aviso.nome}" to ${deliveredTo}`);
         sentCount++;
 
+        // Auto-move WhatsApp kanban card on meeting notification
+        try {
+          const last8 = telefone.replace(/\D/g, '').slice(-8);
+          if (last8.length === 8) {
+            const { data: waConfig } = await supabase
+              .from('whatsapp_kanban_config')
+              .select('auto_move_reuniao_column_id')
+              .eq('user_id', resolvedUserId)
+              .maybeSingle();
+
+            const targetCol = (waConfig as any)?.auto_move_reuniao_column_id;
+            if (targetCol) {
+              const { data: waChats } = await supabase
+                .from('whatsapp_chats')
+                .select('id')
+                .eq('user_id', resolvedUserId)
+                .is('deleted_at', null)
+                .like('normalized_number', `%${last8}`);
+
+              for (const wc of (waChats || [])) {
+                const { data: existing } = await supabase
+                  .from('whatsapp_chat_kanban')
+                  .select('id')
+                  .eq('chat_id', wc.id)
+                  .maybeSingle();
+
+                if (existing) {
+                  await supabase.from('whatsapp_chat_kanban')
+                    .update({ column_id: targetCol, updated_at: new Date().toISOString() })
+                    .eq('id', existing.id);
+                } else {
+                  await supabase.from('whatsapp_chat_kanban')
+                    .insert({ user_id: resolvedUserId, chat_id: wc.id, column_id: targetCol });
+                }
+              }
+              console.log(`[WA-AutoMove] Moved WhatsApp card to reunião column for phone ${last8}`);
+            }
+          }
+        } catch (autoMoveErr) {
+          console.error('[WA-AutoMove] Error:', autoMoveErr);
+        }
+
         // Log the success (with instance info for audit)
         await supabase.from("avisos_reuniao_log").insert({
           user_id: resolvedUserId,
