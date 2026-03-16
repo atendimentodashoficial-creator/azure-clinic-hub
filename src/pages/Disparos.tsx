@@ -681,9 +681,11 @@ export default function Disparos() {
   useEffect(() => {
     (async () => {
       // Run config + instancias in parallel for faster startup
-      await Promise.all([checkConfig(), loadInstancias()]);
+      const [, loadedInstancias] = await Promise.all([checkConfig(), loadInstancias()]);
+
       // Load cached chats immediately (DB query, very fast)
-      await loadChats();
+      await loadChats((loadedInstancias || []).map((inst) => inst.id));
+
       // Sync with external API in background (doesn't block UI)
       syncChats({ silent: true });
     })();
