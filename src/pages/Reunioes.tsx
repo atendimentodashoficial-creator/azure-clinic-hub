@@ -607,7 +607,7 @@ export default function Reunioes() {
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                className="w-full aspect-square p-0 flex items-center justify-center" 
+                                className="w-full h-9 p-0 flex items-center justify-center" 
                                 onClick={() => setReuniaoParaReagendar(reuniao)} 
                                 title="Reagendar"
                               >
@@ -617,7 +617,7 @@ export default function Reunioes() {
                                 <Button 
                                   variant="outline" 
                                   size="sm" 
-                                  className="w-full aspect-square p-0 flex items-center justify-center text-green-600 hover:text-green-700 hover:bg-green-50" 
+                                  className="w-full h-9 p-0 flex items-center justify-center text-green-600 hover:text-green-700 hover:bg-green-50" 
                                   onClick={() => {
                                     const phone = reuniao.cliente_telefone?.replace(/\D/g, "") || "";
                                     navigateToChat(navigate, phone);
@@ -632,7 +632,7 @@ export default function Reunioes() {
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                className="w-full aspect-square p-0 flex items-center justify-center text-destructive hover:text-destructive hover:bg-destructive/10" 
+                                className="w-full h-9 p-0 flex items-center justify-center text-destructive hover:text-destructive hover:bg-destructive/10" 
                                 onClick={() => setReuniaoParaDesmarcar(reuniao)} 
                                 title="Desmarcar"
                               >
