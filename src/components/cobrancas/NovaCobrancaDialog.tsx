@@ -67,7 +67,7 @@ export function NovaCobrancaDialog({ onSubmit, clienteId, editando, onClose, ext
   };
 
   const handleSubmit = () => {
-    if (!descricao.trim() || !dataVencimento) return;
+    const parsedValor = parseFloat(valor.replace(/\./g, "").replace(",", ".")) || 0;
 
     const data: any = {
       cliente_id: clienteId,
