@@ -1956,6 +1956,31 @@ Deno.serve(async (req) => {
                 console.log('Saved first Disparos message with UTM:', messageId, hasEarlyUtm ? earlyUtmData : '(no UTM)');
               }
             }
+
+            // Auto-move new Disparos chat to kanban column on first message
+            if (!isFromMe && !wasSentByApi && !isOutboundBySender && disparosChatIdForMessage) {
+              try {
+                const { data: kanbanConfig } = await supabase
+                  .from('disparos_kanban_config')
+                  .select('auto_move_column_id')
+                  .eq('user_id', effectiveUserId)
+                  .maybeSingle();
+
+                if (kanbanConfig?.auto_move_column_id) {
+                  await supabase
+                    .from('disparos_chat_kanban')
+                    .upsert({
+                      user_id: effectiveUserId,
+                      chat_id: disparosChatIdForMessage,
+                      column_id: kanbanConfig.auto_move_column_id,
+                      first_reply_moved: true,
+                    }, { onConflict: 'chat_id' });
+                  console.log('[Disparos-AutoMove] New chat auto-moved to column', kanbanConfig.auto_move_column_id);
+                }
+              } catch (e) {
+                console.error('[Disparos-AutoMove] Error on new chat:', e);
+              }
+            }
           }
         }
       } catch (unreadError) {
