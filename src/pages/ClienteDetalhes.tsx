@@ -424,7 +424,7 @@ export default function ClienteDetalhes() {
                   Passados
                 </TabsTrigger>
                 <TabsTrigger value="faturas" className="gap-1.5">
-                  <Receipt className="h-4 w-4" />
+                  <CreditCard className="h-4 w-4" />
                   Faturas
                 </TabsTrigger>
                 <TabsTrigger value="historico" className="gap-1.5">
