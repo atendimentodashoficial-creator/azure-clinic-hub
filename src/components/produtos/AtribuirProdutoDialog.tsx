@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { getLast8Digits } from "@/utils/phoneFormat";
 import { sendTaskNotification } from "@/utils/taskNotifications";
+import { autoMoveKanbanOnReuniao } from "@/utils/kanbanAutoMove";
 import {
   Dialog,
   DialogContent,
