@@ -39,6 +39,7 @@ import Tarefas from "./pages/Tarefas";
 import TarefasClientes from "./pages/TarefasClientes";
 import TarefasClienteDetalhes from "./pages/TarefasClienteDetalhes";
 import Equipe from "./pages/Equipe";
+import EquipeMembroDetalhes from "./pages/EquipeMembroDetalhes";
 import ProdutosTarefas from "./pages/ProdutosTarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import ClienteAprovacoes from "./pages/ClienteAprovacoes";
