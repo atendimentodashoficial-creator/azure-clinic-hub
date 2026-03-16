@@ -34,6 +34,18 @@ serve(async (req) => {
       throw new Error("Unauthorized");
     }
 
+    // Resolve owner_id: if user is a funcionario, use the admin's user_id
+    let effectiveUserId = user.id;
+    const { data: membro } = await supabase
+      .from("tarefas_membros")
+      .select("user_id")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+    if (membro?.user_id) {
+      effectiveUserId = membro.user_id;
+      console.log(`Funcionario detected, using owner_id: ${effectiveUserId}`);
+    }
+
     const body = await req.json();
     
     // Support both single chat_id and array of chat_ids
@@ -48,13 +60,13 @@ serve(async (req) => {
       throw new Error("chat_id or chat_ids is required");
     }
 
-    console.log(`=== Deleting ${chatIdsToProcess.length} chat(s) for user ${user.id} ===`);
+    console.log(`=== Deleting ${chatIdsToProcess.length} chat(s) for user ${effectiveUserId} ===`);
 
     // Fetch the chats to get their chat_id (WhatsApp ID) and normalized_number
     const { data: chats, error: chatsError } = await supabase
       .from("whatsapp_chats")
       .select("id, chat_id, contact_number, normalized_number")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .in("id", chatIdsToProcess);
 
     if (chatsError) {
@@ -85,7 +97,7 @@ serve(async (req) => {
     const { data: userChats, error: userChatsError } = await supabase
       .from("whatsapp_chats")
       .select("id, chat_id, contact_number, normalized_number")
-      .eq("user_id", user.id);
+      .eq("user_id", effectiveUserId);
 
     if (userChatsError) {
       console.error("Error fetching user chats:", userChatsError);
@@ -123,7 +135,7 @@ serve(async (req) => {
         .from("whatsapp_chat_deletions")
         .upsert(
           {
-            user_id: user.id,
+            user_id: effectiveUserId,
             phone_last8: last8,
             deleted_at: nowIso,
           },
@@ -141,7 +153,7 @@ serve(async (req) => {
     const { data: config } = await supabase
       .from("uazapi_config")
       .select("base_url, api_key")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .eq("is_active", true)
       .single();
 
@@ -223,7 +235,7 @@ serve(async (req) => {
       .from("whatsapp_chats")
       .delete()
       .in("id", chatIdsToDeleteDb)
-      .eq("user_id", user.id);
+      .eq("user_id", effectiveUserId);
 
     if (deleteError) {
       console.error("Error deleting chats:", deleteError);
