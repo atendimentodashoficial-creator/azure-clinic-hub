@@ -66,6 +66,7 @@ const App = () => (
           <Route path="/cliente-form/:clienteId" element={<FormularioCliente />} />
           <Route path="/aprovacao/:token" element={<AprovacaoMockup />} />
           <Route path="/aprovacao-interna/:token" element={<AprovacaoInterna />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
 
           {/* Root: redirect based on role */}
           <Route
