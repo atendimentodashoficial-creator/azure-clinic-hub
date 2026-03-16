@@ -5687,6 +5687,7 @@ export type Database = {
           chat_id: string
           column_id: string
           created_at: string
+          first_reply_moved: boolean
           id: string
           updated_at: string
           user_id: string
@@ -5695,6 +5696,7 @@ export type Database = {
           chat_id: string
           column_id: string
           created_at?: string
+          first_reply_moved?: boolean
           id?: string
           updated_at?: string
           user_id: string
@@ -5703,6 +5705,7 @@ export type Database = {
           chat_id?: string
           column_id?: string
           created_at?: string
+          first_reply_moved?: boolean
           id?: string
           updated_at?: string
           user_id?: string
@@ -5848,6 +5851,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      whatsapp_kanban_config: {
+        Row: {
+          auto_move_column_id: string | null
+          auto_move_reuniao_column_id: string | null
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_move_column_id?: string | null
+          auto_move_reuniao_column_id?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_move_column_id?: string | null
+          auto_move_reuniao_column_id?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_kanban_config_auto_move_column_id_fkey"
+            columns: ["auto_move_column_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_kanban_columns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_kanban_config_auto_move_reuniao_column_id_fkey"
+            columns: ["auto_move_reuniao_column_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_kanban_columns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_labels: {
         Row: {
