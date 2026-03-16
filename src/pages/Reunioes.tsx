@@ -154,7 +154,7 @@ export default function Reunioes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reunioes" as any)
-        .select("*, profissionais(nome), leads:cliente_id(nome, telefone)")
+        .select("*, profissionais(nome), leads:cliente_id(nome, telefone), tipos_reuniao:tipo_reuniao_id(nome)")
         .or("google_event_id.not.is.null,status.eq.agendado")
         .order("data_reuniao", { ascending: false });
       
