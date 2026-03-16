@@ -81,8 +81,14 @@ export default function TarefasClientesTab() {
 
       <Tabs value={subTab} onValueChange={setSubTab}>
         <TabsList>
-          <TabsTrigger value="interno">Internos</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
+          <TabsTrigger value="interno" className="gap-1.5">
+            <Building2 className="h-4 w-4" />
+            Internos
+          </TabsTrigger>
+          <TabsTrigger value="preview" className="gap-1.5">
+            <Eye className="h-4 w-4" />
+            Preview
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={subTab} className="mt-4">
