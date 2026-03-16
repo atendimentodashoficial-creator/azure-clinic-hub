@@ -8,15 +8,15 @@ import { extractCountryCode, formatPhoneByCountry } from "@/utils/phoneFormat";
 import { toast } from "sonner";
 import { Trash2, Edit, Mail, Phone, Building2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from "react-router-dom";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
-import { ClienteTarefasDialog } from "@/components/tarefas/ClienteTarefasDialog";
 
 export default function TarefasClientesTab() {
   const { clientes, isLoading, criarCliente, atualizarCliente, excluirCliente } = useTarefasClientes();
   const [editando, setEditando] = useState<TarefaCliente | null>(null);
   const [busca, setBusca] = useState("");
   const [subTab, setSubTab] = useState("interno");
-  const [clienteDetalhe, setClienteDetalhe] = useState<TarefaCliente | null>(null);
+  const navigate = useNavigate();
 
   const filtrados = clientes.filter(c =>
     (c.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -93,7 +93,7 @@ export default function TarefasClientesTab() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtrados.map(cliente => (
-                <Card key={cliente.id} className="p-5 cursor-pointer hover:border-primary/40 transition-colors" onClick={() => setClienteDetalhe(cliente)}>
+                <Card key={cliente.id} className="p-5 cursor-pointer hover:border-primary/40 transition-colors" onClick={() => navigate(`/admin/tarefas-clientes/${cliente.id}`)}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar className="h-12 w-12 shrink-0">
@@ -138,12 +138,6 @@ export default function TarefasClientesTab() {
           )}
         </TabsContent>
       </Tabs>
-
-      <ClienteTarefasDialog
-        cliente={clienteDetalhe}
-        open={!!clienteDetalhe}
-        onClose={() => setClienteDetalhe(null)}
-      />
     </div>
   );
 }

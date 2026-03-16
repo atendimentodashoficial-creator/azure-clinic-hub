@@ -37,6 +37,7 @@ import GoogleCalendarCallback from "./pages/GoogleCalendarCallback";
 import ConfigurarPaineis from "./pages/ConfigurarPaineis";
 import Tarefas from "./pages/Tarefas";
 import TarefasClientes from "./pages/TarefasClientes";
+import TarefasClienteDetalhes from "./pages/TarefasClienteDetalhes";
 import Equipe from "./pages/Equipe";
 import ProdutosTarefas from "./pages/ProdutosTarefas";
 import ClienteDashboard from "./pages/ClienteDashboard";
@@ -111,6 +112,7 @@ const App = () => (
             <Route path="paineis" element={<ConfigurarPaineis />} />
             <Route path="tarefas" element={<Tarefas />} />
             <Route path="tarefas-clientes" element={<TarefasClientes />} />
+            <Route path="tarefas-clientes/:id" element={<TarefasClienteDetalhes />} />
             <Route path="tipos-tarefas" element={<TiposTarefas />} />
             <Route path="equipe" element={<Equipe />} />
             <Route path="produtos-tarefas" element={<ProdutosTarefas />} />
