@@ -1,0 +1,1 @@
+ALTER TABLE public.panel_tabs_config ADD COLUMN IF NOT EXISTS is_divider boolean NOT NULL DEFAULT false;

@@ -1,23 +1,22 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Settings2, User, UserCog, Shield } from "lucide-react";
+import { Settings2, User, UserCog, Shield, GripVertical, Plus, Trash2, Minus } from "lucide-react";
 import { navigation } from "@/components/layout/Sidebar";
+import { cn } from "@/lib/utils";
 
-// Derive a stable tab key from href
 const getTabKey = (href: string) => {
-  // "/admin" -> "calendario", "/admin/leads" -> "leads"
   const stripped = href.replace(/^\/admin\/?/, "");
   return stripped || "calendario";
 };
 
-// Available tabs that admin can toggle for each panel (deduplicated by key)
-const availableTabs = Array.from(
+const defaultTabs = Array.from(
   new Map(
     navigation.map((item) => {
       const key = getTabKey(item.href);
@@ -26,9 +25,20 @@ const availableTabs = Array.from(
   ).values()
 );
 
+interface OrderedItem {
+  id?: string;
+  tab_key: string;
+  tab_label: string;
+  is_visible: boolean;
+  is_divider: boolean;
+  ordem: number;
+}
+
 export default function ConfigurarPaineis() {
   const queryClient = useQueryClient();
   const [activePanel, setActivePanel] = useState<string>("admin");
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const { data: configs = [], isLoading } = useQuery({
     queryKey: ["panel-tabs-config"],
@@ -37,55 +47,142 @@ export default function ConfigurarPaineis() {
         .from("panel_tabs_config")
         .select("*")
         .order("ordem");
-
       if (error) throw error;
       return data;
     },
   });
 
-  const toggleMutation = useMutation({
-    mutationFn: async ({ panelType, tabKey, tabLabel, isVisible }: { panelType: string; tabKey: string; tabLabel: string; isVisible: boolean }) => {
+  // Build ordered list for a panel type
+  const getOrderedItems = useCallback((panelType: string): OrderedItem[] => {
+    const panelConfigs = configs.filter((c) => c.panel_type === panelType);
+    
+    if (panelConfigs.length === 0) {
+      // No config saved yet - use defaults
+      return defaultTabs.map((tab, i) => ({
+        tab_key: tab.key,
+        tab_label: tab.label,
+        is_visible: panelType === "admin",
+        is_divider: false,
+        ordem: i,
+      }));
+    }
+
+    // Merge: DB configs (including dividers) + any missing default tabs appended
+    const result: OrderedItem[] = panelConfigs.map((c) => ({
+      id: c.id,
+      tab_key: c.tab_key,
+      tab_label: c.tab_label,
+      is_visible: c.is_visible,
+      is_divider: (c as any).is_divider || false,
+      ordem: c.ordem,
+    }));
+
+    // Add missing tabs at the end
+    const existingKeys = new Set(result.filter(r => !r.is_divider).map(r => r.tab_key));
+    const maxOrdem = Math.max(...result.map(r => r.ordem), -1);
+    defaultTabs.forEach((tab, i) => {
+      if (!existingKeys.has(tab.key)) {
+        result.push({
+          tab_key: tab.key,
+          tab_label: tab.label,
+          is_visible: panelType === "admin",
+          is_divider: false,
+          ordem: maxOrdem + 1 + i,
+        });
+      }
+    });
+
+    return result.sort((a, b) => a.ordem - b.ordem);
+  }, [configs]);
+
+  const saveMutation = useMutation({
+    mutationFn: async ({ panelType, items }: { panelType: string; items: OrderedItem[] }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
-      const existing = configs.find(
-        (c) => c.panel_type === panelType && c.tab_key === tabKey
-      );
+      // Delete existing configs for this panel, then re-insert
+      await supabase
+        .from("panel_tabs_config")
+        .delete()
+        .eq("panel_type", panelType as any)
+        .eq("user_id", user.id);
 
-      if (existing) {
-        const { error } = await supabase
-          .from("panel_tabs_config")
-          .update({ is_visible: isVisible, updated_at: new Date().toISOString() })
-          .eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("panel_tabs_config")
-          .insert({
-            panel_type: panelType as any,
-            tab_key: tabKey,
-            tab_label: tabLabel,
-            is_visible: isVisible,
-            user_id: user.id,
-          });
-        if (error) throw error;
-      }
+      const rows = items.map((item, i) => ({
+        panel_type: panelType as any,
+        tab_key: item.is_divider ? `divider-${i}` : item.tab_key,
+        tab_label: item.is_divider ? "---" : item.tab_label,
+        is_visible: item.is_visible,
+        is_divider: item.is_divider,
+        ordem: i,
+        user_id: user.id,
+      }));
+
+      const { error } = await supabase.from("panel_tabs_config").insert(rows);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["panel-tabs-config"] });
-      toast.success("Configuração salva!");
+      queryClient.invalidateQueries({ queryKey: ["panel-tabs-config-admin"] });
+      toast.success("Ordem e configuração salvas!");
     },
     onError: (err: any) => {
       toast.error(err.message || "Erro ao salvar");
     },
   });
 
-  const isTabVisible = (panelType: string, tabKey: string) => {
-    const config = configs.find(
-      (c) => c.panel_type === panelType && c.tab_key === tabKey
-    );
-    // Admin tabs default to visible, client/employee default to hidden
-    return config ? config.is_visible : panelType === "admin";
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (panelType: string, dropIndex: number) => {
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const items = [...getOrderedItems(panelType)];
+    const [moved] = items.splice(dragIndex, 1);
+    items.splice(dropIndex, 0, moved);
+    
+    // Re-assign ordem
+    const reordered = items.map((item, i) => ({ ...item, ordem: i }));
+    saveMutation.mutate({ panelType, items: reordered });
+    
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleToggle = (panelType: string, index: number, checked: boolean) => {
+    const items = [...getOrderedItems(panelType)];
+    items[index] = { ...items[index], is_visible: checked };
+    saveMutation.mutate({ panelType, items });
+  };
+
+  const handleAddDivider = (panelType: string, afterIndex: number) => {
+    const items = [...getOrderedItems(panelType)];
+    const newDivider: OrderedItem = {
+      tab_key: `divider-${Date.now()}`,
+      tab_label: "---",
+      is_visible: true,
+      is_divider: true,
+      ordem: afterIndex + 1,
+    };
+    items.splice(afterIndex + 1, 0, newDivider);
+    const reordered = items.map((item, i) => ({ ...item, ordem: i }));
+    saveMutation.mutate({ panelType, items: reordered });
+  };
+
+  const handleRemoveDivider = (panelType: string, index: number) => {
+    const items = [...getOrderedItems(panelType)];
+    items.splice(index, 1);
+    const reordered = items.map((item, i) => ({ ...item, ordem: i }));
+    saveMutation.mutate({ panelType, items: reordered });
   };
 
   return (
@@ -96,7 +193,7 @@ export default function ConfigurarPaineis() {
           Configurar Painéis
         </h1>
         <p className="text-muted-foreground">
-          Defina quais abas serão visíveis no painel de cada tipo de usuário
+          Defina quais abas serão visíveis, a ordem e divisórias do menu lateral
         </p>
       </div>
 
@@ -120,32 +217,71 @@ export default function ConfigurarPaineis() {
           <TabsContent key={panelType} value={panelType}>
             <Card className="p-6">
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Ative ou desative as abas que serão visíveis no painel do{" "}
-                  {panelType === "cliente" ? "cliente" : "funcionário"}.
-                </p>
-                <div className="grid gap-3">
-                  {availableTabs.map((tab) => (
-                    <div
-                      key={tab.key}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                    >
-                      <Label htmlFor={`${panelType}-${tab.key}`} className="cursor-pointer font-medium">
-                        {tab.label}
-                      </Label>
-                      <Switch
-                        id={`${panelType}-${tab.key}`}
-                        checked={isTabVisible(panelType, tab.key)}
-                        onCheckedChange={(checked) =>
-                          toggleMutation.mutate({
-                            panelType,
-                            tabKey: tab.key,
-                            tabLabel: tab.label,
-                            isVisible: checked,
-                          })
-                        }
-                        disabled={isLoading}
-                      />
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Arraste para reordenar. Use o botão <Plus className="inline h-3 w-3" /> para adicionar divisórias.
+                  </p>
+                </div>
+                <div className="grid gap-1">
+                  {getOrderedItems(panelType).map((item, index) => (
+                    <div key={`${item.tab_key}-${index}`}>
+                      {item.is_divider ? (
+                        <div
+                          draggable
+                          onDragStart={() => handleDragStart(index)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={() => handleDrop(panelType, index)}
+                          onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30 cursor-grab active:cursor-grabbing transition-all",
+                            dragOverIndex === index && "border-primary bg-primary/10"
+                          )}
+                        >
+                          <GripVertical className="h-4 w-4 text-muted-foreground/50" />
+                          <Minus className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground flex-1">Divisória</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => handleRemoveDivider(panelType, index)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div
+                          draggable
+                          onDragStart={() => handleDragStart(index)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={() => handleDrop(panelType, index)}
+                          onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                          className={cn(
+                            "flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-all cursor-grab active:cursor-grabbing",
+                            dragOverIndex === index && "border-primary bg-primary/10",
+                            dragIndex === index && "opacity-50"
+                          )}
+                        >
+                          <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                          <Label className="cursor-grab font-medium flex-1">
+                            {item.tab_label}
+                          </Label>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            title="Adicionar divisória abaixo"
+                            onClick={() => handleAddDivider(panelType, index)}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </Button>
+                          <Switch
+                            checked={item.tab_key === "paineis" ? true : item.is_visible}
+                            onCheckedChange={(checked) => handleToggle(panelType, index, checked)}
+                            disabled={isLoading || item.tab_key === "paineis"}
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
