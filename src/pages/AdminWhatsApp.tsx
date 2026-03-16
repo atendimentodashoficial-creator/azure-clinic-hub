@@ -1400,6 +1400,15 @@ export default function AdminWhatsApp() {
     const idsToDelete = Array.from(selectedChatIds);
 
     try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+
       // Use backend function (same flow as individual delete) and batch to avoid URL/request limits
       const BATCH_SIZE = 50;
       let totalDeleted = 0;
@@ -1409,6 +1418,7 @@ export default function AdminWhatsApp() {
         const batch = idsToDelete.slice(i, i + BATCH_SIZE);
 
         const { error } = await supabase.functions.invoke("whatsapp-delete-chat", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
           body: { chat_ids: batch },
         });
 

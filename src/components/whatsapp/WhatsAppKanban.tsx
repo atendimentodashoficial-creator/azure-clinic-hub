@@ -947,6 +947,15 @@ export function WhatsAppKanban({
     );
 
     try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+
       // Process in batches of 50 to avoid request size limits
       const BATCH_SIZE = 50;
       const MAX_RETRIES = 3;
@@ -959,6 +968,7 @@ export function WhatsAppKanban({
         for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
           try {
             const { error } = await supabase.functions.invoke("whatsapp-delete-chat", {
+              headers: { Authorization: `Bearer ${session.access_token}` },
               body: { chat_ids },
             });
 
