@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play, ChevronRight, ShieldCheck, Copy, ExternalLink, RotateCcw, Settings } from "lucide-react";
+import { Plus, MoreVertical, GripVertical, Calendar, Trash2, ListChecks, Building2, User, Users, DollarSign, Video, Play, ChevronRight, ShieldCheck, Copy, ExternalLink, RotateCcw, Settings, Clock } from "lucide-react";
 const TiposTarefas = lazy(() => import("@/pages/TiposTarefas"));
 import { TipoTarefa } from "@/hooks/useTiposTarefas";
 import { format } from "date-fns";
@@ -395,6 +395,11 @@ function TarefaCardContent({ tarefa, colunas, clientes, membrosNomes, reunioesMa
               )}
             </div>
           </div>
+
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5 flex items-center gap-1">
+            <Clock className="h-2.5 w-2.5" />
+            Atribuída em {format(new Date(tarefa.created_at), "dd/MM/yyyy 'às' HH:mm")}
+          </p>
 
           {/* Always show meeting info, even in "A Fazer" for employees */}
           {reuniao && (
