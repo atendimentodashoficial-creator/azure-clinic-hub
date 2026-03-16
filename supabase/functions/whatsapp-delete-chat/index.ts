@@ -63,7 +63,12 @@ serve(async (req) => {
     }
 
     if (!chats || chats.length === 0) {
-      throw new Error("No chats found");
+      // Already deleted - return success (idempotent)
+      console.log("No chats found - already deleted, returning success");
+      return new Response(
+        JSON.stringify({ success: true, deleted: 0, already_deleted: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Compute last 8 digits for each selected chat to create deletion tombstones
