@@ -44,7 +44,7 @@ export const navigation = [
   { name: "Reuniões", href: "/admin/reunioes", icon: Video },
   { name: "Tarefas", href: "/admin/tarefas", icon: ListChecks },
   { name: "Produtos", href: "/admin/produtos-tarefas", icon: Package },
-  { name: "Clientes *", href: "/admin/tarefas-clientes", icon: Building2 },
+  { name: "Clientes", href: "/admin/tarefas-clientes", icon: Building2 },
   { name: "Equipe", href: "/admin/equipe", icon: UsersRound },
   { name: "Financeiro", href: "/admin/financeiro", icon: DollarSign },
   { name: "Painéis", href: "/admin/paineis", icon: Settings2 },
