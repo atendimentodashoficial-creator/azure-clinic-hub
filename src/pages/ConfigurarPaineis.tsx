@@ -82,7 +82,7 @@ export default function ConfigurarPaineis() {
     
     if (panelConfigs.length === 0) {
       // No config saved yet - use defaults
-      return defaultTabs.map((tab, i) => ({
+      return getDefaultTabsForPanel(panelType).map((tab, i) => ({
         tab_key: tab.key,
         tab_label: tab.label,
         is_visible: panelType === "admin",
