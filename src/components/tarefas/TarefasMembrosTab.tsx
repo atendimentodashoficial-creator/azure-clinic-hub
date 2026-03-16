@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTarefasMembros, TarefaMembro } from "@/hooks/useTarefasMembros";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
