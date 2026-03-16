@@ -138,12 +138,6 @@ export default function TarefasClientesTab() {
           )}
         </TabsContent>
       </Tabs>
-
-      <ClienteTarefasDialog
-        cliente={clienteDetalhe}
-        open={!!clienteDetalhe}
-        onClose={() => setClienteDetalhe(null)}
-      />
     </div>
   );
 }
