@@ -1137,6 +1137,54 @@ export function WhatsAppKanban({
           </Button>
         )}
 
+        {/* Auto-move on first reply */}
+        <div className="flex items-center gap-1.5">
+          <ArrowRightCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <Select value={autoMoveColumnId} onValueChange={saveAutoMoveColumn}>
+            <SelectTrigger className="w-[175px] h-8 text-xs">
+              <SelectValue placeholder="Mover na 1ª resposta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem auto-movimentação</SelectItem>
+              {columns.map(col => (
+                <SelectItem key={col.id} value={col.id}>
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: col.cor }}
+                    />
+                    {col.nome}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Auto-move on meeting scheduled */}
+        <div className="flex items-center gap-1.5">
+          <Calendar className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <Select value={autoMoveReuniaoColumnId} onValueChange={saveAutoMoveReuniaoColumn}>
+            <SelectTrigger className="w-[175px] h-8 text-xs">
+              <SelectValue placeholder="Mover ao agendar reunião" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem mover em reunião</SelectItem>
+              {columns.map(col => (
+                <SelectItem key={col.id} value={col.id}>
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: col.cor }}
+                    />
+                    {col.nome}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="flex-1" />
         
         <span className="text-sm text-muted-foreground">
