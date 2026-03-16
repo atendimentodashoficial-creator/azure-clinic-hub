@@ -87,9 +87,9 @@ export default function FuncionarioDashboard() {
     return tarefas
       .filter((t: any) => {
         const col = t.tarefas_colunas?.nome?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-        return col !== "concluido" && t.data_entrega;
+        return col !== "concluido" && t.data_limite;
       })
-      .sort((a: any, b: any) => new Date(a.data_entrega).getTime() - new Date(b.data_entrega).getTime())
+      .sort((a: any, b: any) => new Date(a.data_limite).getTime() - new Date(b.data_limite).getTime())
       .slice(0, 5);
   }, [tarefas]);
 
