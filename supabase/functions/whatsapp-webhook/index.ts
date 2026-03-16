@@ -1422,6 +1422,31 @@ Deno.serve(async (req) => {
                 } else {
                   console.log('Saved first WhatsApp message with UTM:', messageId, hasEarlyUtm ? earlyUtmData : '(no UTM)');
                 }
+
+                // Auto-move new chat to kanban column on first message
+                if (!isFromMe && !wasSentByApi && !isOutboundBySender) {
+                  try {
+                    const { data: waKanbanConfig } = await supabase
+                      .from('whatsapp_kanban_config')
+                      .select('auto_move_column_id')
+                      .eq('user_id', effectiveUserId)
+                      .maybeSingle();
+
+                    if (waKanbanConfig?.auto_move_column_id && chatIdForMessage) {
+                      await supabase
+                        .from('whatsapp_chat_kanban')
+                        .upsert({
+                          user_id: effectiveUserId,
+                          chat_id: chatIdForMessage,
+                          column_id: waKanbanConfig.auto_move_column_id,
+                          first_reply_moved: true,
+                        }, { onConflict: 'chat_id' });
+                      console.log('[WA-AutoMove] New chat (tombstone) auto-moved to column', waKanbanConfig.auto_move_column_id);
+                    }
+                  } catch (e) {
+                    console.error('[WA-AutoMove] Error on new chat (tombstone):', e);
+                  }
+                }
               }
               
               // NOTE: Do NOT return here - we must continue to lead creation logic below
