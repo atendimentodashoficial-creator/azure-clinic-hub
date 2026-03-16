@@ -1080,7 +1080,9 @@ Deno.serve(async (req) => {
         // If there's no instance param => WhatsApp.
         // If there IS an instance param => it's Disparos, unless it matches the configured main WhatsApp instance.
         const shouldUpdateWhatsApp = !effectiveHasInstanceParam || isMainWhatsAppInstance;
-        const shouldUpdateDisparos = effectiveHasInstanceParam && !isMainWhatsAppInstance;
+        // Always update disparos_chats when the instance was resolved from disparos_instancias,
+        // even if it's also the main WhatsApp instance. This ensures messages appear in both tabs.
+        const shouldUpdateDisparos = Boolean(instanciaId);
         if (shouldUpdateWhatsApp) {
           const { data: existingChats } = await supabase
             .from('whatsapp_chats')
