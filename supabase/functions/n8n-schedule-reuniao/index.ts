@@ -112,6 +112,22 @@ Deno.serve(async (req) => {
 
       const membroIds = tipoMembros.map((tm: any) => tm.membro_id);
 
+      // Filter members by cargo (e.g. "Closer")
+      const { data: membrosComCargo } = await supabase
+        .from("tarefas_membros")
+        .select("id")
+        .in("id", membroIds)
+        .ilike("cargo", cargoFilter);
+
+      const membroIdsFiltrados = (membrosComCargo || []).map((m: any) => m.id);
+
+      if (membroIdsFiltrados.length === 0) {
+        return new Response(JSON.stringify({ error: `Nenhum profissional com cargo "${cargoFilter}" vinculado a este tipo de reunião` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Check availability for each member
       const startDate2 = new Date(data_hora);
       const endDate2 = new Date(startDate2.getTime() + duracaoFinal * 60 * 1000);
