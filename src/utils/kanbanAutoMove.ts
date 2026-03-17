@@ -6,10 +6,12 @@ import { getLast8Digits } from "@/utils/phoneFormat";
  * Works for both admin and funcionário contexts by accepting the effective userId.
  */
 export async function autoMoveKanbanOnReuniao(userId: string, telefone: string) {
-  await Promise.all([
+  console.log("[KanbanAutoMove] Starting auto-move for userId:", userId, "telefone:", telefone);
+  const results = await Promise.allSettled([
     autoMoveWhatsAppKanbanOnReuniao(userId, telefone),
     autoMoveDisparosKanbanOnReuniao(userId, telefone),
   ]);
+  console.log("[KanbanAutoMove] Results:", results.map((r, i) => `${i === 0 ? 'WA' : 'Disparos'}: ${r.status}${r.status === 'rejected' ? ' - ' + r.reason : ''}`));
 }
 
 async function autoMoveWhatsAppKanbanOnReuniao(userId: string, telefone: string) {
