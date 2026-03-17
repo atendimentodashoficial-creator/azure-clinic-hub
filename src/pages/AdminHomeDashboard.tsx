@@ -301,54 +301,52 @@ export default function AdminHomeDashboard() {
               </CardContent>
             </Card>
 
-            {/* Reuniões Hoje */}
+            {/* Próximas Reuniões */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Video className="h-4 w-4" />
-                  Reuniões Hoje
-                  {stats.reunioesHoje.length > 0 && (
-                    <Badge variant="secondary" className="ml-auto">{stats.reunioesHoje.length}</Badge>
+                  Próximas Reuniões
+                  {stats.proximasReunioes.length > 0 && (
+                    <Badge variant="secondary" className="ml-auto">{stats.proximasReunioes.length}</Badge>
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {stats.reunioesHoje.length > 0 ? (
-                  stats.reunioesHoje.map(r => (
-                    <div key={r.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer" onClick={() => navigate("/admin/reunioes")}>
-                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <Video className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{r.titulo}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(r.data_reuniao), "HH:mm", { locale: ptBR })}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-sm text-center py-6">Nenhuma reunião hoje</p>
-                )}
+              <CardContent className="space-y-2">
+                {stats.proximasReunioes.length > 0 ? (
+                  stats.proximasReunioes.map(r => {
+                    const d = new Date(r.data_reuniao);
+                    const hoje = isToday(d);
+                    const amanha = isTomorrow(d);
+                    const dateLabel = hoje
+                      ? "Hoje"
+                      : amanha
+                        ? "Amanhã"
+                        : format(d, "dd/MM", { locale: ptBR });
 
-                {stats.reunioesAmanha.length > 0 && (
-                  <>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2">Amanhã</p>
-                    {stats.reunioesAmanha.slice(0, 3).map(r => (
-                      <div key={r.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate("/admin/reunioes")}>
-                        <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                          <Video className="h-4 w-4 text-muted-foreground" />
+                    return (
+                      <div key={r.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer" onClick={() => navigate("/admin/reunioes")}>
+                        <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", hoje ? "bg-primary/10" : "bg-muted")}>
+                          <Video className={cn("h-4 w-4", hoje ? "text-primary" : "text-muted-foreground")} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate">{r.titulo}</p>
                           <p className="text-xs text-muted-foreground">
-                            {format(new Date(r.data_reuniao), "HH:mm", { locale: ptBR })}
+                            {dateLabel} · {format(d, "HH:mm", { locale: ptBR })}
                           </p>
                         </div>
+                        {hoje && <Badge variant="default" className="text-[10px] px-1.5 py-0 shrink-0">Hoje</Badge>}
                       </div>
-                    ))}
-                  </>
+                    );
+                  })
+                ) : (
+                  <p className="text-muted-foreground text-sm text-center py-6">Nenhuma reunião agendada</p>
                 )}
+                <div className="pt-1 text-right">
+                  <button className="text-xs text-primary hover:underline inline-flex items-center gap-1" onClick={() => navigate("/admin/reunioes")}>
+                    Ver todas <ArrowRight className="h-3 w-3" />
+                  </button>
+                </div>
               </CardContent>
             </Card>
           </div>
