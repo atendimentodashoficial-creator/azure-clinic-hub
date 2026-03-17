@@ -70,29 +70,38 @@ Deno.serve(async (req) => {
 
     // 4. Calculate date range (in Brasilia timezone)
     const now = new Date();
-    const brasiliaOffset = -3 * 60;
-    const utcOffset = now.getTimezoneOffset();
-    const brasiliaTime = new Date(now.getTime() + (utcOffset + brasiliaOffset) * 60000);
-    
-    const startDate = data_inicio 
-      ? new Date(data_inicio + "T00:00:00") 
-      : new Date(brasiliaTime.getFullYear(), brasiliaTime.getMonth(), brasiliaTime.getDate());
-    
-    const endDate = data_fim 
-      ? new Date(data_fim + "T23:59:59") 
-      : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    // Get current time in Brasilia using Intl
+    const brasiliaFormatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    });
+    const brasiliaParts = brasiliaFormatter.formatToParts(now);
+    const bp: Record<string, string> = {};
+    for (const p of brasiliaParts) bp[p.type] = p.value;
+    const brasiliaTime = new Date(
+      Number(bp.year), Number(bp.month) - 1, Number(bp.day),
+      Number(bp.hour), Number(bp.minute)
+    );
 
-    // 5. Get escalas for all members
-    const { data: escalas } = await supabase
-      .from("escalas_membros")
-      .select("*")
-      .in("membro_id", membroIds)
-      .eq("ativo", true);
+    const startStr = data_inicio && /^\d{4}-\d{2}-\d{2}$/.test(data_inicio)
+      ? data_inicio
+      : `${bp.year}-${bp.month}-${bp.day}`;
+
+    const endStr = data_fim && /^\d{4}-\d{2}-\d{2}$/.test(data_fim)
+      ? data_fim
+      : (() => {
+          const d = new Date(Number(bp.year), Number(bp.month) - 1, Number(bp.day));
+          d.setDate(d.getDate() + 7);
+          return formatDate(d);
+        })();
+
+    const startDate = new Date(startStr + "T00:00:00");
+    const endDate = new Date(endStr + "T23:59:59");
+
+    // 5. Get escalas for all members  (moved before usage)
 
     // 6. Get ausencias for all members in the period
-    const startStr = formatDate(startDate);
-    const endStr = formatDate(endDate);
-
     const { data: ausencias } = await supabase
       .from("ausencias_membros")
       .select("*")
@@ -100,9 +109,9 @@ Deno.serve(async (req) => {
       .lte("data_inicio", endStr)
       .gte("data_fim", startStr);
 
-    // 7. Get existing reunioes in the period for these members (profissional_id = membro_id)
-    const startISO = new Date(startStr + "T00:00:00-03:00").toISOString();
-    const endISO = new Date(endStr + "T23:59:59-03:00").toISOString();
+    // 7. Get existing reunioes in the period for these members
+    const startISO = new Date(startStr + "T03:00:00Z").toISOString();
+    const endISO = new Date(endStr + "T02:59:59Z").toISOString();
 
     const { data: reunioesExistentes } = await supabase
       .from("reunioes")
