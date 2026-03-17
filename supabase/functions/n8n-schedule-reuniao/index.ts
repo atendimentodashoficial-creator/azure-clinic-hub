@@ -23,7 +23,11 @@ Deno.serve(async (req) => {
       cliente_nome,
       cliente_telefone,
       titulo,
+      cargo_filtro,
     } = await req.json();
+
+    // Default: only consider "Closer" members
+    const cargoFilter = cargo_filtro || "Closer";
 
     // Validações
     if (!tipo_reuniao_id && !membro_id) {
