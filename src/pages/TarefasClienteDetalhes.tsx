@@ -386,58 +386,12 @@ export default function TarefasClienteDetalhes() {
 
         {/* ── Financeiro ── */}
         <TabsContent value="financeiro">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-            {[
-              { label: "Valor do Contrato", value: formatCurrency(financeiro.valorContrato), icon: <DollarSign className="h-4 w-4" /> },
-              { label: "Total Comissões", value: formatCurrency(financeiro.totalComissoes), icon: <DollarSign className="h-4 w-4" /> },
-              { label: "Comissões Pendentes", value: formatCurrency(financeiro.comissoesPendentes), icon: <Clock className="h-4 w-4" /> },
-              { label: "Comissões Aprovadas", value: formatCurrency(financeiro.comissoesAprovadas), icon: <CheckCircle2 className="h-4 w-4" /> },
-            ].map(item => (
-              <Card key={item.label} className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                  {item.icon}
-                  <span className="text-xs">{item.label}</span>
-                </div>
-                <p className="text-lg font-bold">{item.value}</p>
-              </Card>
-            ))}
-          </div>
-
-          {comissoes.length > 0 ? (
-            <Card className="overflow-hidden">
-              <div className="p-4 border-b">
-                <h3 className="font-semibold text-sm">Histórico de Comissões</h3>
-              </div>
-              <div className="divide-y">
-                {comissoes.map((c: any) => {
-                  const tarefa = clienteTarefas.find(t => t.id === c.tarefa_id);
-                  return (
-                    <div key={c.id} className="p-4 flex items-center justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{tarefa?.titulo || "Tarefa removida"}</p>
-                        <p className="text-xs text-muted-foreground">{c.membro_nome} · {new Date(c.created_at).toLocaleDateString("pt-BR")}</p>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <Badge variant={c.status === "aprovado" ? "default" : "secondary"} className="text-xs">
-                          {c.status === "aprovado" ? "Aprovado" : "Pendente"}
-                        </Badge>
-                        <span className="text-sm font-semibold">{formatCurrency(c.valor)}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-          ) : (
-            <Card className="p-8 text-center text-muted-foreground">
-              Nenhuma comissão registrada para este cliente
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* ── Cobranças ── */}
-        <TabsContent value="cobrancas">
-          <CobrancasTab clienteId={cliente.id} valorContrato={financeiro.valorContrato} />
+          <ClienteFinanceiroTab
+            clienteId={cliente.id}
+            valorContrato={financeiro.valorContrato}
+            comissoes={comissoes}
+            clienteTarefas={clienteTarefas}
+          />
         </TabsContent>
 
         {/* ── Contrato ── */}
