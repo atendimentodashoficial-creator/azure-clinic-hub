@@ -80,48 +80,61 @@ async function autoMoveWhatsAppKanbanOnReuniao(userId: string, telefone: string)
 
 async function autoMoveDisparosKanbanOnReuniao(userId: string, telefone: string) {
   try {
-    const { data: config } = await supabase
+    const { data: config, error: configErr } = await supabase
       .from("disparos_kanban_config")
       .select("auto_move_reuniao_column_id")
       .eq("user_id", userId)
       .maybeSingle();
 
+    console.log("[Disparos-AutoMove] Config:", config, "Error:", configErr);
+
     const targetColumnId = (config as any)?.auto_move_reuniao_column_id;
-    if (!targetColumnId) return;
+    if (!targetColumnId) {
+      console.log("[Disparos-AutoMove] No target column configured, skipping");
+      return;
+    }
 
     const last8 = getLast8Digits(telefone);
     if (!last8) return;
 
-    const { data: chats } = await supabase
+    console.log("[Disparos-AutoMove] Looking for chats with last8:", last8);
+
+    const { data: chats, error: chatsErr } = await supabase
       .from("disparos_chats")
       .select("id")
       .eq("user_id", userId)
       .is("deleted_at", null)
       .like("normalized_number", `%${last8}`);
 
+    console.log("[Disparos-AutoMove] Found chats:", chats?.length, "Error:", chatsErr);
+
     if (!chats || chats.length === 0) return;
 
     for (const chat of chats) {
-      const { data: entry } = await supabase
+      const { data: entry, error: entryErr } = await supabase
         .from("disparos_chat_kanban")
         .select("id")
         .eq("chat_id", chat.id)
         .maybeSingle();
 
+      console.log("[Disparos-AutoMove] Chat:", chat.id, "Existing kanban entry:", entry, "Error:", entryErr);
+
       if (entry) {
-        await supabase
+        const { error: updateErr } = await supabase
           .from("disparos_chat_kanban")
           .update({ column_id: targetColumnId, updated_at: new Date().toISOString() })
           .eq("id", entry.id);
+        console.log("[Disparos-AutoMove] Updated kanban entry, error:", updateErr);
       } else {
-        await supabase.from("disparos_chat_kanban").insert({
+        const { error: insertErr } = await supabase.from("disparos_chat_kanban").insert({
           user_id: userId,
           chat_id: chat.id,
           column_id: targetColumnId,
         });
+        console.log("[Disparos-AutoMove] Inserted kanban entry, error:", insertErr);
       }
     }
   } catch (err) {
-    console.error("[AutoMove] Error in autoMoveDisparosKanbanOnReuniao:", err);
+    console.error("[Disparos-AutoMove] Error in autoMoveDisparosKanbanOnReuniao:", err);
   }
 }
