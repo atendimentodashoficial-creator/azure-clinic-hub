@@ -240,18 +240,15 @@ export default function Clientes() {
               </Button>
             </>
           ) : (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleSelectionMode}
-                title="Selecionar clientes"
-              >
-                <CheckSquare className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline text-sm">Selecionar</span>
-              </Button>
-              <NovoClienteDialog />
-            </>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleSelectionMode}
+              title="Selecionar clientes"
+            >
+              <CheckSquare className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline text-sm">Selecionar</span>
+            </Button>
           )}
         </div>
       </div>
