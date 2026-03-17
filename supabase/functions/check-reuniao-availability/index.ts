@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     const { data: escalas } = await supabase
       .from("escalas_membros")
       .select("*")
-      .in("membro_id", membroIds)
+      .in("membro_id", membroIdsFiltrados)
       .eq("ativo", true);
 
     // 6. Get ausencias for all members in the period
