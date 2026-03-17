@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       const { data: escalas } = await supabase
         .from("escalas_membros")
         .select("membro_id, hora_inicio, hora_fim")
-        .in("membro_id", membroIds)
+        .in("membro_id", membroIdsFiltrados)
         .eq("ativo", true)
         .eq("dia_semana", dayOfWeek);
 
