@@ -451,6 +451,7 @@ serve(async (req) => {
 
         let deliveredTo: string | null = null;
         let lastError: string | null = null;
+        let sendResult: any = null;
 
         for (const candidate of phoneCandidates) {
           // Send audio BEFORE text if configured
