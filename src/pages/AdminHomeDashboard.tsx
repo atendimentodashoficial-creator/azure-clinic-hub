@@ -144,10 +144,6 @@ export default function AdminHomeDashboard() {
       .sort((a, b) => new Date(a.data_reuniao).getTime() - new Date(b.data_reuniao).getTime())
       .slice(0, 8);
 
-    const reunioesAmanha = reunioes.filter(r => {
-      const d = new Date(r.data_reuniao);
-      return isTomorrow(d);
-    });
 
     return {
       totalTarefas: tarefas.length,
