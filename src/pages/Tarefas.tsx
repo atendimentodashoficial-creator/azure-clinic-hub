@@ -799,30 +799,6 @@ export default function Tarefas() {
         <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
       </div>
 
-      {activeTab === "kanban" && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-[180px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input placeholder="Buscar tarefa..." value={buscaTarefa} onChange={e => setBuscaTarefa(e.target.value)} className="pl-9 h-9" />
-          </div>
-          {isFuncionario && (
-            <Tabs value={filtro} onValueChange={(v) => setFiltro(v as "minhas" | "todas")}>
-              <TabsList>
-                <TabsTrigger value="minhas" className="gap-1.5">
-                  <User className="h-3.5 w-3.5" />
-                  Minhas
-                </TabsTrigger>
-                <TabsTrigger value="todas" className="gap-1.5">
-                  <Users className="h-3.5 w-3.5" />
-                  Todas
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
-          <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />
-        </div>
-      )}
-
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="kanban" className="gap-1.5">
@@ -836,6 +812,30 @@ export default function Tarefas() {
             </TabsTrigger>
           )}
         </TabsList>
+
+        {activeTab === "kanban" && (
+          <div className="flex items-center gap-3 flex-wrap mt-4">
+            <div className="relative flex-1 min-w-[180px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input placeholder="Buscar tarefa..." value={buscaTarefa} onChange={e => setBuscaTarefa(e.target.value)} className="pl-9 h-9" />
+            </div>
+            {isFuncionario && (
+              <Tabs value={filtro} onValueChange={(v) => setFiltro(v as "minhas" | "todas")}>
+                <TabsList>
+                  <TabsTrigger value="minhas" className="gap-1.5">
+                    <User className="h-3.5 w-3.5" />
+                    Minhas
+                  </TabsTrigger>
+                  <TabsTrigger value="todas" className="gap-1.5">
+                    <Users className="h-3.5 w-3.5" />
+                    Todas
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
+            <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />
+          </div>
+        )}
 
         <TabsContent value="kanban" className="mt-4">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
