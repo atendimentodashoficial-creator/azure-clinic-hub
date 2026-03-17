@@ -187,6 +187,18 @@ export function TiposReuniaoConfig() {
           </DialogHeader>
 
           <div className="flex-1 min-h-0 overflow-y-auto space-y-5 pr-1">
+            {editando && (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">ID do Tipo (para integrações)</Label>
+                <div className="flex items-center gap-2">
+                  <Input value={editando.id} readOnly className="font-mono text-xs bg-muted" />
+                  <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => { navigator.clipboard.writeText(editando.id); toast.success("ID copiado!"); }}>
+                    Copiar
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Nome *</Label>
               <Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Reunião de Venda, Onboarding..." />
