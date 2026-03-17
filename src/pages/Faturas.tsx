@@ -115,15 +115,9 @@ export default function Faturas() {
   };
   return <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-2">
-          <FileText className="w-6 h-6" />
-          <h1 className="text-2xl font-bold">Faturas</h1>
-        </div>
-        <Button size="sm" onClick={() => setSelecionarClienteOpen(true)}>
-          <Plus className="h-4 w-4 mr-1 sm:mr-2" />
-          <span className="text-xs sm:text-sm">Nova Fatura</span>
-        </Button>
+      <div className="flex items-center gap-2">
+        <FileText className="w-6 h-6" />
+        <h1 className="text-2xl font-bold">Faturas</h1>
       </div>
 
       {/* Filtros */}
