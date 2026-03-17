@@ -36,7 +36,8 @@ serve(async (req) => {
       });
     }
 
-    const { action, instancia_id, phone_last8 } = await req.json();
+    const body = await req.json();
+    const { action, instancia_id, phone_last8, new_value } = body;
 
     if (!instancia_id || !phone_last8) {
       return new Response(JSON.stringify({ error: "instancia_id e phone_last8 são obrigatórios" }), {
