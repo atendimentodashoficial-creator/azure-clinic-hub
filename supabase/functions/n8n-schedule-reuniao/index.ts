@@ -421,3 +421,13 @@ function formatDate(d: Date): string {
   const day = d.getDate().toString().padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+function formatTime(d: Date): string {
+  // Convert to Brasilia time (UTC-3) for comparison with escalas
+  const brasiliaOffset = -3 * 60;
+  const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
+  const brasiliaDate = new Date(utcMs + brasiliaOffset * 60000);
+  const h = brasiliaDate.getHours().toString().padStart(2, "0");
+  const min = brasiliaDate.getMinutes().toString().padStart(2, "0");
+  return `${h}:${min}`;
+}
