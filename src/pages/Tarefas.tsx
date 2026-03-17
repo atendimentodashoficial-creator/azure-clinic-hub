@@ -531,6 +531,7 @@ export default function Tarefas() {
   const [detalheTarefa, setDetalheTarefa] = useState<Tarefa | null>(null);
   const isFuncionario = role === "funcionario";
   const [filtro, setFiltro] = useState<"minhas" | "todas">(isFuncionario ? "minhas" : "todas");
+  const [buscaTarefa, setBuscaTarefa] = useState("");
 
   // lastColOrdem removed - using name-based column detection now
 
