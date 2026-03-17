@@ -155,48 +155,71 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
           Nenhuma cobrança encontrada
         </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {filtered.map(c => {
             const cfg = statusConfig[c.status] || statusConfig.pendente;
+            const isOverdue = c.status === "atrasado";
             return (
-              <Card key={c.id} className="p-4 flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm font-medium truncate">{c.descricao}</p>
-                    <Badge variant="outline" className="text-xs shrink-0">
-                      {c.tipo === "mrr" ? "MRR" : "Único"}
-                    </Badge>
-                    {c.recorrencia_ativa && (
-                      <Badge variant="secondary" className="text-xs shrink-0 gap-1">
-                        <RefreshCw className="h-3 w-3" /> Auto
+              <Card
+                key={c.id}
+                className={`p-4 transition-colors hover:border-primary/30 ${isOverdue ? "border-destructive/30 bg-destructive/5" : ""}`}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  {/* Left: info */}
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold truncate">{c.descricao}</p>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0 font-medium">
+                        {c.tipo === "mrr" ? "MRR" : "Único"}
                       </Badge>
+                      {c.recorrencia_ativa && (
+                        <Badge className="text-[10px] px-1.5 py-0 shrink-0 gap-0.5 bg-secondary text-secondary-foreground">
+                          <RefreshCw className="h-2.5 w-2.5" /> Auto
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Venc: {formatDate(c.data_vencimento)}
+                      </span>
+                      {c.data_pagamento && (
+                        <span className="flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Pago: {formatDate(c.data_pagamento)}
+                        </span>
+                      )}
+                      {c.metodo_pagamento && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                          {metodoLabels[c.metodo_pagamento] || c.metodo_pagamento}
+                        </Badge>
+                      )}
+                    </div>
+                    {c.observacoes && (
+                      <p className="text-xs text-muted-foreground/70 truncate max-w-md italic">{c.observacoes}</p>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                    <span>Venc: {formatDate(c.data_vencimento)}</span>
-                    {c.data_pagamento && <span>Pago: {formatDate(c.data_pagamento)}</span>}
-                    {c.metodo_pagamento && <span>{metodoLabels[c.metodo_pagamento] || c.metodo_pagamento}</span>}
-                    {c.observacoes && <span className="truncate max-w-[200px]">{c.observacoes}</span>}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Badge variant={cfg.variant} className="text-xs gap-1">
-                    {cfg.icon}
-                    {cfg.label}
-                  </Badge>
-                  <span className="text-sm font-bold whitespace-nowrap">{formatCurrency(c.valor)}</span>
-                  <div className="flex items-center gap-0.5">
-                    {c.status === "pendente" && (
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" onClick={() => handleMarcarPago(c)} title="Marcar como pago">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
+
+                  {/* Right: status + value + actions */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <Badge variant={cfg.variant} className="text-xs gap-1 px-2 py-0.5">
+                      {cfg.icon}
+                      {cfg.label}
+                    </Badge>
+                    <span className="text-base font-bold whitespace-nowrap tabular-nums">{formatCurrency(c.valor)}</span>
+                    <div className="flex items-center gap-0.5 border-l pl-2 border-border">
+                      {c.status === "pendente" && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => handleMarcarPago(c)} title="Marcar como pago">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditando(c)}>
+                        <Edit className="h-3.5 w-3.5" />
                       </Button>
-                    )}
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditando(c)}>
-                      <Edit className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setExcluirId(c.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setExcluirId(c.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>
