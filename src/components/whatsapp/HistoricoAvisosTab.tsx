@@ -339,7 +339,7 @@ export function HistoricoAvisosTab() {
                   placeholder="Buscar por cliente ou aviso..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 h-9"
                 />
               </div>
             </div>
