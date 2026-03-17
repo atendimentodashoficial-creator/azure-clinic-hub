@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { tipo_reuniao_id, data_inicio, data_fim, intervalo_minutos } = await req.json();
+    const { tipo_reuniao_id, data_inicio, data_fim, intervalo_minutos, cargo_filtro } = await req.json();
 
     if (!tipo_reuniao_id) {
       return new Response(JSON.stringify({ error: "tipo_reuniao_id é obrigatório" }), {
@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
     const parsedStep = Number(intervalo_minutos);
     const step = Number.isFinite(parsedStep) ? Math.min(60, Math.max(15, parsedStep)) : 30;
     const userId = tipoReuniao.user_id;
+    const cargoFilterNormalized = normalizeText(cargo_filtro || "Closer");
 
     // 2. Get members linked to this tipo_reuniao
     const { data: tipoMembros } = await supabase
@@ -64,11 +65,29 @@ Deno.serve(async (req) => {
 
     const membroIds = tipoMembros.map((tm: any) => tm.membro_id);
 
-    // 3. Get member info
+    // 3. Get member info + cargo filter (default: Closer)
     const { data: membros } = await supabase
       .from("tarefas_membros")
       .select("id, nome, cargo, email")
       .in("id", membroIds);
+
+    const membrosFiltradosPorCargo = (membros || []).filter((m: any) => {
+      if (!cargoFilterNormalized) return true;
+      return normalizeText(m?.cargo) === cargoFilterNormalized;
+    });
+
+    if (membrosFiltradosPorCargo.length === 0) {
+      return new Response(JSON.stringify({
+        tipo_reuniao: tipoReuniao.nome,
+        duracao_minutos: duracaoMinutos,
+        dias: [],
+        message: `Nenhum profissional com cargo "${cargo_filtro || "Closer"}" vinculado a este tipo de reunião`
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const membroIdsFiltrados = membrosFiltradosPorCargo.map((m: any) => m.id);
 
     // 4. Calculate date range (in Brasilia timezone)
     const now = new Date();
@@ -105,14 +124,14 @@ Deno.serve(async (req) => {
     const { data: escalas } = await supabase
       .from("escalas_membros")
       .select("*")
-      .in("membro_id", membroIds)
+      .in("membro_id", membroIdsFiltrados)
       .eq("ativo", true);
 
     // 6. Get ausencias for all members in the period
     const { data: ausencias } = await supabase
       .from("ausencias_membros")
       .select("*")
-      .in("membro_id", membroIds)
+      .in("membro_id", membroIdsFiltrados)
       .lte("data_inicio", endStr)
       .gte("data_fim", startStr);
 
@@ -137,7 +156,7 @@ Deno.serve(async (req) => {
     // 8. Build aggregated availability (sem identificar profissionais)
     const diasMap = new Map<string, { dia_semana: string; horarios: Set<string> }>();
 
-    for (const membro of (membros || [])) {
+    for (const membro of membrosFiltradosPorCargo) {
       const membroEscalas = (escalas || []).filter((e: any) => e.membro_id === membro.id);
       const membroAusencias = (ausencias || []).filter((a: any) => a.membro_id === membro.id);
       const membroReunioes = (reunioesExistentes || []).filter((r: any) => r.profissional_id === membro.id);
@@ -253,4 +272,12 @@ function formatDateFromISO(d: Date): string {
     year: "numeric", month: "2-digit", day: "2-digit",
   });
   return fmt.format(d);
+}
+
+function normalizeText(value: unknown): string {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
 }
