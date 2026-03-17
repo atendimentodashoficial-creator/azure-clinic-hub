@@ -39,6 +39,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Rejeitar horários no passado
+    const agora = new Date();
+    const dataHoraSolicitada = new Date(data_hora);
+    if (dataHoraSolicitada.getTime() <= agora.getTime()) {
+      return new Response(JSON.stringify({ error: "Não é possível agendar em horários que já passaram" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // 1. Resolve tipo_reuniao and owner
     let tipoReuniao: any = null;
     let ownerUserId: string;
