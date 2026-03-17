@@ -16,45 +16,61 @@ export async function autoMoveKanbanOnReuniao(userId: string, telefone: string) 
 
 async function autoMoveWhatsAppKanbanOnReuniao(userId: string, telefone: string) {
   try {
-    const { data: config } = await supabase
+    const { data: config, error: configErr } = await supabase
       .from("whatsapp_kanban_config")
       .select("auto_move_reuniao_column_id")
       .eq("user_id", userId)
       .maybeSingle();
 
+    console.log("[WA-AutoMove] Config:", config, "Error:", configErr);
+
     const targetColumnId = (config as any)?.auto_move_reuniao_column_id;
-    if (!targetColumnId) return;
+    if (!targetColumnId) {
+      console.log("[WA-AutoMove] No target column configured, skipping");
+      return;
+    }
 
     const last8 = getLast8Digits(telefone);
-    if (!last8) return;
+    if (!last8) {
+      console.log("[WA-AutoMove] Could not extract last 8 digits from:", telefone);
+      return;
+    }
 
-    const { data: chats } = await supabase
+    console.log("[WA-AutoMove] Looking for chats with last8:", last8);
+
+    const { data: chats, error: chatsErr } = await supabase
       .from("whatsapp_chats")
       .select("id")
       .eq("user_id", userId)
       .is("deleted_at", null)
       .like("normalized_number", `%${last8}`);
 
+    console.log("[WA-AutoMove] Found chats:", chats?.length, "Error:", chatsErr);
+
     if (!chats || chats.length === 0) return;
 
     for (const chat of chats) {
-      const { data: entry } = await supabase
+      const { data: entry, error: entryErr } = await supabase
         .from("whatsapp_chat_kanban")
         .select("id")
         .eq("chat_id", chat.id)
         .maybeSingle();
 
+      console.log("[WA-AutoMove] Chat:", chat.id, "Existing kanban entry:", entry, "Error:", entryErr);
+
       if (entry) {
-        await supabase
+        const { error: updateErr } = await supabase
           .from("whatsapp_chat_kanban")
           .update({ column_id: targetColumnId, updated_at: new Date().toISOString() })
           .eq("id", entry.id);
+        console.log("[WA-AutoMove] Updated kanban entry, error:", updateErr);
       } else {
-        await supabase.from("whatsapp_chat_kanban").insert({
+        const { error: insertErr } = await supabase.from("whatsapp_chat_kanban").insert({
           user_id: userId,
           chat_id: chat.id,
           column_id: targetColumnId,
         });
+        console.log("[WA-AutoMove] Inserted kanban entry, error:", insertErr);
       }
     }
   } catch (err) {
