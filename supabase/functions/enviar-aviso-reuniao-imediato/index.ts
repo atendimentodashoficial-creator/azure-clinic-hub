@@ -483,7 +483,7 @@ serve(async (req) => {
           });
 
           const responseText = await sendResponse.text();
-          let sendResult: any = null;
+          sendResult = null;
           try {
             sendResult = responseText ? JSON.parse(responseText) : null;
           } catch {
