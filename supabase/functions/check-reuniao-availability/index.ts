@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ 
         tipo_reuniao: tipoReuniao.nome,
         duracao_minutos: duracaoMinutos,
-        membros: [],
+        dias: [],
         message: "Nenhum profissional vinculado a este tipo de reunião" 
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
