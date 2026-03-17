@@ -156,7 +156,7 @@ export default function Reunioes() {
       const { data, error } = await supabase
         .from("reunioes" as any)
         .select("*, profissionais(nome), leads:cliente_id(nome, telefone), tipos_reuniao:tipo_reuniao_id(nome)")
-        .or("google_event_id.not.is.null,status.eq.agendado")
+        .or("google_event_id.not.is.null,status.eq.agendado,status.eq.nao_compareceu,status.eq.realizada,status.eq.confirmado,status.eq.cancelado,status.eq.resumido,status.eq.transcrito")
         .order("data_reuniao", { ascending: false });
       
       if (error) throw error;
