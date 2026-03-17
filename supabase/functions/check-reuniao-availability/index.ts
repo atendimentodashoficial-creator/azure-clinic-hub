@@ -133,52 +133,43 @@ Deno.serve(async (req) => {
       .gte("data_reuniao", startISO)
       .lte("data_reuniao", endISO);
 
-    // 8. Build availability per member
-    const result: any[] = [];
+    // 8. Build aggregated availability (sem identificar profissionais)
+    const diasMap = new Map<string, { dia_semana: string; horarios: Set<string> }>();
 
     for (const membro of (membros || [])) {
       const membroEscalas = (escalas || []).filter((e: any) => e.membro_id === membro.id);
       const membroAusencias = (ausencias || []).filter((a: any) => a.membro_id === membro.id);
       const membroReunioes = (reunioesExistentes || []).filter((r: any) => r.profissional_id === membro.id);
 
-      const diasDisponiveis: any[] = [];
-
-      // Iterate each day in range
       const currentDate = new Date(startDate);
       while (currentDate <= endDate) {
         const dateStr = formatDate(currentDate);
         const diaSemana = currentDate.getDay(); // 0=domingo
 
-        // Check if member has schedule this day
         const escalasDia = membroEscalas.filter((e: any) => e.dia_semana === diaSemana);
-        
         if (escalasDia.length === 0) {
           currentDate.setDate(currentDate.getDate() + 1);
           continue;
         }
 
-        // Check if member is absent this day
-        const estaAusente = membroAusencias.some((a: any) => {
-          return dateStr >= a.data_inicio && dateStr <= a.data_fim;
-        });
-
+        const estaAusente = membroAusencias.some((a: any) => dateStr >= a.data_inicio && dateStr <= a.data_fim);
         if (estaAusente) {
           currentDate.setDate(currentDate.getDate() + 1);
           continue;
         }
 
-        // Get reunioes for this day
         const reunioesDia = membroReunioes.filter((r: any) => {
           const reuniaoDate = new Date(r.data_reuniao);
           return formatDateFromISO(reuniaoDate) === dateStr;
         });
 
-        // Build occupied ranges (in minutes from midnight)
         const occupied = reunioesDia.map((r: any) => {
           const d = new Date(r.data_reuniao);
           const fmt = new Intl.DateTimeFormat("en-CA", {
             timeZone: "America/Sao_Paulo",
-            hour: "2-digit", minute: "2-digit", hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
           });
           const parts = fmt.formatToParts(d);
           const pp: Record<string, string> = {};
@@ -187,9 +178,6 @@ Deno.serve(async (req) => {
           const dur = r.duracao_minutos || duracaoMinutos;
           return { startMin, endMin: startMin + dur };
         });
-
-        // Generate available slots from each escala window
-        const horarios: string[] = [];
 
         for (const escala of escalasDia) {
           const [hI, mI] = escala.hora_inicio.split(":").map(Number);
@@ -200,48 +188,45 @@ Deno.serve(async (req) => {
           for (let t = windowStart; t + duracaoMinutos <= windowEnd; t += step) {
             const slotStart = t;
             const slotEnd = t + duracaoMinutos;
+            const hasConflict = occupied.some((occ: any) => slotStart < occ.endMin && slotEnd > occ.startMin);
+            if (hasConflict) continue;
 
-            // Check overlap with any occupied slot
-            const hasConflict = occupied.some((occ: any) => 
-              slotStart < occ.endMin && slotEnd > occ.startMin
-            );
-
-            if (!hasConflict) {
-              // Skip past times for today
-              if (dateStr === formatDate(brasiliaTime)) {
-                const nowMin = brasiliaTime.getHours() * 60 + brasiliaTime.getMinutes();
-                if (slotStart <= nowMin) continue;
-              }
-
-              const h = Math.floor(t / 60);
-              const m = t % 60;
-              horarios.push(`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`);
+            if (dateStr === formatDate(brasiliaTime)) {
+              const nowMin = brasiliaTime.getHours() * 60 + brasiliaTime.getMinutes();
+              if (slotStart <= nowMin) continue;
             }
-          }
-        }
 
-        if (horarios.length > 0) {
-          diasDisponiveis.push({
-            data: dateStr,
-            dia_semana: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][diaSemana],
-            horarios_disponiveis: horarios,
-          });
+            const h = Math.floor(t / 60);
+            const m = t % 60;
+            const horario = `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+
+            const diaAtual = diasMap.get(dateStr) ?? {
+              dia_semana: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][diaSemana],
+              horarios: new Set<string>(),
+            };
+            diaAtual.horarios.add(horario);
+            diasMap.set(dateStr, diaAtual);
+          }
         }
 
         currentDate.setDate(currentDate.getDate() + 1);
       }
-
-      result.push({
-        dias: diasDisponiveis,
-      });
     }
+
+    const dias = Array.from(diasMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([data, info]) => ({
+        data,
+        dia_semana: info.dia_semana,
+        horarios_disponiveis: Array.from(info.horarios).sort(),
+      }));
 
     return new Response(JSON.stringify({
       tipo_reuniao: tipoReuniao.nome,
       tipo_reuniao_id: tipoReuniao.id,
       duracao_minutos: duracaoMinutos,
       periodo: { inicio: formatDate(startDate), fim: formatDate(endDate) },
-      membros: result,
+      dias,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
