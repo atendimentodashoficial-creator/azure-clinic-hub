@@ -1,3 +1,4 @@
+// v2 - fixed escalas query and timezone handling
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
