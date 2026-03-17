@@ -86,7 +86,6 @@ export default function TarefasClientesTab() {
               Preview
             </TabsTrigger>
           </TabsList>
-          <NovoClienteDialog onSubmit={handleCriar} />
         </div>
 
         <Input placeholder="Buscar cliente..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-sm mt-4" />
