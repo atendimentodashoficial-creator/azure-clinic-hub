@@ -287,8 +287,8 @@ export default function AdminFinanceiro() {
   const FiltersBar = () => (
     <div className="flex items-center gap-3 flex-wrap">
       <div className="relative flex-1 min-w-[180px] max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <Input placeholder="Buscar cobrança..." value={busca} onChange={e => setBusca(e.target.value)} className="pl-9 h-8 text-xs" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Buscar cobrança..." value={busca} onChange={e => setBusca(e.target.value)} className="pl-9 h-9" />
       </div>
       <Select value={periodo} onValueChange={setPeriodo}>
         <SelectTrigger className="w-[160px] h-8 text-xs">

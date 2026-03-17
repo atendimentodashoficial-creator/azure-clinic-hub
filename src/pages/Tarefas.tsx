@@ -816,7 +816,7 @@ export default function Tarefas() {
         {activeTab === "kanban" && (
           <div className="flex items-center gap-3 flex-wrap mt-4">
             <div className="relative flex-1 min-w-[180px] max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Buscar tarefa..." value={buscaTarefa} onChange={e => setBuscaTarefa(e.target.value)} className="pl-9 h-9" />
             </div>
             {isFuncionario && (
