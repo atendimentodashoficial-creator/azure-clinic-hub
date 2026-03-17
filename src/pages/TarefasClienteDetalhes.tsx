@@ -245,7 +245,6 @@ export default function TarefasClienteDetalhes() {
           <TabsTrigger value="geral" className="gap-1.5"><Building2 className="h-4 w-4" />Geral</TabsTrigger>
           <TabsTrigger value="tarefas" className="gap-1.5"><Layers className="h-4 w-4" />Tarefas ({clienteTarefas.length})</TabsTrigger>
           <TabsTrigger value="financeiro" className="gap-1.5"><DollarSign className="h-4 w-4" />Financeiro</TabsTrigger>
-          <TabsTrigger value="cobrancas" className="gap-1.5"><Receipt className="h-4 w-4" />Cobranças</TabsTrigger>
           <TabsTrigger value="contrato" className="gap-1.5"><Paperclip className="h-4 w-4" />Contrato</TabsTrigger>
         </TabsList>
 
