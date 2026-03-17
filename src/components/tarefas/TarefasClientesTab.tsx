@@ -88,7 +88,10 @@ export default function TarefasClientesTab() {
           </TabsList>
         </div>
 
-        <Input placeholder="Buscar cliente..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-sm mt-4" />
+        <div className="flex items-center gap-3 mt-4">
+          <Input placeholder="Buscar cliente..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-sm" />
+          <NovoClienteDialog onSubmit={handleCriar} />
+        </div>
 
         <TabsContent value={subTab} className="mt-4">
           {filtrados.length === 0 ? (
