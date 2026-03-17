@@ -377,10 +377,10 @@ serve(async (req) => {
               console.log(`[SYNC] Skipping ${contactNumber} - no last message timestamp`);
               continue;
             }
-            // Also check if the message is recent (within last 30 days) to avoid old history
-            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-            if (lastMsgTime < thirtyDaysAgo) {
-              console.log(`[SYNC] Skipping ${contactNumber} - last message too old (${lastMsgTime.toISOString()})`);
+            // Only create chats with messages AFTER the instance was connected
+            // This prevents pulling old conversations when connecting a new instance
+            if (lastMsgTime < instanceConnectedDate) {
+              console.log(`[SYNC] Skipping ${contactNumber} - last message (${lastMsgTime.toISOString()}) is before instance connection (${instanceConnectedDate.toISOString()})`);
               continue;
             }
             console.log(`[SYNC] Creating new chat ${contactNumber} from phone sync`);
