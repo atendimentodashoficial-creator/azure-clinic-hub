@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { tipo_reuniao_id, data_inicio, data_fim, intervalo_minutos } = await req.json();
+    const { tipo_reuniao_id, data_inicio, data_fim, intervalo_minutos, cargo_filtro } = await req.json();
 
     if (!tipo_reuniao_id) {
       return new Response(JSON.stringify({ error: "tipo_reuniao_id é obrigatório" }), {
