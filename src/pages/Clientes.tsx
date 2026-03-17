@@ -240,18 +240,15 @@ export default function Clientes() {
               </Button>
             </>
           ) : (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleSelectionMode}
-                title="Selecionar clientes"
-              >
-                <CheckSquare className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline text-sm">Selecionar</span>
-              </Button>
-              <NovoClienteDialog />
-            </>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleSelectionMode}
+              title="Selecionar clientes"
+            >
+              <CheckSquare className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline text-sm">Selecionar</span>
+            </Button>
           )}
         </div>
       </div>
@@ -295,14 +292,17 @@ export default function Clientes() {
             {clientesInPeriod?.length || 0} clientes no período
           </span>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome, telefone ou email..."
-            className="pl-9 h-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, telefone ou email..."
+              className="pl-9 h-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          {!isSelectionMode && <NovoClienteDialog />}
         </div>
       </Card>
 

@@ -441,21 +441,9 @@ export default function Despesas() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Wallet className="w-6 h-6" />
-          <h1 className="text-2xl font-bold text-foreground">Despesas</h1>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setCategoriaDialogOpen(true)} title="Categorias">
-            <Tag className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline text-sm">Categorias</span>
-          </Button>
-          <Button size="sm" onClick={() => handleOpenDialog()}>
-            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="text-xs sm:text-sm">Nova Despesa</span>
-          </Button>
-        </div>
+      <div className="flex items-center gap-2">
+        <Wallet className="w-6 h-6" />
+        <h1 className="text-2xl font-bold text-foreground">Despesas</h1>
       </div>
 
       {/* Filtros */}
@@ -532,14 +520,24 @@ export default function Despesas() {
 
       {/* Search */}
       <Card className="p-4 shadow-card">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por descrição ou categoria..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="pl-9 h-9"
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por descrição ou categoria..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+          <Button variant="outline" size="sm" className="shrink-0" onClick={() => setCategoriaDialogOpen(true)} title="Categorias">
+            <Tag className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline text-sm">Categorias</span>
+          </Button>
+          <Button size="sm" className="shrink-0" onClick={() => handleOpenDialog()}>
+            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="text-xs sm:text-sm">Nova Despesa</span>
+          </Button>
         </div>
       </Card>
 

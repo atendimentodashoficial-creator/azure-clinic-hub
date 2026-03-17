@@ -646,7 +646,7 @@ export default function ProdutosTarefas() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Buscar produto..." value={busca} onChange={e => setBusca(e.target.value)} className="pl-9 h-9" />
         </div>
-        <Button className="gap-2 shrink-0" onClick={() => setDialogState({ mode: "create" })}>
+        <Button size="sm" className="gap-2 shrink-0" onClick={() => setDialogState({ mode: "create" })}>
           <Plus className="h-4 w-4" /> Novo Produto
         </Button>
       </div>

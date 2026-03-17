@@ -115,15 +115,9 @@ export default function Faturas() {
   };
   return <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-2">
-          <FileText className="w-6 h-6" />
-          <h1 className="text-2xl font-bold">Faturas</h1>
-        </div>
-        <Button size="sm" onClick={() => setSelecionarClienteOpen(true)}>
-          <Plus className="h-4 w-4 mr-1 sm:mr-2" />
-          <span className="text-xs sm:text-sm">Nova Fatura</span>
-        </Button>
+      <div className="flex items-center gap-2">
+        <FileText className="w-6 h-6" />
+        <h1 className="text-2xl font-bold">Faturas</h1>
       </div>
 
       {/* Filtros */}
@@ -229,9 +223,15 @@ export default function Faturas() {
 
       {/* Search */}
       <Card className="p-4 shadow-card">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por cliente, telefone ou valor..." className="pl-9 h-9" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar por cliente, telefone ou valor..." className="pl-9 h-9" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          </div>
+          <Button size="sm" className="shrink-0" onClick={() => setSelecionarClienteOpen(true)}>
+            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="text-xs sm:text-sm">Nova Fatura</span>
+          </Button>
         </div>
       </Card>
 
