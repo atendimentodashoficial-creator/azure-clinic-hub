@@ -791,16 +791,21 @@ export default function Tarefas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <ListChecks className="h-6 w-6" />
-            Tarefas
-          </h1>
-          <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {isFuncionario && activeTab === "kanban" && (
+      <div>
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <ListChecks className="h-6 w-6" />
+          Tarefas
+        </h1>
+        <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
+      </div>
+
+      {activeTab === "kanban" && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[180px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input placeholder="Buscar tarefa..." value={buscaTarefa} onChange={e => setBuscaTarefa(e.target.value)} className="pl-9 h-9" />
+          </div>
+          {isFuncionario && (
             <Tabs value={filtro} onValueChange={(v) => setFiltro(v as "minhas" | "todas")}>
               <TabsList>
                 <TabsTrigger value="minhas" className="gap-1.5">
@@ -814,9 +819,9 @@ export default function Tarefas() {
               </TabsList>
             </Tabs>
           )}
-          {activeTab === "kanban" && <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />}
+          <NovaTarefaDialog colunas={colunas} onSubmit={handleCriar} />
         </div>
-      </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
