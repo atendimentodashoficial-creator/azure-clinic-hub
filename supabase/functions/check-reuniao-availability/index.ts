@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
     const { data: ausencias } = await supabase
       .from("ausencias_membros")
       .select("*")
-      .in("membro_id", membroIds)
+      .in("membro_id", membroIdsFiltrados)
       .lte("data_inicio", endStr)
       .gte("data_fim", startStr);
 
