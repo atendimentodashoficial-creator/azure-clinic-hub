@@ -155,15 +155,7 @@ Deno.serve(async (req) => {
         return `${formatDate(d)}T02:59:59.000Z`;
       })();
 
-      const { data: allDayMeetings } = await supabase
-        .from("reunioes")
-        .select("id, data_reuniao, duracao_minutos, profissional_id")
-        .eq("user_id", ownerUserId)
-        .in("status", ["agendado", "confirmado"])
-        .gte("data_reuniao", dayStartISO)
-        .lte("data_reuniao", dayEndISO);
-
-      // For each available member, resolve profissional_id, count meetings, check conflict
+      // For each available member, check conflicts using their effective user_id
       const candidates: { membroId: string; meetingCount: number }[] = [];
 
       for (const mid of membrosDisponiveis) {
@@ -173,28 +165,26 @@ Deno.serve(async (req) => {
           .eq("id", mid)
           .single();
 
-        let profId: string | null = null;
-        if (memberData?.email) {
-          const targetId = memberData?.auth_user_id || ownerUserId;
-          const { data: prof } = await supabase
-            .from("profissionais")
-            .select("id")
-            .eq("user_id", targetId)
-            .eq("email", memberData.email)
-            .maybeSingle();
-          profId = prof?.id || null;
-        }
+        const memberUserId = memberData?.auth_user_id || ownerUserId;
 
-        // Check time conflict for this member
-        const memberMeetings = (allDayMeetings || []).filter((r: any) => r.profissional_id === profId);
-        const hasConflict = memberMeetings.some((r: any) => {
+        // Get this member's meetings for the day using their user_id
+        const { data: memberDayMeetings } = await supabase
+          .from("reunioes")
+          .select("id, data_reuniao, duracao_minutos")
+          .eq("user_id", memberUserId)
+          .in("status", ["agendado", "confirmado"])
+          .gte("data_reuniao", dayStartISO)
+          .lte("data_reuniao", dayEndISO);
+
+        // Check time conflict
+        const hasConflict = (memberDayMeetings || []).some((r: any) => {
           const rStart = new Date(r.data_reuniao).getTime();
           const rEnd = rStart + ((r.duracao_minutos || 60) * 60 * 1000);
           return startDate2.getTime() < rEnd && endDate2.getTime() > rStart;
         });
 
         if (!hasConflict) {
-          candidates.push({ membroId: mid, meetingCount: memberMeetings.length });
+          candidates.push({ membroId: mid, meetingCount: (memberDayMeetings || []).length });
         }
       }
 
