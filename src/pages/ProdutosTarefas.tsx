@@ -632,20 +632,20 @@ export default function ProdutosTarefas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Package className="h-6 w-6" />
-            Produtos
-          </h1>
-          <p className="text-muted-foreground">Configure produtos com templates de tarefas automáticas</p>
-        </div>
-        <Button className="gap-2" onClick={() => setDialogState({ mode: "create" })}>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <Package className="h-6 w-6" />
+          Produtos
+        </h1>
+        <p className="text-muted-foreground">Configure produtos com templates de tarefas automáticas</p>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Input placeholder="Buscar produto..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-sm" />
+        <Button className="gap-2 shrink-0" onClick={() => setDialogState({ mode: "create" })}>
           <Plus className="h-4 w-4" /> Novo Produto
         </Button>
       </div>
-
-      <Input placeholder="Buscar produto..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-sm" />
 
       {filtrados.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">Nenhum produto cadastrado</p>
