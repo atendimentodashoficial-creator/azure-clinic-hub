@@ -141,7 +141,8 @@ export function AvisosReuniaoTab() {
     
     return reunioes
       .filter(r => {
-        if (r.status === 'cancelado') return false;
+        // Excluir reuniões que não estão mais ativas
+        if (r.status !== 'agendado' && r.status !== 'confirmado') return false;
         const dataReuniao = startOfDayBrasilia(toZonedBrasilia(r.data_reuniao));
         return dataReuniao >= hoje && dataReuniao <= em7Dias;
       })
