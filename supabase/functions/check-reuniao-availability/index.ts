@@ -233,8 +233,6 @@ Deno.serve(async (req) => {
 
       result.push({
         membro_id: membro.id,
-        nome: membro.nome,
-        cargo: membro.cargo,
         dias: diasDisponiveis,
       });
     }
