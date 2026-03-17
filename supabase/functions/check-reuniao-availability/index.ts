@@ -96,10 +96,15 @@ Deno.serve(async (req) => {
           return formatDate(d);
         })();
 
-    const startDate = new Date(startStr + "T00:00:00");
-    const endDate = new Date(endStr + "T23:59:59");
+    const startDate = new Date(Number(startStr.slice(0,4)), Number(startStr.slice(5,7)) - 1, Number(startStr.slice(8,10)));
+    const endDate = new Date(Number(endStr.slice(0,4)), Number(endStr.slice(5,7)) - 1, Number(endStr.slice(8,10)), 23, 59, 59);
 
-    // 5. Get escalas for all members  (moved before usage)
+    // 5. Get escalas for all members
+    const { data: escalas } = await supabase
+      .from("escalas_membros")
+      .select("*")
+      .in("membro_id", membroIds)
+      .eq("ativo", true);
 
     // 6. Get ausencias for all members in the period
     const { data: ausencias } = await supabase
@@ -110,8 +115,14 @@ Deno.serve(async (req) => {
       .gte("data_fim", startStr);
 
     // 7. Get existing reunioes in the period for these members
-    const startISO = new Date(startStr + "T03:00:00Z").toISOString();
-    const endISO = new Date(endStr + "T02:59:59Z").toISOString();
+    // Brasilia is UTC-3, so midnight Brasilia = 03:00 UTC
+    const startISO = `${startStr}T03:00:00.000Z`;
+    // End of day in Brasilia = next day 02:59:59 UTC
+    const endISO = (() => {
+      const nextDay = new Date(endDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      return `${formatDate(nextDay)}T02:59:59.000Z`;
+    })();
 
     const { data: reunioesExistentes } = await supabase
       .from("reunioes")
