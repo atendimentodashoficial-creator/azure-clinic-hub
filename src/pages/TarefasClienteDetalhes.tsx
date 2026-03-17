@@ -23,7 +23,7 @@ import {
   Upload, Download, Trash2, Paperclip, Receipt,
 } from "lucide-react";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
-import { CobrancasTab } from "@/components/cobrancas/CobrancasTab";
+import { ClienteFinanceiroTab } from "@/components/cobrancas/ClienteFinanceiroTab";
 
 const colunaIconMap: Record<string, React.ReactNode> = {
   "Concluído": <CheckCircle2 className="h-4 w-4 text-green-500" />,
