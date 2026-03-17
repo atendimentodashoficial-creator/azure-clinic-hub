@@ -166,16 +166,39 @@ Deno.serve(async (req) => {
         const dateStr = formatDate(currentDate);
         const diaSemana = currentDate.getDay(); // 0=domingo
 
-        const escalasDia = membroEscalas.filter((e: any) => e.dia_semana === diaSemana);
-        if (escalasDia.length === 0) {
-          currentDate.setDate(currentDate.getDate() + 1);
-          continue;
-        }
+        // Check substituições (ausencias with hora_inicio/hora_fim = schedule override)
+        const substituicoesDia = membroAusencias.filter((a: any) =>
+          dateStr >= a.data_inicio && dateStr <= a.data_fim
+        );
 
-        const estaAusente = membroAusencias.some((a: any) => dateStr >= a.data_inicio && dateStr <= a.data_fim);
-        if (estaAusente) {
-          currentDate.setDate(currentDate.getDate() + 1);
-          continue;
+        // Build time windows for this day
+        let timeWindows: { start: number; end: number }[] = [];
+
+        if (substituicoesDia.length > 0) {
+          // Has substituições - check if any is a full-day block (no hours)
+          const diaInteiroBloqueado = substituicoesDia.some((s: any) => !s.hora_inicio || !s.hora_fim);
+          if (diaInteiroBloqueado) {
+            currentDate.setDate(currentDate.getDate() + 1);
+            continue;
+          }
+          // Use substituição hours instead of regular schedule
+          timeWindows = substituicoesDia.map((s: any) => {
+            const [hI, mI] = s.hora_inicio.split(":").map(Number);
+            const [hF, mF] = s.hora_fim.split(":").map(Number);
+            return { start: hI * 60 + mI, end: hF * 60 + mF };
+          });
+        } else {
+          // No substituição - use regular schedule
+          const escalasDia = membroEscalas.filter((e: any) => e.dia_semana === diaSemana);
+          if (escalasDia.length === 0) {
+            currentDate.setDate(currentDate.getDate() + 1);
+            continue;
+          }
+          timeWindows = escalasDia.map((e: any) => {
+            const [hI, mI] = e.hora_inicio.split(":").map(Number);
+            const [hF, mF] = e.hora_fim.split(":").map(Number);
+            return { start: hI * 60 + mI, end: hF * 60 + mF };
+          });
         }
 
         const reunioesDia = membroReunioes.filter((r: any) => {
@@ -199,13 +222,8 @@ Deno.serve(async (req) => {
           return { startMin, endMin: startMin + dur };
         });
 
-        for (const escala of escalasDia) {
-          const [hI, mI] = escala.hora_inicio.split(":").map(Number);
-          const [hF, mF] = escala.hora_fim.split(":").map(Number);
-          const windowStart = hI * 60 + mI;
-          const windowEnd = hF * 60 + mF;
-
-          for (let t = windowStart; t + duracaoMinutos <= windowEnd; t += step) {
+        for (const window of timeWindows) {
+          for (let t = window.start; t + duracaoMinutos <= window.end; t += step) {
             const slotStart = t;
             const slotEnd = t + duracaoMinutos;
             const hasConflict = occupied.some((occ: any) => slotStart < occ.endMin && slotEnd > occ.startMin);
