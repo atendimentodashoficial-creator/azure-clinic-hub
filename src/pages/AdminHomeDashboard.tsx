@@ -139,11 +139,10 @@ export default function AdminHomeDashboard() {
       last7Days.push({ dia: dayStr, criadas, concluidas: 0 });
     }
 
-    // Reuniões hoje
-    const reunioesHoje = reunioes.filter(r => {
-      const d = new Date(r.data_reuniao);
-      return isToday(d);
-    });
+    // Próximas reuniões (ordenadas por data)
+    const proximasReunioes = [...reunioes]
+      .sort((a, b) => new Date(a.data_reuniao).getTime() - new Date(b.data_reuniao).getTime())
+      .slice(0, 8);
 
     const reunioesAmanha = reunioes.filter(r => {
       const d = new Date(r.data_reuniao);
