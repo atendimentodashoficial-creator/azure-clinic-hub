@@ -103,16 +103,21 @@ Deno.serve(async (req) => {
       const endDate2 = new Date(startDate2.getTime() + duracaoFinal * 60 * 1000);
       const dateStr = formatDate(startDate2);
 
-      // Get escalas for this day
+      // Get escalas for this day and check time range
       const dayOfWeek = startDate2.getDay();
       const { data: escalas } = await supabase
         .from("escalas_membros")
-        .select("membro_id")
+        .select("membro_id, hora_inicio, hora_fim")
         .in("membro_id", membroIds)
         .eq("ativo", true)
         .eq("dia_semana", dayOfWeek);
 
-      const membrosComEscala = (escalas || []).map((e: any) => e.membro_id);
+      // Filter members whose schedule covers the requested time range
+      const startTimeStr = formatTime(startDate2);
+      const endTimeStr = formatTime(endDate2);
+      const membrosComEscala = (escalas || [])
+        .filter((e: any) => e.hora_inicio <= startTimeStr && e.hora_fim >= endTimeStr)
+        .map((e: any) => e.membro_id);
 
       // Check ausencias
       const { data: ausencias } = await supabase
@@ -415,4 +420,14 @@ function formatDate(d: Date): string {
   const m = (d.getMonth() + 1).toString().padStart(2, "0");
   const day = d.getDate().toString().padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function formatTime(d: Date): string {
+  // Convert to Brasilia time (UTC-3) for comparison with escalas
+  const brasiliaOffset = -3 * 60;
+  const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
+  const brasiliaDate = new Date(utcMs + brasiliaOffset * 60000);
+  const h = brasiliaDate.getHours().toString().padStart(2, "0");
+  const min = brasiliaDate.getMinutes().toString().padStart(2, "0");
+  return `${h}:${min}`;
 }
