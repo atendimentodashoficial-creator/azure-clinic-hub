@@ -409,7 +409,101 @@ Deno.serve(async (req) => {
       throw reuniaoError || new Error("Falha ao criar reunião");
     }
 
-    // 9. Fire-and-forget: send notification
+    // 9. Kanban auto-move for WhatsApp and Disparos
+    if (cliente_telefone) {
+      const last8 = cliente_telefone.replace(/\D/g, '').slice(-8);
+      if (last8.length === 8) {
+        console.log("[KanbanAutoMove-n8n] Moving cards for last8:", last8, "ownerUserId:", ownerUserId);
+
+        // WhatsApp kanban auto-move
+        try {
+          const { data: waConfig } = await supabase
+            .from("whatsapp_kanban_config")
+            .select("auto_move_reuniao_column_id")
+            .eq("user_id", ownerUserId)
+            .maybeSingle();
+
+          const waTargetCol = (waConfig as any)?.auto_move_reuniao_column_id;
+          if (waTargetCol) {
+            const { data: waChats } = await supabase
+              .from("whatsapp_chats")
+              .select("id")
+              .eq("user_id", ownerUserId)
+              .is("deleted_at", null)
+              .like("normalized_number", `%${last8}`);
+
+            for (const chat of (waChats || [])) {
+              const { data: entry } = await supabase
+                .from("whatsapp_chat_kanban")
+                .select("id")
+                .eq("chat_id", chat.id)
+                .maybeSingle();
+
+              if (entry) {
+                await supabase
+                  .from("whatsapp_chat_kanban")
+                  .update({ column_id: waTargetCol, updated_at: new Date().toISOString() })
+                  .eq("id", entry.id);
+              } else {
+                await supabase.from("whatsapp_chat_kanban").insert({
+                  user_id: ownerUserId,
+                  chat_id: chat.id,
+                  column_id: waTargetCol,
+                });
+              }
+              console.log("[KanbanAutoMove-n8n] WA chat moved:", chat.id);
+            }
+          }
+        } catch (waErr) {
+          console.error("[KanbanAutoMove-n8n] WA error:", waErr);
+        }
+
+        // Disparos kanban auto-move
+        try {
+          const { data: dispConfig } = await supabase
+            .from("disparos_kanban_config")
+            .select("auto_move_reuniao_column_id")
+            .eq("user_id", ownerUserId)
+            .maybeSingle();
+
+          const dispTargetCol = (dispConfig as any)?.auto_move_reuniao_column_id;
+          if (dispTargetCol) {
+            const { data: dispChats } = await supabase
+              .from("disparos_chats")
+              .select("id")
+              .eq("user_id", ownerUserId)
+              .is("deleted_at", null)
+              .like("normalized_number", `%${last8}`);
+
+            for (const chat of (dispChats || [])) {
+              const { data: entry } = await supabase
+                .from("disparos_chat_kanban")
+                .select("id")
+                .eq("chat_id", chat.id)
+                .maybeSingle();
+
+              if (entry) {
+                await supabase
+                  .from("disparos_chat_kanban")
+                  .update({ column_id: dispTargetCol, updated_at: new Date().toISOString() })
+                  .eq("id", entry.id);
+              } else {
+                await supabase.from("disparos_chat_kanban").insert({
+                  user_id: ownerUserId,
+                  chat_id: chat.id,
+                  column_id: dispTargetCol,
+                });
+              }
+              console.log("[KanbanAutoMove-n8n] Disparos chat moved:", chat.id);
+            }
+          }
+        } catch (dispErr) {
+          console.error("[KanbanAutoMove-n8n] Disparos error:", dispErr);
+        }
+      }
+    }
+
+    // 10. Fire-and-forget: send notification
     if (cliente_telefone) {
       const notifyPromise = fetch(`${supabaseUrl}/functions/v1/enviar-aviso-reuniao-imediato`, {
         method: "POST",
