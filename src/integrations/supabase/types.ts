@@ -1657,6 +1657,7 @@ export type Database = {
           last_sync_at: string | null
           last_webhook_at: string | null
           nome: string
+          tabela_supabase_externa: string | null
           updated_at: string
           user_id: string
         }
@@ -1670,6 +1671,7 @@ export type Database = {
           last_sync_at?: string | null
           last_webhook_at?: string | null
           nome: string
+          tabela_supabase_externa?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1683,6 +1685,7 @@ export type Database = {
           last_sync_at?: string | null
           last_webhook_at?: string | null
           nome?: string
+          tabela_supabase_externa?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1857,6 +1860,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      disparos_supabase_config: {
+        Row: {
+          created_at: string | null
+          id: string
+          supabase_service_key: string
+          supabase_url: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          supabase_service_key: string
+          supabase_url: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          supabase_service_key?: string
+          supabase_url?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       disparos_template_variacoes: {
         Row: {

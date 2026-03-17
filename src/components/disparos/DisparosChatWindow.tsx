@@ -34,6 +34,7 @@ import { useAudiosPredefinidos } from "@/hooks/useAudiosPredefinidos";
 import { useBlocosAudios } from "@/hooks/useBlocosAudios";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContatoDetalhesPopup } from "./ContatoDetalhesPopup";
+import { DisparosAIToggle } from "./DisparosAIToggle";
 
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -1264,6 +1265,8 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
         </div>
         {/* Ícones fixos à direita */}
         <div className="flex gap-1 flex-shrink-0 items-center">
+          {/* AI Toggle */}
+          <DisparosAIToggle chatContactNumber={chat.contact_number} instanciaId={chat.instancia_id} />
           {/* Dropdown para trocar instância */}
           <DropdownMenu open={changeInstanceOpen} onOpenChange={setChangeInstanceOpen}>
             <DropdownMenuTrigger asChild>
