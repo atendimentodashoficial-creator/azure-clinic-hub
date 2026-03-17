@@ -468,7 +468,7 @@ export default function Reunioes() {
                             ? "border-l-destructive"
                             : reuniao.status === "realizada" || reuniao.status === "resumido" || reuniao.status === "transcrito"
                               ? "border-l-green-500"
-                              : "border-l-transparent"
+                              : "border-l-primary"
                         }`}
                       >
                         <CardContent className="p-4 flex-1 flex flex-col">
