@@ -145,20 +145,39 @@ Deno.serve(async (req) => {
       // Filter members whose schedule covers the requested time range
       const startTimeStr = formatTime(startDate2);
       const endTimeStr = formatTime(endDate2);
-      const membrosComEscala = (escalas || [])
-        .filter((e: any) => e.hora_inicio <= startTimeStr && e.hora_fim >= endTimeStr)
-        .map((e: any) => e.membro_id);
 
-      // Check ausencias
+      // Check ausencias (substituições de escala)
       const { data: ausencias } = await supabase
         .from("ausencias_membros")
-        .select("membro_id")
-        .in("membro_id", membrosComEscala)
+        .select("membro_id, hora_inicio, hora_fim")
+        .in("membro_id", membroIdsFiltrados)
         .lte("data_inicio", dateStr)
         .gte("data_fim", dateStr);
 
-      const membrosAusentes = new Set((ausencias || []).map((a: any) => a.membro_id));
-      const membrosDisponiveis = membrosComEscala.filter((id: string) => !membrosAusentes.has(id));
+      // Build effective availability per member considering substituições
+      const membrosDisponiveis: string[] = [];
+
+      for (const mid of membroIdsFiltrados) {
+        const membroSubstituicoes = (ausencias || []).filter((a: any) => a.membro_id === mid);
+
+        if (membroSubstituicoes.length > 0) {
+          // Has substituição - check if full day block or schedule override
+          const diaInteiroBloqueado = membroSubstituicoes.some((s: any) => !s.hora_inicio || !s.hora_fim);
+          if (diaInteiroBloqueado) continue; // Full day off
+
+          // Check if any substituição window covers the requested time
+          const coversTime = membroSubstituicoes.some((s: any) =>
+            s.hora_inicio <= startTimeStr && s.hora_fim >= endTimeStr
+          );
+          if (coversTime) membrosDisponiveis.push(mid);
+        } else {
+          // No substituição - check regular schedule
+          const membroEscala = (escalas || []).find((e: any) =>
+            e.membro_id === mid && e.hora_inicio <= startTimeStr && e.hora_fim >= endTimeStr
+          );
+          if (membroEscala) membrosDisponiveis.push(mid);
+        }
+      }
 
       if (membrosDisponiveis.length === 0) {
         return new Response(JSON.stringify({ error: "Nenhum profissional disponível nesta data" }), {
