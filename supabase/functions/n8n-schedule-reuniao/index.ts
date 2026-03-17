@@ -415,7 +415,7 @@ Deno.serve(async (req) => {
       if (last8.length === 8) {
         console.log("[KanbanAutoMove-n8n] Moving cards for last8:", last8, "ownerUserId:", ownerUserId);
 
-        // WhatsApp kanban auto-move
+        // WhatsApp kanban auto-move (create chat if needed)
         try {
           const { data: waConfig } = await supabase
             .from("whatsapp_kanban_config")
@@ -425,12 +425,46 @@ Deno.serve(async (req) => {
 
           const waTargetCol = (waConfig as any)?.auto_move_reuniao_column_id;
           if (waTargetCol) {
-            const { data: waChats } = await supabase
+            let { data: waChats } = await supabase
               .from("whatsapp_chats")
               .select("id")
               .eq("user_id", ownerUserId)
               .is("deleted_at", null)
               .like("normalized_number", `%${last8}`);
+
+            // If no WA chat exists, create one so card appears in WhatsApp tab
+            if (!waChats || waChats.length === 0) {
+              const { data: tombstone } = await supabase
+                .from("whatsapp_chat_deletions")
+                .select("id")
+                .eq("user_id", ownerUserId)
+                .eq("phone_last8", last8)
+                .maybeSingle();
+
+              if (!tombstone) {
+                const phoneClean = cliente_telefone.replace(/\D/g, '');
+                const { data: newChat, error: newChatErr } = await supabase
+                  .from("whatsapp_chats")
+                  .insert({
+                    user_id: ownerUserId,
+                    chat_id: `${phoneClean}@s.whatsapp.net`,
+                    contact_name: cliente_nome || "Cliente",
+                    contact_number: phoneClean,
+                    normalized_number: phoneClean,
+                    last_message: `Reunião "${tituloFinal}" agendada`,
+                    last_message_time: new Date().toISOString(),
+                  })
+                  .select("id")
+                  .single();
+
+                if (!newChatErr && newChat) {
+                  waChats = [newChat];
+                  console.log("[KanbanAutoMove-n8n] Created WA chat:", newChat.id);
+                } else {
+                  console.error("[KanbanAutoMove-n8n] Error creating WA chat:", newChatErr);
+                }
+              }
+            }
 
             for (const chat of (waChats || [])) {
               const { data: entry } = await supabase
