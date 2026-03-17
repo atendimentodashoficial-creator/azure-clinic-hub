@@ -253,8 +253,9 @@ function formatDate(d: Date): string {
 }
 
 function formatDateFromISO(d: Date): string {
-  // Convert UTC to Brasilia
-  const brasiliaOffset = -3 * 60;
-  const brasiliaD = new Date(d.getTime() + (d.getTimezoneOffset() + brasiliaOffset) * 60000);
-  return formatDate(brasiliaD);
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  return fmt.format(d);
 }
