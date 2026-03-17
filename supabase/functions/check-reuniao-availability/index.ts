@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
     const parsedStep = Number(intervalo_minutos);
     const step = Number.isFinite(parsedStep) ? Math.min(60, Math.max(15, parsedStep)) : 30;
     const userId = tipoReuniao.user_id;
+    const cargoFilterNormalized = normalizeText(cargo_filtro || "Closer");
 
     // 2. Get members linked to this tipo_reuniao
     const { data: tipoMembros } = await supabase
