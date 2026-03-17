@@ -41,7 +41,8 @@ Deno.serve(async (req) => {
     }
 
     const duracaoMinutos = tipoReuniao.duracao_minutos || 60;
-    const step = intervalo_minutos || 30;
+    const parsedStep = Number(intervalo_minutos);
+    const step = Number.isFinite(parsedStep) ? Math.min(60, Math.max(15, parsedStep)) : 30;
     const userId = tipoReuniao.user_id;
 
     // 2. Get members linked to this tipo_reuniao
