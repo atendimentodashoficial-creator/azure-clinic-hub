@@ -123,8 +123,6 @@ serve(async (req) => {
       });
 
     } else if (action === "toggle") {
-      const { new_value } = await req.json().catch(() => ({}));
-      
       // Find the row first
       const { data: rows } = await extSupabase
         .from(tableName)
