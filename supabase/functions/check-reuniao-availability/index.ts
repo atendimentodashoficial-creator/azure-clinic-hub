@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
     // 8. Build aggregated availability (sem identificar profissionais)
     const diasMap = new Map<string, { dia_semana: string; horarios: Set<string> }>();
 
-    for (const membro of (membros || [])) {
+    for (const membro of membrosFiltradosPorCargo) {
       const membroEscalas = (escalas || []).filter((e: any) => e.membro_id === membro.id);
       const membroAusencias = (ausencias || []).filter((a: any) => a.membro_id === membro.id);
       const membroReunioes = (reunioesExistentes || []).filter((r: any) => r.profissional_id === membro.id);
