@@ -23,7 +23,11 @@ Deno.serve(async (req) => {
       cliente_nome,
       cliente_telefone,
       titulo,
+      cargo_filtro,
     } = await req.json();
+
+    // Default: only consider "Closer" members
+    const cargoFilter = cargo_filtro || "Closer";
 
     // Validações
     if (!tipo_reuniao_id && !membro_id) {
@@ -108,6 +112,22 @@ Deno.serve(async (req) => {
 
       const membroIds = tipoMembros.map((tm: any) => tm.membro_id);
 
+      // Filter members by cargo (e.g. "Closer")
+      const { data: membrosComCargo } = await supabase
+        .from("tarefas_membros")
+        .select("id")
+        .in("id", membroIds)
+        .ilike("cargo", cargoFilter);
+
+      const membroIdsFiltrados = (membrosComCargo || []).map((m: any) => m.id);
+
+      if (membroIdsFiltrados.length === 0) {
+        return new Response(JSON.stringify({ error: `Nenhum profissional com cargo "${cargoFilter}" vinculado a este tipo de reunião` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Check availability for each member
       const startDate2 = new Date(data_hora);
       const endDate2 = new Date(startDate2.getTime() + duracaoFinal * 60 * 1000);
@@ -118,7 +138,7 @@ Deno.serve(async (req) => {
       const { data: escalas } = await supabase
         .from("escalas_membros")
         .select("membro_id, hora_inicio, hora_fim")
-        .in("membro_id", membroIds)
+        .in("membro_id", membroIdsFiltrados)
         .eq("ativo", true)
         .eq("dia_semana", dayOfWeek);
 
