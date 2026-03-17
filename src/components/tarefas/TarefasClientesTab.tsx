@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { extractCountryCode, formatPhoneByCountry } from "@/utils/phoneFormat";
 import { toast } from "sonner";
-import { Trash2, Edit, Mail, Phone, Building2, Eye } from "lucide-react";
+import { Trash2, Edit, Mail, Phone, Building2, Eye, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";

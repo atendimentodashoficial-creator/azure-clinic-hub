@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { MessageSquare, RefreshCw, Plus, LayoutList, Kanban, CheckCircle2, Trash2, CheckSquare, Square, X, QrCode, Unplug, Loader2, Smartphone, XCircle, Pencil, Settings, Hash, Keyboard, BellRing } from "lucide-react";
+import { MessageSquare, RefreshCw, Plus, LayoutList, Kanban, CheckCircle2, Trash2, CheckSquare, Square, X, QrCode, Unplug, Loader2, Smartphone, XCircle, Pencil, Settings, Hash, Keyboard, BellRing, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";

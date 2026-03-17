@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Mail, Phone, Briefcase, CalendarIcon, DollarSign, Camera } from "lucide-react";
+import { Plus, Trash2, Edit, Mail, Phone, Briefcase, CalendarIcon, DollarSign, Camera, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 

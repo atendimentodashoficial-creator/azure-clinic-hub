@@ -39,6 +39,7 @@ import {
   Calendar,
   Play,
   Copy,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
