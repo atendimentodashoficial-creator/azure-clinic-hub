@@ -1745,7 +1745,7 @@ export default function Disparos() {
               </Button>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto px-1 sm:px-4">
+          <div className="flex-1 overflow-y-auto px-0 sm:px-4">
             <CampanhasTab onRefresh={() => {}} />
           </div>
         </div>
