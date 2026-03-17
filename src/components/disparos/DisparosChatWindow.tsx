@@ -1265,6 +1265,8 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
         </div>
         {/* Ícones fixos à direita */}
         <div className="flex gap-1 flex-shrink-0 items-center">
+          {/* AI Toggle */}
+          <DisparosAIToggle chatContactNumber={chat.contact_number} instanciaId={chat.instancia_id} />
           {/* Dropdown para trocar instância */}
           <DropdownMenu open={changeInstanceOpen} onOpenChange={setChangeInstanceOpen}>
             <DropdownMenuTrigger asChild>
