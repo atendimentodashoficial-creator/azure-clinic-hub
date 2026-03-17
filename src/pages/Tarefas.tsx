@@ -581,14 +581,25 @@ export default function Tarefas() {
     }
   });
 
-  // Filter tasks for employee "minhas" view
-  const tarefasFiltradas = filtro === "minhas" && membro
-    ? tarefas.filter(t => {
-        if (!t.responsavel_nome) return false;
-        const nomes = t.responsavel_nome.split(",").map(n => n.trim().toLowerCase());
-        return nomes.includes(membro.nome?.toLowerCase());
-      })
-    : tarefas;
+  // Filter tasks for employee "minhas" view + search
+  const tarefasFiltradas = (() => {
+    let result = filtro === "minhas" && membro
+      ? tarefas.filter(t => {
+          if (!t.responsavel_nome) return false;
+          const nomes = t.responsavel_nome.split(",").map(n => n.trim().toLowerCase());
+          return nomes.includes(membro.nome?.toLowerCase());
+        })
+      : tarefas;
+    if (buscaTarefa.trim()) {
+      const term = buscaTarefa.toLowerCase();
+      result = result.filter(t =>
+        t.titulo.toLowerCase().includes(term) ||
+        t.descricao?.toLowerCase().includes(term) ||
+        t.responsavel_nome?.toLowerCase().includes(term)
+      );
+    }
+    return result;
+  })();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
