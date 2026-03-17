@@ -20,7 +20,7 @@ import {
   ArrowLeft, Building2, Mail, Phone, Globe, Instagram,
   FileText, Layers, CheckCircle2, Clock, AlertCircle,
   Link2, ExternalLink, Users, Calendar, DollarSign,
-  Upload, Download, Trash2, Paperclip, Receipt,
+  Upload, Download, Trash2, Paperclip, Receipt, TrendingUp,
 } from "lucide-react";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
 import { ClienteFinanceiroTab } from "@/components/cobrancas/ClienteFinanceiroTab";
