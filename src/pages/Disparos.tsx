@@ -30,6 +30,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
+import { DisparosSupabaseConfig } from "@/components/disparos/DisparosSupabaseConfig";
+import { DisparosInstanciaTableField } from "@/components/disparos/DisparosInstanciaTableField";
 
 interface DisparosInstancia {
   id: string;
