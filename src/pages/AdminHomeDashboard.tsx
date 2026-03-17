@@ -222,8 +222,8 @@ export default function AdminHomeDashboard() {
             />
             <QuickStat
               icon={Video}
-              label="Reuniões Hoje"
-              value={stats.reunioesHoje.length}
+              label="Próximas Reuniões"
+              value={stats.proximasReunioes.length}
               accent="text-primary"
               onClick={() => navigate("/admin/reunioes")}
             />
