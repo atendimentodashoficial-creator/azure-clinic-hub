@@ -537,18 +537,56 @@ serve(async (req) => {
 
         // Save the sent message to whatsapp_messages so it appears in the app
         try {
-          const chatId = `${deliveredTo}@s.whatsapp.net`;
+          const waChatId = `${deliveredTo}@s.whatsapp.net`;
           const last8 = deliveredTo.slice(-8);
           const messageId = sendResult?.key?.id || sendResult?.id || `aviso-${Date.now()}`;
+          const contactName = clienteNome || reuniao.participantes?.[0] || "Cliente";
 
           // Find or create the WhatsApp chat for this number
-          const { data: existingChat } = await supabase
+          let { data: existingChat } = await supabase
             .from("whatsapp_chats")
             .select("id")
             .eq("user_id", resolvedUserId)
             .is("deleted_at", null)
             .like("normalized_number", `%${last8}`)
             .maybeSingle();
+
+          if (!existingChat) {
+            // Check for tombstone (deleted chat) - respect user's deletion
+            const { data: tombstone } = await supabase
+              .from("whatsapp_chat_deletions")
+              .select("id")
+              .eq("user_id", resolvedUserId)
+              .eq("phone_last8", last8)
+              .maybeSingle();
+
+            if (!tombstone) {
+              // Create the chat so the notification appears in the WhatsApp tab
+              console.log(`[Aviso] Creating WhatsApp chat for ${deliveredTo}`);
+              const { data: newChat, error: newChatErr } = await supabase
+                .from("whatsapp_chats")
+                .insert({
+                  user_id: resolvedUserId,
+                  chat_id: waChatId,
+                  contact_name: contactName,
+                  contact_number: deliveredTo,
+                  normalized_number: deliveredTo,
+                  last_message: finalMensagem,
+                  last_message_time: new Date().toISOString(),
+                })
+                .select("id")
+                .single();
+
+              if (newChatErr) {
+                console.error("[Aviso] Error creating WhatsApp chat:", newChatErr);
+              } else {
+                existingChat = newChat;
+                console.log(`[Aviso] Created WhatsApp chat ${newChat.id} for ${deliveredTo}`);
+              }
+            } else {
+              console.log(`[Aviso] Tombstone found for ${last8}, skipping chat creation`);
+            }
+          }
 
           if (existingChat) {
             // Save message to whatsapp_messages
@@ -572,8 +610,6 @@ serve(async (req) => {
               .eq("id", existingChat.id);
 
             console.log(`[Aviso] Saved sent message to whatsapp_messages for chat ${existingChat.id}`);
-          } else {
-            console.log(`[Aviso] No existing WhatsApp chat found for ${last8}, message won't appear in app`);
           }
         } catch (saveErr) {
           console.error("[Aviso] Error saving message to whatsapp_messages:", saveErr);
