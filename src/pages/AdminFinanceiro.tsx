@@ -132,10 +132,11 @@ export default function AdminFinanceiro() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tarefas_clientes")
-        .select("id, nome, empresa")
-        .eq("user_id", ownerId!);
+        .select("id, nome, empresa, tipo")
+        .eq("user_id", ownerId!)
+        .neq("tipo", "preview");
       if (error) throw error;
-      return data as { id: string; nome: string; empresa: string | null }[];
+      return data as { id: string; nome: string; empresa: string | null; tipo: string }[];
     },
     enabled: !!ownerId,
   });
