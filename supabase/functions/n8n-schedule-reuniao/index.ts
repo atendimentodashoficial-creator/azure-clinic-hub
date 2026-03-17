@@ -99,12 +99,12 @@ Deno.serve(async (req) => {
       const membroIds = tipoMembros.map((tm: any) => tm.membro_id);
 
       // Check availability for each member
-      const startDate = new Date(data_hora);
-      const endDate = new Date(startDate.getTime() + duracaoFinal * 60 * 1000);
-      const dateStr = formatDate(startDate);
+      const startDate2 = new Date(data_hora);
+      const endDate2 = new Date(startDate2.getTime() + duracaoFinal * 60 * 1000);
+      const dateStr = formatDate(startDate2);
 
-      // Get escalas
-      const dayOfWeek = startDate.getDay();
+      // Get escalas for this day
+      const dayOfWeek = startDate2.getDay();
       const { data: escalas } = await supabase
         .from("escalas_membros")
         .select("membro_id")
@@ -132,19 +132,35 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check conflicts with existing meetings
+      // Count meetings per member on this day and check conflicts
+      const dayStartISO = `${dateStr}T03:00:00.000Z`; // midnight Brasilia = 03:00 UTC
+      const dayEndISO = (() => {
+        const d = new Date(startDate2);
+        d.setDate(d.getDate() + 1);
+        return `${formatDate(d)}T02:59:59.000Z`;
+      })();
+
+      const { data: allDayMeetings } = await supabase
+        .from("reunioes")
+        .select("id, data_reuniao, duracao_minutos, profissional_id")
+        .eq("user_id", ownerUserId)
+        .in("status", ["agendado", "confirmado"])
+        .gte("data_reuniao", dayStartISO)
+        .lte("data_reuniao", dayEndISO);
+
+      // For each available member, resolve profissional_id, count meetings, check conflict
+      const candidates: { membroId: string; meetingCount: number }[] = [];
+
       for (const mid of membrosDisponiveis) {
-        // Find the member's auth_user_id or linked profissional
         const { data: memberData } = await supabase
           .from("tarefas_membros")
           .select("auth_user_id, email")
           .eq("id", mid)
           .single();
 
-        const targetId = memberData?.auth_user_id || ownerUserId;
-
         let profId: string | null = null;
         if (memberData?.email) {
+          const targetId = memberData?.auth_user_id || ownerUserId;
           const { data: prof } = await supabase
             .from("profissionais")
             .select("id")
@@ -154,33 +170,33 @@ Deno.serve(async (req) => {
           profId = prof?.id || null;
         }
 
-        // Check for conflicts
-        const { data: conflicts } = await supabase
-          .from("reunioes")
-          .select("id, data_reuniao, duracao_minutos")
-          .eq("user_id", targetId)
-          .in("status", ["agendado", "confirmado"])
-          .gte("data_reuniao", new Date(startDate.getTime() - 24 * 60 * 60 * 1000).toISOString())
-          .lte("data_reuniao", new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString());
-
-        const hasConflict = (conflicts || []).some((r: any) => {
+        // Check time conflict for this member
+        const memberMeetings = (allDayMeetings || []).filter((r: any) => r.profissional_id === profId);
+        const hasConflict = memberMeetings.some((r: any) => {
           const rStart = new Date(r.data_reuniao).getTime();
           const rEnd = rStart + ((r.duracao_minutos || 60) * 60 * 1000);
-          return startDate.getTime() < rEnd && endDate.getTime() > rStart;
+          return startDate2.getTime() < rEnd && endDate2.getTime() > rStart;
         });
 
         if (!hasConflict) {
-          targetMemberId = mid;
-          break;
+          candidates.push({ membroId: mid, meetingCount: memberMeetings.length });
         }
       }
 
-      if (!targetMemberId) {
+      if (candidates.length === 0) {
         return new Response(JSON.stringify({ error: "Todos os profissionais estão ocupados neste horário" }), {
           status: 409,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      // Sort by fewest meetings, then randomize ties
+      candidates.sort((a, b) => a.meetingCount - b.meetingCount);
+      const minCount = candidates[0].meetingCount;
+      const tied = candidates.filter((c) => c.meetingCount === minCount);
+      const chosen = tied[Math.floor(Math.random() * tied.length)];
+      targetMemberId = chosen.membroId;
+      console.log(`Auto-selected membro ${targetMemberId} with ${chosen.meetingCount} meetings (${tied.length} tied)`);
     }
 
     // 3. Get member details
