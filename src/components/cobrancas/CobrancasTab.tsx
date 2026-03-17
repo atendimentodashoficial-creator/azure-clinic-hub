@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   DollarSign, Clock, CheckCircle2, AlertTriangle, XCircle,
-  Edit, Trash2, RefreshCw, CreditCard, Receipt, TrendingUp,
+  Edit, Trash2, RefreshCw, CreditCard, Receipt, TrendingUp, Calendar,
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
