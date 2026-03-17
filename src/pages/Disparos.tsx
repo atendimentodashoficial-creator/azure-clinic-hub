@@ -1208,12 +1208,13 @@ export default function Disparos() {
               {/* Actions row */}
               <div className="flex items-center gap-2 sm:h-auto h-9">
                 {/* Search bar - inline on desktop */}
-                <div className="hidden sm:block flex-1">
+                <div className="hidden sm:block flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar por nome ou número..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-9"
+                    className="pl-9 h-9"
                   />
                 </div>
                 
