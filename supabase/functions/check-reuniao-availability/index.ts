@@ -164,9 +164,14 @@ Deno.serve(async (req) => {
         // Build occupied ranges (in minutes from midnight)
         const occupied = reunioesDia.map((r: any) => {
           const d = new Date(r.data_reuniao);
-          // Convert to Brasilia time
-          const brasiliaD = new Date(d.getTime() + (d.getTimezoneOffset() + brasiliaOffset) * 60000);
-          const startMin = brasiliaD.getHours() * 60 + brasiliaD.getMinutes();
+          const fmt = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "America/Sao_Paulo",
+            hour: "2-digit", minute: "2-digit", hour12: false,
+          });
+          const parts = fmt.formatToParts(d);
+          const pp: Record<string, string> = {};
+          for (const p of parts) pp[p.type] = p.value;
+          const startMin = Number(pp.hour) * 60 + Number(pp.minute);
           const dur = r.duracao_minutos || duracaoMinutos;
           return { startMin, endMin: startMin + dur };
         });
