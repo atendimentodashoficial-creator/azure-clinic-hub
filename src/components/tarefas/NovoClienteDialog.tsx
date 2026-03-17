@@ -172,7 +172,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {!isEditing && !hideTrigger && (
         <DialogTrigger asChild>
-          <Button className="gap-2"><Plus className="h-4 w-4" /> Novo Cliente</Button>
+          <Button size="sm" className="gap-2 shrink-0"><Plus className="h-4 w-4" /> Novo Cliente</Button>
         </DialogTrigger>
       )}
       <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">

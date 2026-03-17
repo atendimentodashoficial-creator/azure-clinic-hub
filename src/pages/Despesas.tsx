@@ -520,14 +520,24 @@ export default function Despesas() {
 
       {/* Search */}
       <Card className="p-4 shadow-card">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por descrição ou categoria..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="pl-9 h-9"
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por descrição ou categoria..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+          <Button variant="outline" size="sm" className="shrink-0" onClick={() => setCategoriaDialogOpen(true)} title="Categorias">
+            <Tag className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline text-sm">Categorias</span>
+          </Button>
+          <Button size="sm" className="shrink-0" onClick={() => handleOpenDialog()}>
+            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="text-xs sm:text-sm">Nova Despesa</span>
+          </Button>
         </div>
       </Card>
 

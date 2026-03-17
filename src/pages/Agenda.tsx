@@ -292,14 +292,20 @@ export default function Agenda() {
           </div>
           
           {/* Campo de Busca */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome, telefone, profissional..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 h-9"
-            />
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome, telefone, profissional..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+            <Button size="sm" className="shrink-0" onClick={() => setNovoAgendamentoOpen(true)}>
+              <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="text-xs sm:text-sm">Novo Agendamento</span>
+            </Button>
           </div>
         </div>
       </Card>

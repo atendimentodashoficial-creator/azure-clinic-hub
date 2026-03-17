@@ -147,7 +147,7 @@ export function NovoMembroDialog({ onSubmit, membroEditando, onClose }: {
     <Dialog open={isEditing ? true : open} onOpenChange={isEditing ? () => onClose?.() : handleOpenChange}>
       {!isEditing && (
         <DialogTrigger asChild>
-          <Button className="gap-2"><Plus className="h-4 w-4" /> Novo Membro</Button>
+          <Button size="sm" className="gap-2 shrink-0"><Plus className="h-4 w-4" /> Novo Membro</Button>
         </DialogTrigger>
       )}
       <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
