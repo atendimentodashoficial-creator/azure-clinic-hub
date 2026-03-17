@@ -216,19 +216,9 @@ export default function Agenda() {
   };
   return <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-6 h-6" />
-          <h1 className="text-2xl font-bold">Calendário</h1>
-        </div>
-        
-        {/* Botão Novo Agendamento */}
-        {activeTab === "agendamentos" && (
-          <Button onClick={() => setNovoAgendamentoOpen(true)} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="text-xs sm:text-sm">Novo Agendamento</span>
-          </Button>
-        )}
+      <div className="flex items-center gap-2">
+        <Calendar className="w-6 h-6" />
+        <h1 className="text-2xl font-bold">Calendário</h1>
       </div>
         
       {/* Tabs */}
