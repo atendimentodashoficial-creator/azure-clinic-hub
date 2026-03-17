@@ -441,21 +441,9 @@ export default function Despesas() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Wallet className="w-6 h-6" />
-          <h1 className="text-2xl font-bold text-foreground">Despesas</h1>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setCategoriaDialogOpen(true)} title="Categorias">
-            <Tag className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline text-sm">Categorias</span>
-          </Button>
-          <Button size="sm" onClick={() => handleOpenDialog()}>
-            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="text-xs sm:text-sm">Nova Despesa</span>
-          </Button>
-        </div>
+      <div className="flex items-center gap-2">
+        <Wallet className="w-6 h-6" />
+        <h1 className="text-2xl font-bold text-foreground">Despesas</h1>
       </div>
 
       {/* Filtros */}
