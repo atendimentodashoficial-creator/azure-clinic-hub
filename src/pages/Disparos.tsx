@@ -2090,111 +2090,136 @@ export default function Disparos() {
           <DialogHeader>
             <DialogTitle>Gerenciar Instâncias</DialogTitle>
             <DialogDescription>
-              Gerencie suas conexões WhatsApp
+              Gerencie suas conexões WhatsApp e configurações
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 pt-4">
-            <div className="flex justify-end">
-              <Button size="sm" onClick={() => { setShowInstanceManager(false); setCreateInstanceDialogOpen(true); }}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Instância
-              </Button>
-            </div>
+          <Tabs defaultValue="instancias">
+            <TabsList className="w-full">
+              <TabsTrigger value="instancias" className="flex-1 gap-1.5">
+                <Smartphone className="h-4 w-4" />
+                Instâncias
+              </TabsTrigger>
+              <TabsTrigger value="supabase" className="flex-1 gap-1.5">
+                <Settings className="h-4 w-4" />
+                Supabase
+              </TabsTrigger>
+            </TabsList>
 
-            {fullInstancias.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                Nenhuma instância configurada.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {fullInstancias.map((instancia) => {
-                  const status = connectionStatus[instancia.id];
-                  const isConnected = status === 'connected';
-                  const isLoading = status === 'loading';
-                  
-                  return (
-                    <Card key={instancia.id} className="p-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                            isConnected ? 'bg-green-500' : isLoading ? 'bg-amber-500 animate-pulse' : 'bg-red-500'
-                          }`} />
-                          <div className="min-w-0">
-                            <h4 className="font-medium truncate">{instancia.nome}</h4>
-                            <p className="text-xs text-muted-foreground">
-                              {isConnected ? 'Conectado' : isLoading ? 'Verificando...' : 'Desconectado'}
-                            </p>
+            <TabsContent value="instancias">
+              <div className="space-y-4 pt-4">
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={() => { setShowInstanceManager(false); setCreateInstanceDialogOpen(true); }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Instância
+                  </Button>
+                </div>
+
+                {fullInstancias.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Nenhuma instância configurada.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {fullInstancias.map((instancia) => {
+                      const status = connectionStatus[instancia.id];
+                      const isConnected = status === 'connected';
+                      const isLoading = status === 'loading';
+                      
+                      return (
+                        <Card key={instancia.id} className="p-4">
+                          <div className="flex flex-col gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                                  isConnected ? 'bg-green-500' : isLoading ? 'bg-amber-500 animate-pulse' : 'bg-red-500'
+                                }`} />
+                                <div className="min-w-0">
+                                  <h4 className="font-medium truncate">{instancia.nome}</h4>
+                                  <p className="text-xs text-muted-foreground">
+                                    {isConnected ? 'Conectado' : isLoading ? 'Verificando...' : 'Desconectado'}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end sm:justify-start">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setEditingInstancia(instancia);
+                                    setEditingNome(instancia.nome || "");
+                                    setEditInstanceNameOpen(true);
+                                  }}
+                                  title="Editar nome"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+
+                                {isConnected ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDisconnectInstance(instancia)}
+                                    className="text-destructive hover:text-destructive h-8 px-2 sm:px-3"
+                                  >
+                                    <Unplug className="h-4 w-4 sm:mr-2" />
+                                    <span className="hidden sm:inline">Desconectar</span>
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    className="h-8 px-2 sm:px-3"
+                                    onClick={() => handleConnectInstance(instancia)}
+                                    disabled={isLoading}
+                                  >
+                                    {isLoading ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <QrCode className="h-4 w-4 sm:mr-2" />
+                                        <span className="hidden sm:inline">Conectar</span>
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => checkConnectionStatus(instancia)}
+                                >
+                                  <RefreshCw className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => handleDeleteInstance(instancia.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            {/* External table name field */}
+                            <DisparosInstanciaTableField instanciaId={instancia.id} />
                           </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end sm:justify-start">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => {
-                              setEditingInstancia(instancia);
-                              setEditingNome(instancia.nome || "");
-                              setEditInstanceNameOpen(true);
-                            }}
-                            title="Editar nome"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-
-                          {isConnected ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDisconnectInstance(instancia)}
-                              className="text-destructive hover:text-destructive h-8 px-2 sm:px-3"
-                            >
-                              <Unplug className="h-4 w-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Desconectar</span>
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="h-8 px-2 sm:px-3"
-                              onClick={() => handleConnectInstance(instancia)}
-                              disabled={isLoading}
-                            >
-                              {isLoading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <QrCode className="h-4 w-4 sm:mr-2" />
-                                  <span className="hidden sm:inline">Conectar</span>
-                                </>
-                              )}
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => checkConnectionStatus(instancia)}
-                          >
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteInstance(instancia.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </TabsContent>
+
+            <TabsContent value="supabase">
+              <div className="pt-4">
+                <DisparosSupabaseConfig />
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
