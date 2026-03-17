@@ -535,6 +535,50 @@ serve(async (req) => {
         console.log(`Successfully sent ${isReagendamento ? 'rescheduling' : 'immediate'} notification "${aviso.nome}" to ${deliveredTo}`);
         sentCount++;
 
+        // Save the sent message to whatsapp_messages so it appears in the app
+        try {
+          const chatId = `${deliveredTo}@s.whatsapp.net`;
+          const last8 = deliveredTo.slice(-8);
+          const messageId = sendResult?.key?.id || sendResult?.id || `aviso-${Date.now()}`;
+
+          // Find or create the WhatsApp chat for this number
+          const { data: existingChat } = await supabase
+            .from("whatsapp_chats")
+            .select("id")
+            .eq("user_id", resolvedUserId)
+            .is("deleted_at", null)
+            .like("normalized_number", `%${last8}`)
+            .maybeSingle();
+
+          if (existingChat) {
+            // Save message to whatsapp_messages
+            await supabase.from("whatsapp_messages").insert({
+              chat_id: existingChat.id,
+              message_id: messageId,
+              content: finalMensagem,
+              sender_type: "agent",
+              media_type: "text",
+              status: "sent",
+              timestamp: new Date().toISOString(),
+            });
+
+            // Update chat's last message
+            await supabase
+              .from("whatsapp_chats")
+              .update({
+                last_message: finalMensagem,
+                last_message_time: new Date().toISOString(),
+              })
+              .eq("id", existingChat.id);
+
+            console.log(`[Aviso] Saved sent message to whatsapp_messages for chat ${existingChat.id}`);
+          } else {
+            console.log(`[Aviso] No existing WhatsApp chat found for ${last8}, message won't appear in app`);
+          }
+        } catch (saveErr) {
+          console.error("[Aviso] Error saving message to whatsapp_messages:", saveErr);
+        }
+
         // Auto-move WhatsApp kanban card on meeting notification
         try {
           const last8 = telefone.replace(/\D/g, '').slice(-8);

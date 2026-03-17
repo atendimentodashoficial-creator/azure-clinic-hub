@@ -294,6 +294,44 @@ async function processAviso(
   if (deliveredTo) {
     console.log(`Message sent successfully to ${deliveredTo}`);
 
+    // Save the sent message to whatsapp_messages so it appears in the app
+    try {
+      const last8 = deliveredTo.replace(/\D/g, '').slice(-8);
+      const messageId = `aviso-${Date.now()}`;
+
+      const { data: existingChat } = await supabase
+        .from("whatsapp_chats")
+        .select("id")
+        .eq("user_id", aviso.userId)
+        .is("deleted_at", null)
+        .like("normalized_number", `%${last8}`)
+        .maybeSingle();
+
+      if (existingChat) {
+        await supabase.from("whatsapp_messages").insert({
+          chat_id: existingChat.id,
+          message_id: messageId,
+          content: mensagem,
+          sender_type: "agent",
+          media_type: "text",
+          status: "sent",
+          timestamp: new Date().toISOString(),
+        });
+
+        await supabase
+          .from("whatsapp_chats")
+          .update({
+            last_message: mensagem,
+            last_message_time: new Date().toISOString(),
+          })
+          .eq("id", existingChat.id);
+
+        console.log(`[Aviso] Saved sent message to whatsapp_messages for chat ${existingChat.id}`);
+      }
+    } catch (saveErr) {
+      console.error("[Aviso] Error saving message to whatsapp_messages:", saveErr);
+    }
+
     // Log the sent aviso (with instance info for audit)
     await supabase.from("avisos_reuniao_log").insert({
       user_id: aviso.userId,
