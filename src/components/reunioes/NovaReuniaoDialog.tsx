@@ -34,29 +34,42 @@ function computeSlots(
 ): string[] {
   const d = new Date(date + "T00:00:00");
   const dow = getDay(d);
-  const dayEscalas = escalas.filter(e => e.dia_semana === dow);
-  if (dayEscalas.length === 0) return [];
 
-  const partialAbsences = ausencias.filter(a =>
-    date >= a.data_inicio && date <= a.data_fim && a.hora_inicio && a.hora_fim
+  // Check substituições for this date
+  const substituicoes = ausencias.filter(a =>
+    date >= a.data_inicio && date <= a.data_fim
   );
-  const fullAbsent = ausencias.some(a =>
-    date >= a.data_inicio && date <= a.data_fim && !a.hora_inicio
-  );
-  if (fullAbsent) return [];
+
+  // Build time windows for this day
+  let timeWindows: Array<{ startMin: number; endMin: number }> = [];
+
+  if (substituicoes.length > 0) {
+    // Has substituições - check if any is a full-day block (no hours)
+    const fullAbsent = substituicoes.some(a => !a.hora_inicio || !a.hora_fim);
+    if (fullAbsent) return [];
+
+    // Use substituição hours as the schedule override
+    timeWindows = substituicoes
+      .filter(a => a.hora_inicio && a.hora_fim)
+      .map(a => ({
+        startMin: timeToMinutes(a.hora_inicio!),
+        endMin: timeToMinutes(a.hora_fim!),
+      }));
+  } else {
+    // No substituição - use regular schedule
+    const dayEscalas = escalas.filter(e => e.dia_semana === dow);
+    if (dayEscalas.length === 0) return [];
+
+    timeWindows = dayEscalas.map(e => ({
+      startMin: timeToMinutes(e.hora_inicio),
+      endMin: timeToMinutes(e.hora_fim),
+    }));
+  }
 
   const slots: string[] = [];
-  for (const escala of dayEscalas) {
-    const startMin = timeToMinutes(escala.hora_inicio);
-    const endMin = timeToMinutes(escala.hora_fim);
-    for (let t = startMin; t + durationMin <= endMin; t += stepMin) {
+  for (const window of timeWindows) {
+    for (let t = window.startMin; t + durationMin <= window.endMin; t += stepMin) {
       const slotRange = { startMin: t, endMin: t + durationMin };
-      const absConflict = partialAbsences.some(a => {
-        const aS = timeToMinutes(a.hora_inicio!);
-        const aE = timeToMinutes(a.hora_fim!);
-        return rangesOverlap(slotRange, { startMin: aS, endMin: aE });
-      });
-      if (absConflict) continue;
       const meetConflict = memberMeetings.some(m => {
         const mDate = formatInTimeZone(new Date(m.data_reuniao), "America/Sao_Paulo", "yyyy-MM-dd");
         if (mDate !== date) return false;
