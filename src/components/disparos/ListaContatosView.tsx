@@ -160,7 +160,7 @@ export function ListaContatosView({ lista, onVoltar }: ListaContatosViewProps) {
           placeholder="Buscar por nome, telefone ou e-mail…"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          className="pl-9"
+          className="pl-9 h-9"
         />
       </div>
 

@@ -203,7 +203,7 @@ export default function FormulariosLeads() {
                 placeholder="Buscar por nome, email ou telefone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="pl-9 h-9"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { extractCountryCode, formatPhoneByCountry } from "@/utils/phoneFormat";
 import { toast } from "sonner";
-import { Trash2, Edit, Mail, Phone, Building2, Eye } from "lucide-react";
+import { Trash2, Edit, Mail, Phone, Building2, Eye, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
@@ -89,7 +89,10 @@ export default function TarefasClientesTab() {
         </div>
 
         <div className="flex items-center gap-3 mt-4">
-          <Input placeholder="Buscar cliente..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-sm" />
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar cliente..." value={busca} onChange={e => setBusca(e.target.value)} className="pl-9 h-9" />
+          </div>
           <NovoClienteDialog onSubmit={handleCriar} />
         </div>
 

@@ -538,7 +538,7 @@ export default function Despesas() {
             placeholder="Buscar por descrição ou categoria..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-9"
           />
         </div>
       </Card>
