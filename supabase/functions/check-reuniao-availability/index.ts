@@ -65,11 +65,29 @@ Deno.serve(async (req) => {
 
     const membroIds = tipoMembros.map((tm: any) => tm.membro_id);
 
-    // 3. Get member info
+    // 3. Get member info + cargo filter (default: Closer)
     const { data: membros } = await supabase
       .from("tarefas_membros")
       .select("id, nome, cargo, email")
       .in("id", membroIds);
+
+    const membrosFiltradosPorCargo = (membros || []).filter((m: any) => {
+      if (!cargoFilterNormalized) return true;
+      return normalizeText(m?.cargo) === cargoFilterNormalized;
+    });
+
+    if (membrosFiltradosPorCargo.length === 0) {
+      return new Response(JSON.stringify({
+        tipo_reuniao: tipoReuniao.nome,
+        duracao_minutos: duracaoMinutos,
+        dias: [],
+        message: `Nenhum profissional com cargo "${cargo_filtro || "Closer"}" vinculado a este tipo de reunião`
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const membroIdsFiltrados = membrosFiltradosPorCargo.map((m: any) => m.id);
 
     // 4. Calculate date range (in Brasilia timezone)
     const now = new Date();
