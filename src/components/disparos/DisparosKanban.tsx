@@ -148,6 +148,7 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
     if (chats.length > 0) {
       loadChatAgendamentos();
       loadChatReunioes();
+      loadBulkAIStatus();
     }
   }, [chatIds]);
 
