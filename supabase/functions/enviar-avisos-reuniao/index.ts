@@ -11,6 +11,9 @@ interface AvisoReuniao {
   nome: string;
   mensagem: string;
   dias_antes: number;
+  horas_antes: number;
+  minutos_antes: number;
+  unidade_tempo: string;
   horario_envio: string;
   ativo: boolean;
   intervalo_min: number;
