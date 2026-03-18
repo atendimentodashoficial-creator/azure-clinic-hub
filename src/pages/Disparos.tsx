@@ -2294,6 +2294,12 @@ export default function Disparos() {
                 <DisparosSupabaseConfig />
               </div>
             </TabsContent>
+
+            <TabsContent value="rag">
+              <div className="pt-4">
+                <DisparosRAGConfig />
+              </div>
+            </TabsContent>
           </Tabs>
         </DialogContent>
       </Dialog>
