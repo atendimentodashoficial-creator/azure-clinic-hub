@@ -230,6 +230,11 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
+                      {c.status === "pago" && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-600 hover:bg-amber-100" onClick={() => handleDesmarcarPago(c)} title="Desmarcar pagamento">
+                          <XCircle className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditando(c)}>
                         <Edit className="h-3.5 w-3.5" />
                       </Button>
