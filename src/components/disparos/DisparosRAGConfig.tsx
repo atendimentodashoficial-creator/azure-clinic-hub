@@ -36,7 +36,7 @@ export function DisparosRAGConfig() {
     try {
       const { data, error } = await supabase
         .from("documents" as any)
-        .select("id, content, metadata, created_at")
+        .select("id, content, metadata, created_at, name")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
 
@@ -68,7 +68,8 @@ export function DisparosRAGConfig() {
         body: {
           action: "insert",
           content: newContent.trim(),
-          metadata: { title: newTitle.trim() || undefined },
+          name: newTitle.trim(),
+          metadata: { title: newTitle.trim() },
         },
       });
 
@@ -143,12 +144,15 @@ export function DisparosRAGConfig() {
 
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label className="text-sm">Título (opcional)</Label>
+              <Label className="text-sm">Nome do Documento *</Label>
               <Input
-                placeholder="Ex: Horários de funcionamento"
+                placeholder="Ex: Horários de funcionamento, Preços dos serviços..."
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
               />
+              <p className="text-[10px] text-muted-foreground">
+                Este nome será usado no system prompt para o agente localizar o documento.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -163,7 +167,7 @@ export function DisparosRAGConfig() {
 
             <Button
               onClick={handleAdd}
-              disabled={saving || !newContent.trim()}
+              disabled={saving || !newContent.trim() || !newTitle.trim()}
               className="w-full"
             >
               {saving ? (
@@ -198,8 +202,8 @@ export function DisparosRAGConfig() {
                 className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30"
               >
                 <div className="flex-1 min-w-0">
-                  {doc.metadata?.title && (
-                    <p className="text-sm font-medium truncate">{doc.metadata.title}</p>
+                  {(doc as any).name && (
+                    <p className="text-sm font-medium truncate">{(doc as any).name}</p>
                   )}
                   <p className="text-xs text-muted-foreground line-clamp-3 mt-0.5">
                     {doc.content}

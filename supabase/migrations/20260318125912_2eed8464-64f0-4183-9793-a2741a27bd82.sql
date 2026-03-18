@@ -1,0 +1,1 @@
+ALTER TABLE public.documents ADD COLUMN name text;

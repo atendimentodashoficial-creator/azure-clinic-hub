@@ -38,7 +38,7 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
-    const { action, content, metadata, documentId } = await req.json();
+    const { action, content, metadata, documentId, name } = await req.json();
 
     // DELETE action
     if (action === "delete") {
@@ -130,10 +130,11 @@ serve(async (req) => {
       .insert({
         user_id: userId,
         content: content.trim(),
+        name: name || null,
         metadata: metadata || {},
         embedding: JSON.stringify(embedding),
       })
-      .select("id, content, metadata, created_at")
+      .select("id, content, name, metadata, created_at")
       .single();
 
     if (insertError) {

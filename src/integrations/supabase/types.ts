@@ -1975,6 +1975,7 @@ export type Database = {
           embedding: string | null
           id: string
           metadata: Json | null
+          name: string | null
           updated_at: string | null
           user_id: string
         }
@@ -1984,6 +1985,7 @@ export type Database = {
           embedding?: string | null
           id?: string
           metadata?: Json | null
+          name?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -1993,6 +1995,7 @@ export type Database = {
           embedding?: string | null
           id?: string
           metadata?: Json | null
+          name?: string | null
           updated_at?: string | null
           user_id?: string
         }
