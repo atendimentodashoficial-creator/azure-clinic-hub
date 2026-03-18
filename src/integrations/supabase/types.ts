@@ -1008,6 +1008,50 @@ export type Database = {
         }
         Relationships: []
       }
+      cobranca_pagamentos: {
+        Row: {
+          cobranca_id: string
+          comprovante_url: string | null
+          created_at: string
+          data_pagamento: string
+          data_proximo_pagamento: string | null
+          id: string
+          observacoes: string | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          cobranca_id: string
+          comprovante_url?: string | null
+          created_at?: string
+          data_pagamento?: string
+          data_proximo_pagamento?: string | null
+          id?: string
+          observacoes?: string | null
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          cobranca_id?: string
+          comprovante_url?: string | null
+          created_at?: string
+          data_pagamento?: string
+          data_proximo_pagamento?: string | null
+          id?: string
+          observacoes?: string | null
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cobranca_pagamentos_cobranca_id_fkey"
+            columns: ["cobranca_id"]
+            isOneToOne: false
+            referencedRelation: "cobrancas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cobrancas: {
         Row: {
           cliente_id: string
