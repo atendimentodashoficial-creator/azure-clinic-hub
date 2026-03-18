@@ -39,6 +39,7 @@ interface DisparosInstancia {
   base_url?: string;
   api_key?: string;
   is_active?: boolean;
+  n8n_setup_at?: string | null;
 }
 
 export default function Disparos() {
