@@ -130,10 +130,11 @@ serve(async (req) => {
       .insert({
         user_id: userId,
         content: content.trim(),
+        name: name || null,
         metadata: metadata || {},
         embedding: JSON.stringify(embedding),
       })
-      .select("id, content, metadata, created_at")
+      .select("id, content, name, metadata, created_at")
       .single();
 
     if (insertError) {
