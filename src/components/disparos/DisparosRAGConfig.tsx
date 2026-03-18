@@ -68,7 +68,8 @@ export function DisparosRAGConfig() {
         body: {
           action: "insert",
           content: newContent.trim(),
-          metadata: { title: newTitle.trim() || undefined },
+          name: newTitle.trim(),
+          metadata: { title: newTitle.trim() },
         },
       });
 
