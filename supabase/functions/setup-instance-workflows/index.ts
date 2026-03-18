@@ -428,7 +428,19 @@ Deno.serve(async (req) => {
         results.push({ step: "clone_sdr", success: true, detail: `Workflow "${newWfName}" criado (ID: ${clonedSdrId})` });
       } catch (e: any) {
         console.error("Error cloning SDR:", e);
-        results.push({ step: "clone_sdr", success: false, error: e.message });
+        const msg = `Falha ao clonar workflow SDR: ${e.message}`;
+        results.push({ step: "clone_sdr", success: false, error: msg });
+
+        return new Response(JSON.stringify({
+          success: false,
+          error: msg,
+          message: msg,
+          table_name: tableName,
+          steps: results,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 
