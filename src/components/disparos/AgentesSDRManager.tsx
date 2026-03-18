@@ -166,7 +166,7 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
     }
   };
 
-  const agentOrder = ["agente_principal", "agente_horarios", "remarcação", "cancelamento", "1 hora", "24 horas", "72 horas", "follow programado", "follow up programado"];
+  const agentOrder = ["agente principal", "agente_principal", "agente_horarios", "agente_remarcacao", "remarcação", "agente_cancelamento", "cancelamento", "1 hora", "24 horas", "72 horas", "follow programado", "follow up programado"];
   const sortAgents = (agents: AgentNode[]) => [...agents].sort((a, b) => {
     const aIdx = agentOrder.findIndex(n => a.nodeName.toLowerCase().includes(n.toLowerCase()));
     const bIdx = agentOrder.findIndex(n => b.nodeName.toLowerCase().includes(n.toLowerCase()));
