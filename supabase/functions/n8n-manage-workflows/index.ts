@@ -187,9 +187,34 @@ async function updateAgentPrompts(
         continue;
       }
 
+      // Sanitize nodes to only include properties accepted by n8n API
+      const sanitizedNodes = workflow.nodes.map((node: any) => {
+        const clean: any = {
+          id: node.id,
+          name: node.name,
+          type: node.type,
+          position: node.position,
+          parameters: node.parameters,
+          typeVersion: node.typeVersion,
+        };
+        // Preserve optional fields only if they exist
+        if (node.credentials) clean.credentials = node.credentials;
+        if (node.webhookId) clean.webhookId = node.webhookId;
+        if (node.disabled !== undefined) clean.disabled = node.disabled;
+        if (node.notes) clean.notes = node.notes;
+        if (node.notesInFlow !== undefined) clean.notesInFlow = node.notesInFlow;
+        if (node.retryOnFail !== undefined) clean.retryOnFail = node.retryOnFail;
+        if (node.onError) clean.onError = node.onError;
+        if (node.continueOnFail !== undefined) clean.continueOnFail = node.continueOnFail;
+        if (node.executeOnce !== undefined) clean.executeOnce = node.executeOnce;
+        if (node.alwaysOutputData !== undefined) clean.alwaysOutputData = node.alwaysOutputData;
+        if (node.color) clean.color = node.color;
+        return clean;
+      });
+
       const updatePayload = {
         name: workflow.name,
-        nodes: workflow.nodes,
+        nodes: sanitizedNodes,
         connections: workflow.connections,
         settings: {
           executionOrder: workflow.settings?.executionOrder ?? "v1",
