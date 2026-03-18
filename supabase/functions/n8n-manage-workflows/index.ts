@@ -199,6 +199,21 @@ async function updateAgentPrompts(
   return { updated, errors };
 }
 
+async function updatePromptsPerWorkflow(
+  perWorkflowUpdates: Record<string, { nodeName: string; newPrompt: string }[]>
+): Promise<{ updated: string[]; errors: string[] }> {
+  const updated: string[] = [];
+  const errors: string[] = [];
+
+  for (const [wfId, updates] of Object.entries(perWorkflowUpdates)) {
+    const result = await updateAgentPrompts([wfId], updates);
+    updated.push(...result.updated);
+    errors.push(...result.errors);
+  }
+
+  return { updated, errors };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -216,6 +231,9 @@ Deno.serve(async (req) => {
         break;
       case "update_prompts":
         result = await updateAgentPrompts(params.workflow_ids, params.updates);
+        break;
+      case "update_prompts_per_workflow":
+        result = await updatePromptsPerWorkflow(params.per_workflow_updates);
         break;
       default:
         throw new Error(`Unknown action: ${action}`);
