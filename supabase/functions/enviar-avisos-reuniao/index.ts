@@ -11,6 +11,9 @@ interface AvisoReuniao {
   nome: string;
   mensagem: string;
   dias_antes: number;
+  horas_antes: number;
+  minutos_antes: number;
+  unidade_tempo: string;
   horario_envio: string;
   ativo: boolean;
   intervalo_min: number;
@@ -515,28 +518,31 @@ Deno.serve(async (req) => {
     // Process each aviso
     for (const aviso of avisos as AvisoReuniao[]) {
       const userId = aviso.user_id;
-      console.log(`Processing aviso "${aviso.nome}" for user ${userId}`);
+      const unidadeTempo = (aviso as any).unidade_tempo || 'dias';
+      console.log(`Processing aviso "${aviso.nome}" for user ${userId} (unidade: ${unidadeTempo})`);
 
-      // Check if it's time to send (or past time)
-      const [envioHora, envioMinuto] = aviso.horario_envio.split(":").map(Number);
-      const currentHour = saoPauloNow.getHours();
-      const currentMinute = saoPauloNow.getMinutes();
-      const currentTotal = currentHour * 60 + currentMinute;
-      const envioTotal = envioHora * 60 + envioMinuto;
+      // For "dias" mode, check if it's time to send based on horario_envio
+      if (unidadeTempo === 'dias') {
+        const [envioHora, envioMinuto] = aviso.horario_envio.split(":").map(Number);
+        const currentHour = saoPauloNow.getHours();
+        const currentMinute = saoPauloNow.getMinutes();
+        const currentTotal = currentHour * 60 + currentMinute;
+        const envioTotal = envioHora * 60 + envioMinuto;
 
-      // Skip if too early (unless manual test)
-      if (!filterAvisoId && currentTotal < envioTotal) {
-        console.log(`Skipping aviso "${aviso.nome}" - too early (now=${currentTotal}, scheduled=${envioTotal})`);
-        continue;
+        if (!filterAvisoId && currentTotal < envioTotal) {
+          console.log(`Skipping aviso "${aviso.nome}" - too early (now=${currentTotal}, scheduled=${envioTotal})`);
+          continue;
+        }
       }
 
-      // Get reunioes for next 7 days
+      // Get reunioes - for horas/minutos we need a wider window
       const hojeSP = new Date(saoPauloNow);
       hojeSP.setHours(0, 0, 0, 0);
 
-      const em7Dias = new Date(hojeSP);
-      em7Dias.setDate(em7Dias.getDate() + 7);
-      em7Dias.setHours(23, 59, 59, 999);
+      const lookAheadDays = unidadeTempo === 'dias' ? 7 : 3;
+      const emXDias = new Date(hojeSP);
+      emXDias.setDate(emXDias.getDate() + lookAheadDays);
+      emXDias.setHours(23, 59, 59, 999);
 
       const { data: reunioes, error: reunioesError } = await supabase
         .from("reunioes")
@@ -544,7 +550,7 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .in("status", ["agendado", "confirmado"])
         .gte("data_reuniao", hojeSP.toISOString())
-        .lte("data_reuniao", em7Dias.toISOString());
+        .lte("data_reuniao", emXDias.toISOString());
 
       if (reunioesError || !reunioes || reunioes.length === 0) {
         console.log(`No upcoming reunioes for user ${userId}`);
@@ -556,18 +562,33 @@ Deno.serve(async (req) => {
       // Build pending list for this aviso
       const pendingAvisos: PendingAviso[] = [];
 
-      // Filter by dias_antes
+      // Filter reunioes based on unidade_tempo
       const matchingReunioes = (reunioes as any[]).filter(reuniao => {
         const dataReuniao = new Date(reuniao.data_reuniao);
-        const dataReuniaoSP = new Date(dataReuniao.getTime());
-        dataReuniaoSP.setHours(0, 0, 0, 0);
 
-        const hojeDateSP = new Date(saoPauloNow);
-        hojeDateSP.setHours(0, 0, 0, 0);
-
-        const diffDays = Math.round((dataReuniaoSP.getTime() - hojeDateSP.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (diffDays !== aviso.dias_antes) return false;
+        if (unidadeTempo === 'horas') {
+          const horasAntes = (aviso as any).horas_antes || 0;
+          const diffMs = dataReuniao.getTime() - Date.now();
+          const diffHours = diffMs / (1000 * 60 * 60);
+          // Should send when we're within the window (between 0 and horasAntes hours before)
+          // But only trigger when close to the exact time (within 2 min tolerance)
+          const targetSendTime = new Date(dataReuniao.getTime() - horasAntes * 60 * 60 * 1000);
+          const diffFromTarget = Math.abs(Date.now() - targetSendTime.getTime()) / (1000 * 60);
+          if (diffFromTarget > 2) return false; // Only match within 2 min of target
+        } else if (unidadeTempo === 'minutos') {
+          const minutosAntes = (aviso as any).minutos_antes || 0;
+          const targetSendTime = new Date(dataReuniao.getTime() - minutosAntes * 60 * 1000);
+          const diffFromTarget = Math.abs(Date.now() - targetSendTime.getTime()) / (1000 * 60);
+          if (diffFromTarget > 2) return false; // Only match within 2 min of target
+        } else {
+          // dias mode - original logic
+          const dataReuniaoSP = new Date(dataReuniao.getTime());
+          dataReuniaoSP.setHours(0, 0, 0, 0);
+          const hojeDateSP = new Date(saoPauloNow);
+          hojeDateSP.setHours(0, 0, 0, 0);
+          const diffDays = Math.round((dataReuniaoSP.getTime() - hojeDateSP.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays !== aviso.dias_antes) return false;
+        }
 
         // Filter by tipo_reuniao_id if specified
         if (aviso.tipo_reuniao_id && reuniao.tipo_reuniao_id !== aviso.tipo_reuniao_id) return false;
@@ -576,9 +597,12 @@ Deno.serve(async (req) => {
       });
 
       if (matchingReunioes.length === 0) {
-        console.log(`No matching reunioes for aviso "${aviso.nome}" (dias_antes=${aviso.dias_antes})`);
-        // Update timestamps
-        const nextCheckAt = calculateNextCheckAt(aviso.horario_envio);
+        const label = unidadeTempo === 'horas' ? `horas_antes=${(aviso as any).horas_antes}` : unidadeTempo === 'minutos' ? `minutos_antes=${(aviso as any).minutos_antes}` : `dias_antes=${aviso.dias_antes}`;
+        console.log(`No matching reunioes for aviso "${aviso.nome}" (${label})`);
+        // For horas/minutos, schedule next check in 1 min (cron handles it)
+        const nextCheckAt = unidadeTempo === 'dias' 
+          ? calculateNextCheckAt(aviso.horario_envio)
+          : new Date(Date.now() + 60 * 1000).toISOString();
         await supabase
           .from("avisos_reuniao")
           .update({ next_check_at: nextCheckAt, last_check_at: new Date().toISOString() })

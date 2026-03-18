@@ -72,6 +72,9 @@ interface AvisoReuniao {
   nome: string;
   mensagem: string;
   dias_antes: number;
+  horas_antes: number;
+  minutos_antes: number;
+  unidade_tempo: string;
   horario_envio: string;
   ativo: boolean;
   envio_imediato: boolean;
@@ -113,6 +116,9 @@ export function AvisosReuniaoTab() {
     "Olá {nome}! 👋\n\nLembramos que você tem uma reunião agendada para {data} às {horario}.\n\n📹 Link da call: {link_call}\n\nAguardamos você! 🙂"
   );
   const [formDiasAntes, setFormDiasAntes] = useState(1);
+  const [formHorasAntes, setFormHorasAntes] = useState(0);
+  const [formMinutosAntes, setFormMinutosAntes] = useState(0);
+  const [formUnidadeTempo, setFormUnidadeTempo] = useState<"dias" | "horas" | "minutos">("dias");
   const [formHorarioEnvio, setFormHorarioEnvio] = useState("09:00");
   const [formIntervaloMin, setFormIntervaloMin] = useState(15);
   const [formIntervaloMax, setFormIntervaloMax] = useState(33);
@@ -214,6 +220,9 @@ export function AvisosReuniaoTab() {
       "Olá {nome}! 👋\n\nLembramos que você tem uma reunião agendada para {data} às {horario}.\n\n📹 Link da call: {link_call}\n\nAguardamos você! 🙂"
     );
     setFormDiasAntes(1);
+    setFormHorasAntes(0);
+    setFormMinutosAntes(0);
+    setFormUnidadeTempo("dias");
     setFormHorarioEnvio("09:00");
     setFormIntervaloMin(15);
     setFormIntervaloMax(33);
@@ -253,6 +262,9 @@ export function AvisosReuniaoTab() {
     setFormNome(aviso.nome);
     setFormMensagem(aviso.mensagem);
     setFormDiasAntes(aviso.dias_antes);
+    setFormHorasAntes(aviso.horas_antes || 0);
+    setFormMinutosAntes(aviso.minutos_antes || 0);
+    setFormUnidadeTempo((aviso.unidade_tempo as "dias" | "horas" | "minutos") || "dias");
     setFormHorarioEnvio(aviso.horario_envio.substring(0, 5));
     if (aviso.intervalo_min >= 60 && aviso.intervalo_min % 60 === 0) {
       setFormIntervaloMin(aviso.intervalo_min / 60);
@@ -271,7 +283,6 @@ export function AvisosReuniaoTab() {
     setFormAudioPosicao((aviso.audio_posicao as "antes" | "depois") || "antes");
     setFormLinkCalendarioAtivo(aviso.link_calendario_ativo || false);
     setFormLinkCalendarioTexto(aviso.link_calendario_texto || "📅 Adicionar ao meu calendário");
-    // Map envio_imediato to tipo_gatilho for backwards compatibility
     if (aviso.envio_imediato) {
       setFormTipoGatilho("imediato");
     } else {
@@ -303,6 +314,11 @@ export function AvisosReuniaoTab() {
         // Immediate or rescheduling notifications don't need scheduled checks
         if (!isActive || formTipoGatilho === 'imediato' || formTipoGatilho === 'reagendamento') return null;
         
+        // For horas/minutos mode, check every minute via cron (no specific horario_envio)
+        if (formUnidadeTempo === 'horas' || formUnidadeTempo === 'minutos') {
+          return new Date().toISOString();
+        }
+        
         const now = new Date();
         const utc = now.getTime() + now.getTimezoneOffset() * 60000;
         const saoPauloOffset = -3 * 60 * 60 * 1000;
@@ -326,10 +342,13 @@ export function AvisosReuniaoTab() {
       if (editingAviso) {
         const { error } = await supabase
           .from('avisos_reuniao')
-          .update({
+           .update({
             nome: formNome.trim(),
             mensagem: formMensagem.trim(),
             dias_antes: formDiasAntes,
+            horas_antes: formHorasAntes,
+            minutos_antes: formMinutosAntes,
+            unidade_tempo: formUnidadeTempo,
             horario_envio: formHorarioEnvio,
             intervalo_min: intervaloMinSec,
             intervalo_max: intervaloMaxSec,
@@ -357,6 +376,9 @@ export function AvisosReuniaoTab() {
             nome: formNome.trim(),
             mensagem: formMensagem.trim(),
             dias_antes: formDiasAntes,
+            horas_antes: formHorasAntes,
+            minutos_antes: formMinutosAntes,
+            unidade_tempo: formUnidadeTempo,
             horario_envio: formHorarioEnvio,
             intervalo_min: intervaloMinSec,
             intervalo_max: intervaloMaxSec,
@@ -449,7 +471,19 @@ export function AvisosReuniaoTab() {
     }
   };
 
-  const formatPeriodo = (dias: number) => {
+  const formatPeriodo = (aviso: AvisoReuniao) => {
+    const unidade = aviso.unidade_tempo || 'dias';
+    if (unidade === 'minutos') {
+      const min = aviso.minutos_antes || 0;
+      if (min === 0) return 'No momento';
+      return `${min} min antes`;
+    }
+    if (unidade === 'horas') {
+      const hrs = aviso.horas_antes || 0;
+      if (hrs === 0) return 'No momento';
+      return `${hrs}h antes`;
+    }
+    const dias = aviso.dias_antes;
     if (dias === 0) return 'No dia';
     if (dias === 1) return '1 dia antes';
     return `${dias} dias antes`;
@@ -747,12 +781,14 @@ export function AvisosReuniaoTab() {
                     {/* Timing info */}
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-xs">
-                        {formatPeriodo(aviso.dias_antes)}
+                        {formatPeriodo(aviso)}
                       </Badge>
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>às {aviso.horario_envio.substring(0, 5)}</span>
-                      </div>
+                      {(aviso.unidade_tempo || 'dias') === 'dias' && (
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>às {aviso.horario_envio.substring(0, 5)}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Procedimento se especificado */}
@@ -1025,35 +1061,93 @@ export function AvisosReuniaoTab() {
             </div>
 
             {/* Período e horário - only show for dias_antes type */}
-            <div className="grid grid-cols-2 gap-4">
-              {formTipoGatilho === 'dias_antes' && (
+            {formTipoGatilho === 'dias_antes' && (
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="diasAntes">Dias antes da reunião</Label>
-                  <Input
-                    id="diasAntes"
-                    type="number"
-                    min={0}
-                    max={30}
-                    value={formDiasAntes}
-                    onChange={(e) => setFormDiasAntes(parseInt(e.target.value) || 0)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    0 = no dia da reunião
-                  </p>
+                  <Label>Unidade de tempo</Label>
+                  <Select
+                    value={formUnidadeTempo}
+                    onValueChange={(v) => {
+                      setFormUnidadeTempo(v as "dias" | "horas" | "minutos");
+                      if (v === 'dias') { setFormDiasAntes(1); setFormHorasAntes(0); setFormMinutosAntes(0); }
+                      if (v === 'horas') { setFormDiasAntes(0); setFormHorasAntes(1); setFormMinutosAntes(0); }
+                      if (v === 'minutos') { setFormDiasAntes(0); setFormHorasAntes(0); setFormMinutosAntes(30); }
+                    }}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      <SelectItem value="dias">Dias antes</SelectItem>
+                      <SelectItem value="horas">Horas antes</SelectItem>
+                      <SelectItem value="minutos">Minutos antes</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-              {formTipoGatilho === 'dias_antes' && (
-                <div className="space-y-2">
-                  <Label htmlFor="horarioEnvio">Horário de envio</Label>
-                  <Input
-                    id="horarioEnvio"
-                    type="time"
-                    value={formHorarioEnvio}
-                    onChange={(e) => setFormHorarioEnvio(e.target.value)}
-                  />
+
+                <div className="grid grid-cols-2 gap-4">
+                  {formUnidadeTempo === 'dias' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="diasAntes">Dias antes da reunião</Label>
+                      <Input
+                        id="diasAntes"
+                        type="number"
+                        min={0}
+                        max={30}
+                        value={formDiasAntes}
+                        onChange={(e) => setFormDiasAntes(parseInt(e.target.value) || 0)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        0 = no dia da reunião
+                      </p>
+                    </div>
+                  )}
+                  {formUnidadeTempo === 'horas' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="horasAntes">Horas antes da reunião</Label>
+                      <Input
+                        id="horasAntes"
+                        type="number"
+                        min={1}
+                        max={72}
+                        value={formHorasAntes}
+                        onChange={(e) => setFormHorasAntes(parseInt(e.target.value) || 1)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Ex: 2 = 2 horas antes do horário da reunião
+                      </p>
+                    </div>
+                  )}
+                  {formUnidadeTempo === 'minutos' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="minutosAntes">Minutos antes da reunião</Label>
+                      <Input
+                        id="minutosAntes"
+                        type="number"
+                        min={5}
+                        max={180}
+                        value={formMinutosAntes}
+                        onChange={(e) => setFormMinutosAntes(parseInt(e.target.value) || 5)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Ex: 30 = 30 minutos antes do horário da reunião
+                      </p>
+                    </div>
+                  )}
+                  {formUnidadeTempo === 'dias' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="horarioEnvio">Horário de envio</Label>
+                      <Input
+                        id="horarioEnvio"
+                        type="time"
+                        value={formHorarioEnvio}
+                        onChange={(e) => setFormHorarioEnvio(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Intervalo entre mensagens */}
             {formTipoGatilho === 'dias_antes' && (
