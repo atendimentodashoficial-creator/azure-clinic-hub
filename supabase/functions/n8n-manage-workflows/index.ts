@@ -199,6 +199,21 @@ async function updateAgentPrompts(
   return { updated, errors };
 }
 
+async function updatePromptsPerWorkflow(
+  perWorkflowUpdates: Record<string, { nodeName: string; newPrompt: string }[]>
+): Promise<{ updated: string[]; errors: string[] }> {
+  const updated: string[] = [];
+  const errors: string[] = [];
+
+  for (const [wfId, updates] of Object.entries(perWorkflowUpdates)) {
+    const result = await updateAgentPrompts([wfId], updates);
+    updated.push(...result.updated);
+    errors.push(...result.errors);
+  }
+
+  return { updated, errors };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
