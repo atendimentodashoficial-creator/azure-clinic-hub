@@ -38,7 +38,7 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
-    const { action, content, metadata, documentId } = await req.json();
+    const { action, content, metadata, documentId, name } = await req.json();
 
     // DELETE action
     if (action === "delete") {
