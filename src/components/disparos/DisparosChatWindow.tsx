@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { RefreshCw, Send, Package, Trash2, MessageSquare, Image, Mic, Forward, X, ArrowLeft, Pencil, Check, ChevronDown, Repeat, Wifi, Info, MoreVertical } from "lucide-react";
+import { RefreshCw, Send, Package, Trash2, MessageSquare, Image, Mic, Forward, X, ArrowLeft, Pencil, Check, ChevronDown, Repeat, Wifi, Info, MoreVertical, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +31,7 @@ import { getInitials, normalizePhoneNumber, formatPhoneNumber, getLast8Digits } 
 import { syncContactNameEverywhere, CONTACT_NAME_QUERY_KEYS } from "@/utils/syncContactName";
 import { useProdutoTemplates, ProdutoTemplate } from "@/hooks/useProdutoTemplates";
 import { AtribuirProdutoDialog } from "@/components/produtos/AtribuirProdutoDialog";
+import { NovaReuniaoDialog } from "@/components/reunioes/NovaReuniaoDialog";
 import { useMensagensPredefinidas } from "@/hooks/useMensagensPredefinidas";
 import { useBlocosMensagens } from "@/hooks/useBlocosMensagens";
 import { useAudiosPredefinidos } from "@/hooks/useAudiosPredefinidos";
@@ -206,6 +207,7 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
   const [selectedTemplate, setSelectedTemplate] = useState<ProdutoTemplate | null>(null);
   const { data: produtoTemplates = [] } = useProdutoTemplates();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reuniaoDialogOpen, setReuniaoDialogOpen] = useState(false);
   const [mensagensPredefindasOpen, setMensagensPredefindasOpen] = useState(false);
   const [leadStatus, setLeadStatus] = useState<string | null>(null);
   const [leadId, setLeadId] = useState<string | null>(null);
@@ -1301,6 +1303,11 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
                   </DropdownMenuItem>
                 ))
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setReuniaoDialogOpen(true)}>
+                <Calendar className="w-4 h-4 mr-2" />
+                Marcar Reunião
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -1801,6 +1808,14 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
           }}
         />
       )}
+
+      {/* Dialog de Nova Reunião */}
+      <NovaReuniaoDialog
+        open={reuniaoDialogOpen}
+        onOpenChange={setReuniaoDialogOpen}
+        initialClienteNome={chat.contact_name}
+        initialClienteTelefone={chat.contact_number}
+      />
 
       {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
