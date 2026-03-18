@@ -83,26 +83,44 @@ function extractAgents(workflow: any): AgentNode[] {
 async function listWorkflows(): Promise<WorkflowSummary[]> {
   const headers = getN8nHeaders();
 
-  // Fetch all workflows
-  const res = await fetch(`${N8N_BASE_URL}/api/v1/workflows?limit=100`, { headers });
-  if (!res.ok) throw new Error(`Failed to list workflows: ${res.status}`);
-  const data = await res.json();
+  // Fetch all workflows with pagination
+  const allWfData: any[] = [];
+  let cursor: string | undefined;
+  
+  while (true) {
+    const url = cursor
+      ? `${N8N_BASE_URL}/api/v1/workflows?limit=250&cursor=${cursor}`
+      : `${N8N_BASE_URL}/api/v1/workflows?limit=250`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error(`Failed to list workflows: ${res.status}`);
+    const data = await res.json();
+    allWfData.push(...(data.data || []));
+    cursor = data.nextCursor;
+    if (!cursor) break;
+  }
+
+  console.log(`[n8n] Total workflows fetched: ${allWfData.length}`);
 
   const workflows: WorkflowSummary[] = [];
 
-  for (const wf of data.data || []) {
-    // Get full workflow details to check MCP setting and extract agents
+  for (const wf of allWfData) {
     const fullRes = await fetch(`${N8N_BASE_URL}/api/v1/workflows/${wf.id}`, { headers });
-    if (!fullRes.ok) continue;
+    if (!fullRes.ok) {
+      console.log(`[n8n] Failed to get workflow ${wf.id} (${wf.name}): ${fullRes.status}`);
+      continue;
+    }
     const fullWf = await fullRes.json();
 
-    // Only include workflows with MCP enabled
-    if (!fullWf.settings?.availableInMCP) continue;
-
     const agents = extractAgents(fullWf);
-    if (agents.length === 0) continue;
-
     const tags = (fullWf.tags || []).map((t: any) => t.name || t);
+
+    if (agents.length === 0) {
+      console.log(`[n8n] Skipping "${wf.name}" - no agent nodes found`);
+      continue;
+    }
+
+    console.log(`[n8n] Including "${wf.name}" with ${agents.length} agent(s), tags: [${tags.join(', ')}]`);
+
     workflows.push({
       id: wf.id,
       name: wf.name,
@@ -112,6 +130,7 @@ async function listWorkflows(): Promise<WorkflowSummary[]> {
     });
   }
 
+  console.log(`[n8n] Total workflows with agents: ${workflows.length}`);
   return workflows;
 }
 
