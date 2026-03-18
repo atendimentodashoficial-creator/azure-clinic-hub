@@ -22,9 +22,16 @@ interface WorkflowSummary {
   name: string;
   active: boolean;
   agents: AgentNode[];
+  tags: string[];
 }
 
-export function AgentesSDRManager() {
+interface AgentesSDRManagerProps {
+  filterTag?: string;
+  emptyIcon?: React.ReactNode;
+  emptyMessage?: string;
+}
+
+export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: AgentesSDRManagerProps = {}) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [workflows, setWorkflows] = useState<WorkflowSummary[]>([]);
