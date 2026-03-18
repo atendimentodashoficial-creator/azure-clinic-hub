@@ -19,7 +19,8 @@ import {
   Unplug,
   Webhook,
   AlertCircle,
-  Keyboard
+  Keyboard,
+  Workflow,
 } from "lucide-react";
 import {
   Dialog,
