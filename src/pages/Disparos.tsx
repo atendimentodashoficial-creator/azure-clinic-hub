@@ -2174,24 +2174,7 @@ export default function Disparos() {
             </DialogDescription>
           </DialogHeader>
           
-          <Tabs defaultValue="instancias">
-            <TabsList className="w-full">
-              <TabsTrigger value="instancias" className="flex-1 gap-1.5">
-                <Smartphone className="h-4 w-4" />
-                Instâncias
-              </TabsTrigger>
-              <TabsTrigger value="supabase" className="flex-1 gap-1.5">
-                <Settings className="h-4 w-4" />
-                Supabase
-              </TabsTrigger>
-              <TabsTrigger value="rag" className="flex-1 gap-1.5">
-                <BookOpen className="h-4 w-4" />
-                Base RAG
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="instancias">
-              <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-4">
                 <div className="flex justify-end">
                   <Button size="sm" onClick={() => { setShowInstanceManager(false); setCreateInstanceDialogOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -2296,20 +2279,6 @@ export default function Disparos() {
                   </div>
                 )}
               </div>
-            </TabsContent>
-
-            <TabsContent value="supabase">
-              <div className="pt-4">
-                <DisparosSupabaseConfig />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="rag">
-              <div className="pt-4">
-                <DisparosRAGConfig />
-              </div>
-            </TabsContent>
-          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
