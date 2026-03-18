@@ -728,8 +728,11 @@ Deno.serve(async (req) => {
     const allSuccess = results.every(r => r.success);
     const successCount = results.filter(r => r.success).length;
 
+    const firstFailure = results.find(r => !r.success);
+
     return new Response(JSON.stringify({
       success: allSuccess,
+      error: allSuccess ? null : (firstFailure?.error || `${successCount}/${results.length} etapas concluídas.`),
       message: allSuccess
         ? `Automação completa! ${successCount} etapas concluídas com sucesso.`
         : `${successCount}/${results.length} etapas concluídas. Verifique os detalhes.`,
