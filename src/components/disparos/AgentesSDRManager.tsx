@@ -168,8 +168,8 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
   if (workflows.length === 0) {
     return (
       <div className="text-center py-12">
-        <Workflow className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-        <p className="text-muted-foreground text-sm">Nenhum workflow com agentes encontrado no n8n</p>
+        {emptyIcon || <Workflow className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />}
+        <p className="text-muted-foreground text-sm">{emptyMessage || "Nenhum workflow com agentes encontrado no n8n"}</p>
         <Button variant="outline" size="sm" className="mt-4 gap-1.5" onClick={loadWorkflows}>
           <RefreshCw className="h-4 w-4" />
           Tentar novamente
