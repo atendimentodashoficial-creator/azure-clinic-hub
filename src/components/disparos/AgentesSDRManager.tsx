@@ -59,13 +59,16 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
 
       if (error) throw error;
       if (Array.isArray(data)) {
-        setWorkflows(data);
-        // Pre-populate editing prompts from the first workflow's agents
+        // Filter by tag if specified
+        const filtered = filterTag
+          ? data.filter((wf: WorkflowSummary) => wf.tags?.some(t => t.toLowerCase() === filterTag.toLowerCase()))
+          : data;
+        setWorkflows(filtered);
+        // Pre-populate editing prompts from the workflows' agents
         const prompts: Record<string, string> = {};
-        for (const wf of data) {
+        for (const wf of filtered) {
           for (const agent of wf.agents) {
             if (!prompts[agent.nodeName]) {
-              // Clean dynamic suffix for display
               let prompt = agent.systemPrompt;
               prompt = prompt.replace(/\n\n### INFORMACOES ADICIONAIS[\s\S]*$/, "");
               prompts[agent.nodeName] = prompt;
