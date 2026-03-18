@@ -19,7 +19,8 @@ import {
   Unplug,
   Webhook,
   AlertCircle,
-  Keyboard
+  Keyboard,
+  Workflow,
 } from "lucide-react";
 import {
   Dialog,
@@ -91,6 +92,13 @@ export function DisparosInstanciasManager({ instancias, onInstanciasChange }: Di
   const [newInstanceLoading, setNewInstanceLoading] = useState(false);
   const [newInstancePolling, setNewInstancePolling] = useState<ReturnType<typeof setInterval> | null>(null);
   const [tempNewInstance, setTempNewInstance] = useState<DisparosInstancia | null>(null);
+
+  // Setup Fluxos state
+  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const [setupInstance, setSetupInstance] = useState<DisparosInstancia | null>(null);
+  const [setupPhoneLast4, setSetupPhoneLast4] = useState("");
+  const [setupLoading, setSetupLoading] = useState<string | null>(null);
+  const [setupResults, setSetupResults] = useState<any>(null);
 
   // Check connection status on mount and auto-configure webhook if needed
   useEffect(() => {
@@ -512,6 +520,39 @@ export function DisparosInstanciasManager({ instancias, onInstanciasChange }: Di
     }, 180000);
   };
 
+  const handleSetupFluxos = async () => {
+    if (!setupInstance || !setupPhoneLast4 || setupPhoneLast4.length !== 4) {
+      toast.error("Informe os 4 últimos dígitos do telefone");
+      return;
+    }
+
+    setSetupLoading(setupInstance.id);
+    setSetupResults(null);
+
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke("setup-instance-workflows", {
+        headers: { Authorization: `Bearer ${session.session?.access_token}` },
+        body: {
+          instancia_id: setupInstance.id,
+          phone_last4: setupPhoneLast4,
+        },
+      });
+
+      if (response.error) throw new Error(response.error.message);
+      if (!response.data?.success) throw new Error(response.data?.error || "Erro desconhecido");
+
+      setSetupResults(response.data);
+      toast.success("Fluxos configurados com sucesso!");
+      onInstanciasChange();
+    } catch (error: any) {
+      console.error("Setup error:", error);
+      toast.error("Erro ao configurar fluxos: " + (error.message || "Erro desconhecido"));
+    } finally {
+      setSetupLoading(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -907,6 +948,39 @@ export function DisparosInstanciasManager({ instancias, onInstanciasChange }: Di
                       </Button>
                     )}
                   </div>
+
+                  {/* Setup Fluxos button */}
+                  {isConnected && !(instancia as any).n8n_setup_at && (
+                    <div className="border-t pt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSetupInstance(instancia);
+                          setSetupPhoneLast4("");
+                          setSetupResults(null);
+                          setSetupDialogOpen(true);
+                        }}
+                        disabled={setupLoading === instancia.id}
+                        className="gap-1.5"
+                      >
+                        {setupLoading === instancia.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Workflow className="h-4 w-4" />
+                        )}
+                        Configurar Fluxos
+                      </Button>
+                    </div>
+                  )}
+                  {(instancia as any).n8n_setup_at && (
+                    <div className="border-t pt-3">
+                      <Badge variant="secondary" className="text-[10px] gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Fluxos configurados
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               </Card>
             );
@@ -984,6 +1058,101 @@ export function DisparosInstanciasManager({ instancias, onInstanciasChange }: Di
               Atualizar QR Code
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Setup Fluxos Dialog */}
+      <Dialog open={setupDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setSetupResults(null);
+        }
+        setSetupDialogOpen(open);
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Workflow className="h-5 w-5" />
+              Configurar Fluxos n8n
+            </DialogTitle>
+            <DialogDescription>
+              {setupInstance?.nome} — Configure tabela, workflows SDR e Follow-up automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!setupResults ? (
+            <div className="space-y-4 pt-2">
+              <div>
+                <Label htmlFor="phone_last4">4 últimos dígitos do telefone</Label>
+                <Input
+                  id="phone_last4"
+                  value={setupPhoneLast4}
+                  onChange={(e) => setSetupPhoneLast4(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="Ex: 1234"
+                  maxLength={4}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Usado para nomear o webhook e identificar os fluxos.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setSetupDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSetupFluxos}
+                  disabled={setupPhoneLast4.length !== 4 || !!setupLoading}
+                >
+                  {setupLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Workflow className="h-4 w-4 mr-2" />
+                  )}
+                  {setupLoading ? "Configurando..." : "Iniciar Configuração"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 pt-2">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span>Tabela: <strong>{setupResults.table_name}</strong></span>
+                </div>
+                {setupResults.sdr_workflow_id && (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <span>Workflow SDR criado</span>
+                  </div>
+                )}
+                {setupResults.followup_workflow_id && (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <span>Workflow Follow-up criado</span>
+                  </div>
+                )}
+                {setupResults.cron_created && (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <span>Cron de follow-up configurado</span>
+                  </div>
+                )}
+                {setupResults.webhook_registered && (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <span>Webhook SDR registrado na UAZAPI</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button onClick={() => setSetupDialogOpen(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
