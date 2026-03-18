@@ -318,7 +318,7 @@ serve(async (req) => {
 
         // Claim lock for enough time to cover the whole execution (blocks + delays).
         // NOTE: we use next_send_at as a lightweight lock so other 'continue' calls will skip.
-        const lockUntilIso = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+        const lockUntilIso = new Date(Date.now() + 3 * 60 * 1000).toISOString(); // 3 minutes (reduced from 10 to minimize stuck time if background crashes)
 
         // Use FOR UPDATE to ensure atomic lock acquisition
         const { data: lockRows, error: lockError } = await supabase
@@ -359,7 +359,7 @@ serve(async (req) => {
       // CRITICAL: For "start" action, also set a lock via next_send_at to prevent
       // the frontend scheduler from calling "continue" immediately after "start"
       if (action === "start") {
-        const startLockUntilIso = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes lock
+        const startLockUntilIso = new Date(Date.now() + 3 * 60 * 1000).toISOString(); // 3 minutes lock
         
         await supabase
           .from("disparos_campanhas")
@@ -426,14 +426,33 @@ serve(async (req) => {
         );
       }
 
-      // Process contacts in background
-      EdgeRuntime.waitUntil(processCampaign(
-        supabase,
-        instancias,
-        campanha,
-        contatos || [],
-        blocos
-      ));
+      // Process contacts in background with error recovery
+      // CRITICAL: If processCampaign crashes, release the lock so cron can retry
+      EdgeRuntime.waitUntil(
+        processCampaign(
+          supabase,
+          instancias,
+          campanha,
+          contatos || [],
+          blocos
+        ).catch(async (error: any) => {
+          console.error(`[FATAL] processCampaign crashed for ${campanha_id}:`, error?.message || error);
+          try {
+            // Release lock by setting next_send_at to now (so cron picks it up immediately)
+            await supabase
+              .from("disparos_campanhas")
+              .update({ 
+                next_send_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .eq("id", campanha_id)
+              .eq("status", "running");
+            console.log(`[RECOVERY] Lock released for campaign ${campanha_id}, cron will retry`);
+          } catch (recoveryErr: any) {
+            console.error(`[RECOVERY] Failed to release lock for ${campanha_id}:`, recoveryErr?.message);
+          }
+        })
+      );
 
       return new Response(
         JSON.stringify({ 
