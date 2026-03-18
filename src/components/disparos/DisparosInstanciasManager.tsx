@@ -93,6 +93,13 @@ export function DisparosInstanciasManager({ instancias, onInstanciasChange }: Di
   const [newInstancePolling, setNewInstancePolling] = useState<ReturnType<typeof setInterval> | null>(null);
   const [tempNewInstance, setTempNewInstance] = useState<DisparosInstancia | null>(null);
 
+  // Setup Fluxos state
+  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const [setupInstance, setSetupInstance] = useState<DisparosInstancia | null>(null);
+  const [setupPhoneLast4, setSetupPhoneLast4] = useState("");
+  const [setupLoading, setSetupLoading] = useState<string | null>(null);
+  const [setupResults, setSetupResults] = useState<any>(null);
+
   // Check connection status on mount and auto-configure webhook if needed
   useEffect(() => {
     const checkAndConfigureInstances = async () => {
