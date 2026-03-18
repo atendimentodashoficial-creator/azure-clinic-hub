@@ -19,6 +19,7 @@ interface WorkflowSummary {
   name: string;
   active: boolean;
   agents: AgentNode[];
+  tags: string[];
 }
 
 async function authenticateUser(req: Request) {
