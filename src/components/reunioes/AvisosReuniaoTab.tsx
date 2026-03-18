@@ -262,6 +262,9 @@ export function AvisosReuniaoTab() {
     setFormNome(aviso.nome);
     setFormMensagem(aviso.mensagem);
     setFormDiasAntes(aviso.dias_antes);
+    setFormHorasAntes(aviso.horas_antes || 0);
+    setFormMinutosAntes(aviso.minutos_antes || 0);
+    setFormUnidadeTempo((aviso.unidade_tempo as "dias" | "horas" | "minutos") || "dias");
     setFormHorarioEnvio(aviso.horario_envio.substring(0, 5));
     if (aviso.intervalo_min >= 60 && aviso.intervalo_min % 60 === 0) {
       setFormIntervaloMin(aviso.intervalo_min / 60);
@@ -280,7 +283,6 @@ export function AvisosReuniaoTab() {
     setFormAudioPosicao((aviso.audio_posicao as "antes" | "depois") || "antes");
     setFormLinkCalendarioAtivo(aviso.link_calendario_ativo || false);
     setFormLinkCalendarioTexto(aviso.link_calendario_texto || "📅 Adicionar ao meu calendário");
-    // Map envio_imediato to tipo_gatilho for backwards compatibility
     if (aviso.envio_imediato) {
       setFormTipoGatilho("imediato");
     } else {
