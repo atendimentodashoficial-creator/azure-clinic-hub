@@ -38,7 +38,41 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
+    // Get external Supabase config
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const adminClient = createClient(supabaseUrl, serviceKey);
+
+    const { data: extConfig } = await adminClient
+      .from("disparos_supabase_config")
+      .select("supabase_url, supabase_service_key")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!extConfig?.supabase_url || !extConfig?.supabase_service_key) {
+      return new Response(
+        JSON.stringify({ error: "Configure a conexão com o Supabase externo primeiro (aba Supabase)." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create external Supabase client
+    const extClient = createClient(extConfig.supabase_url, extConfig.supabase_service_key);
+
     const { action, content, metadata, documentId, name } = await req.json();
+
+    // LIST action
+    if (action === "list") {
+      const { data: docs, error } = await extClient
+        .from("documents")
+        .select("id, content, metadata")
+        .order("id", { ascending: false });
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true, documents: docs || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // DELETE action
     if (action === "delete") {
@@ -49,14 +83,10 @@ serve(async (req) => {
         });
       }
 
-      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const adminClient = createClient(supabaseUrl, serviceKey);
-
-      const { error } = await adminClient
+      const { error } = await extClient
         .from("documents")
         .delete()
-        .eq("id", documentId)
-        .eq("user_id", userId);
+        .eq("id", documentId);
 
       if (error) throw error;
 
@@ -76,10 +106,6 @@ serve(async (req) => {
     // Get OpenAI API key - try user's key first, then global
     let openaiKey: string | null = null;
 
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const adminClient = createClient(supabaseUrl, serviceKey);
-
-    // Check user's own OpenAI config
     const { data: userConfig } = await adminClient
       .from("openai_config")
       .select("api_key")
@@ -99,6 +125,9 @@ serve(async (req) => {
       );
     }
 
+    // Build final content with document name prefix if provided
+    const finalContent = name ? `${name}\n\n${content.trim()}` : content.trim();
+
     // Generate embedding via OpenAI
     const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
       method: "POST",
@@ -108,7 +137,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "text-embedding-ada-002",
-        input: content.trim(),
+        input: finalContent,
       }),
     });
 
@@ -124,17 +153,21 @@ serve(async (req) => {
     const embeddingData = await embeddingResponse.json();
     const embedding = embeddingData.data[0].embedding;
 
-    // Insert into documents table
-    const { data: doc, error: insertError } = await adminClient
+    // Build metadata matching external format
+    const docMetadata = {
+      source: name || "manual",
+      ...(metadata || {}),
+    };
+
+    // Insert into external Supabase documents table
+    const { data: doc, error: insertError } = await extClient
       .from("documents")
       .insert({
-        user_id: userId,
-        content: content.trim(),
-        name: name || null,
-        metadata: metadata || {},
+        content: finalContent,
+        metadata: docMetadata,
         embedding: JSON.stringify(embedding),
       })
-      .select("id, content, name, metadata, created_at")
+      .select("id, content, metadata")
       .single();
 
     if (insertError) {
