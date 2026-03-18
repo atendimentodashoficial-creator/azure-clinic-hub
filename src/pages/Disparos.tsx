@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
-import { MessageSquare, RefreshCw, Plus, Trash2, CheckSquare, X, Send, Megaphone, List, Kanban, Phone, FileText, ListFilter, QrCode, Loader2, Smartphone, Unplug, Settings, Pencil, Keyboard, XCircle, BellRing, Search, BotOff, BookOpen, Flame } from "lucide-react";
+import { MessageSquare, RefreshCw, Plus, Trash2, CheckSquare, X, Send, Megaphone, List, Kanban, Phone, FileText, ListFilter, QrCode, Loader2, Smartphone, Unplug, Settings, Pencil, Keyboard, XCircle, BellRing, Search, BotOff, BookOpen, Flame, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -30,10 +30,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
-import { DisparosSupabaseConfig } from "@/components/disparos/DisparosSupabaseConfig";
-import { DisparosRAGConfig } from "@/components/disparos/DisparosRAGConfig";
 import { DisparosInstanciaTableField } from "@/components/disparos/DisparosInstanciaTableField";
-import { AquecimentoConfig } from "@/components/disparos/AquecimentoConfig";
+import { AgenteIATab } from "@/components/disparos/AgenteIATab";
 
 interface DisparosInstancia {
   id: string;
@@ -1263,9 +1261,9 @@ export default function Disparos() {
                   <ListFilter className="h-4 w-4" />
                   Listas
                 </TabsTrigger>
-                <TabsTrigger value="aquecimento" className="gap-1.5">
-                  <Flame className="h-4 w-4" />
-                  Aquecimento
+                <TabsTrigger value="agente-ia" className="gap-1.5">
+                  <Bot className="h-4 w-4" />
+                  Agente I.A.
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -1837,11 +1835,9 @@ export default function Disparos() {
             <ListasImportadasManager />
           </div>
         </div>
-      ) : activeTab === "aquecimento" ? (
+      ) : activeTab === "agente-ia" ? (
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-0 sm:px-4 py-3">
-            <AquecimentoConfig />
-          </div>
+          <AgenteIATab />
         </div>
       ) : null}
 
@@ -2176,24 +2172,7 @@ export default function Disparos() {
             </DialogDescription>
           </DialogHeader>
           
-          <Tabs defaultValue="instancias">
-            <TabsList className="w-full">
-              <TabsTrigger value="instancias" className="flex-1 gap-1.5">
-                <Smartphone className="h-4 w-4" />
-                Instâncias
-              </TabsTrigger>
-              <TabsTrigger value="supabase" className="flex-1 gap-1.5">
-                <Settings className="h-4 w-4" />
-                Supabase
-              </TabsTrigger>
-              <TabsTrigger value="rag" className="flex-1 gap-1.5">
-                <BookOpen className="h-4 w-4" />
-                Base RAG
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="instancias">
-              <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-4">
                 <div className="flex justify-end">
                   <Button size="sm" onClick={() => { setShowInstanceManager(false); setCreateInstanceDialogOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -2298,20 +2277,6 @@ export default function Disparos() {
                   </div>
                 )}
               </div>
-            </TabsContent>
-
-            <TabsContent value="supabase">
-              <div className="pt-4">
-                <DisparosSupabaseConfig />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="rag">
-              <div className="pt-4">
-                <DisparosRAGConfig />
-              </div>
-            </TabsContent>
-          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
