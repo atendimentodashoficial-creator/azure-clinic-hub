@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Plus,
@@ -18,9 +17,7 @@ import {
   Smartphone,
   Unplug,
   Hash,
-  Copy,
-  Workflow,
-  Settings2,
+  Copy
 } from "lucide-react";
 import {
   Dialog,
@@ -94,13 +91,6 @@ export function WhatsAppInstanceManager({
   const [qrCodeLoading, setQrCodeLoading] = useState(false);
   const [selectedInstance, setSelectedInstance] = useState<WhatsAppInstance | null>(null);
   const [qrPollingInterval, setQrPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
-
-  // Setup workflows state
-  const [setupLoading, setSetupLoading] = useState<string | null>(null);
-  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
-  const [setupInstance, setSetupInstance] = useState<WhatsAppInstance | null>(null);
-  const [setupPhoneLast4, setSetupPhoneLast4] = useState("");
-  const [setupResults, setSetupResults] = useState<any[] | null>(null);
 
   // Pairing Code state
   const [connectionMode, setConnectionMode] = useState<'qrcode' | 'paircode'>('qrcode');
@@ -514,46 +504,6 @@ export function WhatsAppInstanceManager({
     if (selectedInstance) handleConnect(selectedInstance);
   };
 
-  // Setup workflows handler
-  const handleSetupWorkflows = async () => {
-    if (!setupInstance || !setupPhoneLast4.trim()) {
-      toast.error("Informe os 4 últimos dígitos do telefone");
-      return;
-    }
-
-    setSetupLoading(setupInstance.id);
-    setSetupResults(null);
-
-    try {
-      const { data: session } = await supabase.auth.getSession();
-
-      const { data, error } = await supabase.functions.invoke("setup-instance-workflows", {
-        headers: { Authorization: `Bearer ${session.session?.access_token}` },
-        body: {
-          instance_id: setupInstance.id,
-          phone_last4: setupPhoneLast4.trim(),
-        },
-      });
-
-      if (error) throw error;
-
-      setSetupResults(data?.steps || []);
-
-      if (data?.success) {
-        toast.success("Automação completa! Fluxos SDR e follow-up criados.");
-      } else {
-        toast.warning(data?.message || "Automação parcial. Verifique os detalhes.");
-      }
-
-      onInstancesChange();
-    } catch (error: any) {
-      console.error("Setup error:", error);
-      toast.error("Erro ao configurar fluxos: " + (error.message || "Erro desconhecido"));
-    } finally {
-      setSetupLoading(null);
-    }
-  };
-
   // For whatsapp type, show only the main instance (if exists)
   // For disparos type, show all instances except the main one
   const displayInstances = instanceType === "whatsapp" 
@@ -659,33 +609,6 @@ export function WhatsAppInstanceManager({
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    {isConnected && instanceType === "disparos" && !(instance as any).n8n_setup_at && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSetupInstance(instance);
-                          setSetupPhoneLast4("");
-                          setSetupResults(null);
-                          setSetupDialogOpen(true);
-                        }}
-                        disabled={setupLoading === instance.id}
-                        className="gap-1.5"
-                      >
-                        {setupLoading === instance.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Workflow className="h-4 w-4" />
-                        )}
-                        Configurar Fluxos
-                      </Button>
-                    )}
-                    {(instance as any).n8n_setup_at && (
-                      <Badge variant="secondary" className="text-[10px] gap-1">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Fluxos configurados
-                      </Badge>
-                    )}
                     {isConnected ? (
                       <Button
                         variant="outline"
@@ -915,75 +838,6 @@ export function WhatsAppInstanceManager({
                 )}
               </>
             )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Setup Workflows Dialog */}
-      <Dialog open={setupDialogOpen} onOpenChange={setSetupDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Workflow className="h-5 w-5" />
-              Configurar Fluxos n8n
-            </DialogTitle>
-            <DialogDescription>
-              Cria automaticamente os fluxos SDR e follow-up para a instância <strong>{setupInstance?.nome}</strong>.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label>4 últimos dígitos do telefone da instância</Label>
-              <Input
-                value={setupPhoneLast4}
-                onChange={(e) => setSetupPhoneLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                placeholder="Ex: 5530"
-                maxLength={4}
-                className="text-center text-lg font-mono"
-              />
-              <p className="text-xs text-muted-foreground">
-                Usado para gerar os paths dos webhooks no n8n.
-              </p>
-            </div>
-
-            {setupResults && (
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {setupResults.map((step: any, i: number) => (
-                  <div key={i} className={`flex items-start gap-2 text-xs p-2 rounded ${step.success ? 'bg-green-50 dark:bg-green-950/30' : 'bg-destructive/10'}`}>
-                    {step.success ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0 mt-0.5" />
-                    ) : (
-                      <XCircle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
-                    )}
-                    <div>
-                      <span className="font-medium">{step.step}</span>
-                      <p className="text-muted-foreground">{step.detail || step.error}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setSetupDialogOpen(false)}>
-                {setupResults ? "Fechar" : "Cancelar"}
-              </Button>
-              {!setupResults && (
-                <Button
-                  onClick={handleSetupWorkflows}
-                  disabled={!!setupLoading || setupPhoneLast4.length < 4}
-                  className="gap-1.5"
-                >
-                  {setupLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Settings2 className="h-4 w-4" />
-                  )}
-                  Iniciar Automação
-                </Button>
-              )}
-            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -1683,10 +1683,6 @@ export type Database = {
           is_active: boolean | null
           last_sync_at: string | null
           last_webhook_at: string | null
-          n8n_followup_workflow_id: string | null
-          n8n_sdr_workflow_id: string | null
-          n8n_setup_at: string | null
-          n8n_table_name: string | null
           nome: string
           tabela_supabase_externa: string | null
           updated_at: string
@@ -1701,10 +1697,6 @@ export type Database = {
           is_active?: boolean | null
           last_sync_at?: string | null
           last_webhook_at?: string | null
-          n8n_followup_workflow_id?: string | null
-          n8n_sdr_workflow_id?: string | null
-          n8n_setup_at?: string | null
-          n8n_table_name?: string | null
           nome: string
           tabela_supabase_externa?: string | null
           updated_at?: string
@@ -1719,10 +1711,6 @@ export type Database = {
           is_active?: boolean | null
           last_sync_at?: string | null
           last_webhook_at?: string | null
-          n8n_followup_workflow_id?: string | null
-          n8n_sdr_workflow_id?: string | null
-          n8n_setup_at?: string | null
-          n8n_table_name?: string | null
           nome?: string
           tabela_supabase_externa?: string | null
           updated_at?: string
