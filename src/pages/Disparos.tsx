@@ -102,6 +102,7 @@ export default function Disparos() {
   // Manual connection fields
   const [manualBaseUrl, setManualBaseUrl] = useState("");
   const [manualApiKey, setManualApiKey] = useState("");
+  const [aiStatusMap, setAiStatusMap] = useState<Record<string, { bot_ativo: boolean; follow_ativo: boolean }>>({});
   const getChatLast8 = (chat: any) => {
     const candidates = [chat?.contact_number, chat?.normalized_number, chat?.chat_id].filter(Boolean);
     for (const c of candidates) {
