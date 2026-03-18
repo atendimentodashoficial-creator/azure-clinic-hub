@@ -143,12 +143,15 @@ export function DisparosRAGConfig() {
 
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label className="text-sm">Título (opcional)</Label>
+              <Label className="text-sm">Nome do Documento *</Label>
               <Input
-                placeholder="Ex: Horários de funcionamento"
+                placeholder="Ex: Horários de funcionamento, Preços dos serviços..."
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
               />
+              <p className="text-[10px] text-muted-foreground">
+                Este nome será usado no system prompt para o agente localizar o documento.
+              </p>
             </div>
 
             <div className="space-y-2">
