@@ -326,7 +326,7 @@ Deno.serve(async (req) => {
 
         // Modify nodes: update Supabase table references and webhook path
         const newNodes = templateWf.nodes.map((node: any) => {
-          const modified = { ...node, id: crypto.randomUUID() };
+          const modified = { ...sanitizeN8nNode(node), id: crypto.randomUUID() };
 
           // Update Supabase nodes - look for table name references
           if (node.type?.includes("supabase") || node.type?.includes("Supabase")) {
