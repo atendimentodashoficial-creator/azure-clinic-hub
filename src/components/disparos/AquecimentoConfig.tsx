@@ -105,6 +105,7 @@ export function AquecimentoConfig() {
   const [saving, setSaving] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
   const [tools, setTools] = useState<ToolConfig[]>([]);
+  const [expandedPrompt, setExpandedPrompt] = useState(false);
 
   useEffect(() => {
     if (user?.id) loadConfig();
