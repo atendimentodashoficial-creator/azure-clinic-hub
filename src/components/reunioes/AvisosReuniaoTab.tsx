@@ -781,12 +781,14 @@ export function AvisosReuniaoTab() {
                     {/* Timing info */}
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-xs">
-                        {formatPeriodo(aviso.dias_antes)}
+                        {formatPeriodo(aviso)}
                       </Badge>
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>às {aviso.horario_envio.substring(0, 5)}</span>
-                      </div>
+                      {(aviso.unidade_tempo || 'dias') === 'dias' && (
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>às {aviso.horario_envio.substring(0, 5)}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Procedimento se especificado */}
