@@ -1809,6 +1809,14 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
         />
       )}
 
+      {/* Dialog de Nova Reunião */}
+      <NovaReuniaoDialog
+        open={reuniaoDialogOpen}
+        onOpenChange={setReuniaoDialogOpen}
+        initialClienteNome={chat.contact_name}
+        initialClienteTelefone={chat.contact_number}
+      />
+
       {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
