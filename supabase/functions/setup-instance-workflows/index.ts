@@ -253,8 +253,19 @@ Deno.serve(async (req) => {
       results.push({ step: "create_table", success: true, detail: `Tabela ${tableName} criada a partir de ${sourceTable}` });
     } catch (e: any) {
       console.error("Error creating table:", e);
-      results.push({ step: "create_table", success: false, error: e.message });
-      // Continue with other steps even if table creation fails
+      const msg = `Falha ao criar tabela no Supabase externo: ${e.message}`;
+      results.push({ step: "create_table", success: false, error: msg });
+
+      return new Response(JSON.stringify({
+        success: false,
+        error: msg,
+        message: msg,
+        table_name: tableName,
+        steps: results,
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // ═══════════════════════════════════════════
