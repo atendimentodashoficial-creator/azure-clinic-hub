@@ -33,7 +33,7 @@ import { useTabPersistence } from "@/hooks/useTabPersistence";
 import { DisparosSupabaseConfig } from "@/components/disparos/DisparosSupabaseConfig";
 import { DisparosRAGConfig } from "@/components/disparos/DisparosRAGConfig";
 import { DisparosInstanciaTableField } from "@/components/disparos/DisparosInstanciaTableField";
-import { AquecimentoConfig } from "@/components/disparos/AquecimentoConfig";
+import { AgenteIATab } from "@/components/disparos/AgenteIATab";
 
 interface DisparosInstancia {
   id: string;
