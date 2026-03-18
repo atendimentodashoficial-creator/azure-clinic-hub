@@ -148,48 +148,26 @@ Deno.serve(async (req) => {
 
     let nextTableNum = 1;
     try {
-      // Query information_schema to find existing leads_whatsapp tables
-      const { data: tables, error: tablesErr } = await extSupabase.rpc("execute_sql", {
-        sql: `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE 'leads_whatsapp%' ORDER BY table_name`
-      }).catch(() => ({ data: null, error: "rpc not available" }));
-
-      if (tables && Array.isArray(tables)) {
-        const nums = tables
-          .map((t: any) => {
-            const match = (t.table_name || t).match(/leads_whatsapp(\d+)/);
-            return match ? parseInt(match[1]) : 0;
-          })
-          .filter((n: number) => n > 0);
-        if (nums.length > 0) nextTableNum = Math.max(...nums) + 1;
-      } else {
-        // Fallback: try direct SQL via pg REST
-        const res = await fetch(`${extConfig.supabase_url}/rest/v1/rpc/`, {
-          method: "POST",
-          headers: {
-            "apikey": extConfig.supabase_service_key,
-            "Authorization": `Bearer ${extConfig.supabase_service_key}`,
-            "Content-Type": "application/json",
-          },
-        }).catch(() => null);
-
-        // If RPC doesn't work, try a simpler approach - just try incrementing
-        // We'll query each table until we find one that doesn't exist
-        for (let i = 1; i <= 100; i++) {
-          const checkRes = await fetch(
-            `${extConfig.supabase_url}/rest/v1/leads_whatsapp${i}?select=id&limit=1`,
-            {
-              headers: {
-                "apikey": extConfig.supabase_service_key,
-                "Authorization": `Bearer ${extConfig.supabase_service_key}`,
-              },
-            }
-          );
-          if (checkRes.status === 404 || checkRes.status === 400) {
-            // Table doesn't exist
-            nextTableNum = i;
-            break;
+      // Fallback strategy: detect the first missing leads_whatsappN table via PostgREST
+      // (works even when external SQL RPC functions are unavailable)
+      for (let i = 1; i <= 200; i++) {
+        const checkRes = await fetch(
+          `${extConfig.supabase_url}/rest/v1/leads_whatsapp${i}?select=id&limit=1`,
+          {
+            headers: {
+              "apikey": extConfig.supabase_service_key,
+              "Authorization": `Bearer ${extConfig.supabase_service_key}`,
+            },
           }
-          nextTableNum = i + 1;
+        );
+
+        if (checkRes.status === 404 || checkRes.status === 400) {
+          nextTableNum = i;
+          break;
+        }
+
+        if (i === 200) {
+          nextTableNum = 201;
         }
       }
     } catch (e: any) {
