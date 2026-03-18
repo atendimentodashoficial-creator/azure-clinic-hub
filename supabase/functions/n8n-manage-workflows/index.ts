@@ -42,41 +42,29 @@ function getN8nHeaders(): Record<string, string> {
   return { "X-N8N-API-KEY": apiKey, "Content-Type": "application/json" };
 }
 
-// Extract agent nodes (main agents + sub-agents) from a workflow
-function extractAgents(workflow: any): AgentNode[] {
-  const agentTypes = [
-    "@n8n/n8n-nodes-langchain.agent",
-    "@n8n/n8n-nodes-langchain.chainLlm",
-    "@n8n/n8n-nodes-langchain.openAi",
-    "n8n-nodes-base.openAi",
-  ];
+// Agent node types in n8n langchain
+const AGENT_TYPES = [
+  "@n8n/n8n-nodes-langchain.agent",
+  "@n8n/n8n-nodes-langchain.agentTool",
+];
 
+function extractAgents(workflow: any): AgentNode[] {
   const agents: AgentNode[] = [];
 
   for (const node of workflow.nodes || []) {
-    // Check if it's an agent-type node
-    const isAgent = agentTypes.some(t => node.type?.includes(t)) ||
-      node.type?.includes("agent") ||
-      node.type?.includes("Agent");
+    if (!AGENT_TYPES.some(t => node.type === t)) continue;
 
-    if (!isAgent) continue;
-
-    // Extract system prompt from various possible locations
-    let systemPrompt = "";
     const params = node.parameters || {};
+    let systemPrompt = "";
 
-    if (params.options?.systemMessage) {
-      systemPrompt = String(params.options.systemMessage);
-    } else if (params.systemMessage) {
-      systemPrompt = String(params.systemMessage);
-    } else if (params.text) {
-      systemPrompt = String(params.text);
-    } else if (Array.isArray(params.messages)) {
-      const sysMsg = params.messages.find((m: any) => m.role === "system");
-      if (sysMsg) systemPrompt = String(sysMsg.content || "");
+    // Extract system prompt from various n8n agent parameter structures
+    if (typeof params.options?.systemMessage === "string") {
+      systemPrompt = params.options.systemMessage;
+    } else if (typeof params.systemMessage === "string") {
+      systemPrompt = params.systemMessage;
     }
 
-    // Clean n8n expression prefix
+    // Clean n8n expression prefix "="
     if (systemPrompt.startsWith("=")) {
       systemPrompt = systemPrompt.slice(1);
     }
@@ -93,20 +81,25 @@ function extractAgents(workflow: any): AgentNode[] {
 
 async function listWorkflows(): Promise<WorkflowSummary[]> {
   const headers = getN8nHeaders();
+
+  // Fetch all workflows
   const res = await fetch(`${N8N_BASE_URL}/api/v1/workflows?limit=100`, { headers });
   if (!res.ok) throw new Error(`Failed to list workflows: ${res.status}`);
-
   const data = await res.json();
+
   const workflows: WorkflowSummary[] = [];
 
   for (const wf of data.data || []) {
-    // Get full workflow to extract agents
+    // Get full workflow details to check MCP setting and extract agents
     const fullRes = await fetch(`${N8N_BASE_URL}/api/v1/workflows/${wf.id}`, { headers });
     if (!fullRes.ok) continue;
     const fullWf = await fullRes.json();
 
+    // Only include workflows with MCP enabled
+    if (!fullWf.settings?.availableInMCP) continue;
+
     const agents = extractAgents(fullWf);
-    if (agents.length === 0) continue; // Only include workflows with agents
+    if (agents.length === 0) continue;
 
     workflows.push({
       id: wf.id,
@@ -129,28 +122,20 @@ async function updateAgentPrompts(
 
   for (const wfId of workflowIds) {
     try {
-      // Get workflow
       const getRes = await fetch(`${N8N_BASE_URL}/api/v1/workflows/${wfId}`, { headers });
       if (!getRes.ok) {
         errors.push(`${wfId}: failed to get (${getRes.status})`);
         continue;
       }
       const workflow = await getRes.json();
-
       let modified = false;
 
       for (const update of updates) {
         const node = workflow.nodes.find((n: any) => n.name === update.nodeName);
         if (!node) continue;
 
-        const params = node.parameters || {};
-
         // Preserve dynamic n8n suffix if present
-        const dynamicSuffix = `
-
-### INFORMACOES ADICIONAIS 
--  SEMPRE considere Data e hora atual: {{ $now.toISO() }} 
-- Dia da semana atual: {{ $now.setLocale('pt-BR').toFormat('cccc') }}`;
+        const dynamicSuffix = `\n\n### INFORMACOES ADICIONAIS \n-  SEMPRE considere Data e hora atual: {{ $now.toISO() }} \n- Dia da semana atual: {{ $now.setLocale('pt-BR').toFormat('cccc') }}`;
 
         const promptWithoutSuffix = update.newPrompt.replace(
           /\n\n### INFORMACOES ADICIONAIS[\s\S]*$/,
@@ -159,14 +144,16 @@ async function updateAgentPrompts(
 
         const finalPrompt = `=${promptWithoutSuffix}${dynamicSuffix}`;
 
-        if (params.options?.systemMessage !== undefined) {
+        // Set prompt in the correct location based on current structure
+        if (node.parameters?.options?.systemMessage !== undefined) {
           node.parameters.options.systemMessage = finalPrompt;
           modified = true;
-        } else if (params.systemMessage !== undefined) {
+        } else if (node.parameters?.systemMessage !== undefined) {
           node.parameters.systemMessage = finalPrompt;
           modified = true;
         } else {
-          // Try to set in options.systemMessage as default
+          // Default: set in options.systemMessage
+          if (!node.parameters) node.parameters = {};
           if (!node.parameters.options) node.parameters.options = {};
           node.parameters.options.systemMessage = finalPrompt;
           modified = true;
@@ -178,7 +165,6 @@ async function updateAgentPrompts(
         continue;
       }
 
-      // PUT updated workflow
       const updatePayload = {
         name: workflow.name,
         nodes: workflow.nodes,
@@ -226,10 +212,7 @@ Deno.serve(async (req) => {
         result = await listWorkflows();
         break;
       case "update_prompts":
-        result = await updateAgentPrompts(
-          params.workflow_ids,
-          params.updates
-        );
+        result = await updateAgentPrompts(params.workflow_ids, params.updates);
         break;
       default:
         throw new Error(`Unknown action: ${action}`);
