@@ -207,6 +207,7 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
   const [selectedTemplate, setSelectedTemplate] = useState<ProdutoTemplate | null>(null);
   const { data: produtoTemplates = [] } = useProdutoTemplates();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reuniaoDialogOpen, setReuniaoDialogOpen] = useState(false);
   const [mensagensPredefindasOpen, setMensagensPredefindasOpen] = useState(false);
   const [leadStatus, setLeadStatus] = useState<string | null>(null);
   const [leadId, setLeadId] = useState<string | null>(null);
