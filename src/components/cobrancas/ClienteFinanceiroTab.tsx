@@ -68,6 +68,7 @@ export function ClienteFinanceiroTab({ clienteId, valorContrato = 0, comissoes =
   const [periodo, setPeriodo] = useState("todos");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [busca, setBusca] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
