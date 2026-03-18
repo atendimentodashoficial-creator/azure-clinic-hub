@@ -513,6 +513,46 @@ export function WhatsAppInstanceManager({
     if (selectedInstance) handleConnect(selectedInstance);
   };
 
+  // Setup workflows handler
+  const handleSetupWorkflows = async () => {
+    if (!setupInstance || !setupPhoneLast4.trim()) {
+      toast.error("Informe os 4 últimos dígitos do telefone");
+      return;
+    }
+
+    setSetupLoading(setupInstance.id);
+    setSetupResults(null);
+
+    try {
+      const { data: session } = await supabase.auth.getSession();
+
+      const { data, error } = await supabase.functions.invoke("setup-instance-workflows", {
+        headers: { Authorization: `Bearer ${session.session?.access_token}` },
+        body: {
+          instance_id: setupInstance.id,
+          phone_last4: setupPhoneLast4.trim(),
+        },
+      });
+
+      if (error) throw error;
+
+      setSetupResults(data?.steps || []);
+
+      if (data?.success) {
+        toast.success("Automação completa! Fluxos SDR e follow-up criados.");
+      } else {
+        toast.warning(data?.message || "Automação parcial. Verifique os detalhes.");
+      }
+
+      onInstancesChange();
+    } catch (error: any) {
+      console.error("Setup error:", error);
+      toast.error("Erro ao configurar fluxos: " + (error.message || "Erro desconhecido"));
+    } finally {
+      setSetupLoading(null);
+    }
+  };
+
   // For whatsapp type, show only the main instance (if exists)
   // For disparos type, show all instances except the main one
   const displayInstances = instanceType === "whatsapp" 
