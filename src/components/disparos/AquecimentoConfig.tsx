@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Save, Loader2, Bot, Wrench, GripVertical, ChevronDown, ChevronUp, Copy } from "lucide-react";
+import { Plus, Trash2, Save, Loader2, Bot, Wrench, GripVertical, ChevronDown, ChevronUp, Copy, Maximize2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface ToolField {
   key: string;
@@ -104,6 +105,7 @@ export function AquecimentoConfig() {
   const [saving, setSaving] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
   const [tools, setTools] = useState<ToolConfig[]>([]);
+  const [expandedPrompt, setExpandedPrompt] = useState(false);
 
   useEffect(() => {
     if (user?.id) loadConfig();
@@ -267,18 +269,52 @@ export function AquecimentoConfig() {
     );
   }
 
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
+      {/* Expanded Prompt Dialog */}
+      <Dialog open={expandedPrompt} onOpenChange={setExpandedPrompt}>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Bot className="h-5 w-5 text-primary" />
+              System Prompt do Agente
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0">
+            <Textarea
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              className="h-full font-mono text-sm resize-none"
+              placeholder="Você é um assistente de aquecimento de leads..."
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* System Prompt */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-primary" />
-            System Prompt do Agente
-          </CardTitle>
-          <CardDescription>
-            Prompt principal utilizado pelo agente de I.A. no fluxo do n8n
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-primary" />
+                System Prompt do Agente
+              </CardTitle>
+              <CardDescription>
+                Prompt principal utilizado pelo agente de I.A. no fluxo do n8n
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              title="Expandir editor"
+              onClick={() => setExpandedPrompt(true)}
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Textarea
