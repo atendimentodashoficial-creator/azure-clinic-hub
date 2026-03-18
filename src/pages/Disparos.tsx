@@ -2175,6 +2175,10 @@ export default function Disparos() {
                 <Settings className="h-4 w-4" />
                 Supabase
               </TabsTrigger>
+              <TabsTrigger value="rag" className="flex-1 gap-1.5">
+                <BookOpen className="h-4 w-4" />
+                Base RAG
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="instancias">
