@@ -342,10 +342,13 @@ export function AvisosReuniaoTab() {
       if (editingAviso) {
         const { error } = await supabase
           .from('avisos_reuniao')
-          .update({
+           .update({
             nome: formNome.trim(),
             mensagem: formMensagem.trim(),
             dias_antes: formDiasAntes,
+            horas_antes: formHorasAntes,
+            minutos_antes: formMinutosAntes,
+            unidade_tempo: formUnidadeTempo,
             horario_envio: formHorarioEnvio,
             intervalo_min: intervaloMinSec,
             intervalo_max: intervaloMaxSec,
