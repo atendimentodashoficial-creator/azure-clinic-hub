@@ -1337,6 +1337,7 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
                                 )}
                               </div>
                             </div>
+                            {renderAIStatusBadges(chat)}
                             {renderAgendamentoBadge(chat.id)}
                             {renderReuniaoBadge(chat.id)}
                           </div>
