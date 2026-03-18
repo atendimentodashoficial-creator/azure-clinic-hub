@@ -22,13 +22,13 @@ export function AgenteIATab() {
             <Flame className="h-4 w-4" />
             Aquecimento
           </TabsTrigger>
-          <TabsTrigger value="supabase" className="gap-1.5">
-            <Settings className="h-4 w-4" />
-            Supabase
-          </TabsTrigger>
           <TabsTrigger value="rag" className="gap-1.5">
             <BookOpen className="h-4 w-4" />
             Base RAG
+          </TabsTrigger>
+          <TabsTrigger value="supabase" className="gap-1.5">
+            <Settings className="h-4 w-4" />
+            Supabase
           </TabsTrigger>
         </TabsList>
 
