@@ -761,6 +761,7 @@ export type Database = {
           dias_antes: number
           envio_imediato: boolean
           horario_envio: string
+          horas_antes: number | null
           id: string
           instancia_id: string | null
           intervalo_max: number
@@ -769,11 +770,13 @@ export type Database = {
           link_calendario_ativo: boolean
           link_calendario_texto: string
           mensagem: string
+          minutos_antes: number | null
           next_check_at: string | null
           nome: string
           procedimento_id: string | null
           tipo_gatilho: string
           tipo_reuniao_id: string | null
+          unidade_tempo: string | null
           updated_at: string
           user_id: string
         }
@@ -785,6 +788,7 @@ export type Database = {
           dias_antes?: number
           envio_imediato?: boolean
           horario_envio?: string
+          horas_antes?: number | null
           id?: string
           instancia_id?: string | null
           intervalo_max?: number
@@ -793,11 +797,13 @@ export type Database = {
           link_calendario_ativo?: boolean
           link_calendario_texto?: string
           mensagem: string
+          minutos_antes?: number | null
           next_check_at?: string | null
           nome: string
           procedimento_id?: string | null
           tipo_gatilho?: string
           tipo_reuniao_id?: string | null
+          unidade_tempo?: string | null
           updated_at?: string
           user_id: string
         }
@@ -809,6 +815,7 @@ export type Database = {
           dias_antes?: number
           envio_imediato?: boolean
           horario_envio?: string
+          horas_antes?: number | null
           id?: string
           instancia_id?: string | null
           intervalo_max?: number
@@ -817,11 +824,13 @@ export type Database = {
           link_calendario_ativo?: boolean
           link_calendario_texto?: string
           mensagem?: string
+          minutos_antes?: number | null
           next_check_at?: string | null
           nome?: string
           procedimento_id?: string | null
           tipo_gatilho?: string
           tipo_reuniao_id?: string | null
+          unidade_tempo?: string | null
           updated_at?: string
           user_id?: string
         }
