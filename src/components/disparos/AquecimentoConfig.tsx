@@ -179,6 +179,21 @@ export function AquecimentoConfig() {
     ]);
   };
 
+  const duplicateTool = (toolId: string) => {
+    const original = tools.find((t) => t.id === toolId);
+    if (!original) return;
+    const newTool: ToolConfig = {
+      id: crypto.randomUUID(),
+      name: `${original.name}_copia`,
+      fields: original.fields.map((f) => ({ ...f })),
+    };
+    const index = tools.findIndex((t) => t.id === toolId);
+    const updated = [...tools];
+    updated.splice(index + 1, 0, newTool);
+    setTools(updated);
+    toast.success(`Tool "${original.name}" duplicada!`);
+  };
+
   const removeTool = (toolId: string) => {
     setTools(tools.filter((t) => t.id !== toolId));
   };
