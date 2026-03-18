@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
-import { MessageSquare, RefreshCw, Plus, Trash2, CheckSquare, X, Send, Megaphone, List, Kanban, Phone, FileText, ListFilter, QrCode, Loader2, Smartphone, Unplug, Settings, Pencil, Keyboard, XCircle, BellRing, Search, BotOff, BookOpen } from "lucide-react";
+import { MessageSquare, RefreshCw, Plus, Trash2, CheckSquare, X, Send, Megaphone, List, Kanban, Phone, FileText, ListFilter, QrCode, Loader2, Smartphone, Unplug, Settings, Pencil, Keyboard, XCircle, BellRing, Search, BotOff, BookOpen, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,7 @@ import { useTabPersistence } from "@/hooks/useTabPersistence";
 import { DisparosSupabaseConfig } from "@/components/disparos/DisparosSupabaseConfig";
 import { DisparosRAGConfig } from "@/components/disparos/DisparosRAGConfig";
 import { DisparosInstanciaTableField } from "@/components/disparos/DisparosInstanciaTableField";
+import { AquecimentoConfig } from "@/components/disparos/AquecimentoConfig";
 
 interface DisparosInstancia {
   id: string;
@@ -1262,6 +1263,10 @@ export default function Disparos() {
                   <ListFilter className="h-4 w-4" />
                   Listas
                 </TabsTrigger>
+                <TabsTrigger value="aquecimento" className="gap-1.5">
+                  <Flame className="h-4 w-4" />
+                  Aquecimento
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -1830,6 +1835,12 @@ export default function Disparos() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto px-0 sm:px-4 py-3">
             <ListasImportadasManager />
+          </div>
+        </div>
+      ) : activeTab === "aquecimento" ? (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-0 sm:px-4 py-3">
+            <AquecimentoConfig />
           </div>
         </div>
       ) : null}
