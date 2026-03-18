@@ -5,17 +5,35 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMembroAtual } from "@/hooks/useMembroAtual";
 import { useOwnerId } from "@/hooks/useOwnerId";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, ChevronLeft, ChevronRight, Wallet, Clock, CheckCircle2, XCircle } from "lucide-react";
-import { format, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DollarSign, Wallet, Clock, CheckCircle2, XCircle, CalendarDays } from "lucide-react";
+import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function FuncionarioFinanceiro() {
   const { user } = useAuth();
   const { membro } = useMembroAtual();
   const { ownerId } = useOwnerId();
-  const [mesAtual, setMesAtual] = useState(new Date());
+  const now = new Date();
+  const periodoOptions = useMemo(() => {
+    const options = [];
+    for (let i = 0; i < 12; i++) {
+      const d = subMonths(now, i);
+      options.push({
+        value: format(d, "yyyy-MM"),
+        label: format(d, "MMMM yyyy", { locale: ptBR }),
+      });
+    }
+    return options;
+  }, []);
+
+  const [periodoSelecionado, setPeriodoSelecionado] = useState(format(now, "yyyy-MM"));
+
+  const mesAtual = useMemo(() => {
+    const [y, m] = periodoSelecionado.split("-").map(Number);
+    return new Date(y, m - 1, 1);
+  }, [periodoSelecionado]);
 
   const inicio = format(startOfMonth(mesAtual), "yyyy-MM-dd");
   const fim = format(endOfMonth(mesAtual), "yyyy-MM-dd");
@@ -48,25 +66,28 @@ export default function FuncionarioFinanceiro() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Wallet className="h-6 w-6" />
-          Financeiro
-        </h1>
-        <p className="text-muted-foreground">Acompanhe seu salário e comissões</p>
-      </div>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Wallet className="h-6 w-6" />
+            Financeiro
+          </h1>
+          <p className="text-muted-foreground">Acompanhe seu salário e comissões</p>
+        </div>
 
-      {/* Month navigation */}
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={() => setMesAtual(subMonths(mesAtual, 1))}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <span className="text-sm font-medium min-w-[140px] text-center capitalize">
-          {format(mesAtual, "MMMM yyyy", { locale: ptBR })}
-        </span>
-        <Button variant="outline" size="icon" onClick={() => setMesAtual(addMonths(mesAtual, 1))}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+        <Select value={periodoSelecionado} onValueChange={setPeriodoSelecionado}>
+          <SelectTrigger className="w-[200px]">
+            <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {periodoOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value} className="capitalize">
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Summary cards */}
