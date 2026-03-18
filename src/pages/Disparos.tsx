@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
-import { MessageSquare, RefreshCw, Plus, Trash2, CheckSquare, X, Send, Megaphone, List, Kanban, Phone, FileText, ListFilter, QrCode, Loader2, Smartphone, Unplug, Settings, Pencil, Keyboard, XCircle, BellRing, Search, BotOff } from "lucide-react";
+import { MessageSquare, RefreshCw, Plus, Trash2, CheckSquare, X, Send, Megaphone, List, Kanban, Phone, FileText, ListFilter, QrCode, Loader2, Smartphone, Unplug, Settings, Pencil, Keyboard, XCircle, BellRing, Search, BotOff, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Card } from "@/components/ui/card";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
 import { DisparosSupabaseConfig } from "@/components/disparos/DisparosSupabaseConfig";
+import { DisparosRAGConfig } from "@/components/disparos/DisparosRAGConfig";
 import { DisparosInstanciaTableField } from "@/components/disparos/DisparosInstanciaTableField";
 
 interface DisparosInstancia {
@@ -2174,6 +2175,10 @@ export default function Disparos() {
                 <Settings className="h-4 w-4" />
                 Supabase
               </TabsTrigger>
+              <TabsTrigger value="rag" className="flex-1 gap-1.5">
+                <BookOpen className="h-4 w-4" />
+                Base RAG
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="instancias">
@@ -2287,6 +2292,12 @@ export default function Disparos() {
             <TabsContent value="supabase">
               <div className="pt-4">
                 <DisparosSupabaseConfig />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="rag">
+              <div className="pt-4">
+                <DisparosRAGConfig />
               </div>
             </TabsContent>
           </Tabs>
