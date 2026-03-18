@@ -41,6 +41,7 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
   const [editando, setEditando] = useState<Cobranca | null>(null);
   const [excluirId, setExcluirId] = useState<string | null>(null);
   const [subTab, setSubTab] = useState("todas");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
