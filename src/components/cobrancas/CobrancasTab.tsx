@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useCobrancas, Cobranca } from "@/hooks/useCobrancas";
 import { NovaCobrancaDialog } from "./NovaCobrancaDialog";
+import { CobrancaPagamentosSection } from "./CobrancaPagamentosSection";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   DollarSign, Clock, CheckCircle2, AlertTriangle, XCircle,
-  Edit, Trash2, RefreshCw, CreditCard, Receipt, TrendingUp, Calendar,
+  Edit, Trash2, RefreshCw, CreditCard, Receipt, TrendingUp, Calendar, ChevronDown, ChevronUp,
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -40,6 +41,7 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
   const [editando, setEditando] = useState<Cobranca | null>(null);
   const [excluirId, setExcluirId] = useState<string | null>(null);
   const [subTab, setSubTab] = useState("todas");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -159,6 +161,7 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
           {filtered.map(c => {
             const cfg = statusConfig[c.status] || statusConfig.pendente;
             const isOverdue = c.status === "atrasado";
+            const isExpanded = expandedId === c.id;
             return (
               <Card
                 key={c.id}
@@ -208,8 +211,11 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
                     </Badge>
                     <span className="text-base font-bold whitespace-nowrap tabular-nums">{formatCurrency(c.valor)}</span>
                     <div className="flex items-center gap-0.5 border-l pl-2 border-border">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpandedId(isExpanded ? null : c.id)} title="Pagamentos parciais">
+                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </Button>
                       {c.status === "pendente" && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => handleMarcarPago(c)} title="Marcar como pago">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:bg-primary/10" onClick={() => handleMarcarPago(c)} title="Marcar como pago">
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
@@ -222,6 +228,9 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
                     </div>
                   </div>
                 </div>
+                {isExpanded && (
+                  <CobrancaPagamentosSection cobrancaId={c.id} valorTotal={c.valor} />
+                )}
               </Card>
             );
           })}
