@@ -6,8 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Bot, Save, RefreshCw, Workflow, Eye, EyeOff } from "lucide-react";
+import { Loader2, Bot, Save, RefreshCw, Workflow, Eye, Pencil } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AgentNode {
   nodeName: string;
@@ -34,16 +35,14 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
   const [saving, setSaving] = useState(false);
   const [workflows, setWorkflows] = useState<WorkflowSummary[]>([]);
   const [selectedWorkflowIds, setSelectedWorkflowIds] = useState<Set<string>>(new Set());
-  // key: "workflowId::agentNodeName" -> prompt
-  const [editingPrompts, setEditingPrompts] = useState<Record<string, string>>({});
-  const [viewMode, setViewMode] = useState<"por-fluxo" | "unificado">("por-fluxo");
+  // Per-workflow prompts: "wfId::agentName" -> prompt
+  const [perWorkflowPrompts, setPerWorkflowPrompts] = useState<Record<string, string>>({});
+  // Bulk prompts: "agentName" -> prompt
+  const [bulkPrompts, setBulkPrompts] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    loadWorkflows();
-  }, []);
+  useEffect(() => { loadWorkflows(); }, []);
 
-  const promptKey = (wfId: string, agentName: string) => `${wfId}::${agentName}`;
-
+  const pKey = (wfId: string, name: string) => `${wfId}::${name}`;
   const cleanPrompt = (raw: string) => raw.replace(/\n\n### INFORMACOES ADICIONAIS[\s\S]*$/, "");
 
   const loadWorkflows = async () => {
@@ -51,12 +50,10 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Não autenticado");
-
       const { data, error } = await supabase.functions.invoke("n8n-manage-workflows", {
         headers: { Authorization: `Bearer ${session.access_token}` },
         body: { action: "list" },
       });
-
       if (error) throw error;
       if (Array.isArray(data)) {
         const filtered = filterTag
@@ -64,13 +61,17 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
           : data;
         setWorkflows(filtered);
 
-        const prompts: Record<string, string> = {};
+        const perWf: Record<string, string> = {};
+        const bulk: Record<string, string> = {};
         for (const wf of filtered) {
           for (const agent of wf.agents) {
-            prompts[promptKey(wf.id, agent.nodeName)] = cleanPrompt(agent.systemPrompt);
+            const cleaned = cleanPrompt(agent.systemPrompt);
+            perWf[pKey(wf.id, agent.nodeName)] = cleaned;
+            if (!bulk[agent.nodeName]) bulk[agent.nodeName] = cleaned;
           }
         }
-        setEditingPrompts(prompts);
+        setPerWorkflowPrompts(perWf);
+        setBulkPrompts(bulk);
       }
     } catch (err: any) {
       console.error("Error loading workflows:", err);
@@ -83,77 +84,68 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
   const toggleWorkflow = (id: string) => {
     setSelectedWorkflowIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };
 
   const selectAll = () => {
-    if (selectedWorkflowIds.size === workflows.length) {
-      setSelectedWorkflowIds(new Set());
-    } else {
-      setSelectedWorkflowIds(new Set(workflows.map(w => w.id)));
-    }
+    setSelectedWorkflowIds(
+      selectedWorkflowIds.size === workflows.length ? new Set() : new Set(workflows.map(w => w.id))
+    );
   };
 
-  const handleSave = async () => {
-    if (selectedWorkflowIds.size === 0) {
-      toast.error("Selecione pelo menos um workflow");
-      return;
-    }
-
+  const handleSavePerWorkflow = async (wfId: string) => {
+    const wf = workflows.find(w => w.id === wfId);
+    if (!wf) return;
     setSaving(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Não autenticado");
-
-      // Build per-workflow updates
-      const perWorkflowUpdates: Record<string, { nodeName: string; newPrompt: string }[]> = {};
-      for (const wfId of selectedWorkflowIds) {
-        const wf = workflows.find(w => w.id === wfId);
-        if (!wf) continue;
-        const updates = wf.agents
-          .map(agent => ({
-            nodeName: agent.nodeName,
-            newPrompt: editingPrompts[promptKey(wfId, agent.nodeName)] || "",
-          }))
-          .filter(u => u.newPrompt.trim());
-        if (updates.length > 0) perWorkflowUpdates[wfId] = updates;
-      }
-
-      if (Object.keys(perWorkflowUpdates).length === 0) {
-        toast.error("Nenhum prompt para atualizar");
-        setSaving(false);
-        return;
-      }
-
+      const updates = wf.agents
+        .map(a => ({ nodeName: a.nodeName, newPrompt: perWorkflowPrompts[pKey(wfId, a.nodeName)] || "" }))
+        .filter(u => u.newPrompt.trim());
       const { data, error } = await supabase.functions.invoke("n8n-manage-workflows", {
         headers: { Authorization: `Bearer ${session.access_token}` },
-        body: {
-          action: "update_prompts_per_workflow",
-          per_workflow_updates: perWorkflowUpdates,
-        },
+        body: { action: "update_prompts", workflow_ids: [wfId], updates },
       });
-
       if (error) throw error;
-
-      if (data?.updated?.length > 0) {
-        toast.success(`Atualizado em ${data.updated.length} workflow(s)!`);
-      }
-      if (data?.errors?.length > 0) {
-        console.error("Update errors:", data.errors);
-        toast.warning(`${data.errors.length} erro(s): ${data.errors[0]}`);
-      }
-
+      if (data?.updated?.length > 0) toast.success(`Workflow "${wf.name}" atualizado!`);
+      if (data?.errors?.length > 0) toast.warning(data.errors[0]);
       await loadWorkflows();
     } catch (err: any) {
-      console.error("Error saving:", err);
+      toast.error("Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveBulk = async () => {
+    if (selectedWorkflowIds.size === 0) { toast.error("Selecione pelo menos um workflow"); return; }
+    const updates = Object.entries(bulkPrompts)
+      .filter(([_, p]) => p.trim())
+      .map(([nodeName, newPrompt]) => ({ nodeName, newPrompt }));
+    if (updates.length === 0) { toast.error("Nenhum prompt para atualizar"); return; }
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Não autenticado");
+      const { data, error } = await supabase.functions.invoke("n8n-manage-workflows", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { action: "update_prompts", workflow_ids: Array.from(selectedWorkflowIds), updates },
+      });
+      if (error) throw error;
+      if (data?.updated?.length > 0) toast.success(`Atualizado em ${data.updated.length} workflow(s)!`);
+      if (data?.errors?.length > 0) toast.warning(`${data.errors.length} erro(s): ${data.errors[0]}`);
+      await loadWorkflows();
+    } catch (err: any) {
       toast.error("Erro ao salvar prompts");
     } finally {
       setSaving(false);
     }
   };
+
+  const allAgentNames = Array.from(new Set(workflows.flatMap(wf => wf.agents.map(a => a.nodeName))));
 
   if (loading) {
     return (
@@ -170,8 +162,7 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
         {emptyIcon || <Workflow className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />}
         <p className="text-muted-foreground text-sm">{emptyMessage || "Nenhum workflow com agentes encontrado no n8n"}</p>
         <Button variant="outline" size="sm" className="mt-4 gap-1.5" onClick={loadWorkflows}>
-          <RefreshCw className="h-4 w-4" />
-          Tentar novamente
+          <RefreshCw className="h-4 w-4" /> Tentar novamente
         </Button>
       </div>
     );
@@ -203,16 +194,11 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
               <div
                 key={wf.id}
                 className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  selectedWorkflowIds.has(wf.id)
-                    ? "bg-primary/5 border-primary/30"
-                    : "hover:bg-muted/50"
+                  selectedWorkflowIds.has(wf.id) ? "bg-primary/5 border-primary/30" : "hover:bg-muted/50"
                 }`}
                 onClick={() => toggleWorkflow(wf.id)}
               >
-                <Checkbox
-                  checked={selectedWorkflowIds.has(wf.id)}
-                  onCheckedChange={() => toggleWorkflow(wf.id)}
-                />
+                <Checkbox checked={selectedWorkflowIds.has(wf.id)} onCheckedChange={() => toggleWorkflow(wf.id)} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm truncate">{wf.name}</span>
@@ -223,8 +209,7 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
                   <div className="flex gap-1.5 mt-1 flex-wrap">
                     {wf.agents.map(agent => (
                       <Badge key={agent.nodeName} variant="outline" className="text-[10px] h-4 gap-1">
-                        <Bot className="h-2.5 w-2.5" />
-                        {agent.nodeName}
+                        <Bot className="h-2.5 w-2.5" /> {agent.nodeName}
                       </Badge>
                     ))}
                   </div>
@@ -235,82 +220,125 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
         </CardContent>
       </Card>
 
-      {/* Prompt Editors - Per Workflow */}
+      {/* Prompt Editors - Two modes */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Bot className="h-5 w-5 text-primary" />
-                System Prompts dos Agentes
-              </CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">
-                Veja e edite os prompts de cada workflow individualmente ({selectedWorkflowIds.size} selecionado{selectedWorkflowIds.size !== 1 ? "s" : ""})
-              </p>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Bot className="h-5 w-5 text-primary" />
+            System Prompts dos Agentes
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {workflows.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Nenhum agente encontrado</p>
-          ) : (
-            <Accordion type="multiple" className="space-y-3">
-              {workflows.map(wf => (
-                <AccordionItem key={wf.id} value={wf.id} className="border rounded-lg px-4">
-                  <AccordionTrigger className="py-3 hover:no-underline">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Workflow className="h-4 w-4 text-muted-foreground" />
-                      <span className="truncate">{wf.name}</span>
-                      <Badge variant={wf.active ? "default" : "secondary"} className="text-[10px] h-4">
-                        {wf.active ? "Ativo" : "Inativo"}
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px] h-4">
-                        {wf.agents.length} agente{wf.agents.length !== 1 ? "s" : ""}
-                      </Badge>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-4 space-y-4">
-                    {wf.agents.map(agent => (
-                      <div key={agent.nodeName} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Bot className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-xs font-medium text-muted-foreground">{agent.nodeName}</span>
-                          <Badge variant="outline" className="text-[9px] h-3.5">
-                            {agent.nodeType.includes("agentTool") ? "Sub-agente" : "Principal"}
-                          </Badge>
-                        </div>
-                        <Textarea
-                          value={editingPrompts[promptKey(wf.id, agent.nodeName)] || ""}
-                          onChange={(e) =>
-                            setEditingPrompts(prev => ({
-                              ...prev,
-                              [promptKey(wf.id, agent.nodeName)]: e.target.value,
-                            }))
-                          }
-                          placeholder="System prompt do agente..."
-                          className="min-h-[180px] font-mono text-xs"
-                        />
+          <Tabs defaultValue="por-fluxo">
+            <TabsList className="mb-4">
+              <TabsTrigger value="por-fluxo" className="gap-1.5 text-xs">
+                <Eye className="h-3.5 w-3.5" />
+                Ver por Fluxo
+              </TabsTrigger>
+              <TabsTrigger value="em-massa" className="gap-1.5 text-xs">
+                <Pencil className="h-3.5 w-3.5" />
+                Editar em Massa
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Per-workflow view */}
+            <TabsContent value="por-fluxo">
+              <p className="text-xs text-muted-foreground mb-3">
+                Visualize e edite o prompt de cada workflow individualmente.
+              </p>
+              <Accordion type="multiple" className="space-y-3">
+                {workflows.map(wf => (
+                  <AccordionItem key={wf.id} value={wf.id} className="border rounded-lg px-4">
+                    <AccordionTrigger className="py-3 hover:no-underline">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Workflow className="h-4 w-4 text-muted-foreground" />
+                        <span className="truncate">{wf.name}</span>
+                        <Badge variant={wf.active ? "default" : "secondary"} className="text-[10px] h-4">
+                          {wf.active ? "Ativo" : "Inativo"}
+                        </Badge>
                       </div>
-                    ))}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          )}
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-4 space-y-4">
+                      {wf.agents.map(agent => (
+                        <div key={agent.nodeName} className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Bot className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-xs font-medium text-muted-foreground">{agent.nodeName}</span>
+                            <Badge variant="outline" className="text-[9px] h-3.5">
+                              {agent.nodeType.includes("agentTool") ? "Sub-agente" : "Principal"}
+                            </Badge>
+                          </div>
+                          <Textarea
+                            value={perWorkflowPrompts[pKey(wf.id, agent.nodeName)] || ""}
+                            onChange={(e) =>
+                              setPerWorkflowPrompts(prev => ({ ...prev, [pKey(wf.id, agent.nodeName)]: e.target.value }))
+                            }
+                            placeholder="System prompt do agente..."
+                            className="min-h-[180px] font-mono text-xs"
+                          />
+                        </div>
+                      ))}
+                      <div className="flex justify-end pt-2">
+                        <Button size="sm" onClick={() => handleSavePerWorkflow(wf.id)} disabled={saving} className="gap-1.5">
+                          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                          Salvar este workflow
+                        </Button>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </TabsContent>
+
+            {/* Bulk edit view */}
+            <TabsContent value="em-massa">
+              <p className="text-xs text-muted-foreground mb-3">
+                Edite o prompt por agente e aplique em todos os workflows selecionados ({selectedWorkflowIds.size} selecionado{selectedWorkflowIds.size !== 1 ? "s" : ""}).
+              </p>
+              {allAgentNames.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum agente encontrado</p>
+              ) : (
+                <Accordion type="multiple" className="space-y-3" defaultValue={allAgentNames}>
+                  {allAgentNames.map(agentName => {
+                    const selectedWithAgent = workflows.filter(
+                      wf => selectedWorkflowIds.has(wf.id) && wf.agents.some(a => a.nodeName === agentName)
+                    ).length;
+                    return (
+                      <AccordionItem key={agentName} value={agentName} className="border rounded-lg px-4">
+                        <AccordionTrigger className="py-3 hover:no-underline">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Bot className="h-4 w-4 text-muted-foreground" />
+                            {agentName}
+                            {selectedWithAgent > 0 && (
+                              <Badge variant="secondary" className="text-[10px] h-4 ml-1">
+                                {selectedWithAgent} workflow{selectedWithAgent !== 1 ? "s" : ""}
+                              </Badge>
+                            )}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-4">
+                          <Textarea
+                            value={bulkPrompts[agentName] || ""}
+                            onChange={(e) => setBulkPrompts(prev => ({ ...prev, [agentName]: e.target.value }))}
+                            placeholder="System prompt do agente..."
+                            className="min-h-[200px] font-mono text-sm"
+                          />
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              )}
+              <div className="flex justify-end mt-4">
+                <Button onClick={handleSaveBulk} disabled={saving || selectedWorkflowIds.size === 0} className="gap-2">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Aplicar nos {selectedWorkflowIds.size} Workflow{selectedWorkflowIds.size !== 1 ? "s" : ""} Selecionado{selectedWorkflowIds.size !== 1 ? "s" : ""}
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-
-      {/* Save */}
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSave}
-          disabled={saving || selectedWorkflowIds.size === 0}
-          className="gap-2"
-        >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Aplicar nos {selectedWorkflowIds.size} Workflow{selectedWorkflowIds.size !== 1 ? "s" : ""} Selecionado{selectedWorkflowIds.size !== 1 ? "s" : ""}
-        </Button>
-      </div>
     </div>
   );
 }
