@@ -120,7 +120,7 @@ export function DisparosAIToggle({ chatContactNumber, instanciaId }: Props) {
     <Popover>
       <PopoverTrigger asChild>
         <button className="flex items-center px-1 py-1 rounded hover:bg-accent transition-colors">
-          <Bot className={`h-4 w-4 ${isAnyActive ? 'text-green-500' : 'text-muted-foreground'}`} />
+          <Bot className={`h-5 w-5 ${isAnyActive ? 'text-green-500' : 'text-muted-foreground'}`} />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-56 p-3" align="end">
