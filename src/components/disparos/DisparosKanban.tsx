@@ -774,6 +774,31 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
     }
   };
 
+  const renderAIStatusBadges = (chat: any) => {
+    const phoneLast8 = getLast8Digits(chat.contact_number);
+    const status = aiStatusMap[phoneLast8];
+    if (!status) return null;
+    
+    const badges = [];
+    if (!status.bot_ativo) {
+      badges.push(
+        <Badge key="bot-off" variant="outline" className="text-[10px] px-1.5 py-0 h-4 gap-0.5 text-destructive border-destructive/30">
+          <BotOff className="h-2.5 w-2.5" />
+          I.A. off
+        </Badge>
+      );
+    }
+    if (!status.follow_ativo) {
+      badges.push(
+        <Badge key="follow-off" variant="outline" className="text-[10px] px-1.5 py-0 h-4 gap-0.5 text-muted-foreground border-muted-foreground/30">
+          Follow off
+        </Badge>
+      );
+    }
+    if (badges.length === 0) return null;
+    return <div className="flex gap-1 mt-1 flex-wrap">{badges}</div>;
+  };
+
   const renderAgendamentoBadge = (chatId: string) => {
     const agendamento = chatAgendamentos[chatId];
     if (!agendamento) return null;
