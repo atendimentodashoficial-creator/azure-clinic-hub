@@ -245,7 +245,7 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
                   </div>
                 </div>
                 {isExpanded && (
-                  <CobrancaPagamentosSection cobrancaId={c.id} valorTotal={c.valor} />
+                  <CobrancaPagamentosSection cobrancaId={c.id} valorTotal={c.valor} dataVencimento={c.data_vencimento} />
                 )}
               </Card>
             );
