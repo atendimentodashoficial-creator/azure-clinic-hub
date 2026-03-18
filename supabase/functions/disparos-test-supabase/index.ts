@@ -61,7 +61,12 @@ serve(async (req) => {
       const code = (testError as any).code || "";
       
       // These errors mean the connection itself worked (auth OK, network OK)
-      if (code === "42P01" || msg.includes("does not exist") || msg.includes("relation")) {
+      const isTableNotFound = code === "42P01" || code === "PGRST205" 
+        || msg.includes("does not exist") 
+        || msg.includes("relation") 
+        || msg.includes("Could not find");
+      
+      if (isTableNotFound) {
         return new Response(JSON.stringify({ success: true, message: "Conexão bem sucedida!" }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
