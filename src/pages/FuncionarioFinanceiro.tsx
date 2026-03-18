@@ -5,10 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMembroAtual } from "@/hooks/useMembroAtual";
 import { useOwnerId } from "@/hooks/useOwnerId";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, ChevronLeft, ChevronRight, Wallet, Clock, CheckCircle2, XCircle } from "lucide-react";
-import { format, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DollarSign, Wallet, Clock, CheckCircle2, XCircle, CalendarDays } from "lucide-react";
+import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function FuncionarioFinanceiro() {
