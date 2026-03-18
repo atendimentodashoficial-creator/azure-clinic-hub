@@ -202,7 +202,7 @@ export default function Disparos() {
       );
     }
     if (badges.length === 0) return null;
-    return <div className="flex gap-1 flex-wrap">{badges}</div>;
+    return <div className="flex gap-1 flex-wrap mt-1">{badges}</div>;
   };
 
 
