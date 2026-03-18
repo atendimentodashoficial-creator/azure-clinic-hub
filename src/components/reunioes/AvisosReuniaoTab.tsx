@@ -1061,35 +1061,93 @@ export function AvisosReuniaoTab() {
             </div>
 
             {/* Período e horário - only show for dias_antes type */}
-            <div className="grid grid-cols-2 gap-4">
-              {formTipoGatilho === 'dias_antes' && (
+            {formTipoGatilho === 'dias_antes' && (
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="diasAntes">Dias antes da reunião</Label>
-                  <Input
-                    id="diasAntes"
-                    type="number"
-                    min={0}
-                    max={30}
-                    value={formDiasAntes}
-                    onChange={(e) => setFormDiasAntes(parseInt(e.target.value) || 0)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    0 = no dia da reunião
-                  </p>
+                  <Label>Unidade de tempo</Label>
+                  <Select
+                    value={formUnidadeTempo}
+                    onValueChange={(v) => {
+                      setFormUnidadeTempo(v as "dias" | "horas" | "minutos");
+                      if (v === 'dias') { setFormDiasAntes(1); setFormHorasAntes(0); setFormMinutosAntes(0); }
+                      if (v === 'horas') { setFormDiasAntes(0); setFormHorasAntes(1); setFormMinutosAntes(0); }
+                      if (v === 'minutos') { setFormDiasAntes(0); setFormHorasAntes(0); setFormMinutosAntes(30); }
+                    }}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      <SelectItem value="dias">Dias antes</SelectItem>
+                      <SelectItem value="horas">Horas antes</SelectItem>
+                      <SelectItem value="minutos">Minutos antes</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-              {formTipoGatilho === 'dias_antes' && (
-                <div className="space-y-2">
-                  <Label htmlFor="horarioEnvio">Horário de envio</Label>
-                  <Input
-                    id="horarioEnvio"
-                    type="time"
-                    value={formHorarioEnvio}
-                    onChange={(e) => setFormHorarioEnvio(e.target.value)}
-                  />
+
+                <div className="grid grid-cols-2 gap-4">
+                  {formUnidadeTempo === 'dias' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="diasAntes">Dias antes da reunião</Label>
+                      <Input
+                        id="diasAntes"
+                        type="number"
+                        min={0}
+                        max={30}
+                        value={formDiasAntes}
+                        onChange={(e) => setFormDiasAntes(parseInt(e.target.value) || 0)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        0 = no dia da reunião
+                      </p>
+                    </div>
+                  )}
+                  {formUnidadeTempo === 'horas' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="horasAntes">Horas antes da reunião</Label>
+                      <Input
+                        id="horasAntes"
+                        type="number"
+                        min={1}
+                        max={72}
+                        value={formHorasAntes}
+                        onChange={(e) => setFormHorasAntes(parseInt(e.target.value) || 1)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Ex: 2 = 2 horas antes do horário da reunião
+                      </p>
+                    </div>
+                  )}
+                  {formUnidadeTempo === 'minutos' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="minutosAntes">Minutos antes da reunião</Label>
+                      <Input
+                        id="minutosAntes"
+                        type="number"
+                        min={5}
+                        max={180}
+                        value={formMinutosAntes}
+                        onChange={(e) => setFormMinutosAntes(parseInt(e.target.value) || 5)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Ex: 30 = 30 minutos antes do horário da reunião
+                      </p>
+                    </div>
+                  )}
+                  {formUnidadeTempo === 'dias' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="horarioEnvio">Horário de envio</Label>
+                      <Input
+                        id="horarioEnvio"
+                        type="time"
+                        value={formHorarioEnvio}
+                        onChange={(e) => setFormHorarioEnvio(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Intervalo entre mensagens */}
             {formTipoGatilho === 'dias_antes' && (
