@@ -47,7 +47,8 @@ Deno.serve(async (req) => {
 
     // ── Parse body ──
     const body = await req.json();
-    const { instance_id, phone_last4 } = body;
+    const instance_id = body.instance_id || body.instancia_id;
+    const { phone_last4 } = body;
 
     if (!instance_id || !phone_last4) {
       return new Response(JSON.stringify({ success: false, error: "instance_id e phone_last4 são obrigatórios." }), {
