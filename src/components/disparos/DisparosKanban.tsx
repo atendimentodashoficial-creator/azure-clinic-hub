@@ -176,6 +176,34 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
     };
   }, [chatIds]);
 
+  const loadBulkAIStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const contacts = chats
+        .filter(c => c.instancia_id && c.contact_number)
+        .map(c => ({
+          instancia_id: c.instancia_id,
+          phone_last8: getLast8Digits(c.contact_number),
+        }))
+        .filter(c => c.phone_last8);
+
+      if (contacts.length === 0) return;
+
+      const { data, error } = await supabase.functions.invoke("disparos-toggle-ai", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { action: "bulk_get", contacts },
+      });
+
+      if (!error && data?.results) {
+        setAiStatusMap(data.results);
+      }
+    } catch (e) {
+      console.error("Error loading bulk AI status:", e);
+    }
+  };
+
   const loadInstancias = async () => {
     try {
       const { data } = await supabase
