@@ -220,6 +220,9 @@ export function AvisosReuniaoTab() {
       "Olá {nome}! 👋\n\nLembramos que você tem uma reunião agendada para {data} às {horario}.\n\n📹 Link da call: {link_call}\n\nAguardamos você! 🙂"
     );
     setFormDiasAntes(1);
+    setFormHorasAntes(0);
+    setFormMinutosAntes(0);
+    setFormUnidadeTempo("dias");
     setFormHorarioEnvio("09:00");
     setFormIntervaloMin(15);
     setFormIntervaloMax(33);
