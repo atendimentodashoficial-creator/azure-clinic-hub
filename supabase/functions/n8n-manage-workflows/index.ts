@@ -71,9 +71,8 @@ function extractAgents(workflow: any): AgentNode[] {
       systemPrompt = String(params.systemMessage);
     } else if (params.text) {
       systemPrompt = String(params.text);
-    } else if (params.messages) {
-      // Some agents use a messages array
-      const sysMsg = (params.messages || []).find((m: any) => m.role === "system");
+    } else if (Array.isArray(params.messages)) {
+      const sysMsg = params.messages.find((m: any) => m.role === "system");
       if (sysMsg) systemPrompt = String(sysMsg.content || "");
     }
 
