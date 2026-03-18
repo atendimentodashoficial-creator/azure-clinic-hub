@@ -139,14 +139,18 @@ export default function Disparos() {
       return tb - ta;
     });
   };
-  // Bulk AI status for list view badges
+  // Bulk AI status for list view badges — only load once on mount + when chat list actually changes
   const chatIds = useMemo(() => chats.map(c => c.id).sort().join(','), [chats]);
+  const aiStatusLoadedRef = useRef(false);
+  const lastAiChatIdsRef = useRef('');
   
   useEffect(() => {
-    if (chats.length > 0) {
+    // Only load when in list view mode and chat IDs actually changed
+    if (chats.length > 0 && viewMode === 'list' && chatIds !== lastAiChatIdsRef.current) {
+      lastAiChatIdsRef.current = chatIds;
       loadBulkAIStatus();
     }
-  }, [chatIds]);
+  }, [chatIds, viewMode]);
 
   const loadBulkAIStatus = async () => {
     try {
