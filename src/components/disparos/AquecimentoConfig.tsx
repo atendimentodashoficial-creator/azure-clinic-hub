@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Save, Loader2, Bot, Wrench, GripVertical, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Save, Loader2, Bot, Wrench, GripVertical, ChevronDown, ChevronUp, Copy } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -179,6 +179,21 @@ export function AquecimentoConfig() {
     ]);
   };
 
+  const duplicateTool = (toolId: string) => {
+    const original = tools.find((t) => t.id === toolId);
+    if (!original) return;
+    const newTool: ToolConfig = {
+      id: crypto.randomUUID(),
+      name: `${original.name}_copia`,
+      fields: original.fields.map((f) => ({ ...f })),
+    };
+    const index = tools.findIndex((t) => t.id === toolId);
+    const updated = [...tools];
+    updated.splice(index + 1, 0, newTool);
+    setTools(updated);
+    toast.success(`Tool "${original.name}" duplicada!`);
+  };
+
   const removeTool = (toolId: string) => {
     setTools(tools.filter((t) => t.id !== toolId));
   };
@@ -299,6 +314,18 @@ export function AquecimentoConfig() {
                         {tool.name || "Tool sem nome"}
                       </div>
                     </AccordionTrigger>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      title="Duplicar tool"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        duplicateTool(tool.id);
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
