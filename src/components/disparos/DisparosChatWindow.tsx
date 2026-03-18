@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { RefreshCw, Send, Package, Trash2, MessageSquare, Image, Mic, Forward, X, ArrowLeft, Pencil, Check, ChevronDown, Repeat, Wifi, Info } from "lucide-react";
+import { RefreshCw, Send, Package, Trash2, MessageSquare, Image, Mic, Forward, X, ArrowLeft, Pencil, Check, ChevronDown, Repeat, Wifi, Info, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
@@ -1265,78 +1268,10 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
         </div>
         {/* Ícones fixos à direita */}
         <div className="flex gap-1 flex-shrink-0 items-center">
-          {/* AI Toggle */}
+          {/* AI Toggle - sempre visível */}
           <DisparosAIToggle chatContactNumber={chat.contact_number} instanciaId={chat.instancia_id} />
-          {/* Dropdown para trocar instância */}
-          <DropdownMenu open={changeInstanceOpen} onOpenChange={setChangeInstanceOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                title="Trocar instância de atendimento"
-                disabled={changingInstance}
-              >
-                <Repeat className={`w-4 h-4 ${changingInstance ? 'animate-spin' : ''}`} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="flex items-center gap-2">
-                <Wifi className="h-3 w-3" />
-                Trocar instância
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {instanciasDisponiveis.length === 0 ? (
-                <DropdownMenuItem disabled>
-                  Nenhuma instância disponível
-                </DropdownMenuItem>
-              ) : (
-                instanciasDisponiveis.map(inst => {
-                  const status = instanciasStatus[inst.id];
-                  return (
-                    <DropdownMenuItem
-                      key={inst.id}
-                      onClick={() => handleChangeInstance(inst.id)}
-                      className={inst.id === chat.instancia_id ? "bg-accent" : ""}
-                    >
-                      <div className="flex items-center justify-between w-full gap-2">
-                        <div className="flex items-center gap-2">
-                          {/* Status indicator */}
-                          <span 
-                            className={`h-2.5 w-2.5 rounded-full flex-shrink-0 ${
-                              status === 'loading' 
-                                ? 'bg-muted-foreground animate-pulse' 
-                                : status === 'connected' 
-                                  ? 'bg-green-500' 
-                                  : 'bg-red-500'
-                            }`}
-                            title={status === 'loading' ? 'Verificando...' : status === 'connected' ? 'Conectada' : 'Desconectada'}
-                          />
-                          <span>{inst.nome}</span>
-                        </div>
-                        {inst.id === chat.instancia_id && (
-                          <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                        )}
-                      </div>
-                    </DropdownMenuItem>
-                  );
-                })
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
 
-          {contatoMapeado && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setContatoDetalhesOpen(true)}
-              title="Ver dados mapeados do contato"
-            >
-              <Info className="w-4 h-4" />
-            </Button>
-          )}
-          
+          {/* Produto - sempre visível */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -1368,25 +1303,83 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setDeleteDialogOpen(true)}
-            title="Excluir Conversa"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => syncMessagesFromApi()}
-            disabled={isLoadingMessages}
-            title="Sincronizar com WhatsApp"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoadingMessages ? 'animate-spin' : ''}`} />
-          </Button>
+
+          {/* Menu de três pontinhos com as demais ações */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {/* Trocar instância - submenu */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Repeat className={`w-4 h-4 mr-2 ${changingInstance ? 'animate-spin' : ''}`} />
+                  Trocar instância
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-56">
+                  {instanciasDisponiveis.length === 0 ? (
+                    <DropdownMenuItem disabled>Nenhuma instância disponível</DropdownMenuItem>
+                  ) : (
+                    instanciasDisponiveis.map(inst => {
+                      const status = instanciasStatus[inst.id];
+                      return (
+                        <DropdownMenuItem
+                          key={inst.id}
+                          onClick={() => handleChangeInstance(inst.id)}
+                          className={inst.id === chat.instancia_id ? "bg-accent" : ""}
+                        >
+                          <div className="flex items-center justify-between w-full gap-2">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-2.5 w-2.5 rounded-full flex-shrink-0 ${
+                                  status === 'loading'
+                                    ? 'bg-muted-foreground animate-pulse'
+                                    : status === 'connected'
+                                      ? 'bg-green-500'
+                                      : 'bg-red-500'
+                                }`}
+                              />
+                              <span>{inst.nome}</span>
+                            </div>
+                            {inst.id === chat.instancia_id && (
+                              <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                            )}
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              {contatoMapeado && (
+                <DropdownMenuItem onClick={() => setContatoDetalhesOpen(true)}>
+                  <Info className="w-4 h-4 mr-2" />
+                  Ver dados do contato
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem
+                onClick={() => syncMessagesFromApi()}
+                disabled={isLoadingMessages}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingMessages ? 'animate-spin' : ''}`} />
+                Sincronizar mensagens
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={() => setDeleteDialogOpen(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir conversa
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
