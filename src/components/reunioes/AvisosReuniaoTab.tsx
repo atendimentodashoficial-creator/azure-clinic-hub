@@ -314,6 +314,11 @@ export function AvisosReuniaoTab() {
         // Immediate or rescheduling notifications don't need scheduled checks
         if (!isActive || formTipoGatilho === 'imediato' || formTipoGatilho === 'reagendamento') return null;
         
+        // For horas/minutos mode, check every minute via cron (no specific horario_envio)
+        if (formUnidadeTempo === 'horas' || formUnidadeTempo === 'minutos') {
+          return new Date().toISOString();
+        }
+        
         const now = new Date();
         const utc = now.getTime() + now.getTimezoneOffset() * 60000;
         const saoPauloOffset = -3 * 60 * 60 * 1000;
