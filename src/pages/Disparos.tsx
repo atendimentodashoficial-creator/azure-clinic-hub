@@ -722,6 +722,31 @@ export default function Disparos() {
     }
   };
 
+  const handleSetupFluxos = async () => {
+    if (!setupInstance || !setupPhoneLast4 || setupPhoneLast4.length !== 4) {
+      toast.error("Informe os 4 últimos dígitos do telefone");
+      return;
+    }
+    setSetupLoading(setupInstance.id);
+    setSetupResults(null);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke("setup-instance-workflows", {
+        headers: { Authorization: `Bearer ${session.session?.access_token}` },
+        body: { instancia_id: setupInstance.id, phone_last4: setupPhoneLast4 },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (!response.data?.success) throw new Error(response.data?.error || "Erro desconhecido");
+      setSetupResults(response.data);
+      toast.success("Fluxos configurados com sucesso!");
+      loadInstancias();
+    } catch (error: any) {
+      console.error("Setup error:", error);
+      toast.error("Erro ao configurar fluxos: " + (error.message || "Erro desconhecido"));
+    } finally {
+      setSetupLoading(null);
+    }
+  };
 
   // Delete instance (also delete from UAZapi via admin API)
   const handleDeleteInstance = async (id: string) => {
