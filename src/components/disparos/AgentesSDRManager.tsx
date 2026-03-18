@@ -277,7 +277,7 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4 space-y-4">
-                  {wf.agents.map(agent => {
+                  {sortAgents(wf.agents).map(agent => {
                     const key = pKey(wf.id, agent.nodeName);
                     return (
                       <div key={agent.nodeName} className="space-y-2">
