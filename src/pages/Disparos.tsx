@@ -2303,6 +2303,39 @@ export default function Disparos() {
                             </div>
                             {/* External table name field */}
                             <DisparosInstanciaTableField instanciaId={instancia.id} />
+
+                            {/* Setup Fluxos button */}
+                            {isConnected && !instancia.n8n_setup_at && (
+                              <div className="border-t pt-3">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSetupInstance(instancia);
+                                    setSetupPhoneLast4("");
+                                    setSetupResults(null);
+                                    setSetupDialogOpen(true);
+                                  }}
+                                  disabled={setupLoading === instancia.id}
+                                  className="gap-1.5"
+                                >
+                                  {setupLoading === instancia.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Workflow className="h-4 w-4" />
+                                  )}
+                                  Configurar Fluxos
+                                </Button>
+                              </div>
+                            )}
+                            {instancia.n8n_setup_at && (
+                              <div className="border-t pt-3">
+                                <Badge variant="secondary" className="text-[10px] gap-1">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Fluxos configurados
+                                </Badge>
+                              </div>
+                            )}
                           </div>
                         </Card>
                       );
