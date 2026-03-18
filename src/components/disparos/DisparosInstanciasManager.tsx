@@ -1060,6 +1060,101 @@ export function DisparosInstanciasManager({ instancias, onInstanciasChange }: Di
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Setup Fluxos Dialog */}
+      <Dialog open={setupDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setSetupResults(null);
+        }
+        setSetupDialogOpen(open);
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Workflow className="h-5 w-5" />
+              Configurar Fluxos n8n
+            </DialogTitle>
+            <DialogDescription>
+              {setupInstance?.nome} — Configure tabela, workflows SDR e Follow-up automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!setupResults ? (
+            <div className="space-y-4 pt-2">
+              <div>
+                <Label htmlFor="phone_last4">4 últimos dígitos do telefone</Label>
+                <Input
+                  id="phone_last4"
+                  value={setupPhoneLast4}
+                  onChange={(e) => setSetupPhoneLast4(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="Ex: 1234"
+                  maxLength={4}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Usado para nomear o webhook e identificar os fluxos.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setSetupDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSetupFluxos}
+                  disabled={setupPhoneLast4.length !== 4 || !!setupLoading}
+                >
+                  {setupLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Workflow className="h-4 w-4 mr-2" />
+                  )}
+                  {setupLoading ? "Configurando..." : "Iniciar Configuração"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 pt-2">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span>Tabela: <strong>{setupResults.table_name}</strong></span>
+                </div>
+                {setupResults.sdr_workflow_id && (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <span>Workflow SDR criado</span>
+                  </div>
+                )}
+                {setupResults.followup_workflow_id && (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <span>Workflow Follow-up criado</span>
+                  </div>
+                )}
+                {setupResults.cron_created && (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <span>Cron de follow-up configurado</span>
+                  </div>
+                )}
+                {setupResults.webhook_registered && (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <span>Webhook SDR registrado na UAZAPI</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button onClick={() => setSetupDialogOpen(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
