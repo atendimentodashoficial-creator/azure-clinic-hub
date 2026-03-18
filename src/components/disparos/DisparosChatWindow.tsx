@@ -1303,6 +1303,11 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
                   </DropdownMenuItem>
                 ))
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setReuniaoDialogOpen(true)}>
+                <Calendar className="w-4 h-4 mr-2" />
+                Marcar Reunião
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
