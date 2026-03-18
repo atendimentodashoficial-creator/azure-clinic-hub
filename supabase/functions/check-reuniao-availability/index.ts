@@ -112,9 +112,10 @@ Deno.serve(async (req) => {
     const endStr = data_fim && /^\d{4}-\d{2}-\d{2}$/.test(data_fim)
       ? data_fim
       : (() => {
-          const d = new Date(Number(bp.year), Number(bp.month) - 1, Number(bp.day));
-          d.setDate(d.getDate() + 7);
-          return formatDate(d);
+          // Default: 7 days from startDate (not from today)
+          const base = new Date(Number(startStr.slice(0,4)), Number(startStr.slice(5,7)) - 1, Number(startStr.slice(8,10)));
+          base.setDate(base.getDate() + 7);
+          return formatDate(base);
         })();
 
     const startDate = new Date(Number(startStr.slice(0,4)), Number(startStr.slice(5,7)) - 1, Number(startStr.slice(8,10)));
