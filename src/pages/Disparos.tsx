@@ -1263,9 +1263,9 @@ export default function Disparos() {
                   <ListFilter className="h-4 w-4" />
                   Listas
                 </TabsTrigger>
-                <TabsTrigger value="aquecimento" className="gap-1.5">
-                  <Flame className="h-4 w-4" />
-                  Aquecimento
+                <TabsTrigger value="agente-ia" className="gap-1.5">
+                  <Bot className="h-4 w-4" />
+                  Agente I.A.
                 </TabsTrigger>
               </TabsList>
             </Tabs>
