@@ -14,7 +14,8 @@ import {
   formatLastMessagePreview,
   truncateText,
 } from "@/utils/whatsapp";
-import { Plus, Settings, Trash2, GripVertical, X, Check, Pencil, Calendar, Phone, Filter, CheckSquare, Square, XCircle, ArrowRightCircle, FileText } from "lucide-react";
+import { Plus, Settings, Trash2, GripVertical, X, Check, Pencil, Calendar, Phone, Filter, CheckSquare, Square, XCircle, ArrowRightCircle, FileText, Bot, BotOff } from "lucide-react";
+import { getLast8Digits } from "@/utils/whatsapp";
 import {
   Dialog,
   DialogContent,
