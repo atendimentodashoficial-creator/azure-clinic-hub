@@ -19,6 +19,7 @@ interface WorkflowSummary {
   name: string;
   active: boolean;
   agents: AgentNode[];
+  tags: string[];
 }
 
 async function authenticateUser(req: Request) {
@@ -101,11 +102,13 @@ async function listWorkflows(): Promise<WorkflowSummary[]> {
     const agents = extractAgents(fullWf);
     if (agents.length === 0) continue;
 
+    const tags = (fullWf.tags || []).map((t: any) => t.name || t);
     workflows.push({
       id: wf.id,
       name: wf.name,
       active: wf.active,
       agents,
+      tags,
     });
   }
 

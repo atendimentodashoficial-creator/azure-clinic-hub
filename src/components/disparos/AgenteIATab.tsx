@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bot, Settings, BookOpen, Flame, Workflow } from "lucide-react";
+import { Settings, BookOpen, Flame, Workflow, RotateCcw } from "lucide-react";
 import { DisparosSupabaseConfig } from "@/components/disparos/DisparosSupabaseConfig";
 import { DisparosRAGConfig } from "@/components/disparos/DisparosRAGConfig";
 import { AquecimentoConfig } from "@/components/disparos/AquecimentoConfig";
@@ -13,6 +13,10 @@ export function AgenteIATab() {
           <TabsTrigger value="agentes-sdr" className="gap-1.5">
             <Workflow className="h-4 w-4" />
             Agentes SDR
+          </TabsTrigger>
+          <TabsTrigger value="follow-up" className="gap-1.5">
+            <RotateCcw className="h-4 w-4" />
+            Follow Up
           </TabsTrigger>
           <TabsTrigger value="aquecimento" className="gap-1.5">
             <Flame className="h-4 w-4" />
@@ -29,7 +33,15 @@ export function AgenteIATab() {
         </TabsList>
 
         <TabsContent value="agentes-sdr">
-          <AgentesSDRManager />
+          <AgentesSDRManager filterTag="sdr" />
+        </TabsContent>
+
+        <TabsContent value="follow-up">
+          <AgentesSDRManager
+            filterTag="follow up"
+            emptyIcon={<RotateCcw className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />}
+            emptyMessage="Nenhum workflow de Follow Up encontrado. Adicione a tag 'follow up' nos workflows do n8n."
+          />
         </TabsContent>
 
         <TabsContent value="aquecimento">

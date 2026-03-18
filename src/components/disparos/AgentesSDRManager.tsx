@@ -22,9 +22,16 @@ interface WorkflowSummary {
   name: string;
   active: boolean;
   agents: AgentNode[];
+  tags: string[];
 }
 
-export function AgentesSDRManager() {
+interface AgentesSDRManagerProps {
+  filterTag?: string;
+  emptyIcon?: React.ReactNode;
+  emptyMessage?: string;
+}
+
+export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: AgentesSDRManagerProps = {}) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [workflows, setWorkflows] = useState<WorkflowSummary[]>([]);
@@ -52,13 +59,16 @@ export function AgentesSDRManager() {
 
       if (error) throw error;
       if (Array.isArray(data)) {
-        setWorkflows(data);
-        // Pre-populate editing prompts from the first workflow's agents
+        // Filter by tag if specified
+        const filtered = filterTag
+          ? data.filter((wf: WorkflowSummary) => wf.tags?.some(t => t.toLowerCase() === filterTag.toLowerCase()))
+          : data;
+        setWorkflows(filtered);
+        // Pre-populate editing prompts from the workflows' agents
         const prompts: Record<string, string> = {};
-        for (const wf of data) {
+        for (const wf of filtered) {
           for (const agent of wf.agents) {
             if (!prompts[agent.nodeName]) {
-              // Clean dynamic suffix for display
               let prompt = agent.systemPrompt;
               prompt = prompt.replace(/\n\n### INFORMACOES ADICIONAIS[\s\S]*$/, "");
               prompts[agent.nodeName] = prompt;
@@ -158,8 +168,8 @@ export function AgentesSDRManager() {
   if (workflows.length === 0) {
     return (
       <div className="text-center py-12">
-        <Workflow className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-        <p className="text-muted-foreground text-sm">Nenhum workflow com agentes encontrado no n8n</p>
+        {emptyIcon || <Workflow className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />}
+        <p className="text-muted-foreground text-sm">{emptyMessage || "Nenhum workflow com agentes encontrado no n8n"}</p>
         <Button variant="outline" size="sm" className="mt-4 gap-1.5" onClick={loadWorkflows}>
           <RefreshCw className="h-4 w-4" />
           Tentar novamente
