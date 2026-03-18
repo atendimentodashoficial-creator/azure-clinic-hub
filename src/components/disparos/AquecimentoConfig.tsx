@@ -159,7 +159,24 @@ export function AquecimentoConfig() {
         .upsert(payload as any, { onConflict: "user_id" });
 
       if (error) throw error;
-      toast.success("Configuração salva com sucesso!");
+
+      // Sync tools to n8n workflow
+      toast.info("Sincronizando com n8n...");
+      const { data: syncData, error: syncError } = await supabase.functions.invoke(
+        "n8n-sync-tools",
+        {
+          body: { tools, system_prompt: systemPrompt },
+        }
+      );
+
+      if (syncError) {
+        console.error("n8n sync error:", syncError);
+        toast.warning("Configuração salva, mas erro ao sincronizar com n8n");
+      } else if (syncData?.success) {
+        toast.success(`Salvo e sincronizado! ${syncData.tools_synced} tools no n8n`);
+      } else {
+        toast.warning(`Salvo, mas n8n retornou: ${syncData?.error || "erro desconhecido"}`);
+      }
     } catch (err: any) {
       console.error("Error saving:", err);
       toast.error("Erro ao salvar configuração");
