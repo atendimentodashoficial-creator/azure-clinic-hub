@@ -157,8 +157,21 @@ export function DisparosSupabaseConfig() {
 
         <Button onClick={handleSave} disabled={saving} className="w-full">
           {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Salvar Configuração
+          {saving ? "Testando conexão..." : "Salvar Configuração"}
         </Button>
+
+        {testResult === "success" && (
+          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400 rounded-md p-3">
+            <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+            <span>Conexão validada com sucesso!</span>
+          </div>
+        )}
+        {testResult === "error" && (
+          <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-md p-3">
+            <XCircle className="h-4 w-4 flex-shrink-0" />
+            <span>Falha na conexão. Verifique a URL e a Service Role Key.</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
