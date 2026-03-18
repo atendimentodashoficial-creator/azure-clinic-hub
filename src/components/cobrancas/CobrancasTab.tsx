@@ -161,6 +161,7 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
           {filtered.map(c => {
             const cfg = statusConfig[c.status] || statusConfig.pendente;
             const isOverdue = c.status === "atrasado";
+            const isExpanded = expandedId === c.id;
             return (
               <Card
                 key={c.id}
@@ -210,8 +211,11 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
                     </Badge>
                     <span className="text-base font-bold whitespace-nowrap tabular-nums">{formatCurrency(c.valor)}</span>
                     <div className="flex items-center gap-0.5 border-l pl-2 border-border">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpandedId(isExpanded ? null : c.id)} title="Pagamentos parciais">
+                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </Button>
                       {c.status === "pendente" && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => handleMarcarPago(c)} title="Marcar como pago">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:bg-primary/10" onClick={() => handleMarcarPago(c)} title="Marcar como pago">
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
@@ -224,6 +228,9 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
                     </div>
                   </div>
                 </div>
+                {isExpanded && (
+                  <CobrancaPagamentosSection cobrancaId={c.id} valorTotal={c.valor} />
+                )}
               </Card>
             );
           })}
