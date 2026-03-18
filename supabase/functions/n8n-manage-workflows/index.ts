@@ -222,6 +222,10 @@ async function updateAgentPrompts(
 
       if (!putRes.ok) {
         const errorText = await putRes.text();
+        console.error(`[n8n] PUT failed for ${wfId} (${putRes.status}): ${errorText}`);
+        // Log the problematic node keys for debugging
+        const nodeKeys = sanitizedNodes.map((n: any) => ({ name: n.name, keys: Object.keys(n) }));
+        console.error(`[n8n] Node keys for ${wfId}:`, JSON.stringify(nodeKeys[0]));
         errors.push(`${wfId}: update failed (${putRes.status}) ${errorText}`);
         continue;
       }
