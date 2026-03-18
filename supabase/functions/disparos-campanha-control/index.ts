@@ -359,7 +359,7 @@ serve(async (req) => {
       // CRITICAL: For "start" action, also set a lock via next_send_at to prevent
       // the frontend scheduler from calling "continue" immediately after "start"
       if (action === "start") {
-        const startLockUntilIso = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes lock
+        const startLockUntilIso = new Date(Date.now() + 3 * 60 * 1000).toISOString(); // 3 minutes lock
         
         await supabase
           .from("disparos_campanhas")
