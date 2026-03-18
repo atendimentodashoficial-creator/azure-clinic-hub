@@ -15,6 +15,47 @@ interface StepResult {
   error?: string;
 }
 
+const N8N_ALLOWED_NODE_KEYS = new Set([
+  "id",
+  "name",
+  "type",
+  "typeVersion",
+  "position",
+  "parameters",
+  "credentials",
+  "disabled",
+  "notes",
+  "notesInFlow",
+  "continueOnFail",
+  "alwaysOutputData",
+  "executeOnce",
+  "retryOnFail",
+  "maxTries",
+  "waitBetweenTries",
+  "onError",
+]);
+
+const sanitizeN8nNode = (node: any) => {
+  const sanitized: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(node || {})) {
+    if (N8N_ALLOWED_NODE_KEYS.has(key) && value !== undefined) {
+      sanitized[key] = value;
+    }
+  }
+
+  // Remove fields that commonly break create API validation
+  delete sanitized.webhookId;
+  delete sanitized.pinData;
+  delete sanitized.issues;
+
+  if (!sanitized.parameters || typeof sanitized.parameters !== "object") {
+    sanitized.parameters = {};
+  }
+
+  return sanitized;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -107,48 +148,26 @@ Deno.serve(async (req) => {
 
     let nextTableNum = 1;
     try {
-      // Query information_schema to find existing leads_whatsapp tables
-      const { data: tables, error: tablesErr } = await extSupabase.rpc("execute_sql", {
-        sql: `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE 'leads_whatsapp%' ORDER BY table_name`
-      }).catch(() => ({ data: null, error: "rpc not available" }));
-
-      if (tables && Array.isArray(tables)) {
-        const nums = tables
-          .map((t: any) => {
-            const match = (t.table_name || t).match(/leads_whatsapp(\d+)/);
-            return match ? parseInt(match[1]) : 0;
-          })
-          .filter((n: number) => n > 0);
-        if (nums.length > 0) nextTableNum = Math.max(...nums) + 1;
-      } else {
-        // Fallback: try direct SQL via pg REST
-        const res = await fetch(`${extConfig.supabase_url}/rest/v1/rpc/`, {
-          method: "POST",
-          headers: {
-            "apikey": extConfig.supabase_service_key,
-            "Authorization": `Bearer ${extConfig.supabase_service_key}`,
-            "Content-Type": "application/json",
-          },
-        }).catch(() => null);
-
-        // If RPC doesn't work, try a simpler approach - just try incrementing
-        // We'll query each table until we find one that doesn't exist
-        for (let i = 1; i <= 100; i++) {
-          const checkRes = await fetch(
-            `${extConfig.supabase_url}/rest/v1/leads_whatsapp${i}?select=id&limit=1`,
-            {
-              headers: {
-                "apikey": extConfig.supabase_service_key,
-                "Authorization": `Bearer ${extConfig.supabase_service_key}`,
-              },
-            }
-          );
-          if (checkRes.status === 404 || checkRes.status === 400) {
-            // Table doesn't exist
-            nextTableNum = i;
-            break;
+      // Fallback strategy: detect the first missing leads_whatsappN table via PostgREST
+      // (works even when external SQL RPC functions are unavailable)
+      for (let i = 1; i <= 200; i++) {
+        const checkRes = await fetch(
+          `${extConfig.supabase_url}/rest/v1/leads_whatsapp${i}?select=id&limit=1`,
+          {
+            headers: {
+              "apikey": extConfig.supabase_service_key,
+              "Authorization": `Bearer ${extConfig.supabase_service_key}`,
+            },
           }
-          nextTableNum = i + 1;
+        );
+
+        if (checkRes.status === 404 || checkRes.status === 400) {
+          nextTableNum = i;
+          break;
+        }
+
+        if (i === 200) {
+          nextTableNum = 201;
         }
       }
     } catch (e: any) {
@@ -234,8 +253,19 @@ Deno.serve(async (req) => {
       results.push({ step: "create_table", success: true, detail: `Tabela ${tableName} criada a partir de ${sourceTable}` });
     } catch (e: any) {
       console.error("Error creating table:", e);
-      results.push({ step: "create_table", success: false, error: e.message });
-      // Continue with other steps even if table creation fails
+      const msg = `Falha ao criar tabela no Supabase externo: ${e.message}`;
+      results.push({ step: "create_table", success: false, error: msg });
+
+      return new Response(JSON.stringify({
+        success: false,
+        error: msg,
+        message: msg,
+        table_name: tableName,
+        steps: results,
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // ═══════════════════════════════════════════
@@ -296,7 +326,7 @@ Deno.serve(async (req) => {
 
         // Modify nodes: update Supabase table references and webhook path
         const newNodes = templateWf.nodes.map((node: any) => {
-          const modified = { ...node, id: crypto.randomUUID() };
+          const modified = { ...sanitizeN8nNode(node), id: crypto.randomUUID() };
 
           // Update Supabase nodes - look for table name references
           if (node.type?.includes("supabase") || node.type?.includes("Supabase")) {
@@ -398,7 +428,19 @@ Deno.serve(async (req) => {
         results.push({ step: "clone_sdr", success: true, detail: `Workflow "${newWfName}" criado (ID: ${clonedSdrId})` });
       } catch (e: any) {
         console.error("Error cloning SDR:", e);
-        results.push({ step: "clone_sdr", success: false, error: e.message });
+        const msg = `Falha ao clonar workflow SDR: ${e.message}`;
+        results.push({ step: "clone_sdr", success: false, error: msg });
+
+        return new Response(JSON.stringify({
+          success: false,
+          error: msg,
+          message: msg,
+          table_name: tableName,
+          steps: results,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 
@@ -416,7 +458,7 @@ Deno.serve(async (req) => {
         const templateWf = await templateRes.json();
 
         const newNodes = templateWf.nodes.map((node: any) => {
-          const modified = { ...node, id: crypto.randomUUID() };
+          const modified = { ...sanitizeN8nNode(node), id: crypto.randomUUID() };
 
           // Deep replace table name
           const replaceInObj = (obj: any): any => {
@@ -686,8 +728,11 @@ Deno.serve(async (req) => {
     const allSuccess = results.every(r => r.success);
     const successCount = results.filter(r => r.success).length;
 
+    const firstFailure = results.find(r => !r.success);
+
     return new Response(JSON.stringify({
       success: allSuccess,
+      error: allSuccess ? null : (firstFailure?.error || `${successCount}/${results.length} etapas concluídas.`),
       message: allSuccess
         ? `Automação completa! ${successCount} etapas concluídas com sucesso.`
         : `${successCount}/${results.length} etapas concluídas. Verifique os detalhes.`,

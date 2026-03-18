@@ -540,7 +540,15 @@ export function DisparosInstanciasManager({ instancias, onInstanciasChange }: Di
       });
 
       if (response.error) throw new Error(response.error.message);
-      if (!response.data?.success) throw new Error(response.data?.error || "Erro desconhecido");
+      if (!response.data?.success) {
+        const firstFailedStep = response.data?.steps?.find((s: any) => !s.success);
+        throw new Error(
+          response.data?.error ||
+          response.data?.message ||
+          firstFailedStep?.error ||
+          "Erro desconhecido"
+        );
+      }
 
       setSetupResults(response.data);
       toast.success("Fluxos configurados com sucesso!");
