@@ -94,6 +94,13 @@ export function WhatsAppInstanceManager({
   const [selectedInstance, setSelectedInstance] = useState<WhatsAppInstance | null>(null);
   const [qrPollingInterval, setQrPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
+  // Setup workflows state
+  const [setupLoading, setSetupLoading] = useState<string | null>(null);
+  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const [setupInstance, setSetupInstance] = useState<WhatsAppInstance | null>(null);
+  const [setupPhoneLast4, setSetupPhoneLast4] = useState("");
+  const [setupResults, setSetupResults] = useState<any[] | null>(null);
+
   // Pairing Code state
   const [connectionMode, setConnectionMode] = useState<'qrcode' | 'paircode'>('qrcode');
   const [pairingCode, setPairingCode] = useState<string | null>(null);
