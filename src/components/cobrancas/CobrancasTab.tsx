@@ -98,6 +98,17 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
     });
   };
 
+  const handleDesmarcarPago = (cobranca: Cobranca) => {
+    atualizarCobranca.mutate({
+      id: cobranca.id,
+      status: "pendente",
+      data_pagamento: null,
+    } as any, {
+      onSuccess: () => toast.success("Pagamento desmarcado!"),
+      onError: (e: any) => toast.error(e.message),
+    });
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-32 text-muted-foreground">Carregando...</div>;
   }
