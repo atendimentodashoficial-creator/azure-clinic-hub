@@ -95,6 +95,86 @@ serve(async (req) => {
       });
     }
 
+    // UPDATE action
+    if (action === "update") {
+      if (!documentId || !content || typeof content !== "string" || content.trim().length === 0) {
+        return new Response(JSON.stringify({ error: "documentId and content are required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Get OpenAI API key
+      let openaiKey: string | null = null;
+      const { data: userConfig } = await adminClient
+        .from("openai_config")
+        .select("api_key")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (userConfig?.api_key) {
+        openaiKey = userConfig.api_key;
+      } else {
+        openaiKey = Deno.env.get("OPENAI_API_KEY") || null;
+      }
+
+      if (!openaiKey) {
+        return new Response(
+          JSON.stringify({ error: "Nenhuma chave OpenAI configurada." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const finalContent = name ? `${name}\n\n${content.trim()}` : content.trim();
+
+      // Re-generate embedding
+      const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "text-embedding-ada-002",
+          input: finalContent,
+        }),
+      });
+
+      if (!embeddingResponse.ok) {
+        const errText = await embeddingResponse.text();
+        console.error("OpenAI embedding error:", errText);
+        return new Response(
+          JSON.stringify({ error: "Erro ao gerar embedding: " + embeddingResponse.status }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const embeddingData = await embeddingResponse.json();
+      const embedding = embeddingData.data[0].embedding;
+
+      const docMetadata = {
+        source: name || "manual",
+        ...(metadata || {}),
+      };
+
+      const { data: doc, error: updateError } = await extClient
+        .from("documents")
+        .update({
+          content: finalContent,
+          metadata: docMetadata,
+          embedding: JSON.stringify(embedding),
+        })
+        .eq("id", documentId)
+        .select("id, content, metadata")
+        .single();
+
+      if (updateError) throw updateError;
+
+      return new Response(JSON.stringify({ success: true, document: doc }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // INSERT action (default)
     if (!content || typeof content !== "string" || content.trim().length === 0) {
       return new Response(JSON.stringify({ error: "content is required" }), {

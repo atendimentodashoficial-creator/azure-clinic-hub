@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { BookOpen, Loader2, Plus, Trash2, FileText, AlertTriangle } from "lucide-react";
+import { BookOpen, Loader2, Plus, Trash2, FileText, AlertTriangle, Pencil, X, Save } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface RAGDocument {
@@ -26,6 +26,12 @@ export function DisparosRAGConfig() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [noConfig, setNoConfig] = useState(false);
+
+  // Edit state
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (user) loadDocuments();
@@ -129,12 +135,66 @@ export function DisparosRAGConfig() {
     }
   };
 
+  const startEditing = (doc: RAGDocument) => {
+    const title = doc.metadata?.source || "";
+    const content = getDocPreview(doc);
+    setEditingId(doc.id);
+    setEditTitle(title);
+    setEditContent(content);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditTitle("");
+    setEditContent("");
+  };
+
+  const handleUpdate = async () => {
+    if (editingId === null || !user || !editContent.trim() || !editTitle.trim()) {
+      toast.error("Preencha o nome e o conteúdo do documento");
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Sessão expirada");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("rag-embed-document", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: {
+          action: "update",
+          documentId: editingId,
+          content: editContent.trim(),
+          name: editTitle.trim(),
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      toast.success("Documento atualizado e embedding regenerado!");
+      cancelEditing();
+      await loadDocuments();
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erro ao atualizar: " + err.message);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const getDocTitle = (doc: RAGDocument) => {
     return doc.metadata?.source || doc.content?.substring(0, 50) || "Sem título";
   };
 
   const getDocPreview = (doc: RAGDocument) => {
-    // Remove the title line from preview if content starts with it
     const source = doc.metadata?.source;
     if (source && doc.content?.startsWith(source)) {
       return doc.content.substring(source.length).trim();
@@ -233,29 +293,87 @@ export function DisparosRAGConfig() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
               {documents.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{getDocTitle(doc)}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                      {getDocPreview(doc)}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      ID: {doc.id}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive flex-shrink-0"
-                    onClick={() => setDeleteId(doc.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <div key={doc.id}>
+                  {editingId === doc.id ? (
+                    <div className="p-3 rounded-lg border border-primary/50 bg-muted/50 space-y-3">
+                      <div className="space-y-2">
+                        <Label className="text-xs">Nome do Documento</Label>
+                        <Input
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          placeholder="Nome do documento"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Conteúdo</Label>
+                        <Textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          rows={5}
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={cancelEditing}
+                          disabled={updating}
+                        >
+                          <X className="h-3.5 w-3.5 mr-1" />
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={handleUpdate}
+                          disabled={updating || !editContent.trim() || !editTitle.trim()}
+                        >
+                          {updating ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                              Atualizando...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-3.5 w-3.5 mr-1" />
+                              Salvar e Regenerar
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{getDocTitle(doc)}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                          {getDocPreview(doc)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          ID: {doc.id}
+                        </p>
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => startEditing(doc)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteId(doc.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
