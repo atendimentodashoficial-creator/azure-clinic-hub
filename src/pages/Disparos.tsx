@@ -1585,7 +1585,7 @@ export default function Disparos() {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between mt-1">
                               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                 <span className="text-sm text-muted-foreground truncate">
                                   {truncateText(formatLastMessagePreview(chat.last_message), 35)}
