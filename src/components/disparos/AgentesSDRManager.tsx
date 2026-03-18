@@ -6,9 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Bot, Save, RefreshCw, Workflow, Eye, Pencil, Maximize2 } from "lucide-react";
+import { Loader2, Bot, Save, RefreshCw, Workflow, Pencil, Maximize2, X } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface AgentNode {
@@ -35,18 +34,18 @@ interface ExpandedPrompt {
   key: string;
   label: string;
   sublabel?: string;
+  source: "per" | "bulk";
 }
 
 export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: AgentesSDRManagerProps = {}) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [workflows, setWorkflows] = useState<WorkflowSummary[]>([]);
+  const [bulkMode, setBulkMode] = useState(false);
   const [selectedWorkflowIds, setSelectedWorkflowIds] = useState<Set<string>>(new Set());
   const [perWorkflowPrompts, setPerWorkflowPrompts] = useState<Record<string, string>>({});
   const [bulkPrompts, setBulkPrompts] = useState<Record<string, string>>({});
   const [expandedPrompt, setExpandedPrompt] = useState<ExpandedPrompt | null>(null);
-  // "per" = per-workflow prompts, "bulk" = bulk prompts
-  const [expandedSource, setExpandedSource] = useState<"per" | "bulk">("per");
 
   useEffect(() => { loadWorkflows(); }, []);
 
@@ -152,25 +151,19 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
     }
   };
 
-  // Get current value from the correct source
   const getExpandedValue = () => {
     if (!expandedPrompt) return "";
-    if (expandedSource === "bulk") return bulkPrompts[expandedPrompt.key] || "";
+    if (expandedPrompt.source === "bulk") return bulkPrompts[expandedPrompt.key] || "";
     return perWorkflowPrompts[expandedPrompt.key] || "";
   };
 
   const setExpandedValue = (val: string) => {
     if (!expandedPrompt) return;
-    if (expandedSource === "bulk") {
+    if (expandedPrompt.source === "bulk") {
       setBulkPrompts(prev => ({ ...prev, [expandedPrompt.key]: val }));
     } else {
       setPerWorkflowPrompts(prev => ({ ...prev, [expandedPrompt.key]: val }));
     }
-  };
-
-  const openExpanded = (key: string, label: string, source: "per" | "bulk", sublabel?: string) => {
-    setExpandedPrompt({ key, label, sublabel });
-    setExpandedSource(source);
   };
 
   const allAgentNames = Array.from(new Set(workflows.flatMap(wf => wf.agents.map(a => a.nodeName))));
@@ -221,18 +214,29 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
         </DialogContent>
       </Dialog>
 
-      {/* Workflow Selection */}
+      {/* Main Card */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Workflow className="h-5 w-5 text-primary" />
-              Workflows com Agentes
+              <Bot className="h-5 w-5 text-primary" />
+              System Prompts dos Agentes
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={selectAll} className="text-xs h-7">
-                {selectedWorkflowIds.size === workflows.length ? "Desmarcar todos" : "Selecionar todos"}
-              </Button>
+              {bulkMode ? (
+                <>
+                  <Button variant="ghost" size="sm" onClick={selectAll} className="text-xs h-7">
+                    {selectedWorkflowIds.size === workflows.length ? "Desmarcar todos" : "Selecionar todos"}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setBulkMode(false); setSelectedWorkflowIds(new Set()); }} className="text-xs h-7 gap-1">
+                    <X className="h-3 w-3" /> Cancelar
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setBulkMode(true)} className="text-xs h-7 gap-1.5">
+                  <Pencil className="h-3.5 w-3.5" /> Editar em Massa
+                </Button>
+              )}
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={loadWorkflows}>
                 <RefreshCw className="h-3.5 w-3.5" />
               </Button>
@@ -240,175 +244,121 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          {/* Workflows Accordion */}
+          <Accordion type="multiple" className="space-y-2">
             {workflows.map(wf => (
-              <div
-                key={wf.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  selectedWorkflowIds.has(wf.id) ? "bg-primary/5 border-primary/30" : "hover:bg-muted/50"
-                }`}
-                onClick={() => toggleWorkflow(wf.id)}
-              >
-                <Checkbox checked={selectedWorkflowIds.has(wf.id)} onCheckedChange={() => toggleWorkflow(wf.id)} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm truncate">{wf.name}</span>
-                    <Badge variant={wf.active ? "default" : "secondary"} className="text-[10px] h-5">
+              <AccordionItem key={wf.id} value={wf.id} className="border rounded-lg px-4">
+                <AccordionTrigger className="py-3 hover:no-underline">
+                  <div className="flex items-center gap-3 text-sm font-medium w-full">
+                    {bulkMode && (
+                      <Checkbox
+                        checked={selectedWorkflowIds.has(wf.id)}
+                        onCheckedChange={(e) => { e; toggleWorkflow(wf.id); }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="shrink-0"
+                      />
+                    )}
+                    <Workflow className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="truncate">{wf.name}</span>
+                    <Badge variant={wf.active ? "default" : "secondary"} className="text-[10px] h-5 shrink-0">
                       {wf.active ? "Ativo" : "Inativo"}
                     </Badge>
                   </div>
-                  <div className="flex gap-1.5 mt-1 flex-wrap">
-                    {wf.agents.map(agent => (
-                      <Badge key={agent.nodeName} variant="outline" className="text-[10px] h-4 gap-1">
-                        <Bot className="h-2.5 w-2.5" /> {agent.nodeName}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Prompt Editors */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Bot className="h-5 w-5 text-primary" />
-            System Prompts dos Agentes
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="por-fluxo">
-            <TabsList className="mb-4">
-              <TabsTrigger value="por-fluxo" className="gap-1.5 text-xs">
-                <Eye className="h-3.5 w-3.5" /> Ver por Fluxo
-              </TabsTrigger>
-              <TabsTrigger value="em-massa" className="gap-1.5 text-xs">
-                <Pencil className="h-3.5 w-3.5" /> Editar em Massa
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Per-workflow */}
-            <TabsContent value="por-fluxo">
-              <p className="text-xs text-muted-foreground mb-3">Visualize e edite o prompt de cada workflow individualmente.</p>
-              <Accordion type="multiple" className="space-y-3">
-                {workflows.map(wf => (
-                  <AccordionItem key={wf.id} value={wf.id} className="border rounded-lg px-4">
-                    <AccordionTrigger className="py-3 hover:no-underline">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Workflow className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate">{wf.name}</span>
-                        <Badge variant={wf.active ? "default" : "secondary"} className="text-[10px] h-4">
-                          {wf.active ? "Ativo" : "Inativo"}
-                        </Badge>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-4 space-y-4">
-                      {wf.agents.map(agent => {
-                        const key = pKey(wf.id, agent.nodeName);
-                        return (
-                          <div key={agent.nodeName} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Bot className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="text-xs font-medium text-muted-foreground">{agent.nodeName}</span>
-                                <Badge variant="outline" className="text-[9px] h-3.5">
-                                  {agent.nodeType.includes("agentTool") ? "Sub-agente" : "Principal"}
-                                </Badge>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                title="Expandir editor"
-                                onClick={() => openExpanded(key, agent.nodeName, "per", wf.name)}
-                              >
-                                <Maximize2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={perWorkflowPrompts[key] || ""}
-                              onChange={(e) =>
-                                setPerWorkflowPrompts(prev => ({ ...prev, [key]: e.target.value }))
-                              }
-                              placeholder="System prompt do agente..."
-                              className="min-h-[180px] font-mono text-xs"
-                            />
-                          </div>
-                        );
-                      })}
-                      <div className="flex justify-end pt-2">
-                        <Button size="sm" onClick={() => handleSavePerWorkflow(wf.id)} disabled={saving} className="gap-1.5">
-                          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                          Salvar este workflow
-                        </Button>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </TabsContent>
-
-            {/* Bulk */}
-            <TabsContent value="em-massa">
-              <p className="text-xs text-muted-foreground mb-3">
-                Edite o prompt por agente e aplique em todos os workflows selecionados ({selectedWorkflowIds.size} selecionado{selectedWorkflowIds.size !== 1 ? "s" : ""}).
-              </p>
-              {allAgentNames.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhum agente encontrado</p>
-              ) : (
-                <Accordion type="multiple" className="space-y-3" defaultValue={allAgentNames}>
-                  {allAgentNames.map(agentName => {
-                    const selectedWithAgent = workflows.filter(
-                      wf => selectedWorkflowIds.has(wf.id) && wf.agents.some(a => a.nodeName === agentName)
-                    ).length;
+                </AccordionTrigger>
+                <AccordionContent className="pb-4 space-y-4">
+                  {wf.agents.map(agent => {
+                    const key = pKey(wf.id, agent.nodeName);
                     return (
-                      <AccordionItem key={agentName} value={agentName} className="border rounded-lg px-4">
-                        <AccordionTrigger className="py-3 hover:no-underline">
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <Bot className="h-4 w-4 text-muted-foreground" />
-                            {agentName}
-                            {selectedWithAgent > 0 && (
-                              <Badge variant="secondary" className="text-[10px] h-4 ml-1">
-                                {selectedWithAgent} workflow{selectedWithAgent !== 1 ? "s" : ""}
-                              </Badge>
-                            )}
+                      <div key={agent.nodeName} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Bot className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-xs font-medium text-muted-foreground">{agent.nodeName}</span>
+                            <Badge variant="outline" className="text-[9px] h-3.5">
+                              {agent.nodeType.includes("agentTool") ? "Sub-agente" : "Principal"}
+                            </Badge>
                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="pb-4">
-                          <div className="flex justify-end mb-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              title="Expandir editor"
-                              onClick={() => openExpanded(agentName, agentName, "bulk", "Edição em massa")}
-                            >
-                              <Maximize2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                          <Textarea
-                            value={bulkPrompts[agentName] || ""}
-                            onChange={(e) => setBulkPrompts(prev => ({ ...prev, [agentName]: e.target.value }))}
-                            placeholder="System prompt do agente..."
-                            className="min-h-[200px] font-mono text-sm"
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title="Expandir editor"
+                            onClick={() => setExpandedPrompt({ key, label: agent.nodeName, sublabel: wf.name, source: "per" })}
+                          >
+                            <Maximize2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        <Textarea
+                          value={perWorkflowPrompts[key] || ""}
+                          onChange={(e) =>
+                            setPerWorkflowPrompts(prev => ({ ...prev, [key]: e.target.value }))
+                          }
+                          placeholder="System prompt do agente..."
+                          className="min-h-[180px] font-mono text-xs"
+                        />
+                      </div>
                     );
                   })}
-                </Accordion>
-              )}
-              <div className="flex justify-end mt-4">
+                  <div className="flex justify-end pt-2">
+                    <Button size="sm" onClick={() => handleSavePerWorkflow(wf.id)} disabled={saving} className="gap-1.5">
+                      {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                      Salvar este workflow
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+
+          {/* Bulk Edit Section - only visible in bulk mode */}
+          {bulkMode && (
+            <div className="mt-6 pt-6 border-t space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Edite o prompt por agente e aplique nos {selectedWorkflowIds.size} workflow{selectedWorkflowIds.size !== 1 ? "s" : ""} selecionado{selectedWorkflowIds.size !== 1 ? "s" : ""}.
+              </p>
+              {allAgentNames.map(agentName => {
+                const selectedWithAgent = workflows.filter(
+                  wf => selectedWorkflowIds.has(wf.id) && wf.agents.some(a => a.nodeName === agentName)
+                ).length;
+                return (
+                  <div key={agentName} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Bot className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-sm font-medium">{agentName}</span>
+                        {selectedWithAgent > 0 && (
+                          <Badge variant="secondary" className="text-[10px] h-4">
+                            {selectedWithAgent} workflow{selectedWithAgent !== 1 ? "s" : ""}
+                          </Badge>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Expandir editor"
+                        onClick={() => setExpandedPrompt({ key: agentName, label: agentName, sublabel: "Edição em massa", source: "bulk" })}
+                      >
+                        <Maximize2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={bulkPrompts[agentName] || ""}
+                      onChange={(e) => setBulkPrompts(prev => ({ ...prev, [agentName]: e.target.value }))}
+                      placeholder="System prompt do agente..."
+                      className="min-h-[160px] font-mono text-xs"
+                    />
+                  </div>
+                );
+              })}
+              <div className="flex justify-end pt-2">
                 <Button onClick={handleSaveBulk} disabled={saving || selectedWorkflowIds.size === 0} className="gap-2">
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   Aplicar nos {selectedWorkflowIds.size} Workflow{selectedWorkflowIds.size !== 1 ? "s" : ""} Selecionado{selectedWorkflowIds.size !== 1 ? "s" : ""}
                 </Button>
               </div>
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
