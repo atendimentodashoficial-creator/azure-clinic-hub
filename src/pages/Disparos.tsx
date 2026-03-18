@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
-import { MessageSquare, RefreshCw, Plus, Trash2, CheckSquare, X, Send, Megaphone, List, Kanban, Phone, FileText, ListFilter, QrCode, Loader2, Smartphone, Unplug, Settings, Pencil, Keyboard, XCircle, BellRing, Search, BotOff, BookOpen, Flame, Bot } from "lucide-react";
+import { MessageSquare, RefreshCw, Plus, Trash2, CheckSquare, X, Send, Megaphone, List, Kanban, Phone, FileText, ListFilter, QrCode, Loader2, Smartphone, Unplug, Settings, Pencil, Keyboard, XCircle, BellRing, Search, BotOff, BookOpen, Flame, Bot, Workflow, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,7 @@ interface DisparosInstancia {
   base_url?: string;
   api_key?: string;
   is_active?: boolean;
+  n8n_setup_at?: string | null;
 }
 
 export default function Disparos() {
@@ -85,6 +86,13 @@ export default function Disparos() {
   const [qrPollingInterval, setQrPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
   const [showInstanceManager, setShowInstanceManager] = useState(false);
+
+  // Setup Fluxos state
+  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const [setupInstance, setSetupInstance] = useState<DisparosInstancia | null>(null);
+  const [setupPhoneLast4, setSetupPhoneLast4] = useState("");
+  const [setupLoading, setSetupLoading] = useState<string | null>(null);
+  const [setupResults, setSetupResults] = useState<any>(null);
 
   // Create instance (name only)
   const [createInstanceDialogOpen, setCreateInstanceDialogOpen] = useState(false);
@@ -714,6 +722,31 @@ export default function Disparos() {
     }
   };
 
+  const handleSetupFluxos = async () => {
+    if (!setupInstance || !setupPhoneLast4 || setupPhoneLast4.length !== 4) {
+      toast.error("Informe os 4 últimos dígitos do telefone");
+      return;
+    }
+    setSetupLoading(setupInstance.id);
+    setSetupResults(null);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke("setup-instance-workflows", {
+        headers: { Authorization: `Bearer ${session.session?.access_token}` },
+        body: { instancia_id: setupInstance.id, phone_last4: setupPhoneLast4 },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (!response.data?.success) throw new Error(response.data?.error || "Erro desconhecido");
+      setSetupResults(response.data);
+      toast.success("Fluxos configurados com sucesso!");
+      loadInstancias();
+    } catch (error: any) {
+      console.error("Setup error:", error);
+      toast.error("Erro ao configurar fluxos: " + (error.message || "Erro desconhecido"));
+    } finally {
+      setSetupLoading(null);
+    }
+  };
 
   // Delete instance (also delete from UAZapi via admin API)
   const handleDeleteInstance = async (id: string) => {
@@ -2270,6 +2303,39 @@ export default function Disparos() {
                             </div>
                             {/* External table name field */}
                             <DisparosInstanciaTableField instanciaId={instancia.id} />
+
+                            {/* Setup Fluxos button */}
+                            {isConnected && !instancia.n8n_setup_at && (
+                              <div className="border-t pt-3">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSetupInstance(instancia);
+                                    setSetupPhoneLast4("");
+                                    setSetupResults(null);
+                                    setSetupDialogOpen(true);
+                                  }}
+                                  disabled={setupLoading === instancia.id}
+                                  className="gap-1.5"
+                                >
+                                  {setupLoading === instancia.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Workflow className="h-4 w-4" />
+                                  )}
+                                  Configurar Fluxos
+                                </Button>
+                              </div>
+                            )}
+                            {instancia.n8n_setup_at && (
+                              <div className="border-t pt-3">
+                                <Badge variant="secondary" className="text-[10px] gap-1">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Fluxos configurados
+                                </Badge>
+                              </div>
+                            )}
                           </div>
                         </Card>
                       );
@@ -2277,6 +2343,62 @@ export default function Disparos() {
                   </div>
                 )}
               </div>
+        </DialogContent>
+      </Dialog>
+      {/* Setup Fluxos Dialog */}
+      <Dialog open={setupDialogOpen} onOpenChange={(open) => {
+        if (!open) setSetupResults(null);
+        setSetupDialogOpen(open);
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Workflow className="h-5 w-5" />
+              Configurar Fluxos n8n
+            </DialogTitle>
+            <DialogDescription>
+              {setupInstance?.nome} — Configure tabela, workflows SDR e Follow-up automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!setupResults ? (
+            <div className="space-y-4 pt-2">
+              <div>
+                <Label htmlFor="phone_last4_disparos">4 últimos dígitos do telefone</Label>
+                <Input
+                  id="phone_last4_disparos"
+                  value={setupPhoneLast4}
+                  onChange={(e) => setSetupPhoneLast4(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="Ex: 1234"
+                  maxLength={4}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Usado para nomear o webhook e identificar os fluxos.
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setSetupDialogOpen(false)}>Cancelar</Button>
+                <Button onClick={handleSetupFluxos} disabled={setupPhoneLast4.length !== 4 || !!setupLoading}>
+                  {setupLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Workflow className="h-4 w-4 mr-2" />}
+                  {setupLoading ? "Configurando..." : "Iniciar Configuração"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 pt-2">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /><span>Tabela: <strong>{setupResults.table_name}</strong></span></div>
+                {setupResults.sdr_workflow_id && <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /><span>Workflow SDR criado</span></div>}
+                {setupResults.followup_workflow_id && <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /><span>Workflow Follow-up criado</span></div>}
+                {setupResults.cron_created && <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /><span>Cron de follow-up configurado</span></div>}
+                {setupResults.webhook_registered && <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /><span>Webhook SDR registrado</span></div>}
+              </div>
+              <div className="flex justify-end pt-2">
+                <Button onClick={() => setSetupDialogOpen(false)}>Fechar</Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
