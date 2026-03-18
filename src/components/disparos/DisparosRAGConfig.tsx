@@ -36,7 +36,7 @@ export function DisparosRAGConfig() {
     try {
       const { data, error } = await supabase
         .from("documents" as any)
-        .select("id, content, metadata, created_at")
+        .select("id, content, metadata, created_at, name")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
 
