@@ -217,6 +217,9 @@ Deno.serve(async (req) => {
       case "update_prompts":
         result = await updateAgentPrompts(params.workflow_ids, params.updates);
         break;
+      case "update_prompts_per_workflow":
+        result = await updatePromptsPerWorkflow(params.per_workflow_updates);
+        break;
       default:
         throw new Error(`Unknown action: ${action}`);
     }
