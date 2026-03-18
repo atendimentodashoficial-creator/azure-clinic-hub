@@ -918,6 +918,75 @@ export function WhatsAppInstanceManager({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Setup Workflows Dialog */}
+      <Dialog open={setupDialogOpen} onOpenChange={setSetupDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Workflow className="h-5 w-5" />
+              Configurar Fluxos n8n
+            </DialogTitle>
+            <DialogDescription>
+              Cria automaticamente os fluxos SDR e follow-up para a instância <strong>{setupInstance?.nome}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>4 últimos dígitos do telefone da instância</Label>
+              <Input
+                value={setupPhoneLast4}
+                onChange={(e) => setSetupPhoneLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                placeholder="Ex: 5530"
+                maxLength={4}
+                className="text-center text-lg font-mono"
+              />
+              <p className="text-xs text-muted-foreground">
+                Usado para gerar os paths dos webhooks no n8n.
+              </p>
+            </div>
+
+            {setupResults && (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {setupResults.map((step: any, i: number) => (
+                  <div key={i} className={`flex items-start gap-2 text-xs p-2 rounded ${step.success ? 'bg-green-50 dark:bg-green-950/30' : 'bg-destructive/10'}`}>
+                    {step.success ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <XCircle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      <span className="font-medium">{step.step}</span>
+                      <p className="text-muted-foreground">{step.detail || step.error}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setSetupDialogOpen(false)}>
+                {setupResults ? "Fechar" : "Cancelar"}
+              </Button>
+              {!setupResults && (
+                <Button
+                  onClick={handleSetupWorkflows}
+                  disabled={!!setupLoading || setupPhoneLast4.length < 4}
+                  className="gap-1.5"
+                >
+                  {setupLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Settings2 className="h-4 w-4" />
+                  )}
+                  Iniciar Automação
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
