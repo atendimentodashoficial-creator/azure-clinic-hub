@@ -31,6 +31,7 @@ import { getInitials, normalizePhoneNumber, formatPhoneNumber, getLast8Digits } 
 import { syncContactNameEverywhere, CONTACT_NAME_QUERY_KEYS } from "@/utils/syncContactName";
 import { useProdutoTemplates, ProdutoTemplate } from "@/hooks/useProdutoTemplates";
 import { AtribuirProdutoDialog } from "@/components/produtos/AtribuirProdutoDialog";
+import { NovaReuniaoDialog } from "@/components/reunioes/NovaReuniaoDialog";
 import { useMensagensPredefinidas } from "@/hooks/useMensagensPredefinidas";
 import { useBlocosMensagens } from "@/hooks/useBlocosMensagens";
 import { useAudiosPredefinidos } from "@/hooks/useAudiosPredefinidos";
