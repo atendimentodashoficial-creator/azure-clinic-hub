@@ -38,6 +38,8 @@ export function DisparosSupabaseConfig() {
     setLoading(false);
   };
 
+  const [testResult, setTestResult] = useState<"success" | "error" | null>(null);
+
   const handleSave = async () => {
     if (!user || !url.trim() || !serviceKey.trim()) {
       toast.error("Preencha a URL e a chave de serviço");
@@ -45,7 +47,27 @@ export function DisparosSupabaseConfig() {
     }
 
     setSaving(true);
+    setTestResult(null);
     try {
+      // Test connection first via edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Sessão expirada");
+        return;
+      }
+
+      const { data: testData, error: testError } = await supabase.functions.invoke("disparos-test-supabase", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { supabase_url: url.trim(), supabase_service_key: serviceKey.trim() },
+      });
+
+      if (testError || !testData?.success) {
+        setTestResult("error");
+        toast.error(testData?.error || "Falha na conexão com o Supabase externo. Verifique a URL e a chave.");
+        return;
+      }
+
+      // Connection OK — save credentials
       if (existingId) {
         const { error } = await supabase
           .from("disparos_supabase_config" as any)
@@ -66,10 +88,12 @@ export function DisparosSupabaseConfig() {
           } as any);
         if (error) throw error;
       }
-      toast.success("Configuração salva!");
+      setTestResult("success");
+      toast.success("Conexão validada e configuração salva com sucesso!");
       await loadConfig();
     } catch (error: any) {
       console.error(error);
+      setTestResult("error");
       toast.error("Erro ao salvar: " + error.message);
     } finally {
       setSaving(false);
