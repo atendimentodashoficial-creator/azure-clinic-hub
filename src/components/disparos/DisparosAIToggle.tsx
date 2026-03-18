@@ -3,7 +3,8 @@ import { Bot, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import { getLast8Digits } from "@/utils/whatsapp";
 
 interface Props {
@@ -12,9 +13,11 @@ interface Props {
 }
 
 export function DisparosAIToggle({ chatContactNumber, instanciaId }: Props) {
-  const [botAtivo, setBotAtivo] = useState<boolean | null>(null);
+  const [botAtivo, setBotAtivo] = useState<boolean>(false);
+  const [followAtivo, setFollowAtivo] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
-  const [toggling, setToggling] = useState(false);
+  const [togglingBot, setTogglingBot] = useState(false);
+  const [togglingFollow, setTogglingFollow] = useState(false);
   const [found, setFound] = useState(false);
 
   const phoneLast8 = getLast8Digits(chatContactNumber);
@@ -47,7 +50,8 @@ export function DisparosAIToggle({ chatContactNumber, instanciaId }: Props) {
         setFound(false);
       } else if (data?.found) {
         setFound(true);
-        setBotAtivo(data.bot_ativo);
+        setBotAtivo(data.bot_ativo ?? false);
+        setFollowAtivo(data.follow_ativo ?? false);
       } else {
         setFound(false);
       }
@@ -59,11 +63,16 @@ export function DisparosAIToggle({ chatContactNumber, instanciaId }: Props) {
     }
   };
 
-  const handleToggle = async (newValue: boolean) => {
+  const handleToggle = async (field: "BOT_ATIVO" | "follow_ativo", newValue: boolean) => {
     if (!instanciaId || !phoneLast8) return;
+
+    const isBot = field === "BOT_ATIVO";
+    const setter = isBot ? setBotAtivo : setFollowAtivo;
+    const setToggling = isBot ? setTogglingBot : setTogglingFollow;
+    const previousValue = isBot ? botAtivo : followAtivo;
+
     setToggling(true);
-    const previousValue = botAtivo;
-    setBotAtivo(newValue);
+    setter(newValue);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -75,25 +84,26 @@ export function DisparosAIToggle({ chatContactNumber, instanciaId }: Props) {
           action: "toggle",
           instancia_id: instanciaId,
           phone_last8: phoneLast8,
+          field,
           new_value: newValue,
         },
       });
 
       if (error || !data?.success) {
-        setBotAtivo(previousValue);
-        toast.error(data?.error || "Erro ao alterar I.A.");
+        setter(previousValue);
+        toast.error(data?.error || "Erro ao alterar configuração");
       } else {
-        toast.success(newValue ? "I.A. ativada" : "I.A. desativada");
+        const label = isBot ? "I.A." : "Follow-up";
+        toast.success(newValue ? `${label} ativado` : `${label} desativado`);
       }
     } catch (e: any) {
-      setBotAtivo(previousValue);
-      toast.error("Erro ao alterar I.A.");
+      setter(previousValue);
+      toast.error("Erro ao alterar configuração");
     } finally {
       setToggling(false);
     }
   };
 
-  // Don't show if no instance or not found in external table
   if (!instanciaId || (!loading && !found)) return null;
 
   if (loading) {
@@ -104,24 +114,42 @@ export function DisparosAIToggle({ chatContactNumber, instanciaId }: Props) {
     );
   }
 
+  const isAnyActive = botAtivo || followAtivo;
+
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center gap-1.5 px-1">
-            <Bot className={`h-4 w-4 ${botAtivo ? 'text-green-500' : 'text-muted-foreground'}`} />
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="flex items-center px-1 py-1 rounded hover:bg-accent transition-colors">
+          <Bot className={`h-4 w-4 ${isAnyActive ? 'text-green-500' : 'text-muted-foreground'}`} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-3" align="end">
+        <div className="space-y-3">
+          <p className="text-xs font-medium text-muted-foreground">Configurações I.A.</p>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="bot-toggle" className="text-sm cursor-pointer">Bot Ativo</Label>
             <Switch
-              checked={botAtivo || false}
-              onCheckedChange={handleToggle}
-              disabled={toggling}
-              className="scale-75"
+              id="bot-toggle"
+              checked={botAtivo}
+              onCheckedChange={(v) => handleToggle("BOT_ATIVO", v)}
+              disabled={togglingBot}
+              className="scale-90"
             />
           </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{botAtivo ? "I.A. ativada — clique para desativar" : "I.A. desativada — clique para ativar"}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="follow-toggle" className="text-sm cursor-pointer">Follow-up Ativo</Label>
+            <Switch
+              id="follow-toggle"
+              checked={followAtivo}
+              onCheckedChange={(v) => handleToggle("follow_ativo", v)}
+              disabled={togglingFollow}
+              className="scale-90"
+            />
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -4,8 +4,20 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+function findMatchByPhone(rows: any[], phone_last8: string) {
+  return rows?.find((row: any) => {
+    for (const key of Object.keys(row)) {
+      const val = String(row[key] || "").replace(/\D/g, "");
+      if (val.length >= 8 && val.slice(-8) === phone_last8) {
+        return true;
+      }
+    }
+    return false;
+  });
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -21,7 +33,6 @@ serve(async (req) => {
       });
     }
 
-    // Verify user
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -37,7 +48,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, instancia_id, phone_last8, new_value } = body;
+    const { action, instancia_id, phone_last8, field, new_value } = body;
 
     if (!instancia_id || !phone_last8) {
       return new Response(JSON.stringify({ error: "instancia_id e phone_last8 são obrigatórios" }), {
@@ -46,7 +57,6 @@ serve(async (req) => {
       });
     }
 
-    // Get instance config (table name)
     const { data: instancia, error: instError } = await supabase
       .from("disparos_instancias")
       .select("tabela_supabase_externa")
@@ -61,7 +71,6 @@ serve(async (req) => {
       });
     }
 
-    // Get external Supabase config
     const { data: extConfig, error: configError } = await supabase
       .from("disparos_supabase_config")
       .select("supabase_url, supabase_service_key")
@@ -75,70 +84,44 @@ serve(async (req) => {
       });
     }
 
-    // Connect to external Supabase
     const extSupabase = createClient(extConfig.supabase_url, extConfig.supabase_service_key);
     const tableName = instancia.tabela_supabase_externa;
 
-    if (action === "get") {
-      // Find the contact by last 8 digits of phone
-      const { data: rows, error: fetchError } = await extSupabase
-        .from(tableName)
-        .select("*")
-        .limit(1000);
+    // Fetch rows
+    const { data: rows, error: fetchError } = await extSupabase
+      .from(tableName)
+      .select("*")
+      .limit(1000);
 
-      if (fetchError) {
-        console.error("Error fetching from external table:", fetchError);
-        return new Response(JSON.stringify({ error: "Erro ao consultar tabela externa", details: fetchError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Find by last 8 digits matching any phone-like column
-      const match = rows?.find((row: any) => {
-        // Try common phone column names
-        for (const key of Object.keys(row)) {
-          const val = String(row[key] || "").replace(/\D/g, "");
-          if (val.length >= 8 && val.slice(-8) === phone_last8) {
-            return true;
-          }
-        }
-        return false;
+    if (fetchError) {
+      console.error("Error fetching from external table:", fetchError);
+      return new Response(JSON.stringify({ error: "Erro ao consultar tabela externa", details: fetchError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
 
+    const match = findMatchByPhone(rows || [], phone_last8);
+
+    if (action === "get") {
       if (!match) {
-        return new Response(JSON.stringify({ found: false, bot_ativo: null }), {
+        return new Response(JSON.stringify({ found: false }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      return new Response(JSON.stringify({ 
-        found: true, 
+      return new Response(JSON.stringify({
+        found: true,
         bot_ativo: match.BOT_ATIVO === true || match.BOT_ATIVO === "true",
-        row_id: match.id 
+        follow_ativo: match.follow_ativo === true || match.follow_ativo === "true",
+        row_id: match.id,
       }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
 
     } else if (action === "toggle") {
-      // Find the row first
-      const { data: rows } = await extSupabase
-        .from(tableName)
-        .select("*")
-        .limit(1000);
-
-      const match = rows?.find((row: any) => {
-        for (const key of Object.keys(row)) {
-          const val = String(row[key] || "").replace(/\D/g, "");
-          if (val.length >= 8 && val.slice(-8) === phone_last8) {
-            return true;
-          }
-        }
-        return false;
-      });
-
       if (!match) {
         return new Response(JSON.stringify({ error: "Contato não encontrado na tabela externa" }), {
           status: 404,
@@ -146,12 +129,21 @@ serve(async (req) => {
         });
       }
 
-      const currentValue = match.BOT_ATIVO === true || match.BOT_ATIVO === "true";
-      const newValue = new_value !== undefined ? new_value : !currentValue;
+      const columnName = field || "BOT_ATIVO";
+      // Only allow known fields
+      if (columnName !== "BOT_ATIVO" && columnName !== "follow_ativo") {
+        return new Response(JSON.stringify({ error: "Campo inválido" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const updateData: Record<string, boolean> = {};
+      updateData[columnName] = new_value;
 
       const { error: updateError } = await extSupabase
         .from(tableName)
-        .update({ BOT_ATIVO: newValue })
+        .update(updateData)
         .eq("id", match.id);
 
       if (updateError) {
@@ -162,7 +154,7 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ success: true, bot_ativo: newValue }), {
+      return new Response(JSON.stringify({ success: true, [columnName]: new_value }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
