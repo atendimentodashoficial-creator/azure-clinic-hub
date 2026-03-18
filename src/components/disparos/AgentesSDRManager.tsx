@@ -166,7 +166,18 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
     }
   };
 
+  const agentOrder = ["agente_principal", "agente_horarios", "remarcação", "cancelamento"];
+  const sortAgents = (agents: AgentNode[]) => [...agents].sort((a, b) => {
+    const aIdx = agentOrder.findIndex(n => a.nodeName.toLowerCase().includes(n.toLowerCase()));
+    const bIdx = agentOrder.findIndex(n => b.nodeName.toLowerCase().includes(n.toLowerCase()));
+    return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+  });
   const allAgentNames = Array.from(new Set(workflows.flatMap(wf => wf.agents.map(a => a.nodeName))));
+  allAgentNames.sort((a, b) => {
+    const aIdx = agentOrder.findIndex(n => a.toLowerCase().includes(n.toLowerCase()));
+    const bIdx = agentOrder.findIndex(n => b.toLowerCase().includes(n.toLowerCase()));
+    return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+  });
 
   if (loading) {
     return (
@@ -266,7 +277,7 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4 space-y-4">
-                  {wf.agents.map(agent => {
+                  {sortAgents(wf.agents).map(agent => {
                     const key = pKey(wf.id, agent.nodeName);
                     return (
                       <div key={agent.nodeName} className="space-y-2">
