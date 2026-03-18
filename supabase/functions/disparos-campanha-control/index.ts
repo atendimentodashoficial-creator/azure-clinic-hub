@@ -318,7 +318,7 @@ serve(async (req) => {
 
         // Claim lock for enough time to cover the whole execution (blocks + delays).
         // NOTE: we use next_send_at as a lightweight lock so other 'continue' calls will skip.
-        const lockUntilIso = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+        const lockUntilIso = new Date(Date.now() + 3 * 60 * 1000).toISOString(); // 3 minutes (reduced from 10 to minimize stuck time if background crashes)
 
         // Use FOR UPDATE to ensure atomic lock acquisition
         const { data: lockRows, error: lockError } = await supabase
