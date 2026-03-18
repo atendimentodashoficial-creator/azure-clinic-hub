@@ -1757,6 +1757,7 @@ export default function Disparos() {
                                   </Badge>
                                 )}
                               </div>
+                              {renderAIStatusBadges(chat)}
                             </div>
                           </div>
                         ))}
