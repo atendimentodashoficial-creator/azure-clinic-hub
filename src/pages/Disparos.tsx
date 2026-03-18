@@ -1244,7 +1244,7 @@ export default function Disparos() {
 
             {/* Tabs inline */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
-              <div className="w-full sm:w-auto overflow-x-auto overflow-y-hidden touch-pan-x">
+              <div className="w-full sm:w-auto overflow-x-auto overflow-y-hidden touch-pan-x scrollbar-hide">
                 <TabsList className="w-max min-w-max justify-start">
                   <TabsTrigger value="conversas" className="gap-1.5 shrink-0">
                     <MessageSquare className="h-4 w-4" />
