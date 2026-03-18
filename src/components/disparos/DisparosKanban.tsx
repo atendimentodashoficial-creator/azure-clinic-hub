@@ -115,6 +115,7 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
   const [chatAgendamentos, setChatAgendamentos] = useState<Record<string, ChatAgendamento | null>>({});
   const [chatReunioes, setChatReunioes] = useState<Record<string, ChatReuniao | null>>({});
   const [instanciasMap, setInstanciasMap] = useState<Record<string, DisparosInstancia>>({});
+  const [aiStatusMap, setAiStatusMap] = useState<Record<string, { bot_ativo: boolean; follow_ativo: boolean }>>({});
   const [reuniaoDialogOpen, setReuniaoDialogOpen] = useState(false);
   const [selectedReuniao, setSelectedReuniao] = useState<ChatReuniao | null>(null);
   // Filter & Selection state
