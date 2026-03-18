@@ -87,6 +87,13 @@ export default function Disparos() {
 
   const [showInstanceManager, setShowInstanceManager] = useState(false);
 
+  // Setup Fluxos state
+  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const [setupInstance, setSetupInstance] = useState<DisparosInstancia | null>(null);
+  const [setupPhoneLast4, setSetupPhoneLast4] = useState("");
+  const [setupLoading, setSetupLoading] = useState<string | null>(null);
+  const [setupResults, setSetupResults] = useState<any>(null);
+
   // Create instance (name only)
   const [createInstanceDialogOpen, setCreateInstanceDialogOpen] = useState(false);
   const [newInstanciaNome, setNewInstanciaNome] = useState("");
