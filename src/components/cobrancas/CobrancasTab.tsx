@@ -98,6 +98,17 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
     });
   };
 
+  const handleDesmarcarPago = (cobranca: Cobranca) => {
+    atualizarCobranca.mutate({
+      id: cobranca.id,
+      status: "pendente",
+      data_pagamento: null,
+    } as any, {
+      onSuccess: () => toast.success("Pagamento desmarcado!"),
+      onError: (e: any) => toast.error(e.message),
+    });
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-32 text-muted-foreground">Carregando...</div>;
   }
@@ -217,6 +228,11 @@ export function CobrancasTab({ clienteId, valorContrato = 0 }: Props) {
                       {c.status === "pendente" && (
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:bg-primary/10" onClick={() => handleMarcarPago(c)} title="Marcar como pago">
                           <CheckCircle2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      {c.status === "pago" && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-600 hover:bg-amber-100" onClick={() => handleDesmarcarPago(c)} title="Desmarcar pagamento">
+                          <XCircle className="h-3.5 w-3.5" />
                         </Button>
                       )}
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditando(c)}>
