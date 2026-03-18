@@ -597,9 +597,12 @@ Deno.serve(async (req) => {
       });
 
       if (matchingReunioes.length === 0) {
-        console.log(`No matching reunioes for aviso "${aviso.nome}" (dias_antes=${aviso.dias_antes})`);
-        // Update timestamps
-        const nextCheckAt = calculateNextCheckAt(aviso.horario_envio);
+        const label = unidadeTempo === 'horas' ? `horas_antes=${(aviso as any).horas_antes}` : unidadeTempo === 'minutos' ? `minutos_antes=${(aviso as any).minutos_antes}` : `dias_antes=${aviso.dias_antes}`;
+        console.log(`No matching reunioes for aviso "${aviso.nome}" (${label})`);
+        // For horas/minutos, schedule next check in 1 min (cron handles it)
+        const nextCheckAt = unidadeTempo === 'dias' 
+          ? calculateNextCheckAt(aviso.horario_envio)
+          : new Date(Date.now() + 60 * 1000).toISOString();
         await supabase
           .from("avisos_reuniao")
           .update({ next_check_at: nextCheckAt, last_check_at: new Date().toISOString() })
