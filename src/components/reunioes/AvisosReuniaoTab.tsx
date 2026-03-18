@@ -116,6 +116,9 @@ export function AvisosReuniaoTab() {
     "Olá {nome}! 👋\n\nLembramos que você tem uma reunião agendada para {data} às {horario}.\n\n📹 Link da call: {link_call}\n\nAguardamos você! 🙂"
   );
   const [formDiasAntes, setFormDiasAntes] = useState(1);
+  const [formHorasAntes, setFormHorasAntes] = useState(0);
+  const [formMinutosAntes, setFormMinutosAntes] = useState(0);
+  const [formUnidadeTempo, setFormUnidadeTempo] = useState<"dias" | "horas" | "minutos">("dias");
   const [formHorarioEnvio, setFormHorarioEnvio] = useState("09:00");
   const [formIntervaloMin, setFormIntervaloMin] = useState(15);
   const [formIntervaloMax, setFormIntervaloMax] = useState(33);
