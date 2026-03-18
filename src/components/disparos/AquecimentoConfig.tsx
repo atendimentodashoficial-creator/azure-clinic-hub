@@ -317,6 +317,18 @@ export function AquecimentoConfig() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      title="Duplicar tool"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        duplicateTool(tool.id);
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 text-destructive hover:text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
