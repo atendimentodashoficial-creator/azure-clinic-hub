@@ -458,7 +458,7 @@ Deno.serve(async (req) => {
         const templateWf = await templateRes.json();
 
         const newNodes = templateWf.nodes.map((node: any) => {
-          const modified = { ...node, id: crypto.randomUUID() };
+          const modified = { ...sanitizeN8nNode(node), id: crypto.randomUUID() };
 
           // Deep replace table name
           const replaceInObj = (obj: any): any => {
