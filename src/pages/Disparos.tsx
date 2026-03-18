@@ -139,8 +139,69 @@ export default function Disparos() {
       return tb - ta;
     });
   };
+  // Bulk AI status for list view badges
+  const chatIds = useMemo(() => chats.map(c => c.id).sort().join(','), [chats]);
+  
+  useEffect(() => {
+    if (chats.length > 0) {
+      loadBulkAIStatus();
+    }
+  }, [chatIds]);
 
-  // Load chats from database (excluding deleted ones)
+  const loadBulkAIStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const contacts = chats
+        .filter(c => c.instancia_id && c.contact_number)
+        .map(c => ({
+          instancia_id: c.instancia_id,
+          phone_last8: getLast8Digits(c.contact_number),
+        }))
+        .filter(c => c.phone_last8);
+
+      if (contacts.length === 0) return;
+
+      const { data, error } = await supabase.functions.invoke("disparos-toggle-ai", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { action: "bulk_get", contacts },
+      });
+
+      if (!error && data?.results) {
+        setAiStatusMap(data.results);
+      }
+    } catch (e) {
+      console.error("Error loading bulk AI status:", e);
+    }
+  };
+
+  const renderAIStatusBadges = (chat: any) => {
+    const phoneLast8 = getLast8Digits(chat.contact_number);
+    const status = aiStatusMap[phoneLast8];
+    if (!status) return null;
+    
+    const badges = [];
+    if (!status.bot_ativo) {
+      badges.push(
+        <Badge key="bot-off" variant="outline" className="text-[10px] px-1.5 py-0 h-4 gap-0.5 text-destructive border-destructive/30">
+          <BotOff className="h-2.5 w-2.5" />
+          I.A. off
+        </Badge>
+      );
+    }
+    if (!status.follow_ativo) {
+      badges.push(
+        <Badge key="follow-off" variant="outline" className="text-[10px] px-1.5 py-0 h-4 gap-0.5 text-muted-foreground border-muted-foreground/30">
+          Follow off
+        </Badge>
+      );
+    }
+    if (badges.length === 0) return null;
+    return <div className="flex gap-1 flex-wrap">{badges}</div>;
+  };
+
+
   // Only include chats from connected Disparos instances (never from WhatsApp main instance)
   const loadChats = async (allowedInstanciaIdsParam?: string[], instanciasMapOverride?: Record<string, DisparosInstancia>): Promise<any[]> => {
     try {
