@@ -31,6 +31,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Card } from "@/components/ui/card";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
 import { DisparosSupabaseConfig } from "@/components/disparos/DisparosSupabaseConfig";
+import { DisparosRAGConfig } from "@/components/disparos/DisparosRAGConfig";
 import { DisparosInstanciaTableField } from "@/components/disparos/DisparosInstanciaTableField";
 
 interface DisparosInstancia {
