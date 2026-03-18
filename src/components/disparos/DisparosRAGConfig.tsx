@@ -166,7 +166,7 @@ export function DisparosRAGConfig() {
 
             <Button
               onClick={handleAdd}
-              disabled={saving || !newContent.trim()}
+              disabled={saving || !newContent.trim() || !newTitle.trim()}
               className="w-full"
             >
               {saving ? (
