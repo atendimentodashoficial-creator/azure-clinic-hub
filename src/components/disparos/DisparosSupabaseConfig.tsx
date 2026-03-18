@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Database, Loader2, Save, Eye, EyeOff } from "lucide-react";
+import { Database, Loader2, Save, Eye, EyeOff, CheckCircle2, XCircle } from "lucide-react";
 
 export function DisparosSupabaseConfig() {
   const { user } = useAuth();
@@ -38,6 +38,8 @@ export function DisparosSupabaseConfig() {
     setLoading(false);
   };
 
+  const [testResult, setTestResult] = useState<"success" | "error" | null>(null);
+
   const handleSave = async () => {
     if (!user || !url.trim() || !serviceKey.trim()) {
       toast.error("Preencha a URL e a chave de serviço");
@@ -45,7 +47,27 @@ export function DisparosSupabaseConfig() {
     }
 
     setSaving(true);
+    setTestResult(null);
     try {
+      // Test connection first via edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Sessão expirada");
+        return;
+      }
+
+      const { data: testData, error: testError } = await supabase.functions.invoke("disparos-test-supabase", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { supabase_url: url.trim(), supabase_service_key: serviceKey.trim() },
+      });
+
+      if (testError || !testData?.success) {
+        setTestResult("error");
+        toast.error(testData?.error || "Falha na conexão com o Supabase externo. Verifique a URL e a chave.");
+        return;
+      }
+
+      // Connection OK — save credentials
       if (existingId) {
         const { error } = await supabase
           .from("disparos_supabase_config" as any)
@@ -66,10 +88,12 @@ export function DisparosSupabaseConfig() {
           } as any);
         if (error) throw error;
       }
-      toast.success("Configuração salva!");
+      setTestResult("success");
+      toast.success("Conexão validada e configuração salva com sucesso!");
       await loadConfig();
     } catch (error: any) {
       console.error(error);
+      setTestResult("error");
       toast.error("Erro ao salvar: " + error.message);
     } finally {
       setSaving(false);
@@ -133,8 +157,21 @@ export function DisparosSupabaseConfig() {
 
         <Button onClick={handleSave} disabled={saving} className="w-full">
           {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Salvar Configuração
+          {saving ? "Testando conexão..." : "Salvar Configuração"}
         </Button>
+
+        {testResult === "success" && (
+          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400 rounded-md p-3">
+            <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+            <span>Conexão validada com sucesso!</span>
+          </div>
+        )}
+        {testResult === "error" && (
+          <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-md p-3">
+            <XCircle className="h-4 w-4 flex-shrink-0" />
+            <span>Falha na conexão. Verifique a URL e a Service Role Key.</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
