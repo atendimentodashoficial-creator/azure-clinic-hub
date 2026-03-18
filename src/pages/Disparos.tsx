@@ -1243,29 +1243,31 @@ export default function Disparos() {
             </div>
 
             {/* Tabs inline */}
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full justify-start overflow-x-auto overflow-y-hidden scrollbar-hide">
-                <TabsTrigger value="conversas" className="gap-1.5 shrink-0">
-                  <MessageSquare className="h-4 w-4" />
-                  Conversas
-                </TabsTrigger>
-                <TabsTrigger value="campanhas" className="gap-1.5 shrink-0">
-                  <Send className="h-4 w-4" />
-                  Campanhas
-                </TabsTrigger>
-                <TabsTrigger value="templates" className="gap-1.5 shrink-0">
-                  <FileText className="h-4 w-4" />
-                  Templates
-                </TabsTrigger>
-                <TabsTrigger value="listas" className="gap-1.5 shrink-0">
-                  <ListFilter className="h-4 w-4" />
-                  Listas
-                </TabsTrigger>
-                <TabsTrigger value="agente-ia" className="gap-1.5 shrink-0">
-                  <Bot className="h-4 w-4" />
-                  Agente I.A.
-                </TabsTrigger>
-              </TabsList>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+              <div className="w-full sm:w-auto overflow-x-auto overflow-y-hidden touch-pan-x">
+                <TabsList className="w-max min-w-max justify-start">
+                  <TabsTrigger value="conversas" className="gap-1.5 shrink-0">
+                    <MessageSquare className="h-4 w-4" />
+                    Conversas
+                  </TabsTrigger>
+                  <TabsTrigger value="campanhas" className="gap-1.5 shrink-0">
+                    <Send className="h-4 w-4" />
+                    Campanhas
+                  </TabsTrigger>
+                  <TabsTrigger value="templates" className="gap-1.5 shrink-0">
+                    <FileText className="h-4 w-4" />
+                    Templates
+                  </TabsTrigger>
+                  <TabsTrigger value="listas" className="gap-1.5 shrink-0">
+                    <ListFilter className="h-4 w-4" />
+                    Listas
+                  </TabsTrigger>
+                  <TabsTrigger value="agente-ia" className="gap-1.5 shrink-0">
+                    <Bot className="h-4 w-4" />
+                    Agente I.A.
+                  </TabsTrigger>
+                </TabsList>
+              </div>
             </Tabs>
           </div>
         </div>
