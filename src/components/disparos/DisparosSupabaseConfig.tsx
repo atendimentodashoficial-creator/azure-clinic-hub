@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Database, Loader2, Save, Eye, EyeOff } from "lucide-react";
+import { Database, Loader2, Save, Eye, EyeOff, CheckCircle2, XCircle } from "lucide-react";
 
 export function DisparosSupabaseConfig() {
   const { user } = useAuth();
