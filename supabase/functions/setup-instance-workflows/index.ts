@@ -15,6 +15,47 @@ interface StepResult {
   error?: string;
 }
 
+const N8N_ALLOWED_NODE_KEYS = new Set([
+  "id",
+  "name",
+  "type",
+  "typeVersion",
+  "position",
+  "parameters",
+  "credentials",
+  "disabled",
+  "notes",
+  "notesInFlow",
+  "continueOnFail",
+  "alwaysOutputData",
+  "executeOnce",
+  "retryOnFail",
+  "maxTries",
+  "waitBetweenTries",
+  "onError",
+]);
+
+const sanitizeN8nNode = (node: any) => {
+  const sanitized: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(node || {})) {
+    if (N8N_ALLOWED_NODE_KEYS.has(key) && value !== undefined) {
+      sanitized[key] = value;
+    }
+  }
+
+  // Remove fields that commonly break create API validation
+  delete sanitized.webhookId;
+  delete sanitized.pinData;
+  delete sanitized.issues;
+
+  if (!sanitized.parameters || typeof sanitized.parameters !== "object") {
+    sanitized.parameters = {};
+  }
+
+  return sanitized;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
