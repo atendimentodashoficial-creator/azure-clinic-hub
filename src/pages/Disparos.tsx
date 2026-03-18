@@ -1837,11 +1837,9 @@ export default function Disparos() {
             <ListasImportadasManager />
           </div>
         </div>
-      ) : activeTab === "aquecimento" ? (
+      ) : activeTab === "agente-ia" ? (
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-0 sm:px-4 py-3">
-            <AquecimentoConfig />
-          </div>
+          <AgenteIATab />
         </div>
       ) : null}
 
