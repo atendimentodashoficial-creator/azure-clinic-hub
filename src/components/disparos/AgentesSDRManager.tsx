@@ -64,23 +64,9 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
 
     const filter = normalize(rawFilterTag);
     const tags = (wf.tags || []).map(normalize);
-    const name = normalize(wf.name || "");
 
-    // 1) Match by tags (flexible: includes both sides)
-    if (tags.some((tag) => tag.includes(filter) || filter.includes(tag))) {
-      return true;
-    }
-
-    // 2) Fallback by workflow name (for flows tagged by clinic/client only)
-    if (filter === "follow up") {
-      return name.includes("follow up") || name.includes("followup") || name.includes("follow");
-    }
-
-    if (filter === "sdr") {
-      return name.includes("sdr");
-    }
-
-    return name.includes(filter);
+    // Match strictly by tags only
+    return tags.some((tag) => tag.includes(filter) || filter.includes(tag));
   };
 
   const loadWorkflows = async () => {
