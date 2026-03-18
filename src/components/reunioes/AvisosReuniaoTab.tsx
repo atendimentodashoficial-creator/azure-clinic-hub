@@ -471,7 +471,19 @@ export function AvisosReuniaoTab() {
     }
   };
 
-  const formatPeriodo = (dias: number) => {
+  const formatPeriodo = (aviso: AvisoReuniao) => {
+    const unidade = aviso.unidade_tempo || 'dias';
+    if (unidade === 'minutos') {
+      const min = aviso.minutos_antes || 0;
+      if (min === 0) return 'No momento';
+      return `${min} min antes`;
+    }
+    if (unidade === 'horas') {
+      const hrs = aviso.horas_antes || 0;
+      if (hrs === 0) return 'No momento';
+      return `${hrs}h antes`;
+    }
+    const dias = aviso.dias_antes;
     if (dias === 0) return 'No dia';
     if (dias === 1) return '1 dia antes';
     return `${dias} dias antes`;
