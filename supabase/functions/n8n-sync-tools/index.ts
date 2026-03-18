@@ -139,8 +139,7 @@ Deno.serve(async (req) => {
       agentNode.parameters.options.systemMessage = `=${promptWithoutSuffix}${dynamicSuffix}`;
     }
 
-    // 5. Rebuild connections: link first tool to agent, chain others
-    // Remove old tool connections
+    // 5. Rebuild connections: link all tools to agent via ai_tool
     const newConnections = { ...workflow.connections };
 
     // Remove old contato_ connections
@@ -148,18 +147,27 @@ Deno.serve(async (req) => {
       delete newConnections[toolName];
     }
 
-    // Link first new tool to agent via ai_tool
-    if (newToolNodes.length > 0) {
-      newConnections[newToolNodes[0].name] = {
-        ai_tool: [
-          [{ node: AGENT_NODE_NAME, type: "ai_tool", index: 0 }],
-        ],
+    // Link every new tool to agent via ai_tool
+    for (const toolNode of newToolNodes) {
+      newConnections[toolNode.name] = {
+        ai_tool: [[{ node: AGENT_NODE_NAME, type: "ai_tool", index: 0 }]],
       };
     }
 
-    // 6. Build final workflow
-    workflow.nodes = [...nonToolNodes, ...newToolNodes];
-    workflow.connections = newConnections;
+    // 6. Build updated workflow data
+    const updatedNodes = [...nonToolNodes, ...newToolNodes];
+
+    // n8n PUT /workflows/{id} rejects unknown top-level properties.
+    // Send only the allowed/necessary fields.
+    const updatePayload = {
+      name: workflow.name,
+      nodes: updatedNodes,
+      connections: newConnections,
+      settings: {
+        executionOrder: workflow.settings?.executionOrder ?? "v1",
+        timezone: workflow.settings?.timezone ?? "America/Sao_Paulo",
+      },
+    };
 
     // 7. PUT updated workflow
     const putRes = await fetch(`${N8N_BASE_URL}/api/v1/workflows/${WORKFLOW_ID}`, {
@@ -168,7 +176,7 @@ Deno.serve(async (req) => {
         "X-N8N-API-KEY": N8N_API_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(workflow),
+      body: JSON.stringify(updatePayload),
     });
 
     if (!putRes.ok) {
