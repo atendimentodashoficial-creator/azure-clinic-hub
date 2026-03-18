@@ -1244,24 +1244,24 @@ export default function Disparos() {
 
             {/* Tabs inline */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList>
-                <TabsTrigger value="conversas" className="gap-1.5">
+              <TabsList className="w-full justify-start overflow-x-auto overflow-y-hidden scrollbar-hide">
+                <TabsTrigger value="conversas" className="gap-1.5 shrink-0">
                   <MessageSquare className="h-4 w-4" />
                   Conversas
                 </TabsTrigger>
-                <TabsTrigger value="campanhas" className="gap-1.5">
+                <TabsTrigger value="campanhas" className="gap-1.5 shrink-0">
                   <Send className="h-4 w-4" />
                   Campanhas
                 </TabsTrigger>
-                <TabsTrigger value="templates" className="gap-1.5">
+                <TabsTrigger value="templates" className="gap-1.5 shrink-0">
                   <FileText className="h-4 w-4" />
                   Templates
                 </TabsTrigger>
-                <TabsTrigger value="listas" className="gap-1.5">
+                <TabsTrigger value="listas" className="gap-1.5 shrink-0">
                   <ListFilter className="h-4 w-4" />
                   Listas
                 </TabsTrigger>
-                <TabsTrigger value="agente-ia" className="gap-1.5">
+                <TabsTrigger value="agente-ia" className="gap-1.5 shrink-0">
                   <Bot className="h-4 w-4" />
                   Agente I.A.
                 </TabsTrigger>
