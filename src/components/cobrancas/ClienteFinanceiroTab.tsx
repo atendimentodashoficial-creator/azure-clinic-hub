@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useCobrancas, Cobranca } from "@/hooks/useCobrancas";
 import { NovaCobrancaDialog } from "@/components/cobrancas/NovaCobrancaDialog";
+import { CobrancaPagamentosSection } from "@/components/cobrancas/CobrancaPagamentosSection";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
