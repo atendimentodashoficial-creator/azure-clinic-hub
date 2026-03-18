@@ -1369,7 +1369,6 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
                 Sincronizar mensagens
               </DropdownMenuItem>
 
-              <DropdownMenuSeparator />
 
               <DropdownMenuItem
                 onClick={() => setDeleteDialogOpen(true)}
