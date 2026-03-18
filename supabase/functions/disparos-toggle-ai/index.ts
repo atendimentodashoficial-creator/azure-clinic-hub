@@ -48,8 +48,75 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, instancia_id, phone_last8, field, new_value } = body;
+    const { action, instancia_id, phone_last8, field, new_value, contacts } = body;
 
+    // ── BULK GET ──
+    if (action === "bulk_get") {
+      if (!contacts || !Array.isArray(contacts) || contacts.length === 0) {
+        return new Response(JSON.stringify({ results: {} }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: extConfig } = await supabase
+        .from("disparos_supabase_config")
+        .select("supabase_url, supabase_service_key")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!extConfig) {
+        return new Response(JSON.stringify({ results: {} }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const extSupabase = createClient(extConfig.supabase_url, extConfig.supabase_service_key);
+
+      // Group contacts by instancia_id
+      const byInstancia: Record<string, string[]> = {};
+      for (const c of contacts) {
+        if (c.instancia_id && c.phone_last8) {
+          if (!byInstancia[c.instancia_id]) byInstancia[c.instancia_id] = [];
+          byInstancia[c.instancia_id].push(c.phone_last8);
+        }
+      }
+
+      const instanciaIds = Object.keys(byInstancia);
+      const { data: instancias } = await supabase
+        .from("disparos_instancias")
+        .select("id, tabela_supabase_externa")
+        .in("id", instanciaIds)
+        .eq("user_id", user.id);
+
+      const results: Record<string, { bot_ativo: boolean; follow_ativo: boolean }> = {};
+
+      for (const inst of (instancias || [])) {
+        if (!inst.tabela_supabase_externa) continue;
+        const phones = byInstancia[inst.id] || [];
+        if (phones.length === 0) continue;
+
+        const { data: rows } = await extSupabase
+          .from(inst.tabela_supabase_externa)
+          .select("*")
+          .limit(1000);
+
+        for (const ph of phones) {
+          const match = findMatchByPhone(rows || [], ph);
+          if (match) {
+            results[ph] = {
+              bot_ativo: match.BOT_ATIVO === true || match.BOT_ATIVO === "true",
+              follow_ativo: match.follow_ativo === true || match.follow_ativo === "true",
+            };
+          }
+        }
+      }
+
+      return new Response(JSON.stringify({ results }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── SINGLE ACTIONS (get / toggle) ──
     if (!instancia_id || !phone_last8) {
       return new Response(JSON.stringify({ error: "instancia_id e phone_last8 são obrigatórios" }), {
         status: 400,
@@ -87,7 +154,6 @@ serve(async (req) => {
     const extSupabase = createClient(extConfig.supabase_url, extConfig.supabase_service_key);
     const tableName = instancia.tabela_supabase_externa;
 
-    // Fetch rows
     const { data: rows, error: fetchError } = await extSupabase
       .from(tableName)
       .select("*")
@@ -106,35 +172,29 @@ serve(async (req) => {
     if (action === "get") {
       if (!match) {
         return new Response(JSON.stringify({ found: false }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
       return new Response(JSON.stringify({
         found: true,
         bot_ativo: match.BOT_ATIVO === true || match.BOT_ATIVO === "true",
         follow_ativo: match.follow_ativo === true || match.follow_ativo === "true",
         row_id: match.id,
       }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
 
     } else if (action === "toggle") {
       if (!match) {
         return new Response(JSON.stringify({ error: "Contato não encontrado na tabela externa" }), {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       const columnName = field || "BOT_ATIVO";
-      // Only allow known fields
       if (columnName !== "BOT_ATIVO" && columnName !== "follow_ativo") {
         return new Response(JSON.stringify({ error: "Campo inválido" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -149,18 +209,16 @@ serve(async (req) => {
       if (updateError) {
         console.error("Error updating external table:", updateError);
         return new Response(JSON.stringify({ error: "Erro ao atualizar tabela externa", details: updateError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       return new Response(JSON.stringify({ success: true, [columnName]: new_value }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ error: "Ação inválida. Use 'get' ou 'toggle'" }), {
+    return new Response(JSON.stringify({ error: "Ação inválida. Use 'get', 'bulk_get' ou 'toggle'" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -14,7 +14,8 @@ import {
   formatLastMessagePreview,
   truncateText,
 } from "@/utils/whatsapp";
-import { Plus, Settings, Trash2, GripVertical, X, Check, Pencil, Calendar, Phone, Filter, CheckSquare, Square, XCircle, ArrowRightCircle, FileText } from "lucide-react";
+import { Plus, Settings, Trash2, GripVertical, X, Check, Pencil, Calendar, Phone, Filter, CheckSquare, Square, XCircle, ArrowRightCircle, FileText, Bot, BotOff } from "lucide-react";
+import { getLast8Digits } from "@/utils/whatsapp";
 import {
   Dialog,
   DialogContent,
@@ -114,6 +115,7 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
   const [chatAgendamentos, setChatAgendamentos] = useState<Record<string, ChatAgendamento | null>>({});
   const [chatReunioes, setChatReunioes] = useState<Record<string, ChatReuniao | null>>({});
   const [instanciasMap, setInstanciasMap] = useState<Record<string, DisparosInstancia>>({});
+  const [aiStatusMap, setAiStatusMap] = useState<Record<string, { bot_ativo: boolean; follow_ativo: boolean }>>({});
   const [reuniaoDialogOpen, setReuniaoDialogOpen] = useState(false);
   const [selectedReuniao, setSelectedReuniao] = useState<ChatReuniao | null>(null);
   // Filter & Selection state
@@ -146,6 +148,7 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
     if (chats.length > 0) {
       loadChatAgendamentos();
       loadChatReunioes();
+      loadBulkAIStatus();
     }
   }, [chatIds]);
 
@@ -172,6 +175,34 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
       supabase.removeChannel(channel);
     };
   }, [chatIds]);
+
+  const loadBulkAIStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const contacts = chats
+        .filter(c => c.instancia_id && c.contact_number)
+        .map(c => ({
+          instancia_id: c.instancia_id,
+          phone_last8: getLast8Digits(c.contact_number),
+        }))
+        .filter(c => c.phone_last8);
+
+      if (contacts.length === 0) return;
+
+      const { data, error } = await supabase.functions.invoke("disparos-toggle-ai", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { action: "bulk_get", contacts },
+      });
+
+      if (!error && data?.results) {
+        setAiStatusMap(data.results);
+      }
+    } catch (e) {
+      console.error("Error loading bulk AI status:", e);
+    }
+  };
 
   const loadInstancias = async () => {
     try {
@@ -743,6 +774,31 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
     }
   };
 
+  const renderAIStatusBadges = (chat: any) => {
+    const phoneLast8 = getLast8Digits(chat.contact_number);
+    const status = aiStatusMap[phoneLast8];
+    if (!status) return null;
+    
+    const badges = [];
+    if (!status.bot_ativo) {
+      badges.push(
+        <Badge key="bot-off" variant="outline" className="text-[10px] px-1.5 py-0 h-4 gap-0.5 text-destructive border-destructive/30">
+          <BotOff className="h-2.5 w-2.5" />
+          I.A. off
+        </Badge>
+      );
+    }
+    if (!status.follow_ativo) {
+      badges.push(
+        <Badge key="follow-off" variant="outline" className="text-[10px] px-1.5 py-0 h-4 gap-0.5 text-muted-foreground border-muted-foreground/30">
+          Follow off
+        </Badge>
+      );
+    }
+    if (badges.length === 0) return null;
+    return <div className="flex gap-1 mt-1 flex-wrap">{badges}</div>;
+  };
+
   const renderAgendamentoBadge = (chatId: string) => {
     const agendamento = chatAgendamentos[chatId];
     if (!agendamento) return null;
@@ -1164,6 +1220,7 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
                             )}
                           </div>
                         </div>
+                        {renderAIStatusBadges(chat)}
                         {renderAgendamentoBadge(chat.id)}
                         {renderReuniaoBadge(chat.id)}
                       </div>
@@ -1280,6 +1337,7 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
                                 )}
                               </div>
                             </div>
+                            {renderAIStatusBadges(chat)}
                             {renderAgendamentoBadge(chat.id)}
                             {renderReuniaoBadge(chat.id)}
                           </div>
