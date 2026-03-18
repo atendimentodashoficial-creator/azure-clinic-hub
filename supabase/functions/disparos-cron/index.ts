@@ -14,10 +14,17 @@ Deno.serve(async (req) => {
   const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
-  // Validate cron secret
+  // Validate authentication: accept CRON_SECRET header, service role key, or anon key
   const cronHeader = req.headers.get("X-Cron-Secret") ?? "";
-  if (!CRON_SECRET || cronHeader !== CRON_SECRET) {
-    console.error("Invalid or missing cron secret");
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+
+  const isValidCronSecret = CRON_SECRET && cronHeader === CRON_SECRET;
+  const isValidServiceRole = SERVICE_ROLE_KEY && authHeader === `Bearer ${SERVICE_ROLE_KEY}`;
+  const isValidAnonKey = ANON_KEY && authHeader === `Bearer ${ANON_KEY}`;
+
+  if (!isValidCronSecret && !isValidServiceRole && !isValidAnonKey) {
+    console.error("Invalid or missing authentication");
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
