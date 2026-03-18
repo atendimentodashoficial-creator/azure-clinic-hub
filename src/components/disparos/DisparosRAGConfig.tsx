@@ -202,8 +202,8 @@ export function DisparosRAGConfig() {
                 className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30"
               >
                 <div className="flex-1 min-w-0">
-                  {doc.metadata?.title && (
-                    <p className="text-sm font-medium truncate">{doc.metadata.title}</p>
+                  {(doc as any).name && (
+                    <p className="text-sm font-medium truncate">{(doc as any).name}</p>
                   )}
                   <p className="text-xs text-muted-foreground line-clamp-3 mt-0.5">
                     {doc.content}
