@@ -442,14 +442,6 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // INCIDENT MITIGATION: short-circuit inbound webhook processing to relieve database pressure.
-  if (req.method === 'POST') {
-    return new Response(JSON.stringify({ success: true, skipped: true, reason: 'webhook_temporarily_disabled' }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
   // Initialize Supabase client
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
