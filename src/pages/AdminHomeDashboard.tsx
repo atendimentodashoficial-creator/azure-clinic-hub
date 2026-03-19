@@ -25,6 +25,7 @@ export default function AdminHomeDashboard() {
   const { ownerId } = useOwnerId();
   const navigate = useNavigate();
   const effectiveUserId = ownerId || user?.id;
+  const { periodFilter, setPeriodFilter, dateStart, setDateStart, dateEnd, setDateEnd } = usePeriodFilter("this_month");
 
   // Fetch tarefas + colunas
   const { data: tarefasData, isLoading: tarefasLoading } = useQuery({
