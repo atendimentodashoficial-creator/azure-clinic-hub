@@ -279,6 +279,83 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
     loadRespostas();
   }, [user?.id, campanhas, dateStart, dateEnd]);
 
+  // Load reuniões conversion count
+  useEffect(() => {
+    const loadReunioes = async () => {
+      if (!user?.id || campanhas.length === 0) {
+        setReunioesCount(0);
+        return;
+      }
+
+      const startOfPeriod = new Date(dateStart.getFullYear(), dateStart.getMonth(), dateStart.getDate(), 0, 0, 0, 0);
+      const endOfPeriod = new Date(dateEnd.getFullYear(), dateEnd.getMonth(), dateEnd.getDate(), 23, 59, 59, 999);
+
+      const campanhasPeriodo = campanhas.filter(c => {
+        const d = new Date(c.created_at);
+        return d >= startOfPeriod && d <= endOfPeriod;
+      });
+
+      if (campanhasPeriodo.length === 0) {
+        setReunioesCount(0);
+        return;
+      }
+
+      try {
+        const campanhaIds = campanhasPeriodo.map(c => c.id);
+        const sentNumbers = new Set<string>();
+
+        for (let i = 0; i < campanhaIds.length; i += 500) {
+          const batchIds = campanhaIds.slice(i, i + 500);
+          let from = 0;
+          while (true) {
+            const { data } = await supabase
+              .from("disparos_campanha_contatos")
+              .select("numero")
+              .in("campanha_id", batchIds)
+              .in("status", ["sent", "delivered"])
+              .range(from, from + 999);
+            if (!data || data.length === 0) break;
+            data.forEach((d: any) => {
+              const cleaned = d.numero?.replace(/\D/g, "");
+              if (cleaned) sentNumbers.add(cleaned.slice(-8));
+            });
+            if (data.length < 1000) break;
+            from += 1000;
+          }
+        }
+
+        if (sentNumbers.size === 0) {
+          setReunioesCount(0);
+          return;
+        }
+
+        const { data: reunioes } = await supabase
+          .from("reunioes_agendadas")
+          .select("participante_telefone")
+          .eq("user_id", user.id);
+
+        if (reunioes) {
+          const matched = new Set<string>();
+          for (const r of reunioes) {
+            if (!r.participante_telefone) continue;
+            const last8 = r.participante_telefone.replace(/\D/g, "").slice(-8);
+            if (sentNumbers.has(last8) && !matched.has(last8)) {
+              matched.add(last8);
+            }
+          }
+          setReunioesCount(matched.size);
+        } else {
+          setReunioesCount(0);
+        }
+      } catch (error) {
+        console.error("Error loading reunioes count:", error);
+        setReunioesCount(0);
+      }
+    };
+
+    loadReunioes();
+  }, [user?.id, campanhas, dateStart, dateEnd]);
+
   const handleStartCampanha = async (campanhaId: string) => {
     setActionLoading(campanhaId);
     try {
