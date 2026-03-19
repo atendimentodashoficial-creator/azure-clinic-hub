@@ -290,7 +290,7 @@ export default function AdminHomeDashboard() {
           </div>
 
           {/* Second Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <QuickStat
               icon={Building2}
               label="Clientes"
@@ -311,6 +311,20 @@ export default function AdminHomeDashboard() {
               value={stats.totalReunioesProximas}
               accent="text-primary"
               onClick={() => navigate("/admin/reunioes")}
+            />
+            <QuickStat
+              icon={DollarSign}
+              label="Faturamento Mensal"
+              value={stats.faturamentoMensal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              accent="text-emerald-600"
+              onClick={() => navigate("/admin/financeiro")}
+            />
+            <QuickStat
+              icon={Wallet}
+              label="Gastos Mensais"
+              value={stats.gastosMensal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              accent="text-amber-600"
+              onClick={() => navigate("/admin/despesas")}
             />
           </div>
 
