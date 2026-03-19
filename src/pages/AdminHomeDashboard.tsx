@@ -67,20 +67,23 @@ export default function AdminHomeDashboard() {
     staleTime: 120_000,
   });
 
-  // Fetch reuniões
+  // Fetch reuniões (mês inteiro + futuras para "próximas")
   const { data: reunioes = [], isLoading: reunioesLoading } = useQuery({
     queryKey: ["dashboard-reunioes", effectiveUserId],
     queryFn: async () => {
       if (!effectiveUserId) return [];
-      const today = new Date();
-      const sevenDaysLater = new Date(today);
-      sevenDaysLater.setDate(today.getDate() + 7);
+      const mesInicio = startOfMonth(new Date());
+      const mesFim = endOfMonth(new Date());
+      // Fetch reuniões do mês atual + próximos 7 dias (o que for maior)
+      const sevenDaysLater = new Date();
+      sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+      const limiteMax = mesFim > sevenDaysLater ? mesFim : sevenDaysLater;
       const { data } = await supabase
         .from("reunioes")
         .select("id, titulo, data_reuniao, status, tipo_reuniao_id, participantes")
         .eq("user_id", effectiveUserId)
-        .gte("data_reuniao", today.toISOString())
-        .lte("data_reuniao", sevenDaysLater.toISOString())
+        .gte("data_reuniao", mesInicio.toISOString())
+        .lte("data_reuniao", limiteMax.toISOString())
         .order("data_reuniao");
       return data || [];
     },
