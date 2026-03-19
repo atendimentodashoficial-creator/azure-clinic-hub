@@ -502,16 +502,16 @@ export function AvisosReuniaoTab() {
   const avisosAgendados = avisos.filter(a => !a.envio_imediato && a.tipo_gatilho !== 'reagendamento');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 py-4">
       {/* Header */}
       <div className="flex gap-2 flex-wrap">
-        <Button variant="outline" onClick={handleNewAvisoImediato}>
-          <Zap className="h-4 w-4 mr-2" />
-          Aviso Imediato
-        </Button>
         <Button onClick={handleNewAviso}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Lembrete
+        </Button>
+        <Button variant="outline" onClick={handleNewAvisoImediato}>
+          <Zap className="h-4 w-4 mr-2" />
+          Aviso Imediato
         </Button>
       </div>
 
