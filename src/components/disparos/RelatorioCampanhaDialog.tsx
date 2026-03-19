@@ -526,6 +526,30 @@ export function RelatorioCampanhaDialog({
             </>
           )}
 
+          {/* Taxa de Conversão em Reuniões */}
+          {!viewingSnapshot && reuniaoStats && (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Conversão em Reuniões</span>
+                  </div>
+                  <span className="text-lg font-bold text-blue-600">
+                    {reuniaoStats.taxaConversaoReuniao.toFixed(1)}%
+                  </span>
+                </div>
+                <Progress value={reuniaoStats.taxaConversaoReuniao} className="h-2" />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{reuniaoStats.totalReunioes} reuniões agendadas</span>
+                  <span>de {currentContatoStats?.enviados || 0} contatos enviados</span>
+                </div>
+              </div>
+
+              <Separator />
+            </>
+          )}
+
           {/* Detalhes da Campanha */}
           <div className="grid grid-cols-2 gap-4">
             <Card className="p-4">
