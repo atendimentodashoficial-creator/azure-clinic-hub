@@ -1205,9 +1205,55 @@ export const ChatWindow = ({ chat, onMessagesRead, onChatDeleted, onChatUpdated,
   }, [chat.id]);
 
 
-  // Realtime subscription for new and updated messages
+  // Realtime subscription + polling fallback for new and updated messages
   useEffect(() => {
     if (!isUuid(chat.id)) return;
+
+    let isActive = true;
+    let pollIntervalMs = 2000;
+    let pollTimer: number | null = null;
+    const MAX_POLL_INTERVAL_MS = 15000;
+
+    const getMessageTimeMs = (row: any) => new Date(row?.timestamp || row?.created_at || 0).getTime();
+    let lastSeenMessageMs = Math.max(
+      new Date(chat.last_message_time || 0).getTime(),
+      messages.reduce((max, msg) => Math.max(max, getMessageTimeMs(msg)), 0),
+    );
+
+    const schedulePoll = () => {
+      if (!isActive || pollTimer != null) return;
+      pollTimer = window.setTimeout(pollForMissedMessages, pollIntervalMs);
+    };
+
+    const pollForMissedMessages = async () => {
+      pollTimer = null;
+      if (!isActive) return;
+
+      try {
+        const { data: latestRows, error } = await supabase
+          .from('whatsapp_messages')
+          .select('timestamp')
+          .eq('chat_id', chat.id)
+          .order('timestamp', { ascending: false, nullsFirst: false })
+          .limit(1);
+
+        if (error) throw error;
+
+        const latestMs = getMessageTimeMs(latestRows?.[0]);
+        if (latestMs > lastSeenMessageMs) {
+          await loadMessages(false);
+          lastSeenMessageMs = latestMs;
+          pollIntervalMs = 2000;
+        } else {
+          pollIntervalMs = Math.min(Math.floor(pollIntervalMs * 1.5), MAX_POLL_INTERVAL_MS);
+        }
+      } catch (error) {
+        console.warn('[WP Messages Poll] error:', error);
+        pollIntervalMs = Math.min(Math.floor(pollIntervalMs * 1.5), MAX_POLL_INTERVAL_MS);
+      } finally {
+        if (isActive) schedulePoll();
+      }
+    };
 
     const channel = supabase
       .channel(`whatsapp-messages-${chat.id}`)
@@ -1239,6 +1285,8 @@ export const ChatWindow = ({ chat, onMessagesRead, onChatDeleted, onChatUpdated,
             fbclid: payload.new.fbclid,
             ad_thumbnail_url: payload.new.ad_thumbnail_url,
           };
+          lastSeenMessageMs = Math.max(lastSeenMessageMs, getMessageTimeMs(newMsg));
+          pollIntervalMs = 2000;
           // Evitar duplicatas: deduplica por id estável (sem prefixo "owner:")
           setMessages(prev => {
             const key = normalizeProviderMessageId(newMsg.message_id) || newMsg.message_id;
@@ -1269,6 +1317,8 @@ export const ChatWindow = ({ chat, onMessagesRead, onChatDeleted, onChatUpdated,
           filter: `chat_id=eq.${chat.id}`
         },
         (payload) => {
+          lastSeenMessageMs = Math.max(lastSeenMessageMs, getMessageTimeMs(payload.new));
+          pollIntervalMs = 2000;
           setMessages(prevMessages =>
             prevMessages.map(msg =>
               msg.message_id === payload.new.message_id
@@ -1291,9 +1341,18 @@ export const ChatWindow = ({ chat, onMessagesRead, onChatDeleted, onChatUpdated,
           );
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          pollIntervalMs = 1200;
+          schedulePoll();
+        }
+      });
+
+    schedulePoll();
 
     return () => {
+      isActive = false;
+      if (pollTimer != null) clearTimeout(pollTimer);
       supabase.removeChannel(channel);
     };
   }, [chat.id]);
