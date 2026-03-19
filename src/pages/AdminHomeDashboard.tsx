@@ -251,10 +251,19 @@ export default function AdminHomeDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <LayoutDashboard className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+        <div className="flex items-center gap-3">
+          <LayoutDashboard className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        </div>
+        <PeriodFilter
+          value={periodFilter}
+          onChange={setPeriodFilter}
+          dateStart={dateStart}
+          dateEnd={dateEnd}
+          onDateStartChange={setDateStart}
+          onDateEndChange={setDateEnd}
+        />
       </div>
 
       {isLoading ? (
