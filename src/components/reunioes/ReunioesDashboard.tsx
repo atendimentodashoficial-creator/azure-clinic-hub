@@ -100,7 +100,7 @@ export function ReunioesDashboard({ reunioes }: ReunioesDashboardProps) {
           <MetricCard icon={XCircle} label="No-show" value={stats.noShow} color="text-destructive" />
           <MetricCard icon={Users} label="Comparecimento" value={`${stats.taxaComparecimento}%`} color="text-green-600" />
           <MetricCard icon={XCircle} label="Taxa No-show" value={`${stats.taxaNoShow}%`} color="text-destructive" />
-          <MetricCard icon={Clock} label="Duração média" value={stats.duracaoMedia > 0 ? `${stats.duracaoMedia}min` : "—"} />
+          <MetricCard icon={TrendingUp} label="Conversão" value={`${stats.taxaConversao}%`} color="text-blue-600" />
         </div>
 
         {/* Charts */}
