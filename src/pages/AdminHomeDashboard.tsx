@@ -545,7 +545,7 @@ function QuickStat({
           <Icon className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
-          <p className={cn("text-2xl font-bold", accent)}>{value}</p>
+          <p className={cn("text-2xl font-bold tabular-nums", accent)}>{value}</p>
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </div>
