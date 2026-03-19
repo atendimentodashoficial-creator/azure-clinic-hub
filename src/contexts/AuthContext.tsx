@@ -204,31 +204,94 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [navigate, checkAndStoreAdminStatus]);
 
   const signIn = async (email: string, password: string) => {
-    const LOGIN_TIMEOUT_MS = 30000;
+    const SDK_TIMEOUT_MS = 10000;
+    const FALLBACK_TIMEOUT_MS = 20000;
+
+    const signInWithRestFallback = async () => {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), FALLBACK_TIMEOUT_MS);
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/token?grant_type=password`,
+          {
+            method: "POST",
+            headers: {
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+            signal: controller.signal,
+          }
+        );
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const msg =
+            payload?.error_description ||
+            payload?.msg ||
+            payload?.error ||
+            "LOGIN_FAILED";
+          throw new Error(msg);
+        }
+
+        const accessToken = payload?.access_token;
+        const refreshToken = payload?.refresh_token;
+
+        if (!accessToken || !refreshToken) {
+          throw new Error("LOGIN_NO_SESSION");
+        }
+
+        const { data: sessionData, error: setSessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (setSessionError) throw setSessionError;
+
+        return sessionData;
+      } catch (fallbackError: any) {
+        if (fallbackError?.name === "AbortError") {
+          throw new Error("LOGIN_TIMEOUT");
+        }
+        throw fallbackError;
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+    };
 
     try {
-      const signInResult = await Promise.race([
-        supabase.auth.signInWithPassword({
-          email,
-          password,
-        }),
+      const sdkResult = await Promise.race([
+        supabase.auth.signInWithPassword({ email, password }),
         new Promise<{ data: null; error: Error }>((resolve) =>
-          setTimeout(() => resolve({ data: null, error: new Error("LOGIN_TIMEOUT") }), LOGIN_TIMEOUT_MS)
+          setTimeout(() => resolve({ data: null, error: new Error("LOGIN_SDK_TIMEOUT") }), SDK_TIMEOUT_MS)
         ),
       ]);
 
-      const { data, error } = signInResult as
+      let sessionData: { session: Session | null; user: User | null } | null = null;
+
+      const { data, error } = sdkResult as
         | Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>
         | { data: null; error: Error };
 
-      if (error) throw error;
+      if (error?.message === "LOGIN_SDK_TIMEOUT") {
+        console.warn("[Auth] SDK login timeout, tentando fallback REST");
+        sessionData = await signInWithRestFallback();
+      } else {
+        if (error) throw error;
+        sessionData = {
+          session: data?.session ?? null,
+          user: data?.user ?? null,
+        };
+      }
 
-      if (!data?.user || !data?.session) {
+      if (!sessionData?.user || !sessionData?.session) {
         throw new Error("LOGIN_NO_SESSION");
       }
 
       // Verificar se o usuário está expirado
-      const expiryDate = (data.user.user_metadata as any)?.expiry_date;
+      const expiryDate = (sessionData.user.user_metadata as any)?.expiry_date;
       if (expiryDate && new Date(expiryDate) < new Date()) {
         await supabase.auth.signOut();
         toast.error("Sua conta expirou. Entre em contato com o suporte da Nokta para renovar o acesso.", {
@@ -238,12 +301,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Set session/user immediately so downstream components can render
-      setSession(data.session);
-      setUser(data.user);
+      setSession(sessionData.session);
+      setUser(sessionData.user);
 
       // Fire admin check in background - don't block login flow
-      if (data.session.access_token) {
-        checkAndStoreAdminStatus(data.session.access_token).catch((err) =>
+      if (sessionData.session.access_token) {
+        checkAndStoreAdminStatus(sessionData.session.access_token).catch((err) =>
           console.warn("[Auth] Admin status check failed (non-blocking):", err)
         );
       }
@@ -269,7 +332,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
 
-      if (error.message?.includes("Invalid login credentials")) {
+      if (
+        error.message?.includes("Invalid login credentials") ||
+        error.message?.includes("invalid_credentials") ||
+        error.message?.includes("invalid_grant")
+      ) {
         toast.error("Email ou senha incorretos");
       } else {
         toast.error(error.message || "Erro ao fazer login");
