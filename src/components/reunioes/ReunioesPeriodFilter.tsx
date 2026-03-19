@@ -63,49 +63,17 @@ export function ReunioesPeriodFilter({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {isMobile ? (
-        <Select value={value} onValueChange={(v) => onChange(v as ReuniaoFilterValue)}>
-          <SelectTrigger className="w-[200px] h-9 text-sm">
-            <Calendar className="h-3.5 w-3.5 mr-1.5" />
-            <SelectValue placeholder="Filtro de período" />
-          </SelectTrigger>
-          <SelectContent>
-            {filterOptions.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : (
-        <>
-          {filterOptions.filter(o => o.value !== "periodo").map((opt) => (
-            <Button
-              key={opt.value}
-              variant={value === opt.value ? "default" : "outline"}
-              size="sm"
-              className="h-8 text-xs px-3 rounded-md"
-              onClick={() => onChange(opt.value)}
-            >
-              {opt.label}
-              {value === opt.value && opt.value === "hoje" && count !== undefined && (
-                <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px] rounded-md">
-                  {count}
-                </Badge>
-              )}
-            </Button>
+      <Select value={value} onValueChange={(v) => onChange(v as ReuniaoFilterValue)}>
+        <SelectTrigger className="w-[200px] h-9 text-sm">
+          <Calendar className="h-3.5 w-3.5 mr-1.5" />
+          <SelectValue placeholder="Filtro de período" />
+        </SelectTrigger>
+        <SelectContent>
+          {filterOptions.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
           ))}
-
-          {/* Período button */}
-          <Button
-            variant={value === "periodo" ? "default" : "outline"}
-            size="sm"
-            className="h-8 text-xs px-3 rounded-md gap-1.5"
-            onClick={() => onChange("periodo")}
-          >
-            <Calendar className="h-3.5 w-3.5" />
-            Período
-          </Button>
-        </>
-      )}
+        </SelectContent>
+      </Select>
 
       {/* Count badge for non-hoje and non-periodo active filters */}
       {value !== "todas" && value !== "hoje" && value !== "periodo" && count !== undefined && (
