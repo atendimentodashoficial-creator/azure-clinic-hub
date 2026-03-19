@@ -316,7 +316,7 @@ export default function AdminHomeDashboard() {
               <QuickStat icon={DollarSign} label="Receita Paga" value={stats.receitaPaga.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-emerald-600" onClick={() => navigate("/admin/financeiro")} />
               <QuickStat icon={Receipt} label="Despesas Previstas" value={stats.despesasPrevistas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-amber-600" onClick={() => navigate("/admin/despesas")} />
               <QuickStat icon={Wallet} label="Despesas Pagas" value={stats.despesasPagas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-amber-600" onClick={() => navigate("/admin/despesas")} />
-              <QuickStat icon={TrendingUp} label="Margem de Lucro" value={`${stats.margemLucro.toFixed(1)}%`} accent={stats.margemLucro >= 0 ? "text-emerald-600" : "text-destructive"} subtitle="Receita vs Despesas" onClick={() => navigate("/admin/financeiro")} />
+              <QuickStat icon={TrendingUp} label="Margem de Lucro" value={`${stats.margemLucro.toFixed(1)}%`} accent={stats.margemLucro >= 0 ? "text-emerald-600" : "text-destructive"} subtitle={(stats.receitaPaga - stats.despesasPagas).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} onClick={() => navigate("/admin/financeiro")} />
             </div>
           </div>
 
