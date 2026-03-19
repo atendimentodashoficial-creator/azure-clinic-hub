@@ -360,7 +360,7 @@ export default function AdminHomeDashboard() {
             </h2>
              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                <QuickStat icon={CalendarDays} label="Reuniões Hoje" value={stats.reunioesHoje} accent="text-amber-500" onClick={() => navigate("/admin/reunioes")} />
-               <QuickStat icon={CalendarDays} label="Reuniões este Mês" value={stats.totalMes} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={CalendarDays} label="Reuniões no Período" value={stats.totalMes} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={CheckCircle2} label="Comparecimento" value={`${stats.taxaComparecimento}%`} accent="text-emerald-600" subtitle={`${stats.reunioesRealizadas} reuniões`} onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={AlertTriangle} label="No-show" value={`${stats.taxaNoShow}%`} accent="text-destructive" subtitle={`${stats.reunioesNoShow} reuniões`} onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={TrendingUp} label="Conversão" value={`${stats.taxaConversao}%`} accent="text-purple-600" subtitle={`${stats.reunioesRealizadas} de ${stats.totalMes}`} onClick={() => navigate("/admin/reunioes")} />
