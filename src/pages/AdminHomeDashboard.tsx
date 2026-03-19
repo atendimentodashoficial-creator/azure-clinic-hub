@@ -181,6 +181,28 @@ export default function AdminHomeDashboard() {
       .slice(0, 8);
 
 
+    // Faturamento mensal (cobrancas do mês)
+    const faturamentoMensal = cobrancasMes.reduce((sum, c) => sum + (c.valor || 0), 0);
+
+    // Gastos mensais (despesas pontuais do mês + recorrentes ativas)
+    const mesAtualDate = new Date();
+    const gastosMensal = despesasMes.reduce((sum, d) => {
+      if (d.recorrente) {
+        const inicio = d.data_inicio ? new Date(d.data_inicio) : null;
+        const fim = d.data_fim ? new Date(d.data_fim) : null;
+        if (inicio && inicio > mesAtualDate) return sum;
+        if (fim && fim < startOfMonth(mesAtualDate)) return sum;
+        return sum + (d.valor || 0);
+      } else {
+        if (!d.data_despesa) return sum;
+        const dd = new Date(d.data_despesa);
+        if (dd >= startOfMonth(mesAtualDate) && dd <= endOfMonth(mesAtualDate)) {
+          return sum + (d.valor || 0);
+        }
+        return sum;
+      }
+    }, 0);
+
     return {
       totalTarefas: tarefas.length,
       tarefasAtivas: ativas.length,
@@ -195,8 +217,10 @@ export default function AdminHomeDashboard() {
       totalClientes: clientes.length,
       campanhasAtivas: campanhas.filter(c => c.status === "em_andamento").length,
       campanhasPausadas: campanhas.filter(c => c.status === "pausada").length,
+      faturamentoMensal,
+      gastosMensal,
     };
-  }, [tarefasData, reunioes, membros, clientes, campanhas]);
+  }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasMes, despesasMes]);
 
   const isLoading = tarefasLoading || membrosLoading || clientesLoading || reunioesLoading;
 
