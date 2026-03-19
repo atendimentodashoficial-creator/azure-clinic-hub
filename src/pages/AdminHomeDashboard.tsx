@@ -325,6 +325,20 @@ export default function AdminHomeDashboard() {
         </div>
       ) : (
         <>
+          {/* Operacional */}
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Video className="h-4 w-4" /> Operacional
+            </h2>
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+               <QuickStat icon={CalendarDays} label="Reuniões Hoje" value={stats.reunioesHoje} accent="text-amber-500" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={CalendarDays} label="Reuniões no Período" value={stats.totalMes} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={CheckCircle2} label="Comparecimentos" value={`${stats.taxaComparecimento}%`} accent="text-emerald-600" subtitle={`${stats.reunioesRealizadas} reuniões`} onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={AlertTriangle} label="No-shows" value={`${stats.taxaNoShow}%`} accent="text-destructive" subtitle={`${stats.reunioesNoShow} reuniões`} onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={TrendingUp} label="Conversões" value={`${stats.taxaConversao}%`} accent="text-purple-600" subtitle={`${stats.reunioesRealizadas} de ${stats.totalMes}`} onClick={() => navigate("/admin/reunioes")} />
+             </div>
+          </div>
+
           {/* Tarefas */}
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
@@ -351,20 +365,6 @@ export default function AdminHomeDashboard() {
               <QuickStat icon={Wallet} label="Despesas Pagas" value={stats.despesasPagas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-amber-600" onClick={() => navigate("/admin/despesas")} />
               <QuickStat icon={TrendingUp} label="Margem de Lucro" value={`${stats.margemLucro.toFixed(1)}%`} accent={stats.margemLucro >= 0 ? "text-emerald-600" : "text-destructive"} subtitle={(stats.receitaPaga - stats.despesasPagas).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} onClick={() => navigate("/admin/financeiro")} />
             </div>
-          </div>
-
-          {/* Operacional */}
-          <div className="space-y-2">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Video className="h-4 w-4" /> Operacional
-            </h2>
-             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-               <QuickStat icon={CalendarDays} label="Reuniões Hoje" value={stats.reunioesHoje} accent="text-amber-500" onClick={() => navigate("/admin/reunioes")} />
-               <QuickStat icon={CalendarDays} label="Reuniões no Período" value={stats.totalMes} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
-               <QuickStat icon={CheckCircle2} label="Comparecimentos" value={`${stats.taxaComparecimento}%`} accent="text-emerald-600" subtitle={`${stats.reunioesRealizadas} reuniões`} onClick={() => navigate("/admin/reunioes")} />
-               <QuickStat icon={AlertTriangle} label="No-shows" value={`${stats.taxaNoShow}%`} accent="text-destructive" subtitle={`${stats.reunioesNoShow} reuniões`} onClick={() => navigate("/admin/reunioes")} />
-               <QuickStat icon={TrendingUp} label="Conversões" value={`${stats.taxaConversao}%`} accent="text-purple-600" subtitle={`${stats.reunioesRealizadas} de ${stats.totalMes}`} onClick={() => navigate("/admin/reunioes")} />
-             </div>
           </div>
 
           {/* Main Content Grid */}
