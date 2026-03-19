@@ -30,9 +30,27 @@ function isCooldownActive(lastSentAt: string | null, cooldownHours: number): boo
   return (now - lastSent) < cooldownMs;
 }
 
+const SUPABASE_REQUEST_TIMEOUT_MS = 8000;
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = SUPABASE_REQUEST_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error: any) {
+    if (error?.name === 'AbortError') {
+      throw new Error(`REQUEST_TIMEOUT_${timeoutMs}MS`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function getExchangeRate(): Promise<number> {
   try {
-    const response = await fetch('https://open.er-api.com/v6/latest/USD');
+    const response = await fetchWithTimeout('https://open.er-api.com/v6/latest/USD', {}, 5000);
     if (response.ok) {
       const data = await response.json();
       if (data?.rates?.BRL) {
