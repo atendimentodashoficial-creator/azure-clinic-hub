@@ -101,6 +101,7 @@ export function RelatorioCampanhaDialog({
   const [campanha, setCampanha] = useState<CampanhaData | null>(null);
   const [contatoStats, setContatoStats] = useState<ContatoStats | null>(null);
   const [respostaStats, setRespostaStats] = useState<RespostaStats | null>(null);
+  const [reuniaoStats, setReuniaoStats] = useState<ReuniaoStats | null>(null);
   const [blocosCount, setBlocosCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [snapshots, setSnapshots] = useState<SnapshotData[]>([]);
