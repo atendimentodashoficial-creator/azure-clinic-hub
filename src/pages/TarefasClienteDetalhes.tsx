@@ -86,7 +86,6 @@ export default function TarefasClienteDetalhes() {
     },
     enabled: !!id,
   });
-  });
 
   const colunasMap = useMemo(() => {
     const map: Record<string, TarefaColuna> = {};
