@@ -11,7 +11,8 @@ import {
   Percent,
   Send,
   History,
-  ChevronDown
+  ChevronDown,
+  Video
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
