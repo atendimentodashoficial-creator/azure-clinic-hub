@@ -781,14 +781,7 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatsCard
-          title="Campanhas"
-          value={dashStats.totalCampanhas}
-          change="No período"
-          changeType="neutral"
-          icon={Megaphone}
-        />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatsCard
           title="Enviados"
           value={dashStats.totalEnviados.toLocaleString("pt-BR")}
