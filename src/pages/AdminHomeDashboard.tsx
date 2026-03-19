@@ -246,13 +246,6 @@ export default function AdminHomeDashboard() {
               onClick={() => navigate("/admin/equipe")}
             />
             <QuickStat
-              icon={Send}
-              label="Campanhas Ativas"
-              value={stats.campanhasAtivas}
-              accent={stats.campanhasAtivas > 0 ? "text-green-600" : "text-muted-foreground"}
-              onClick={() => navigate("/admin/disparos")}
-            />
-            <QuickStat
               icon={CalendarDays}
               label="Reuniões (7 dias)"
               value={stats.totalReunioesProximas}
