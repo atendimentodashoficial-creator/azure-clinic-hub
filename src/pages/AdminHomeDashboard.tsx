@@ -562,6 +562,7 @@ export default function AdminHomeDashboard() {
                     <CardTitle className="text-base font-semibold flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
                       Clientes
+                      <Badge variant="secondary">{clientes.filter(c => c.tipo === "interno").length}</Badge>
                     </CardTitle>
                     <button
                       className="text-xs text-primary hover:underline flex items-center gap-1"
