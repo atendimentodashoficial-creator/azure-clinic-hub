@@ -70,6 +70,23 @@ export default function TarefasClienteDetalhes() {
     enabled: tarefaIds.length > 0,
   });
 
+  const { data: proximaCobranca } = useQuery({
+    queryKey: ["cliente-proxima-cobranca", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cobrancas")
+        .select("data_vencimento, status")
+        .eq("cliente_id", id!)
+        .eq("status", "pendente")
+        .order("data_vencimento", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
   const colunasMap = useMemo(() => {
     const map: Record<string, TarefaColuna> = {};
     colunas.forEach(c => { map[c.id] = c; });
@@ -276,10 +293,10 @@ export default function TarefasClienteDetalhes() {
                     <span>CNPJ: {cliente.cnpj}</span>
                   </div>
                 )}
-                {cliente.created_at && (
+                {proximaCobranca?.data_vencimento && (
                   <div className="flex items-center gap-3 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span>Cadastrado em {new Date(cliente.created_at).toLocaleDateString("pt-BR")}</span>
+                    <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span>Próximo pagamento: {new Date(proximaCobranca.data_vencimento + "T00:00:00").toLocaleDateString("pt-BR")}</span>
                   </div>
                 )}
               </div>
