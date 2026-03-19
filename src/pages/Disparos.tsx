@@ -1813,7 +1813,7 @@ export default function Disparos() {
         </>
       ) : activeTab === "campanhas" ? (
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-shrink-0 px-2 sm:px-4 py-3">
+          <div className="flex-shrink-0 px-0 sm:px-4 py-3">
             <div className="flex items-center justify-start gap-2">
               <Button size="sm" onClick={() => setNovaCampanhaOpen(true)} className="gap-1">
                 <Plus className="h-4 w-4" />
