@@ -27,7 +27,7 @@ interface TemplateCampo {
   ativo: boolean;
 }
 
-export function TemplateCamposDialog() {
+export function TemplateCamposDialog({ iconOnly = false }: { iconOnly?: boolean }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -130,9 +130,9 @@ export function TemplateCamposDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2" size={iconOnly ? "icon" : "default"}>
           <Settings2 className="w-4 h-4" />
-          Configurar Template
+          {!iconOnly && "Configurar Template"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, Users, Plus } from "lucide-react";
 import { ReunioesPeriodFilter, useReunioesPeriodFilter } from "@/components/reunioes/ReunioesPeriodFilter";
 import { formatPhoneDisplay, getLast8Digits } from "@/utils/phoneFormat";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { navigateToChat } from "@/utils/chatRouting";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +67,7 @@ export default function Reunioes() {
   const queryClient = useQueryClient();
   const { membros } = useTarefasMembros();
   const [selectedMemberId, setSelectedMemberId] = useState<string>("meus");
+  const isMobile = useIsMobile();
   const [syncing, setSyncing] = useState(false);
   const periodFilter = useReunioesPeriodFilter();
   const [selectedReuniao, setSelectedReuniao] = useState<Reuniao | null>(null);
@@ -384,20 +386,21 @@ export default function Reunioes() {
 
           {/* Header controls for reunioes tab */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button onClick={() => setNovaReuniaoOpen(true)} className="gap-2">
+            <div className="flex items-center gap-2">
+              <Button onClick={() => setNovaReuniaoOpen(true)} className="gap-2" size={isMobile ? "icon" : "default"}>
                 <Plus className="w-4 h-4" />
-                Nova Reunião
+                {!isMobile && "Nova Reunião"}
               </Button>
-              <TemplateCamposDialog />
+              <TemplateCamposDialog iconOnly={isMobile} />
               <Button 
                 onClick={handleSync} 
                 disabled={syncing || !hasGoogleCalendar}
                 variant="outline"
                 className="gap-2"
+                size={isMobile ? "icon" : "default"}
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-                Sincronizar Transcrições
+                {!isMobile && "Sincronizar Transcrições"}
               </Button>
             </div>
 
