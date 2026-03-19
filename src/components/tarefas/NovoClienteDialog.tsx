@@ -73,7 +73,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
     setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("55"); setEmpresa("");
     setCnpj(""); setDocTipo("cnpj"); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
     setObservacoes(""); setGrupoWhatsapp(""); setTipo(defaultTipo || "interno"); setFormTab("info"); setFotoPerfilUrl("");
-    setGestorId("");
+    setGestorId(""); setTemIa(false);
   };
 
   // Pre-fill when opened externally with initialData
