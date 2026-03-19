@@ -809,6 +809,14 @@ export default function Reunioes() {
         open={novaReuniaoOpen}
         onOpenChange={setNovaReuniaoOpen}
       />
+      {/* Dialog de histórico do cliente */}
+      <HistoricoClienteDialog
+        open={!!historicoCliente}
+        onOpenChange={(open) => !open && setHistoricoCliente(null)}
+        clienteNome={historicoCliente?.nome || ""}
+        clienteTelefone={historicoCliente?.telefone || null}
+        todasReunioes={allReunioes || []}
+      />
     </div>
   );
 }
