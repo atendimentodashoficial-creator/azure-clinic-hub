@@ -299,9 +299,9 @@ export default function AdminHomeDashboard() {
               <ListChecks className="h-4 w-4" /> Tarefas
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              <QuickStat icon={ListChecks} label="Ativas" value={stats.tarefasAtivas} accent="text-primary" onClick={() => navigate("/admin/tarefas")} />
               <QuickStat icon={CalendarDays} label="Para Hoje" value={stats.paraHoje} accent={stats.paraHoje > 0 ? "text-primary" : "text-muted-foreground"} onClick={() => navigate("/admin/tarefas")} />
               <QuickStat icon={AlertTriangle} label="Atrasadas" value={stats.tarefasAtrasadas} accent={stats.tarefasAtrasadas > 0 ? "text-destructive" : "text-muted-foreground"} onClick={() => navigate("/admin/tarefas")} />
-              <QuickStat icon={TrendingUp} label="Urgentes" value={stats.tarefasUrgentes} accent={stats.tarefasUrgentes > 0 ? "text-amber-600" : "text-muted-foreground"} onClick={() => navigate("/admin/tarefas")} />
               <QuickStat icon={CheckCircle2} label="Concluídas" value={stats.tarefasConcluidas} accent="text-emerald-600" onClick={() => navigate("/admin/tarefas")} />
               <QuickStat icon={Target} label="Total" value={stats.totalTarefas} accent="text-muted-foreground" onClick={() => navigate("/admin/tarefas")} />
             </div>
