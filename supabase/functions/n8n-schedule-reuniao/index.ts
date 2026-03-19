@@ -15,6 +15,9 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    const body = await req.json();
+    console.log("[n8n-schedule-reuniao] Received payload:", JSON.stringify(body));
+
     const {
       tipo_reuniao_id,
       membro_id,
@@ -24,19 +27,21 @@ Deno.serve(async (req) => {
       cliente_telefone,
       titulo,
       cargo_filtro,
-    } = await req.json();
+    } = body;
 
     // Default: only consider "Closer" members
     const cargoFilter = cargo_filtro || "Closer";
 
     // Validações
     if (!tipo_reuniao_id && !membro_id) {
+      console.log("[n8n-schedule-reuniao] FAIL: missing tipo_reuniao_id and membro_id");
       return new Response(JSON.stringify({ error: "tipo_reuniao_id ou membro_id é obrigatório" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (!data_hora) {
+      console.log("[n8n-schedule-reuniao] FAIL: missing data_hora");
       return new Response(JSON.stringify({ error: "data_hora é obrigatório (ISO 8601 ou YYYY-MM-DDTHH:mm)" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -47,6 +52,7 @@ Deno.serve(async (req) => {
     const agora = new Date();
     const dataHoraSolicitada = new Date(data_hora);
     if (dataHoraSolicitada.getTime() <= agora.getTime()) {
+      console.log("[n8n-schedule-reuniao] FAIL: past date. Requested:", data_hora, "Now:", agora.toISOString());
       return new Response(JSON.stringify({ error: "Não é possível agendar em horários que já passaram" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
