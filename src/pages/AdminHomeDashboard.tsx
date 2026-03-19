@@ -69,7 +69,7 @@ export default function AdminHomeDashboard() {
 
   // Fetch reuniões based on period filter
   const { data: reunioes = [], isLoading: reunioesLoading } = useQuery({
-    queryKey: ["dashboard-reunioes", effectiveUserId, periodoKey],
+    queryKey: ["dashboard-reunioes", effectiveUserId, dateStart.toISOString(), dateEnd.toISOString()],
     queryFn: async () => {
       if (!effectiveUserId) return [];
       const todayStart = startOfDay(new Date());
