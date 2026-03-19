@@ -65,6 +65,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
   const [tipo, setTipo] = useState(clienteEditando?.tipo || defaultTipo || "interno");
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(clienteEditando?.foto_perfil_url || "");
   const [gestorId, setGestorId] = useState(clienteEditando?.gestor_id || "");
+  const [temIa, setTemIa] = useState(clienteEditando?.tem_ia || false);
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const fotoInputRef = useRef<HTMLInputElement>(null);
 
