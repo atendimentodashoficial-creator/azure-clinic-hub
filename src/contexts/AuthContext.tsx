@@ -88,34 +88,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let isMounted = true;
+    let loadingWatchdog: number | null = window.setTimeout(() => {
+      if (!isMounted) return;
+      console.warn("[Auth] Loading timeout reached, releasing UI fallback");
+      setLoading(false);
+    }, 6500);
+
+    const finishLoading = () => {
+      if (loadingWatchdog !== null) {
+        window.clearTimeout(loadingWatchdog);
+        loadingWatchdog = null;
+      }
+      if (isMounted) setLoading(false);
+    };
 
     // Listener for ONGOING auth changes - never call supabase synchronously here
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!isMounted) return;
-        console.log('Auth state changed:', event, 'Has session:', !!session);
-        
-        if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed successfully');
+        console.log("Auth state changed:", event, "Has session:", !!session);
+
+        if (event === "TOKEN_REFRESHED") {
+          console.log("Token refreshed successfully");
         }
-        
-        if (event === 'SIGNED_OUT') {
+
+        if (event === "SIGNED_OUT") {
           setSession(null);
           setUser(null);
-          setLoading(false);
-          const adminToken = localStorage.getItem('admin_token');
+          finishLoading();
+          const adminToken = localStorage.getItem("admin_token");
           if (!adminToken) {
-            localStorage.removeItem('admin_token');
-            localStorage.removeItem('admin_users_list');
+            localStorage.removeItem("admin_token");
+            localStorage.removeItem("admin_users_list");
           }
           setAdminUsers([]);
           setIsAdmin(false);
           return;
         }
-        
+
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
+        finishLoading();
 
         // Dispatch async work AFTER callback completes to avoid lock deadlock
         if (session?.user) {
@@ -128,8 +141,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }, 0);
             return;
           }
-          
-          if (event === 'SIGNED_IN' && session.access_token) {
+
+          if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session.access_token) {
             setTimeout(() => {
               checkAndStoreAdminStatus(session.access_token);
             }, 0);
@@ -141,7 +154,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // INITIAL load
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const sessionResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<{ data: { session: Session | null } }>((resolve) =>
+            setTimeout(() => resolve({ data: { session: null } }), 5000)
+          ),
+        ]);
+
+        const session = sessionResult?.data?.session ?? null;
         if (!isMounted) return;
 
         if (session?.user) {
@@ -152,23 +172,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             navigate("/auth");
             return;
           }
-          
+
           // Fire admin check in background - don't block loading
           if (session.access_token) {
             checkAndStoreAdminStatus(session.access_token);
           }
         }
-        
+
         setSession(session);
         setUser(session?.user ?? null);
       } catch (err: any) {
-        if (err?.name === 'AbortError' || err?.message?.includes('Lock broken')) {
-          console.warn('[Auth] Navigator Lock conflict (safe to ignore):', err.message);
+        if (err?.name === "AbortError" || err?.message?.includes("Lock broken")) {
+          console.warn("[Auth] Navigator Lock conflict (safe to ignore):", err.message);
         } else {
-          console.error('[Auth] Error initializing auth:', err);
+          console.error("[Auth] Error initializing auth:", err);
         }
       } finally {
-        if (isMounted) setLoading(false);
+        finishLoading();
       }
     };
 
@@ -176,6 +196,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       isMounted = false;
+      if (loadingWatchdog !== null) {
+        window.clearTimeout(loadingWatchdog);
+      }
       subscription.unsubscribe();
     };
   }, [navigate, checkAndStoreAdminStatus]);
