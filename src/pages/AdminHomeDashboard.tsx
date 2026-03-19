@@ -335,7 +335,7 @@ export default function AdminHomeDashboard() {
                <QuickStat icon={CalendarDays} label="Reuniões no Período" value={stats.totalMes} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={CheckCircle2} label="Comparecimentos" value={`${stats.taxaComparecimento}%`} accent="text-emerald-600" subtitle={`${stats.reunioesRealizadas} reuniões`} onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={AlertTriangle} label="No-shows" value={`${stats.taxaNoShow}%`} accent="text-destructive" subtitle={`${stats.reunioesNoShow} reuniões`} onClick={() => navigate("/admin/reunioes")} />
-               <QuickStat icon={TrendingUp} label="Conversões" value={`${stats.taxaConversao}%`} accent="text-purple-600" subtitle={`${stats.reunioesRealizadas} de ${stats.totalMes}`} onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={TrendingUp} label="Conversões" value={`${stats.taxaConversao}%`} accent="text-blue-600" subtitle={`${stats.reunioesRealizadas} de ${stats.totalMes}`} onClick={() => navigate("/admin/reunioes")} />
              </div>
           </div>
 
