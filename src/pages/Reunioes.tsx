@@ -521,7 +521,10 @@ export default function Reunioes() {
                                 </div>
                               </div>
                               {/* Nome do Cliente como Título */}
-                              <h3 className="font-semibold text-lg text-foreground">
+                              <h3
+                                className="font-semibold text-lg text-foreground cursor-pointer hover:text-primary transition-colors"
+                                onClick={() => setHistoricoCliente({ nome: getClienteNome(reuniao), telefone: reuniao.cliente_telefone })}
+                              >
                                 {getClienteNome(reuniao)}
                               </h3>
                             </div>
