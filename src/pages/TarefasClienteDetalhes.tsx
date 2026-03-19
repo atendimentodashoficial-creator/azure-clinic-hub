@@ -68,6 +68,22 @@ export default function TarefasClienteDetalhes() {
       return data || [];
     },
     enabled: tarefaIds.length > 0,
+
+  const { data: proximaCobranca } = useQuery({
+    queryKey: ["cliente-proxima-cobranca", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cobrancas")
+        .select("data_vencimento, status")
+        .eq("cliente_id", id!)
+        .eq("status", "pendente")
+        .order("data_vencimento", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
   });
 
   const colunasMap = useMemo(() => {
