@@ -530,7 +530,7 @@ export default function AdminHomeDashboard() {
                 {membros.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {membros.slice(0, 6).map(m => (
-                      <div key={m.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                      <div key={m.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => navigate(`/admin/equipe/${m.id}`)}>
                         {m.foto_url ? (
                           <img src={m.foto_url} alt="" className="h-8 w-8 rounded-full object-cover" />
                         ) : (
