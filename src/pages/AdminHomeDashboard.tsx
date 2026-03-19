@@ -101,6 +101,42 @@ export default function AdminHomeDashboard() {
     staleTime: 60_000,
   });
 
+  // Fetch cobrancas do mês atual (faturamento)
+  const mesAtual = format(new Date(), "yyyy-MM");
+  const inicioMes = startOfMonth(new Date()).toISOString();
+  const fimMes = endOfMonth(new Date()).toISOString();
+
+  const { data: cobrancasMes = [] } = useQuery({
+    queryKey: ["dashboard-cobrancas-mes", effectiveUserId, mesAtual],
+    queryFn: async () => {
+      if (!effectiveUserId) return [];
+      const { data } = await supabase
+        .from("cobrancas")
+        .select("id, valor, status, data_vencimento")
+        .eq("user_id", effectiveUserId)
+        .gte("data_vencimento", inicioMes)
+        .lte("data_vencimento", fimMes);
+      return data || [];
+    },
+    enabled: !!effectiveUserId,
+    staleTime: 60_000,
+  });
+
+  // Fetch despesas do mês atual (gastos)
+  const { data: despesasMes = [] } = useQuery({
+    queryKey: ["dashboard-despesas-mes", effectiveUserId, mesAtual],
+    queryFn: async () => {
+      if (!effectiveUserId) return [];
+      const { data } = await supabase
+        .from("despesas")
+        .select("id, valor, data_despesa, recorrente, data_inicio, data_fim")
+        .eq("user_id", effectiveUserId);
+      return data || [];
+    },
+    enabled: !!effectiveUserId,
+    staleTime: 60_000,
+  });
+
   // Computed stats
   const stats = useMemo(() => {
     const tarefas = tarefasData?.tarefas || [];
