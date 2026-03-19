@@ -672,9 +672,9 @@ Deno.serve(async (req) => {
     );
 
     // Determine if we should update WhatsApp or Disparos tables
-    // If there's no instance param => WhatsApp (legacy behavior)
-    // If there IS an instance param => it's WhatsApp if it's the main instance, otherwise Disparos
-    const effectiveHasInstanceParam = hasInstanceParam || Boolean(payloadInstanceName);
+    // If there's no instance info => WhatsApp (legacy behavior)
+    // If we resolved an instance (URL/payload/token) => treat as instance-scoped flow
+    const effectiveHasInstanceParam = hasInstanceParam || Boolean(payloadInstanceName) || Boolean(instanciaId);
 
     // Check if this is a deleted message event
     if (payload.type === 'DeletedMessage' && payload.event?.Type === 'Deleted') {
