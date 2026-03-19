@@ -56,6 +56,7 @@ interface Reuniao {
   cliente_telefone: string | null;
   profissional_id: string | null;
   tipo_reuniao_id: string | null;
+  converteu: boolean;
   profissionais?: { nome: string } | null;
   leads?: { nome: string; telefone: string } | null;
   tipos_reuniao?: { nome: string } | null;
