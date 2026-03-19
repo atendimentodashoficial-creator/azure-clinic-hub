@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
         .eq("id", membro_id)
         .single();
       if (!member) {
+        console.log("[n8n-schedule-reuniao] FAIL: membro not found:", membro_id);
         return new Response(JSON.stringify({ error: "Membro não encontrado" }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
