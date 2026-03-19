@@ -390,12 +390,35 @@ export function NovaReuniaoDialog({ open, onOpenChange, initialClienteNome, init
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Data *</Label>
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={e => { setSelectedDate(e.target.value); setSelectedTime(""); setSelectedMemberId(""); }}
-                min={new Date().toISOString().split("T")[0]}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-10 justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                    {selectedDate
+                      ? format(new Date(`${selectedDate}T00:00:00`), "dd 'de' MMM 'de' yyyy", { locale: ptBR })
+                      : "Selecionar data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate ? new Date(`${selectedDate}T00:00:00`) : undefined}
+                    onSelect={(date) => {
+                      if (!date) return;
+                      setSelectedDate(format(date, "yyyy-MM-dd"));
+                      setSelectedTime("");
+                      setSelectedMemberId("");
+                    }}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    locale={ptBR}
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>Duração (min)</Label>
