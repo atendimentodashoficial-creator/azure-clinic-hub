@@ -65,7 +65,8 @@ export function ReunioesPeriodFilter({
     <div className="flex flex-wrap items-center gap-1.5">
       {isMobile ? (
         <Select value={value} onValueChange={(v) => onChange(v as ReuniaoFilterValue)}>
-          <SelectTrigger className="w-[180px] h-9 text-sm">
+          <SelectTrigger className="w-[200px] h-9 text-sm">
+            <Calendar className="h-3.5 w-3.5 mr-1.5" />
             <SelectValue placeholder="Filtro de período" />
           </SelectTrigger>
           <SelectContent>
