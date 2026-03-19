@@ -103,30 +103,28 @@ export default function AdminHomeDashboard() {
     staleTime: 60_000,
   });
 
-  // Fetch cobrancas do mês atual (faturamento)
-  const mesAtual = format(new Date(), "yyyy-MM");
-  const inicioMes = startOfMonth(new Date()).toISOString();
-  const fimMes = endOfMonth(new Date()).toISOString();
+  // Fetch cobrancas do período (faturamento)
+  const periodoKey = `${dateStart.toISOString()}-${dateEnd.toISOString()}`;
 
-  const { data: cobrancasMes = [] } = useQuery({
-    queryKey: ["dashboard-cobrancas-mes", effectiveUserId, mesAtual],
+  const { data: cobrancasPeriodo = [] } = useQuery({
+    queryKey: ["dashboard-cobrancas", effectiveUserId, periodoKey],
     queryFn: async () => {
       if (!effectiveUserId) return [];
       const { data } = await supabase
         .from("cobrancas")
         .select("id, valor, status, data_vencimento")
         .eq("user_id", effectiveUserId)
-        .gte("data_vencimento", inicioMes)
-        .lte("data_vencimento", fimMes);
+        .gte("data_vencimento", dateStart.toISOString())
+        .lte("data_vencimento", dateEnd.toISOString());
       return data || [];
     },
     enabled: !!effectiveUserId,
     staleTime: 60_000,
   });
 
-  // Fetch despesas do mês atual (gastos)
-  const { data: despesasMes = [] } = useQuery({
-    queryKey: ["dashboard-despesas-mes", effectiveUserId, mesAtual],
+  // Fetch despesas (gastos) - fetch all, filter in memo
+  const { data: todasDespesas = [] } = useQuery({
+    queryKey: ["dashboard-despesas", effectiveUserId],
     queryFn: async () => {
       if (!effectiveUserId) return [];
       const { data } = await supabase
