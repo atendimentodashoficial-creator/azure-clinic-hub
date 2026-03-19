@@ -12,6 +12,7 @@ interface Reuniao {
   data_reuniao: string;
   duracao_minutos: number | null;
   tipo_reuniao_id: string | null;
+  converteu?: boolean;
   tipos_reuniao?: { nome: string } | null;
   profissionais?: { nome: string } | null;
 }
