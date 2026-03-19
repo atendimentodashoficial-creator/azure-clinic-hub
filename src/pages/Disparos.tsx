@@ -842,7 +842,11 @@ export default function Disparos() {
     let fallbackPollTimer: number | null = null;
     let isActive = true;
     let pollIntervalMs = 2000;
+    let stalePollCount = 0;
+    let lastApiSyncAt = 0;
     const MAX_POLL_INTERVAL_MS = 15000;
+    const API_SYNC_MIN_INTERVAL_MS = 12000;
+    const API_SYNC_AFTER_STALE_POLLS = 2;
 
     const allowedInstanciaIdList = instanciasList.map((inst) => inst.id).filter(Boolean);
     const allowedInstanciaIds = new Set(allowedInstanciaIdList);
@@ -924,7 +928,43 @@ export default function Disparos() {
           await loadChats(allowedInstanciaIdList);
           lastSeenUpdateMs = latestMs;
           pollIntervalMs = 2000;
+          stalePollCount = 0;
         } else {
+          stalePollCount += 1;
+
+          const shouldApiSync =
+            stalePollCount >= API_SYNC_AFTER_STALE_POLLS &&
+            Date.now() - lastApiSyncAt >= API_SYNC_MIN_INTERVAL_MS;
+
+          if (shouldApiSync) {
+            lastApiSyncAt = Date.now();
+
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session) {
+                const { data: syncData, error: syncError } = await supabase.functions.invoke('disparos-get-chats', {
+                  headers: { Authorization: `Bearer ${session.access_token}` },
+                });
+
+                if (syncError) {
+                  console.warn('[Disparos API Sync Poll] edge error:', syncError);
+                } else if ((syncData?.count || 0) > 0) {
+                  const refreshed = await loadChats(allowedInstanciaIdList);
+                  const refreshedLatestMs = (refreshed || []).reduce(
+                    (max, row) => Math.max(max, getUpdateTimeMs(row)),
+                    lastSeenUpdateMs,
+                  );
+                  lastSeenUpdateMs = refreshedLatestMs;
+                  pollIntervalMs = 2000;
+                  stalePollCount = 0;
+                  return;
+                }
+              }
+            } catch (syncErr) {
+              console.warn('[Disparos API Sync Poll] error:', syncErr);
+            }
+          }
+
           pollIntervalMs = Math.min(Math.floor(pollIntervalMs * 1.5), MAX_POLL_INTERVAL_MS);
         }
       } catch (error) {
