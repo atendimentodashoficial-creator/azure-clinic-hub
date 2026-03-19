@@ -25,6 +25,7 @@ import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog
 import { EscalaMembrosTab } from "@/components/reunioes/EscalaMembrosTab";
 import { NovaReuniaoDialog } from "@/components/reunioes/NovaReuniaoDialog";
 import { ReunioesDashboard } from "@/components/reunioes/ReunioesDashboard";
+import { HistoricoClienteDialog } from "@/components/reunioes/HistoricoClienteDialog";
 import {
   AlertDialog,
   AlertDialogAction,
