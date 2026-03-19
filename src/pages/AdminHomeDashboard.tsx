@@ -60,7 +60,7 @@ export default function AdminHomeDashboard() {
     queryKey: ["dashboard-clientes", effectiveUserId],
     queryFn: async () => {
       if (!effectiveUserId) return [];
-      const { data } = await supabase.from("tarefas_clientes").select("id, nome").eq("user_id", effectiveUserId);
+      const { data } = await supabase.from("tarefas_clientes").select("id, nome, tipo, empresa, foto_perfil_url").eq("user_id", effectiveUserId);
       return data || [];
     },
     enabled: !!effectiveUserId,
