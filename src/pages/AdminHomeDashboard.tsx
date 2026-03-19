@@ -397,10 +397,8 @@ export default function AdminHomeDashboard() {
             </Card>
           )}
 
-          {/* Bottom Row: Equipe + Campanhas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Equipe Resumo */}
-            <Card>
+          {/* Equipe */}
+          <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
