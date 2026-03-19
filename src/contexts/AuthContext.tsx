@@ -204,6 +204,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [navigate, checkAndStoreAdminStatus]);
 
   const signIn = async (email: string, password: string) => {
+    const LOGIN_TIMEOUT_MS = 30000;
+
     try {
       const signInResult = await Promise.race([
         supabase.auth.signInWithPassword({
@@ -211,7 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           password,
         }),
         new Promise<{ data: null; error: Error }>((resolve) =>
-          setTimeout(() => resolve({ data: null, error: new Error("LOGIN_TIMEOUT") }), 12000)
+          setTimeout(() => resolve({ data: null, error: new Error("LOGIN_TIMEOUT") }), LOGIN_TIMEOUT_MS)
         ),
       ]);
 
@@ -222,7 +224,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
 
       if (!data?.user || !data?.session) {
-        throw new Error("LOGIN_TIMEOUT");
+        throw new Error("LOGIN_NO_SESSION");
       }
 
       // Verificar se o usuário está expirado
@@ -256,17 +258,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (error.message === "LOGIN_TIMEOUT") {
-        try {
-          Object.keys(localStorage)
-            .filter((k) => k.startsWith("sb-") && k.endsWith("-auth-token"))
-            .forEach((k) => localStorage.removeItem(k));
-        } catch {
-          // ignore
-        }
-
-        toast.error("A autenticação demorou demais. Tente novamente em alguns segundos.", {
+        toast.error("A autenticação está lenta no momento. Tente novamente em alguns segundos.", {
           duration: 6000,
         });
+        throw error;
+      }
+
+      if (error.message === "LOGIN_NO_SESSION") {
+        toast.error("Não foi possível iniciar a sessão. Tente novamente.");
         throw error;
       }
 
