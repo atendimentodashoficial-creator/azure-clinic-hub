@@ -59,6 +59,11 @@ interface RespostaStats {
   chatsComResposta: number;
 }
 
+interface ReuniaoStats {
+  totalReunioes: number;
+  taxaConversaoReuniao: number;
+}
+
 interface SnapshotData {
   id: string;
   versao: number;
