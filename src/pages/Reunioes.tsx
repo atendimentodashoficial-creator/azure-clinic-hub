@@ -25,6 +25,7 @@ import { ComparecimentoDialog } from "@/components/reunioes/ComparecimentoDialog
 import { EscalaMembrosTab } from "@/components/reunioes/EscalaMembrosTab";
 import { NovaReuniaoDialog } from "@/components/reunioes/NovaReuniaoDialog";
 import { ReunioesDashboard } from "@/components/reunioes/ReunioesDashboard";
+import { HistoricoClienteDialog } from "@/components/reunioes/HistoricoClienteDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,6 +82,7 @@ export default function Reunioes() {
   const [comparecimentoReuniao, setComparecimentoReuniao] = useState<Reuniao | null>(null);
   const [comparecimentoTipo, setComparecimentoTipo] = useState<"compareceu" | "nao_compareceu" | null>(null);
   const [novaReuniaoOpen, setNovaReuniaoOpen] = useState(false);
+  const [historicoCliente, setHistoricoCliente] = useState<{ nome: string; telefone: string | null } | null>(null);
 
   // Ouve evento de atualização de nome de contato para recarregar os dados
   useEffect(() => {
@@ -519,7 +521,10 @@ export default function Reunioes() {
                                 </div>
                               </div>
                               {/* Nome do Cliente como Título */}
-                              <h3 className="font-semibold text-lg text-foreground">
+                              <h3
+                                className="font-semibold text-lg text-foreground cursor-pointer hover:text-primary transition-colors"
+                                onClick={() => setHistoricoCliente({ nome: getClienteNome(reuniao), telefone: reuniao.cliente_telefone })}
+                              >
                                 {getClienteNome(reuniao)}
                               </h3>
                             </div>
@@ -803,6 +808,14 @@ export default function Reunioes() {
       <NovaReuniaoDialog
         open={novaReuniaoOpen}
         onOpenChange={setNovaReuniaoOpen}
+      />
+      {/* Dialog de histórico do cliente */}
+      <HistoricoClienteDialog
+        open={!!historicoCliente}
+        onOpenChange={(open) => !open && setHistoricoCliente(null)}
+        clienteNome={historicoCliente?.nome || ""}
+        clienteTelefone={historicoCliente?.telefone || null}
+        todasReunioes={allReunioes || []}
       />
     </div>
   );
