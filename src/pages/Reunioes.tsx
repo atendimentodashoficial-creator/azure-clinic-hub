@@ -406,7 +406,7 @@ export default function Reunioes() {
 
             {membros.length > 0 && (
               <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
-                <SelectTrigger className="w-[220px] h-8 text-xs">
+                <SelectTrigger className="w-[220px] h-9 text-sm">
                   <Users className="h-3.5 w-3.5 mr-1.5" />
                   <SelectValue placeholder="Filtrar por colaborador" />
                 </SelectTrigger>
