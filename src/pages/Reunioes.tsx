@@ -386,22 +386,6 @@ export default function Reunioes() {
 
           {/* Header controls for reunioes tab */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            {membros.length > 0 && (
-              <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
-                <SelectTrigger className="w-[220px] h-9 text-sm">
-                  <Users className="h-3.5 w-3.5 mr-1.5" />
-                  <SelectValue placeholder="Filtrar por colaborador" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="meus">Minhas reuniões</SelectItem>
-                  {selectableMembros.map(m => (
-                    <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
             <div className="flex items-center gap-2">
               <Button onClick={() => setNovaReuniaoOpen(true)} className="gap-2" size={isMobile ? "icon" : "default"}>
                 <Plus className="w-4 h-4" />
@@ -419,6 +403,22 @@ export default function Reunioes() {
                 {!isMobile && "Sincronizar Transcrições"}
               </Button>
             </div>
+
+            {membros.length > 0 && (
+              <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+                <SelectTrigger className="w-[220px] h-9 text-sm">
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  <SelectValue placeholder="Filtrar por colaborador" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="meus">Minhas reuniões</SelectItem>
+                  {selectableMembros.map(m => (
+                    <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
 
