@@ -79,7 +79,7 @@ export default function AdminHomeDashboard() {
       const fetchEnd = dateEnd > sevenDaysLater ? dateEnd : sevenDaysLater;
       const { data } = await supabase
         .from("reunioes")
-        .select("id, titulo, data_reuniao, status, tipo_reuniao_id, participantes")
+        .select("id, titulo, data_reuniao, status, tipo_reuniao_id, participantes, converteu")
         .eq("user_id", effectiveUserId)
         .gte("data_reuniao", fetchStart.toISOString())
         .lte("data_reuniao", fetchEnd.toISOString())
