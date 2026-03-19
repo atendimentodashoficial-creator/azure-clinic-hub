@@ -219,7 +219,7 @@ export default function AdminHomeDashboard() {
       faturamentoMensal,
       gastosMensal,
     };
-  }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasMes, despesasMes]);
+  }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasPeriodo, todasDespesas, dateStart, dateEnd]);
 
   const isLoading = tarefasLoading || membrosLoading || clientesLoading || reunioesLoading;
 
