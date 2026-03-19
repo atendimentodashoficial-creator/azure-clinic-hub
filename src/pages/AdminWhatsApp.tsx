@@ -754,7 +754,6 @@ export default function AdminWhatsApp() {
   // Sync chats from UAZapi
   const syncChats = async () => {
     if (!hasConfig) {
-      toast.error('Configure o WhatsApp em Configurações → Conexões');
       return;
     }
     setIsSyncing(true);
