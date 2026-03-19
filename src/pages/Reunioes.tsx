@@ -82,6 +82,7 @@ export default function Reunioes() {
   const [comparecimentoReuniao, setComparecimentoReuniao] = useState<Reuniao | null>(null);
   const [comparecimentoTipo, setComparecimentoTipo] = useState<"compareceu" | "nao_compareceu" | null>(null);
   const [novaReuniaoOpen, setNovaReuniaoOpen] = useState(false);
+  const [historicoCliente, setHistoricoCliente] = useState<{ nome: string; telefone: string | null } | null>(null);
 
   // Ouve evento de atualização de nome de contato para recarregar os dados
   useEffect(() => {
