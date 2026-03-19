@@ -68,6 +68,7 @@ export default function TarefasClienteDetalhes() {
       return data || [];
     },
     enabled: tarefaIds.length > 0,
+  });
 
   const { data: proximaCobranca } = useQuery({
     queryKey: ["cliente-proxima-cobranca", id],
@@ -84,6 +85,7 @@ export default function TarefasClienteDetalhes() {
       return data;
     },
     enabled: !!id,
+  });
   });
 
   const colunasMap = useMemo(() => {
