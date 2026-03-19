@@ -142,11 +142,10 @@ export function HistoricoClienteDialog({
           <ScrollArea className="flex-1 -mx-6 px-6">
             <div className="space-y-4 pb-2">
               {/* Metric Cards */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <MetricCard label="Total" value={stats.total} icon={Video} />
                 <MetricCard label="Realizadas" value={stats.realizadas} icon={CheckCircle2} accent="text-emerald-600" />
                 <MetricCard label="No-shows" value={stats.noShow} icon={XCircle} accent="text-destructive" />
-                <MetricCard label="Comparecimento" value={`${stats.taxaComparecimento}%`} icon={Percent} accent="text-emerald-600" />
                 <MetricCard label="Conversão" value={`${stats.taxaConversao}%`} icon={TrendingUp} accent="text-blue-600" />
               </div>
 
