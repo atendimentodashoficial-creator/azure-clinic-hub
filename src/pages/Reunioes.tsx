@@ -626,6 +626,20 @@ export default function Reunioes() {
                                 </Button>
                               </div>
                             )}
+
+                            {/* Botão de Conversão - visível para reuniões realizadas */}
+                            {(reuniao.status === "realizada" || reuniao.status === "resumido" || reuniao.status === "transcrito") && (
+                              <Button
+                                size="sm"
+                                variant={reuniao.converteu ? "default" : "outline"}
+                                className={`w-full gap-1.5 ${reuniao.converteu ? "bg-blue-600 hover:bg-blue-700 text-white" : "text-blue-600 border-blue-300 hover:bg-blue-50"}`}
+                                onClick={() => toggleConversaoMutation.mutate({ reuniaoId: reuniao.id, converteu: !reuniao.converteu })}
+                                disabled={toggleConversaoMutation.isPending}
+                              >
+                                <TrendingUp className="w-4 h-4" />
+                                {reuniao.converteu ? "Convertido ✓" : "Marcar Conversão"}
+                              </Button>
+                            )}
                           
                             {/* Grid de Ícones - Reagendar, WhatsApp, Desmarcar */}
                           {reuniao.status !== "cancelado" && (
