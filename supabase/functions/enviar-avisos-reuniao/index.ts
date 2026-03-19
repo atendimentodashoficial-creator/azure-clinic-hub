@@ -446,9 +446,21 @@ Deno.serve(async (req) => {
     });
   }
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const cronHeader = req.headers.get("X-Cron-Secret") ?? "";
+  const authHeader = (req.headers.get("Authorization") ?? "").trim();
+  const cronHeader = (req.headers.get("X-Cron-Secret") ?? "").trim();
+  const apikeyHeader = (req.headers.get("apikey") ?? "").trim();
+  const authToken = authHeader.toLowerCase().startsWith("bearer ")
+    ? authHeader.slice(7).trim()
+    : authHeader;
   const isCronRequest = CRON_SECRET && cronHeader === CRON_SECRET;
+  const isServiceRoleRequest = SERVICE_ROLE_KEY && (authToken === SERVICE_ROLE_KEY || apikeyHeader === SERVICE_ROLE_KEY);
+
+  // TEMP MITIGATION: disable scheduled/machine execution to relieve backend load during incidents
+  if (isCronRequest || isServiceRoleRequest) {
+    return new Response(JSON.stringify({ success: true, skipped: true, reason: "cron_temporarily_disabled" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     global: {

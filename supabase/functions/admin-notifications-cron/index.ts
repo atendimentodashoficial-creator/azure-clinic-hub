@@ -307,8 +307,24 @@ Deno.serve(async (req) => {
   const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
   const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? '';
 
-  // Validate cron secret
-  const cronHeader = req.headers.get('X-Cron-Secret') ?? '';
+  // TEMP MITIGATION: disable scheduled/machine execution to relieve backend load during incidents
+  const cronHeader = (req.headers.get('X-Cron-Secret') ?? '').trim();
+  const authHeaderRaw = (req.headers.get('Authorization') ?? '').trim();
+  const apikeyHeader = (req.headers.get('apikey') ?? '').trim();
+  const authToken = authHeaderRaw.toLowerCase().startsWith('bearer ')
+    ? authHeaderRaw.slice(7).trim()
+    : authHeaderRaw;
+
+  const isCronSecretCall = CRON_SECRET.length > 0 && cronHeader === CRON_SECRET;
+  const isServiceRoleCall = SERVICE_ROLE_KEY.length > 0 && (authToken === SERVICE_ROLE_KEY || apikeyHeader === SERVICE_ROLE_KEY);
+
+  if (isCronSecretCall || isServiceRoleCall) {
+    return new Response(JSON.stringify({ success: true, skipped: true, reason: 'cron_temporarily_disabled' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Manual call (non-scheduler) still requires cron secret
   if (!CRON_SECRET || cronHeader !== CRON_SECRET) {
     console.error('[admin-notifications-cron] Invalid or missing cron secret');
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
