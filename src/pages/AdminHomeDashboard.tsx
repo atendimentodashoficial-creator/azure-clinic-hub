@@ -261,6 +261,7 @@ export default function AdminHomeDashboard() {
       taxaNoShow,
       taxaConversao,
       reunioesRealizadas: realizadas,
+      reunioesConvertidas: convertidas,
       reunioesNoShow: noShow,
       totalReunioesProximas: proximasReunioes.length,
       totalMembros: membros.length,
