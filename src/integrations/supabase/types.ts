@@ -1008,6 +1008,53 @@ export type Database = {
         }
         Relationships: []
       }
+      cliente_plataformas_ia: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          id: string
+          login: string | null
+          nome: string
+          observacoes: string | null
+          senha: string | null
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          id?: string
+          login?: string | null
+          nome: string
+          observacoes?: string | null
+          senha?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          id?: string
+          login?: string | null
+          nome?: string
+          observacoes?: string | null
+          senha?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_plataformas_ia_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cobranca_pagamentos: {
         Row: {
           cobranca_id: string
@@ -5342,6 +5389,7 @@ export type Database = {
           senha_acesso: string | null
           site: string | null
           telefone: string | null
+          tem_ia: boolean
           tipo: string
           updated_at: string
           user_id: string
@@ -5368,6 +5416,7 @@ export type Database = {
           senha_acesso?: string | null
           site?: string | null
           telefone?: string | null
+          tem_ia?: boolean
           tipo?: string
           updated_at?: string
           user_id: string
@@ -5394,6 +5443,7 @@ export type Database = {
           senha_acesso?: string | null
           site?: string | null
           telefone?: string | null
+          tem_ia?: boolean
           tipo?: string
           updated_at?: string
           user_id?: string
