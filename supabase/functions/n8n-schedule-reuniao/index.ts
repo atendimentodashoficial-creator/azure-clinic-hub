@@ -422,6 +422,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (reuniaoError || !reuniao) {
+      console.error("[n8n-schedule-reuniao] FAIL: insert error:", reuniaoError);
       throw reuniaoError || new Error("Falha ao criar reunião");
     }
 
