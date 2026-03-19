@@ -99,9 +99,9 @@ export function ReunioesDashboard({ reunioes }: ReunioesDashboardProps) {
           <MetricCard icon={Calendar} label="Total" value={stats.total} />
           <MetricCard icon={CheckCircle2} label="Realizadas" value={stats.realizadas} color="text-green-600" />
           <MetricCard icon={XCircle} label="No-show" value={stats.noShow} color="text-destructive" />
-          <MetricCard icon={Users} label="Comparecimento" value={`${stats.taxaComparecimento}%`} color="text-green-600" />
-          <MetricCard icon={XCircle} label="Taxa No-show" value={`${stats.taxaNoShow}%`} color="text-destructive" />
-          <MetricCard icon={TrendingUp} label="Conversão" value={`${stats.taxaConversao}%`} color="text-blue-600" />
+          <MetricCard icon={Users} label="Taxa de Comparecimento" value={`${stats.taxaComparecimento}%`} color="text-green-600" subtitle={`${stats.realizadas} reuniões`} />
+          <MetricCard icon={XCircle} label="Taxa de No-show" value={`${stats.taxaNoShow}%`} color="text-destructive" subtitle={`${stats.noShow} reuniões`} />
+          <MetricCard icon={TrendingUp} label="Taxa de Conversão" value={`${stats.taxaConversao}%`} color="text-blue-600" subtitle={`${stats.convertidas} de ${stats.total}`} />
         </div>
 
         {/* Charts */}
@@ -153,7 +153,7 @@ export function ReunioesDashboard({ reunioes }: ReunioesDashboardProps) {
   );
 }
 
-function MetricCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string | number; color?: string }) {
+function MetricCard({ icon: Icon, label, value, color, subtitle }: { icon: any; label: string; value: string | number; color?: string; subtitle?: string }) {
   return (
     <Card>
       <CardContent className="p-3 flex items-center gap-3">
@@ -163,6 +163,7 @@ function MetricCard({ icon: Icon, label, value, color }: { icon: any; label: str
         <div>
           <p className="text-xs text-muted-foreground">{label}</p>
           <p className={cn("text-lg font-bold", color)}>{value}</p>
+          {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
         </div>
       </CardContent>
     </Card>
