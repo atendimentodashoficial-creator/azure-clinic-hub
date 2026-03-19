@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,7 @@ import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay, star
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { PeriodFilter, usePeriodFilter } from "@/components/filters/PeriodFilter";
 
 const COLORS = ["hsl(var(--primary))", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899"];
 
@@ -24,6 +25,7 @@ export default function AdminHomeDashboard() {
   const { ownerId } = useOwnerId();
   const navigate = useNavigate();
   const effectiveUserId = ownerId || user?.id;
+  const { periodFilter, setPeriodFilter, dateStart, setDateStart, dateEnd, setDateEnd } = usePeriodFilter("this_month");
 
   // Fetch tarefas + colunas
   const { data: tarefasData, isLoading: tarefasLoading } = useQuery({
@@ -101,30 +103,28 @@ export default function AdminHomeDashboard() {
     staleTime: 60_000,
   });
 
-  // Fetch cobrancas do mês atual (faturamento)
-  const mesAtual = format(new Date(), "yyyy-MM");
-  const inicioMes = startOfMonth(new Date()).toISOString();
-  const fimMes = endOfMonth(new Date()).toISOString();
+  // Fetch cobrancas do período (faturamento)
+  const periodoKey = `${dateStart.toISOString()}-${dateEnd.toISOString()}`;
 
-  const { data: cobrancasMes = [] } = useQuery({
-    queryKey: ["dashboard-cobrancas-mes", effectiveUserId, mesAtual],
+  const { data: cobrancasPeriodo = [] } = useQuery({
+    queryKey: ["dashboard-cobrancas", effectiveUserId, periodoKey],
     queryFn: async () => {
       if (!effectiveUserId) return [];
       const { data } = await supabase
         .from("cobrancas")
         .select("id, valor, status, data_vencimento")
         .eq("user_id", effectiveUserId)
-        .gte("data_vencimento", inicioMes)
-        .lte("data_vencimento", fimMes);
+        .gte("data_vencimento", dateStart.toISOString())
+        .lte("data_vencimento", dateEnd.toISOString());
       return data || [];
     },
     enabled: !!effectiveUserId,
     staleTime: 60_000,
   });
 
-  // Fetch despesas do mês atual (gastos)
-  const { data: despesasMes = [] } = useQuery({
-    queryKey: ["dashboard-despesas-mes", effectiveUserId, mesAtual],
+  // Fetch despesas (gastos) - fetch all, filter in memo
+  const { data: todasDespesas = [] } = useQuery({
+    queryKey: ["dashboard-despesas", effectiveUserId],
     queryFn: async () => {
       if (!effectiveUserId) return [];
       const { data } = await supabase
@@ -181,22 +181,21 @@ export default function AdminHomeDashboard() {
       .slice(0, 8);
 
 
-    // Faturamento mensal (cobrancas do mês)
-    const faturamentoMensal = cobrancasMes.reduce((sum, c) => sum + (c.valor || 0), 0);
+    // Faturamento do período (cobrancas)
+    const faturamentoMensal = cobrancasPeriodo.reduce((sum, c) => sum + (c.valor || 0), 0);
 
-    // Gastos mensais (despesas pontuais do mês + recorrentes ativas)
-    const mesAtualDate = new Date();
-    const gastosMensal = despesasMes.reduce((sum, d) => {
+    // Gastos do período (despesas pontuais + recorrentes ativas no período)
+    const gastosMensal = todasDespesas.reduce((sum, d) => {
       if (d.recorrente) {
         const inicio = d.data_inicio ? new Date(d.data_inicio) : null;
         const fim = d.data_fim ? new Date(d.data_fim) : null;
-        if (inicio && inicio > mesAtualDate) return sum;
-        if (fim && fim < startOfMonth(mesAtualDate)) return sum;
+        if (inicio && inicio > dateEnd) return sum;
+        if (fim && fim < dateStart) return sum;
         return sum + (d.valor || 0);
       } else {
         if (!d.data_despesa) return sum;
         const dd = new Date(d.data_despesa);
-        if (dd >= startOfMonth(mesAtualDate) && dd <= endOfMonth(mesAtualDate)) {
+        if (dd >= dateStart && dd <= dateEnd) {
           return sum + (d.valor || 0);
         }
         return sum;
@@ -220,7 +219,7 @@ export default function AdminHomeDashboard() {
       faturamentoMensal,
       gastosMensal,
     };
-  }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasMes, despesasMes]);
+  }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasPeriodo, todasDespesas, dateStart, dateEnd]);
 
   const isLoading = tarefasLoading || membrosLoading || clientesLoading || reunioesLoading;
 
@@ -252,10 +251,19 @@ export default function AdminHomeDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <LayoutDashboard className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+        <div className="flex items-center gap-3">
+          <LayoutDashboard className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        </div>
+        <PeriodFilter
+          value={periodFilter}
+          onChange={setPeriodFilter}
+          dateStart={dateStart}
+          dateEnd={dateEnd}
+          onDateStartChange={setDateStart}
+          onDateEndChange={setDateEnd}
+        />
       </div>
 
       {isLoading ? (
