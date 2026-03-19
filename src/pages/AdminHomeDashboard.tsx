@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ListChecks, Users, Video, MessageSquare,
   CheckCircle2, Clock, AlertTriangle, TrendingUp, CalendarDays,
-  Building2, UsersRound, Package, Send, ArrowRight, DollarSign, Wallet
+  Building2, UsersRound, Package, Send, ArrowRight, DollarSign, Wallet,
+  Receipt, BarChart3, Target
 } from "lucide-react";
 import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -181,11 +182,11 @@ export default function AdminHomeDashboard() {
       .slice(0, 8);
 
 
-    // Faturamento do período (cobrancas)
-    const faturamentoMensal = cobrancasPeriodo.reduce((sum, c) => sum + (c.valor || 0), 0);
+    // Financeiro
+    const receitaPrevista = cobrancasPeriodo.reduce((sum, c) => sum + (c.valor || 0), 0);
+    const receitaPaga = cobrancasPeriodo.filter(c => c.status === "pago").reduce((sum, c) => sum + (c.valor || 0), 0);
 
-    // Gastos do período (despesas pontuais + recorrentes ativas no período)
-    const gastosMensal = todasDespesas.reduce((sum, d) => {
+    const despesasPrevistas = todasDespesas.reduce((sum, d) => {
       if (d.recorrente) {
         const inicio = d.data_inicio ? new Date(d.data_inicio) : null;
         const fim = d.data_fim ? new Date(d.data_fim) : null;
@@ -195,12 +196,14 @@ export default function AdminHomeDashboard() {
       } else {
         if (!d.data_despesa) return sum;
         const dd = new Date(d.data_despesa);
-        if (dd >= dateStart && dd <= dateEnd) {
-          return sum + (d.valor || 0);
-        }
+        if (dd >= dateStart && dd <= dateEnd) return sum + (d.valor || 0);
         return sum;
       }
     }, 0);
+
+    // For "despesas pagas" we approximate using the same logic (no payment status on despesas table)
+    const margemLucro = receitaPaga > 0 ? Math.round(((receitaPaga - despesasPrevistas) / receitaPaga) * 1000) / 10 : 0;
+    const lucroLiquido = receitaPaga - despesasPrevistas;
 
     return {
       totalTarefas: tarefas.length,
@@ -216,8 +219,11 @@ export default function AdminHomeDashboard() {
       totalClientes: clientes.length,
       campanhasAtivas: campanhas.filter(c => c.status === "em_andamento").length,
       campanhasPausadas: campanhas.filter(c => c.status === "pausada").length,
-      faturamentoMensal,
-      gastosMensal,
+      receitaPrevista,
+      receitaPaga,
+      despesasPrevistas,
+      margemLucro,
+      lucroLiquido,
     };
   }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasPeriodo, todasDespesas, dateStart, dateEnd]);
 
@@ -277,37 +283,40 @@ export default function AdminHomeDashboard() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <ListChecks className="h-4 w-4" /> Tarefas
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               <QuickStat icon={ListChecks} label="Ativas" value={stats.tarefasAtivas} accent="text-primary" onClick={() => navigate("/admin/tarefas")} />
               <QuickStat icon={AlertTriangle} label="Atrasadas" value={stats.tarefasAtrasadas} accent={stats.tarefasAtrasadas > 0 ? "text-destructive" : "text-muted-foreground"} onClick={() => navigate("/admin/tarefas")} />
               <QuickStat icon={TrendingUp} label="Urgentes" value={stats.tarefasUrgentes} accent={stats.tarefasUrgentes > 0 ? "text-amber-600" : "text-muted-foreground"} onClick={() => navigate("/admin/tarefas")} />
               <QuickStat icon={CheckCircle2} label="Concluídas" value={stats.tarefasConcluidas} accent="text-emerald-600" onClick={() => navigate("/admin/tarefas")} />
+              <QuickStat icon={Target} label="Total" value={stats.totalTarefas} accent="text-muted-foreground" onClick={() => navigate("/admin/tarefas")} />
             </div>
           </div>
 
           {/* Financeiro */}
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <DollarSign className="h-4 w-4" /> Financeiro
+              <DollarSign className="h-4 w-4" /> Resumo Financeiro
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <QuickStat icon={DollarSign} label="Faturamento" value={stats.faturamentoMensal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-emerald-600" onClick={() => navigate("/admin/financeiro")} />
-              <QuickStat icon={Wallet} label="Gastos" value={stats.gastosMensal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-amber-600" onClick={() => navigate("/admin/despesas")} />
-              <QuickStat icon={Building2} label="Clientes" value={stats.totalClientes} accent="text-primary" onClick={() => navigate("/admin/tarefas-clientes")} />
-              <QuickStat icon={UsersRound} label="Equipe" value={stats.totalMembros} accent="text-primary" onClick={() => navigate("/admin/equipe")} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              <QuickStat icon={TrendingUp} label="Receita Prevista" value={stats.receitaPrevista.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-primary" onClick={() => navigate("/admin/financeiro")} />
+              <QuickStat icon={DollarSign} label="Receita Paga" value={stats.receitaPaga.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-emerald-600" onClick={() => navigate("/admin/financeiro")} />
+              <QuickStat icon={Receipt} label="Despesas Previstas" value={stats.despesasPrevistas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-amber-600" onClick={() => navigate("/admin/despesas")} />
+              <QuickStat icon={BarChart3} label="Margem de Lucro" value={`${stats.margemLucro}%`} accent={stats.margemLucro >= 0 ? "text-emerald-600" : "text-destructive"} onClick={() => navigate("/admin/financeiro")} subtitle={stats.lucroLiquido.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
+              <QuickStat icon={Wallet} label="Lucro Líquido" value={stats.lucroLiquido.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent={stats.lucroLiquido >= 0 ? "text-emerald-600" : "text-destructive"} onClick={() => navigate("/admin/financeiro")} />
             </div>
           </div>
 
-          {/* Reuniões */}
+          {/* Operacional */}
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Video className="h-4 w-4" /> Reuniões
+              <Video className="h-4 w-4" /> Operacional
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <QuickStat icon={Video} label="Próximas" value={stats.proximasReunioes.length} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
-              <QuickStat icon={CalendarDays} label="Nos próx. 7 dias" value={stats.totalReunioesProximas} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              <QuickStat icon={Video} label="Próximas Reuniões" value={stats.proximasReunioes.length} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+              <QuickStat icon={CalendarDays} label="Reuniões (7 dias)" value={stats.totalReunioesProximas} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+              <QuickStat icon={Building2} label="Clientes" value={stats.totalClientes} accent="text-primary" onClick={() => navigate("/admin/tarefas-clientes")} />
+              <QuickStat icon={UsersRound} label="Equipe" value={stats.totalMembros} accent="text-primary" onClick={() => navigate("/admin/equipe")} />
               <QuickStat icon={Send} label="Campanhas Ativas" value={stats.campanhasAtivas} accent={stats.campanhasAtivas > 0 ? "text-emerald-600" : "text-muted-foreground"} onClick={() => navigate("/admin/disparos")} />
-              <QuickStat icon={Clock} label="Campanhas Pausadas" value={stats.campanhasPausadas} accent="text-muted-foreground" onClick={() => navigate("/admin/disparos")} />
             </div>
           </div>
 
@@ -508,12 +517,14 @@ function QuickStat({
   value,
   accent,
   onClick,
+  subtitle,
 }: {
   icon: React.ElementType;
   label: string;
   value: number | string;
   accent: string;
   onClick?: () => void;
+  subtitle?: string;
 }) {
   return (
     <Card
@@ -523,15 +534,14 @@ function QuickStat({
       )}
       onClick={onClick}
     >
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0">
-          <Icon className="h-5 w-5 text-primary-foreground" />
+      <div className="flex items-center gap-2 mb-2">
+        <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center shrink-0">
+          <Icon className="h-4 w-4 text-primary-foreground" />
         </div>
-        <div>
-          <p className={cn("text-xl font-bold tabular-nums leading-tight", accent)}>{value}</p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-        </div>
+        <p className="text-xs text-muted-foreground leading-tight">{label}</p>
       </div>
+      <p className={cn("text-lg font-bold tabular-nums leading-tight", accent)}>{value}</p>
+      {subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
     </Card>
   );
 }
