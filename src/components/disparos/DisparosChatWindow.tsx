@@ -916,6 +916,23 @@ export function DisparosChatWindow({ chat, onBack, onChatDeleted, onChatUpdated,
       if (!isActive) return;
 
       try {
+        // First, sync from UAZapi API to catch messages the webhook may have missed
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data: syncResult } = await supabase.functions.invoke('disparos-get-messages', {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            body: { chat_id: chat.chat_id, db_chat_id: chat.id }
+          });
+          if (syncResult?.count > 0) {
+            await loadMessages(false);
+            lastSeenMessageMs = Date.now();
+            pollIntervalMs = 2000;
+            if (isActive) schedulePoll();
+            return;
+          }
+        }
+
+        // Fallback: check DB for messages inserted by webhook/realtime
         const { data: latestRows, error } = await supabase
           .from('disparos_messages')
           .select('timestamp')
