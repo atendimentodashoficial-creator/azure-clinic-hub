@@ -239,6 +239,7 @@ Deno.serve(async (req) => {
       }
 
       if (candidates.length === 0) {
+        console.log("[n8n-schedule-reuniao] FAIL: all members busy. membrosDisponiveis:", membrosDisponiveis);
         return new Response(JSON.stringify({ error: "Todos os profissionais estão ocupados neste horário" }), {
           status: 409,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
