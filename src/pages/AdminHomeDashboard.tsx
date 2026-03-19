@@ -406,13 +406,16 @@ export default function AdminHomeDashboard() {
             {/* Próximas Reuniões */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Video className="h-4 w-4" />
-                  Próximas Reuniões
-                  {stats.proximasReunioes.length > 0 && (
-                    <Badge variant="secondary" className="ml-auto">{stats.proximasReunioes.length}</Badge>
-                  )}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    Próximas Reuniões
+                    <Badge variant="secondary">{stats.totalReunioesProximas}</Badge>
+                  </CardTitle>
+                  <button className="text-xs text-primary hover:underline flex items-center gap-1" onClick={() => navigate("/admin/reunioes")}>
+                    Ver todas <ArrowRight className="h-3 w-3" />
+                  </button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2">
                 {stats.proximasReunioes.length > 0 ? (
