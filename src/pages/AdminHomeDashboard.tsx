@@ -359,9 +359,8 @@ export default function AdminHomeDashboard() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <Video className="h-4 w-4" /> Operacional
             </h2>
-             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                <QuickStat icon={CalendarDays} label="Reuniões Hoje" value={stats.reunioesHoje} accent="text-amber-500" onClick={() => navigate("/admin/reunioes")} />
-               <QuickStat icon={Video} label="Próximas Reuniões" value={stats.totalReunioesProximas} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={CalendarDays} label="Reuniões este Mês" value={stats.totalMes} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={CheckCircle2} label="Comparecimento" value={`${stats.taxaComparecimento}%`} accent="text-emerald-600" onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={AlertTriangle} label="No-show" value={`${stats.taxaNoShow}%`} accent="text-destructive" onClick={() => navigate("/admin/reunioes")} />
