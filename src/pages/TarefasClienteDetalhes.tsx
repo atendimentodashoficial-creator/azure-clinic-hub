@@ -393,6 +393,13 @@ export default function TarefasClienteDetalhes() {
           <CobrancasTab clienteId={cliente.id} valorContrato={financeiro.valorContrato} />
         </TabsContent>
 
+        {/* ── I.A ── */}
+        {cliente.tem_ia && (
+          <TabsContent value="ia">
+            <ClienteIATab clienteId={cliente.id} />
+          </TabsContent>
+        )}
+
         {/* ── Contrato ── */}
         <TabsContent value="contrato">
           <Card className="p-6">
