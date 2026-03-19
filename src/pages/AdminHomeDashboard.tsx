@@ -222,7 +222,7 @@ export default function AdminHomeDashboard() {
 
     return {
       totalTarefas: tarefas.length,
-      tarefasAtivas: ativas.length,
+      paraHoje: paraHoje.length,
       tarefasConcluidas: concluidas.length,
       tarefasAtrasadas: atrasadas.length,
       tarefasUrgentes: urgentes.length,
