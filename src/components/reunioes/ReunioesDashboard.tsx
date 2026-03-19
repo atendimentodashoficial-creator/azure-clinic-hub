@@ -95,13 +95,11 @@ export function ReunioesDashboard({ reunioes }: ReunioesDashboardProps) {
 
       <CollapsibleContent className="mt-4 space-y-4 animate-fade-in">
         {/* Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <MetricCard icon={Calendar} label="Total" value={stats.total} />
-          <MetricCard icon={CheckCircle2} label="Realizadas" value={stats.realizadas} color="text-green-600" />
-          <MetricCard icon={XCircle} label="No-show" value={stats.noShow} color="text-destructive" />
-          <MetricCard icon={Users} label="Taxa de Comparecimento" value={`${stats.taxaComparecimento}%`} color="text-green-600" subtitle={`${stats.realizadas} reuniões`} />
-          <MetricCard icon={XCircle} label="Taxa de No-show" value={`${stats.taxaNoShow}%`} color="text-destructive" subtitle={`${stats.noShow} reuniões`} />
-          <MetricCard icon={TrendingUp} label="Taxa de Conversão" value={`${stats.taxaConversao}%`} color="text-blue-600" subtitle={`${stats.convertidas} de ${stats.total}`} />
+          <MetricCard icon={Users} label="Comparecimento" value={`${stats.taxaComparecimento}%`} color="text-green-600" subtitle={`${stats.realizadas} reuniões`} />
+          <MetricCard icon={XCircle} label="No-show" value={`${stats.taxaNoShow}%`} color="text-destructive" subtitle={`${stats.noShow} reuniões`} />
+          <MetricCard icon={TrendingUp} label="Conversão" value={`${stats.taxaConversao}%`} color="text-blue-600" subtitle={`${stats.convertidas} de ${stats.total}`} />
         </div>
 
         {/* Charts */}
