@@ -79,7 +79,7 @@ export default function AdminHomeDashboard() {
       const fetchEnd = dateEnd > sevenDaysLater ? dateEnd : sevenDaysLater;
       const { data } = await supabase
         .from("reunioes")
-        .select("id, titulo, data_reuniao, status, tipo_reuniao_id, participantes")
+        .select("id, titulo, data_reuniao, status, tipo_reuniao_id, participantes, converteu")
         .eq("user_id", effectiveUserId)
         .gte("data_reuniao", fetchStart.toISOString())
         .lte("data_reuniao", fetchEnd.toISOString())
@@ -203,8 +203,9 @@ export default function AdminHomeDashboard() {
     const taxaComparecimento = finalizadas > 0 ? Math.round((realizadas / finalizadas) * 100) : 0;
     const taxaNoShow = finalizadas > 0 ? Math.round((noShow / finalizadas) * 100) : 0;
     
-    // Conversão = realizadas / total do período
-    const taxaConversao = totalMes > 0 ? Math.round((realizadas / totalMes) * 100) : 0;
+    // Conversão = reuniões marcadas como convertidas / total do período
+    const convertidas = reunioesPeriodo.filter(r => (r as any).converteu === true).length;
+    const taxaConversao = totalMes > 0 ? Math.round((convertidas / totalMes) * 100) : 0;
 
 
     // Financeiro
@@ -260,6 +261,7 @@ export default function AdminHomeDashboard() {
       taxaNoShow,
       taxaConversao,
       reunioesRealizadas: realizadas,
+      reunioesConvertidas: convertidas,
       reunioesNoShow: noShow,
       totalReunioesProximas: proximasReunioes.length,
       totalMembros: membros.length,
@@ -335,7 +337,7 @@ export default function AdminHomeDashboard() {
                <QuickStat icon={CalendarDays} label="Reuniões Hoje" value={stats.reunioesHoje} accent="text-amber-500" onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={CheckCircle2} label="Comparecimentos" value={`${stats.taxaComparecimento}%`} accent="text-emerald-600" subtitle={`${stats.reunioesRealizadas} reuniões`} onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={AlertTriangle} label="No-shows" value={`${stats.taxaNoShow}%`} accent="text-destructive" subtitle={`${stats.reunioesNoShow} reuniões`} onClick={() => navigate("/admin/reunioes")} />
-               <QuickStat icon={TrendingUp} label="Conversões" value={`${stats.taxaConversao}%`} accent="text-blue-600" subtitle={`${stats.reunioesRealizadas} de ${stats.totalMes}`} onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={TrendingUp} label="Conversões" value={`${stats.taxaConversao}%`} accent="text-blue-600" subtitle={`${stats.reunioesConvertidas} de ${stats.totalMes}`} onClick={() => navigate("/admin/reunioes")} />
              </div>
           </div>
 

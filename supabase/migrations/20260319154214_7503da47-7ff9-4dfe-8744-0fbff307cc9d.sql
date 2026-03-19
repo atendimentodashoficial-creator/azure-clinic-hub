@@ -1,0 +1,1 @@
+ALTER TABLE public.reunioes ADD COLUMN converteu boolean NOT NULL DEFAULT false;

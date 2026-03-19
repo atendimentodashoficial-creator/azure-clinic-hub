@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, Users, Plus } from "lucide-react";
+import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, Users, Plus, TrendingUp } from "lucide-react";
 import { ReunioesPeriodFilter, useReunioesPeriodFilter } from "@/components/reunioes/ReunioesPeriodFilter";
 import { formatPhoneDisplay, getLast8Digits } from "@/utils/phoneFormat";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -56,6 +56,7 @@ interface Reuniao {
   cliente_telefone: string | null;
   profissional_id: string | null;
   tipo_reuniao_id: string | null;
+  converteu: boolean;
   profissionais?: { nome: string } | null;
   leads?: { nome: string; telefone: string } | null;
   tipos_reuniao?: { nome: string } | null;
@@ -313,6 +314,20 @@ export default function Reunioes() {
     },
   });
 
+  const toggleConversaoMutation = useMutation({
+    mutationFn: async ({ reuniaoId, converteu }: { reuniaoId: string; converteu: boolean }) => {
+      const { error } = await supabase
+        .from("reunioes" as any)
+        .update({ converteu } as any)
+        .eq("id", reuniaoId);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["reunioes"] });
+      toast.success(vars.converteu ? "Reunião marcada como convertida!" : "Conversão removida");
+    },
+    onError: () => toast.error("Erro ao atualizar conversão"),
+  });
   const isWithinOneHour = (dataReuniao: string) => {
     const now = new Date();
     const reuniaoTime = new Date(dataReuniao);
@@ -610,6 +625,20 @@ export default function Reunioes() {
                                   No-show
                                 </Button>
                               </div>
+                            )}
+
+                            {/* Botão de Conversão - visível para reuniões realizadas */}
+                            {(reuniao.status === "realizada" || reuniao.status === "resumido" || reuniao.status === "transcrito") && (
+                              <Button
+                                size="sm"
+                                variant={reuniao.converteu ? "default" : "outline"}
+                                className={`w-full gap-1.5 ${reuniao.converteu ? "bg-blue-600 hover:bg-blue-700 text-white" : "text-blue-600 border-blue-300 hover:bg-blue-50"}`}
+                                onClick={() => toggleConversaoMutation.mutate({ reuniaoId: reuniao.id, converteu: !reuniao.converteu })}
+                                disabled={toggleConversaoMutation.isPending}
+                              >
+                                <TrendingUp className="w-4 h-4" />
+                                {reuniao.converteu ? "Convertido ✓" : "Marcar Conversão"}
+                              </Button>
                             )}
                           
                             {/* Grid de Ícones - Reagendar, WhatsApp, Desmarcar */}

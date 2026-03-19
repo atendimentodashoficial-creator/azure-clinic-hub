@@ -4717,6 +4717,7 @@ export type Database = {
           aviso_dia_anterior: boolean | null
           cliente_id: string | null
           cliente_telefone: string | null
+          converteu: boolean
           created_at: string
           data_reuniao: string
           duracao_minutos: number | null
@@ -4742,6 +4743,7 @@ export type Database = {
           aviso_dia_anterior?: boolean | null
           cliente_id?: string | null
           cliente_telefone?: string | null
+          converteu?: boolean
           created_at?: string
           data_reuniao: string
           duracao_minutos?: number | null
@@ -4767,6 +4769,7 @@ export type Database = {
           aviso_dia_anterior?: boolean | null
           cliente_id?: string | null
           cliente_telefone?: string | null
+          converteu?: boolean
           created_at?: string
           data_reuniao?: string
           duracao_minutos?: number | null
