@@ -181,22 +181,21 @@ export default function AdminHomeDashboard() {
       .slice(0, 8);
 
 
-    // Faturamento mensal (cobrancas do mês)
-    const faturamentoMensal = cobrancasMes.reduce((sum, c) => sum + (c.valor || 0), 0);
+    // Faturamento do período (cobrancas)
+    const faturamentoMensal = cobrancasPeriodo.reduce((sum, c) => sum + (c.valor || 0), 0);
 
-    // Gastos mensais (despesas pontuais do mês + recorrentes ativas)
-    const mesAtualDate = new Date();
-    const gastosMensal = despesasMes.reduce((sum, d) => {
+    // Gastos do período (despesas pontuais + recorrentes ativas no período)
+    const gastosMensal = todasDespesas.reduce((sum, d) => {
       if (d.recorrente) {
         const inicio = d.data_inicio ? new Date(d.data_inicio) : null;
         const fim = d.data_fim ? new Date(d.data_fim) : null;
-        if (inicio && inicio > mesAtualDate) return sum;
-        if (fim && fim < startOfMonth(mesAtualDate)) return sum;
+        if (inicio && inicio > dateEnd) return sum;
+        if (fim && fim < dateStart) return sum;
         return sum + (d.valor || 0);
       } else {
         if (!d.data_despesa) return sum;
         const dd = new Date(d.data_despesa);
-        if (dd >= startOfMonth(mesAtualDate) && dd <= endOfMonth(mesAtualDate)) {
+        if (dd >= dateStart && dd <= dateEnd) {
           return sum + (d.valor || 0);
         }
         return sum;
