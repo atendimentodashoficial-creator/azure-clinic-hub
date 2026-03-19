@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Video, Calendar, Clock, FileText, RefreshCw, Bell, Link2, XCircle, Trash2, MessageCircle, User, Phone, CheckCircle2, CalendarClock, Users, Plus } from "lucide-react";
 import { ReunioesPeriodFilter, useReunioesPeriodFilter } from "@/components/reunioes/ReunioesPeriodFilter";
 import { formatPhoneDisplay, getLast8Digits } from "@/utils/phoneFormat";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { navigateToChat } from "@/utils/chatRouting";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
