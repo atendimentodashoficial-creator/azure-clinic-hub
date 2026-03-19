@@ -1,21 +1,25 @@
 import { useState, useMemo } from "react";
 import { Calendar } from "lucide-react";
-import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, isWithinInterval } from "date-fns";
+import { format, startOfDay, endOfDay, subDays, addDays, startOfWeek, endOfWeek, subWeeks, addWeeks, startOfMonth, endOfMonth, subMonths, addMonths, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type ReuniaoFilterValue =
   | "todas"
   | "ontem"
   | "hoje"
   | "amanha"
-  | "semana_atual"
   | "semana_passada"
-  | "mes_atual"
+  | "semana_atual"
+  | "proxima_semana"
   | "mes_passado"
+  | "mes_atual"
+  | "proximo_mes"
   | "periodo";
 
 interface ReunioesPeriodFilterProps {
@@ -33,10 +37,13 @@ const filterOptions: { value: ReuniaoFilterValue; label: string }[] = [
   { value: "ontem", label: "Ontem" },
   { value: "hoje", label: "Hoje" },
   { value: "amanha", label: "Amanhã" },
-  { value: "semana_atual", label: "Semana Atual" },
   { value: "semana_passada", label: "Semana Passada" },
-  { value: "mes_atual", label: "Mês Atual" },
+  { value: "semana_atual", label: "Semana Atual" },
+  { value: "proxima_semana", label: "Próxima Semana" },
   { value: "mes_passado", label: "Mês Passado" },
+  { value: "mes_atual", label: "Mês Atual" },
+  { value: "proximo_mes", label: "Próximo Mês" },
+  { value: "periodo", label: "Período" },
 ];
 
 export function ReunioesPeriodFilter({
@@ -50,36 +57,54 @@ export function ReunioesPeriodFilter({
 }: ReunioesPeriodFilterProps) {
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  const currentLabel = filterOptions.find(o => o.value === value)?.label ?? "Filtro";
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {filterOptions.map((opt) => (
-        <Button
-          key={opt.value}
-          variant={value === opt.value ? "default" : "outline"}
-          size="sm"
-          className="h-8 text-xs px-3 rounded-md"
-          onClick={() => onChange(opt.value)}
-        >
-          {opt.label}
-          {value === opt.value && opt.value === "hoje" && count !== undefined && (
-            <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px] rounded-md">
-              {count}
-            </Badge>
-          )}
-        </Button>
-      ))}
+      {isMobile ? (
+        <Select value={value} onValueChange={(v) => onChange(v as ReuniaoFilterValue)}>
+          <SelectTrigger className="w-[180px] h-9 text-sm">
+            <SelectValue placeholder="Filtro de período" />
+          </SelectTrigger>
+          <SelectContent>
+            {filterOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <>
+          {filterOptions.filter(o => o.value !== "periodo").map((opt) => (
+            <Button
+              key={opt.value}
+              variant={value === opt.value ? "default" : "outline"}
+              size="sm"
+              className="h-8 text-xs px-3 rounded-md"
+              onClick={() => onChange(opt.value)}
+            >
+              {opt.label}
+              {value === opt.value && opt.value === "hoje" && count !== undefined && (
+                <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px] rounded-md">
+                  {count}
+                </Badge>
+              )}
+            </Button>
+          ))}
 
-      {/* Período button */}
-      <Button
-        variant={value === "periodo" ? "default" : "outline"}
-        size="sm"
-        className="h-8 text-xs px-3 rounded-md gap-1.5"
-        onClick={() => onChange("periodo")}
-      >
-        <Calendar className="h-3.5 w-3.5" />
-        Período
-      </Button>
+          {/* Período button */}
+          <Button
+            variant={value === "periodo" ? "default" : "outline"}
+            size="sm"
+            className="h-8 text-xs px-3 rounded-md gap-1.5"
+            onClick={() => onChange("periodo")}
+          >
+            <Calendar className="h-3.5 w-3.5" />
+            Período
+          </Button>
+        </>
+      )}
 
       {/* Count badge for non-hoje and non-periodo active filters */}
       {value !== "todas" && value !== "hoje" && value !== "periodo" && count !== undefined && (
@@ -130,7 +155,6 @@ export function ReunioesPeriodFilter({
               </PopoverContent>
             </Popover>
           </div>
-          {/* Count badge for periodo */}
           {count !== undefined && (
             <Badge className="h-6 px-2 text-xs rounded-md bg-primary text-primary-foreground">
               {count} reunião(ões)
@@ -152,24 +176,32 @@ export function useReunioesPeriodFilter() {
     const today = new Date();
     switch (filterValue) {
       case "todas":
-        return null; // no filtering
+        return null;
       case "ontem":
         return { start: startOfDay(subDays(today, 1)), end: endOfDay(subDays(today, 1)) };
       case "hoje":
         return { start: startOfDay(today), end: endOfDay(today) };
       case "amanha":
         return { start: startOfDay(addDays(today, 1)), end: endOfDay(addDays(today, 1)) };
-      case "semana_atual":
-        return { start: startOfWeek(today, { weekStartsOn: 0 }), end: endOfWeek(today, { weekStartsOn: 0 }) };
       case "semana_passada": {
         const lw = subWeeks(today, 1);
         return { start: startOfWeek(lw, { weekStartsOn: 0 }), end: endOfWeek(lw, { weekStartsOn: 0 }) };
       }
-      case "mes_atual":
-        return { start: startOfMonth(today), end: endOfMonth(today) };
+      case "semana_atual":
+        return { start: startOfWeek(today, { weekStartsOn: 0 }), end: endOfWeek(today, { weekStartsOn: 0 }) };
+      case "proxima_semana": {
+        const nw = addWeeks(today, 1);
+        return { start: startOfWeek(nw, { weekStartsOn: 0 }), end: endOfWeek(nw, { weekStartsOn: 0 }) };
+      }
       case "mes_passado": {
         const lm = subMonths(today, 1);
         return { start: startOfMonth(lm), end: endOfMonth(lm) };
+      }
+      case "mes_atual":
+        return { start: startOfMonth(today), end: endOfMonth(today) };
+      case "proximo_mes": {
+        const nm = addMonths(today, 1);
+        return { start: startOfMonth(nm), end: endOfMonth(nm) };
       }
       case "periodo":
         return { start: startOfDay(customStart), end: endOfDay(customEnd) };
