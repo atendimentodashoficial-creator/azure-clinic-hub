@@ -180,10 +180,34 @@ export default function AdminHomeDashboard() {
       last7Days.push({ dia: dayStr, criadas, concluidas: 0 });
     }
 
-    // Próximas reuniões (ordenadas por data)
+    // Próximas reuniões (futuras, ordenadas por data)
+    const now2 = new Date();
     const proximasReunioes = [...reunioes]
+      .filter(r => new Date(r.data_reuniao) >= now2 && r.status === "agendado")
       .sort((a, b) => new Date(a.data_reuniao).getTime() - new Date(b.data_reuniao).getTime())
       .slice(0, 8);
+
+    // Reuniões hoje
+    const reunioesHoje = reunioes.filter(r => isToday(new Date(r.data_reuniao))).length;
+
+    // Reuniões este mês
+    const mesInicio = startOfMonth(new Date());
+    const mesFim = endOfMonth(new Date());
+    const reunioesMes = reunioes.filter(r => {
+      const d = new Date(r.data_reuniao);
+      return d >= mesInicio && d <= mesFim;
+    });
+    const totalMes = reunioesMes.length;
+
+    // Comparecimento e no-show (apenas reuniões finalizadas)
+    const realizadas = reunioesMes.filter(r => r.status === "realizada" || r.status === "resumido" || r.status === "transcrito").length;
+    const noShow = reunioesMes.filter(r => r.status === "nao_compareceu").length;
+    const finalizadas = realizadas + noShow;
+    const taxaComparecimento = finalizadas > 0 ? Math.round((realizadas / finalizadas) * 100) : 0;
+    const taxaNoShow = finalizadas > 0 ? Math.round((noShow / finalizadas) * 100) : 0;
+    
+    // Conversão = realizadas / total do mês
+    const taxaConversao = totalMes > 0 ? Math.round((realizadas / totalMes) * 100) : 0;
 
 
     // Financeiro
