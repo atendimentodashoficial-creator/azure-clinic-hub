@@ -16,6 +16,7 @@ import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay, star
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { PeriodFilter, usePeriodFilter } from "@/components/filters/PeriodFilter";
 
 const COLORS = ["hsl(var(--primary))", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899"];
 
