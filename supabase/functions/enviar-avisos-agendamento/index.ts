@@ -443,6 +443,13 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get("Authorization") ?? "";
   const cronHeader = req.headers.get("X-Cron-Secret") ?? "";
   const isCronRequest = CRON_SECRET && cronHeader === CRON_SECRET;
+
+  // TEMP MITIGATION: disable cron execution to relieve backend load during incidents
+  if (isCronRequest) {
+    return new Response(JSON.stringify({ success: true, skipped: true, reason: "cron_temporarily_disabled" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     global: {

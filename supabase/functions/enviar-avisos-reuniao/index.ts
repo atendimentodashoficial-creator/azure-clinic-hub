@@ -450,6 +450,13 @@ Deno.serve(async (req) => {
   const cronHeader = req.headers.get("X-Cron-Secret") ?? "";
   const isCronRequest = CRON_SECRET && cronHeader === CRON_SECRET;
 
+  // TEMP MITIGATION: disable cron execution to relieve backend load during incidents
+  if (isCronRequest) {
+    return new Response(JSON.stringify({ success: true, skipped: true, reason: "cron_temporarily_disabled" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     global: {
       fetch: (input, init) => fetchWithTimeout(input, init, SUPABASE_REQUEST_TIMEOUT_MS),

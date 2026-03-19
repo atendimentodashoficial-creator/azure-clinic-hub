@@ -307,8 +307,16 @@ Deno.serve(async (req) => {
   const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
   const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? '';
 
-  // Validate cron secret
+  // TEMP MITIGATION: disable cron execution to relieve backend load during incidents
   const cronHeader = req.headers.get('X-Cron-Secret') ?? '';
+  const isCronCall = cronHeader.length > 0;
+  if (isCronCall) {
+    return new Response(JSON.stringify({ success: true, skipped: true, reason: 'cron_temporarily_disabled' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // If someone calls manually, still require a valid cron secret
   if (!CRON_SECRET || cronHeader !== CRON_SECRET) {
     console.error('[admin-notifications-cron] Invalid or missing cron secret');
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
