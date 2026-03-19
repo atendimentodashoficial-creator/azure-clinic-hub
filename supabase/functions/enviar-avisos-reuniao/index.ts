@@ -433,6 +433,11 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // INCIDENT MITIGATION: temporarily bypass scheduler execution to relieve backend/database pressure.
+  return new Response(JSON.stringify({ success: true, skipped: true, reason: "scheduler_temporarily_disabled" }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
   const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
   const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
