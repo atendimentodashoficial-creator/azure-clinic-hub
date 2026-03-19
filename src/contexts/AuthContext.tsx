@@ -243,12 +243,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           throw new Error("LOGIN_NO_SESSION");
         }
 
-        const { data: sessionData, error: setSessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
+        const setSessionResult = await Promise.race([
+          supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          }),
+          new Promise<{ data: null; error: Error }>((resolve) =>
+            setTimeout(() => resolve({ data: null, error: new Error("SET_SESSION_TIMEOUT") }), SDK_TIMEOUT_MS)
+          ),
+        ]);
 
-        if (setSessionError) throw setSessionError;
+        const { data: sessionData, error: setSessionError } = setSessionResult as
+          | Awaited<ReturnType<typeof supabase.auth.setSession>>
+          | { data: null; error: Error };
+
+        if (setSessionError) {
+          if (setSessionError.message === "SET_SESSION_TIMEOUT") {
+            throw new Error("LOGIN_TIMEOUT");
+          }
+          throw setSessionError;
+        }
 
         return sessionData;
       } catch (fallbackError: any) {
