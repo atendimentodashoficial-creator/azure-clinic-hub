@@ -147,8 +147,7 @@ export function HistoricoClienteDialog({
                 <MetricCard label="Realizadas" value={stats.realizadas} icon={CheckCircle2} accent="text-emerald-600" />
                 <MetricCard label="No-shows" value={stats.noShow} icon={XCircle} accent="text-destructive" />
                 <MetricCard label="Comparecimento" value={`${stats.taxaComparecimento}%`} icon={Percent} accent="text-emerald-600" />
-                <MetricCard label="Convertidas" value={stats.convertidas} icon={TrendingUp} accent="text-blue-600" />
-                <MetricCard label="Duração Média" value={stats.duracaoMedia > 0 ? `${stats.duracaoMedia}min` : "—"} icon={Clock} />
+                <MetricCard label="Conversão" value={`${stats.taxaConversao}%`} icon={TrendingUp} accent="text-blue-600" />
               </div>
 
               {/* Timeline info */}
