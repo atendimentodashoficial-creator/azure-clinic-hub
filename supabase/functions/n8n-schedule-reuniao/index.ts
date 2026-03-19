@@ -263,11 +263,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (!member) {
+      console.log("[n8n-schedule-reuniao] FAIL: selected member not found:", targetMemberId);
       return new Response(JSON.stringify({ error: "Membro não encontrado" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("[n8n-schedule-reuniao] Selected member:", member.nome, "targetUserId:", targetUserId);
 
     const targetUserId = member.auth_user_id || ownerUserId;
 
