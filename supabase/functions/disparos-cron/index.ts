@@ -5,7 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
-const INTERNAL_CALL_TIMEOUT_MS = 12000;
 const CAMPAIGN_CONTROL_TIMEOUT_MS = 15000;
 
 const extractBearerToken = (value: string) =>
@@ -38,27 +37,6 @@ async function parseResponseSafe(response: Response): Promise<any> {
   }
 }
 
-async function callInternalFunction(
-  supabaseUrl: string,
-  functionName: string,
-  cronSecret: string,
-): Promise<{ ok: boolean; status: number; payload: any }> {
-  const response = await fetchWithTimeout(
-    `${supabaseUrl}/functions/v1/${functionName}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Cron-Secret": cronSecret,
-      },
-    },
-    INTERNAL_CALL_TIMEOUT_MS,
-  );
-
-  const payload = await parseResponseSafe(response);
-  return { ok: response.ok, status: response.status, payload };
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -87,11 +65,6 @@ Deno.serve(async (req) => {
   const isValidAnonKey = anonCandidates.includes(authToken) || anonCandidates.includes(apikeyHeader);
 
   if (!isValidCronSecret && !isValidServiceRole && !isValidAnonKey) {
-    console.error("Invalid or missing authentication", {
-      hasCronHeader: cronHeader.length > 0,
-      hasAuthHeader: authHeaderRaw.length > 0,
-      hasApiKeyHeader: apikeyHeader.length > 0,
-    });
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -99,7 +72,6 @@ Deno.serve(async (req) => {
   }
 
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-    console.error("Missing backend env vars");
     return new Response(JSON.stringify({ error: "Missing backend env vars" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -110,31 +82,12 @@ Deno.serve(async (req) => {
 
   try {
     const now = new Date();
-    console.log(`[CRON] Starting disparos cron at ${now.toISOString()}`);
+    console.log(`[CRON] Starting disparos-cron (campaign-only) at ${now.toISOString()}`);
 
-    const internalFunctions = [
-      "admin-notifications-cron",
-      "enviar-avisos-agendamento",
-      "enviar-avisos-reuniao",
-    ];
+    // IMPORTANT: This function was intentionally reduced to campaign processing only.
+    // It no longer triggers other cron functions (admin-notifications / avisos) to avoid
+    // duplicate schedulers and reduce overall backend load during instability.
 
-    for (const functionName of internalFunctions) {
-      try {
-        console.log(`[CRON] Triggering ${functionName}...`);
-        const result = await callInternalFunction(SUPABASE_URL, functionName, CRON_SECRET);
-
-        if (!result.ok) {
-          console.warn(`[CRON] ${functionName} failed with status ${result.status}`, result.payload);
-          continue;
-        }
-
-        console.log(`[CRON] ${functionName} result:`, result.payload);
-      } catch (error: any) {
-        console.error(`[CRON] Error calling ${functionName}:`, error?.message ?? error);
-      }
-    }
-
-    // Find all running campaigns that are ready to continue
     const { data: campanhas, error: campanhasError } = await supabase
       .from("disparos_campanhas")
       .select("id, nome, user_id, next_send_at, status, delay_min")
@@ -147,21 +100,15 @@ Deno.serve(async (req) => {
     }
 
     if (!campanhas || campanhas.length === 0) {
-      console.log("[CRON] No running campaigns to process");
-      return new Response(
-        JSON.stringify({ success: true, message: "No campaigns to process", processed: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ success: true, message: "No campaigns to process", processed: 0 }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-
-    console.log(`[CRON] Found ${campanhas.length} campaigns to process`);
 
     const results: any[] = [];
 
     for (const campanha of campanhas) {
       try {
-        console.log(`[CRON] Processing campaign \"${campanha.nome}\" (${campanha.id}) for user ${campanha.user_id}`);
-
         const response = await fetchWithTimeout(
           `${SUPABASE_URL}/functions/v1/disparos-campanha-control`,
           {
@@ -178,52 +125,30 @@ Deno.serve(async (req) => {
           CAMPAIGN_CONTROL_TIMEOUT_MS,
         );
 
-        const result = await parseResponseSafe(response);
-
-        if (!response.ok) {
-          console.warn(`[CRON] Campaign \"${campanha.nome}\" returned status ${response.status}`, result);
-        }
-
-        console.log(`[CRON] Campaign \"${campanha.nome}\" result:`, result);
+        const payload = await parseResponseSafe(response);
 
         results.push({
           campanha_id: campanha.id,
           nome: campanha.nome,
-          success: result?.success ?? response.ok,
-          message: result?.message || result?.error,
-          skipped: result?.skipped || false,
+          status: response.status,
+          ok: response.ok,
+          payload,
         });
       } catch (error: any) {
-        console.error(`[CRON] Error processing campaign ${campanha.id}:`, error);
         results.push({
           campanha_id: campanha.id,
           nome: campanha.nome,
-          success: false,
-          error: error.message,
+          ok: false,
+          error: error?.message ?? String(error),
         });
       }
     }
 
-    const successCount = results.filter((r) => r.success && !r.skipped).length;
-    const skippedCount = results.filter((r) => r.skipped).length;
-
-    console.log(
-      `[CRON] Finished. Processed: ${successCount}, Skipped: ${skippedCount}, Failed: ${results.length - successCount - skippedCount}`,
-    );
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        processed: successCount,
-        skipped: skippedCount,
-        total: campanhas.length,
-        results,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ success: true, total: campanhas.length, results }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error: any) {
-    console.error("[CRON] Error in disparos-cron:", error);
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+    return new Response(JSON.stringify({ success: false, error: error?.message ?? String(error) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
