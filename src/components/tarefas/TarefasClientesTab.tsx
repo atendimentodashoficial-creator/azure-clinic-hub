@@ -114,7 +114,14 @@ export default function TarefasClientesTab() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="font-semibold text-sm truncate">{cliente.nome}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-semibold text-sm truncate">{cliente.nome}</p>
+                          {cliente.tem_ia && (
+                            <span className="shrink-0 flex items-center gap-1 rounded-full bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-medium">
+                              <Bot className="h-3 w-3" /> I.A
+                            </span>
+                          )}
+                        </div>
                         {cliente.empresa && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
                             <Building2 className="h-3 w-3 shrink-0" /> {cliente.empresa}
