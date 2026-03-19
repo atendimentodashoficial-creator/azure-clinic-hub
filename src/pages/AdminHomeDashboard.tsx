@@ -237,6 +237,7 @@ export default function AdminHomeDashboard() {
       receitaPaga,
       despesasPrevistas,
       despesasPagas,
+      margemLucro: receitaPrevista > 0 ? ((receitaPrevista - despesasPrevistas) / receitaPrevista) * 100 : 0,
     };
   }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasPeriodo, todasDespesas, dateStart, dateEnd]);
 
@@ -310,11 +311,12 @@ export default function AdminHomeDashboard() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <DollarSign className="h-4 w-4" /> Resumo Financeiro
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               <QuickStat icon={TrendingUp} label="Receita Prevista" value={stats.receitaPrevista.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-primary" onClick={() => navigate("/admin/financeiro")} />
               <QuickStat icon={DollarSign} label="Receita Paga" value={stats.receitaPaga.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-emerald-600" onClick={() => navigate("/admin/financeiro")} />
               <QuickStat icon={Receipt} label="Despesas Previstas" value={stats.despesasPrevistas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-amber-600" onClick={() => navigate("/admin/despesas")} />
               <QuickStat icon={Wallet} label="Despesas Pagas" value={stats.despesasPagas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-amber-600" onClick={() => navigate("/admin/despesas")} />
+              <QuickStat icon={TrendingUp} label="Margem de Lucro" value={`${stats.margemLucro.toFixed(1)}%`} accent={stats.margemLucro >= 0 ? "text-emerald-600" : "text-destructive"} subtitle="Receita vs Despesas" onClick={() => navigate("/admin/financeiro")} />
             </div>
           </div>
 
