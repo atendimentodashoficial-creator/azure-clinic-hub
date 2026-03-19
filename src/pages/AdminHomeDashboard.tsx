@@ -60,7 +60,7 @@ export default function AdminHomeDashboard() {
     queryKey: ["dashboard-clientes", effectiveUserId],
     queryFn: async () => {
       if (!effectiveUserId) return [];
-      const { data } = await supabase.from("tarefas_clientes").select("id, nome").eq("user_id", effectiveUserId);
+      const { data } = await supabase.from("tarefas_clientes").select("id, nome, tipo, empresa, foto_perfil_url").eq("user_id", effectiveUserId);
       return data || [];
     },
     enabled: !!effectiveUserId,
@@ -550,6 +550,56 @@ export default function AdminHomeDashboard() {
                 )}
               </CardContent>
             </Card>
+
+          {/* Clientes Internos */}
+          {(() => {
+            const clientesInternos = clientes.filter(c => c.tipo === "interno");
+            return (
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      Clientes
+                    </CardTitle>
+                    <button
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      onClick={() => navigate("/admin/tarefas-clientes")}
+                    >
+                      Ver todos <ArrowRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {clientesInternos.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {clientesInternos.slice(0, 6).map(c => (
+                        <div
+                          key={c.id}
+                          className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 cursor-pointer hover:bg-accent/50 transition-colors"
+                          onClick={() => navigate(`/admin/tarefas-clientes/${c.id}`)}
+                        >
+                          {c.foto_perfil_url ? (
+                            <img src={c.foto_perfil_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                              {c.nome?.charAt(0)?.toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{c.nome}</p>
+                            {c.empresa && <p className="text-xs text-muted-foreground truncate">{c.empresa}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm text-center py-6">Nenhum cliente interno cadastrado</p>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })()}
 
         </>
       )}
