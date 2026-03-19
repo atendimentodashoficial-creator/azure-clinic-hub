@@ -314,7 +314,22 @@ export default function Reunioes() {
     },
   });
 
-  const isWithinOneHour = (dataReuniao: string) => {
+  const toggleConversaoMutation = useMutation({
+    mutationFn: async ({ reuniaoId, converteu }: { reuniaoId: string; converteu: boolean }) => {
+      const { error } = await supabase
+        .from("reunioes" as any)
+        .update({ converteu } as any)
+        .eq("id", reuniaoId);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["reunioes"] });
+      toast.success(vars.converteu ? "Reunião marcada como convertida!" : "Conversão removida");
+    },
+    onError: () => toast.error("Erro ao atualizar conversão"),
+  });
+
+
     const now = new Date();
     const reuniaoTime = new Date(dataReuniao);
     const diffMs = reuniaoTime.getTime() - now.getTime();
