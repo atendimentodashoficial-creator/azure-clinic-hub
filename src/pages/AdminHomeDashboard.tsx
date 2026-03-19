@@ -517,6 +517,7 @@ export default function AdminHomeDashboard() {
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
                     <UsersRound className="h-4 w-4" />
                     Equipe
+                    <Badge variant="secondary">{membros.length}</Badge>
                   </CardTitle>
                   <button
                     className="text-xs text-primary hover:underline flex items-center gap-1"
