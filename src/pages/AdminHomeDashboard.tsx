@@ -517,12 +517,14 @@ function QuickStat({
   value,
   accent,
   onClick,
+  subtitle,
 }: {
   icon: React.ElementType;
   label: string;
   value: number | string;
   accent: string;
   onClick?: () => void;
+  subtitle?: string;
 }) {
   return (
     <Card
@@ -532,15 +534,14 @@ function QuickStat({
       )}
       onClick={onClick}
     >
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0">
-          <Icon className="h-5 w-5 text-primary-foreground" />
+      <div className="flex items-center gap-2 mb-2">
+        <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center shrink-0">
+          <Icon className="h-4 w-4 text-primary-foreground" />
         </div>
-        <div>
-          <p className={cn("text-xl font-bold tabular-nums leading-tight", accent)}>{value}</p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-        </div>
+        <p className="text-xs text-muted-foreground leading-tight">{label}</p>
       </div>
+      <p className={cn("text-lg font-bold tabular-nums leading-tight", accent)}>{value}</p>
+      {subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
     </Card>
   );
 }
