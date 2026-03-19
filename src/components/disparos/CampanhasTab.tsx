@@ -766,7 +766,7 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
   }
 
   return (
-    <div className="space-y-4 px-0 py-3 sm:p-4">
+    <div className="space-y-4 py-3 sm:py-4">
       {/* Period Filter */}
       <Card className="p-4">
         <PeriodFilter
