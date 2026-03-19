@@ -15,6 +15,9 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    const body = await req.json();
+    console.log("[n8n-schedule-reuniao] Received payload:", JSON.stringify(body));
+
     const {
       tipo_reuniao_id,
       membro_id,
@@ -24,19 +27,21 @@ Deno.serve(async (req) => {
       cliente_telefone,
       titulo,
       cargo_filtro,
-    } = await req.json();
+    } = body;
 
     // Default: only consider "Closer" members
     const cargoFilter = cargo_filtro || "Closer";
 
     // Validações
     if (!tipo_reuniao_id && !membro_id) {
+      console.log("[n8n-schedule-reuniao] FAIL: missing tipo_reuniao_id and membro_id");
       return new Response(JSON.stringify({ error: "tipo_reuniao_id ou membro_id é obrigatório" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (!data_hora) {
+      console.log("[n8n-schedule-reuniao] FAIL: missing data_hora");
       return new Response(JSON.stringify({ error: "data_hora é obrigatório (ISO 8601 ou YYYY-MM-DDTHH:mm)" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -47,6 +52,7 @@ Deno.serve(async (req) => {
     const agora = new Date();
     const dataHoraSolicitada = new Date(data_hora);
     if (dataHoraSolicitada.getTime() <= agora.getTime()) {
+      console.log("[n8n-schedule-reuniao] FAIL: past date. Requested:", data_hora, "Now:", agora.toISOString());
       return new Response(JSON.stringify({ error: "Não é possível agendar em horários que já passaram" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -66,6 +72,7 @@ Deno.serve(async (req) => {
         .eq("id", tipo_reuniao_id)
         .single();
       if (error || !data) {
+        console.log("[n8n-schedule-reuniao] FAIL: tipo_reuniao not found:", tipo_reuniao_id, error);
         return new Response(JSON.stringify({ error: "Tipo de reunião não encontrado" }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -83,6 +90,7 @@ Deno.serve(async (req) => {
         .eq("id", membro_id)
         .single();
       if (!member) {
+        console.log("[n8n-schedule-reuniao] FAIL: membro not found:", membro_id);
         return new Response(JSON.stringify({ error: "Membro não encontrado" }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -104,6 +112,7 @@ Deno.serve(async (req) => {
         .eq("tipo_reuniao_id", tipo_reuniao_id);
 
       if (!tipoMembros || tipoMembros.length === 0) {
+        console.log("[n8n-schedule-reuniao] FAIL: no members linked to tipo_reuniao:", tipo_reuniao_id);
         return new Response(JSON.stringify({ error: "Nenhum profissional vinculado a este tipo de reunião" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -122,6 +131,7 @@ Deno.serve(async (req) => {
       const membroIdsFiltrados = (membrosComCargo || []).map((m: any) => m.id);
 
       if (membroIdsFiltrados.length === 0) {
+        console.log("[n8n-schedule-reuniao] FAIL: no members with cargo:", cargoFilter, "membroIds:", membroIds);
         return new Response(JSON.stringify({ error: `Nenhum profissional com cargo "${cargoFilter}" vinculado a este tipo de reunião` }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -180,6 +190,7 @@ Deno.serve(async (req) => {
       }
 
       if (membrosDisponiveis.length === 0) {
+        console.log("[n8n-schedule-reuniao] FAIL: no members available on date. membroIdsFiltrados:", membroIdsFiltrados);
         return new Response(JSON.stringify({ error: "Nenhum profissional disponível nesta data" }), {
           status: 409,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -228,6 +239,7 @@ Deno.serve(async (req) => {
       }
 
       if (candidates.length === 0) {
+        console.log("[n8n-schedule-reuniao] FAIL: all members busy. membrosDisponiveis:", membrosDisponiveis);
         return new Response(JSON.stringify({ error: "Todos os profissionais estão ocupados neste horário" }), {
           status: 409,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -251,11 +263,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (!member) {
+      console.log("[n8n-schedule-reuniao] FAIL: selected member not found:", targetMemberId);
       return new Response(JSON.stringify({ error: "Membro não encontrado" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("[n8n-schedule-reuniao] Selected member:", member.nome, "targetUserId:", targetUserId);
 
     const targetUserId = member.auth_user_id || ownerUserId;
 
@@ -278,6 +293,7 @@ Deno.serve(async (req) => {
     });
 
     if (hasConflict) {
+      console.log("[n8n-schedule-reuniao] FAIL: conflict for", targetUserId, "at", data_hora);
       return new Response(JSON.stringify({ error: "Este profissional já possui uma reunião neste horário" }), {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -406,10 +422,11 @@ Deno.serve(async (req) => {
       .single();
 
     if (reuniaoError || !reuniao) {
+      console.error("[n8n-schedule-reuniao] FAIL: insert error:", reuniaoError);
       throw reuniaoError || new Error("Falha ao criar reunião");
     }
 
-    // 9. Kanban auto-move for WhatsApp and Disparos
+    console.log("[n8n-schedule-reuniao] SUCCESS: reuniao created:", reuniao.id, "for member:", member.nome, "at:", data_hora);
     if (cliente_telefone) {
       const last8 = cliente_telefone.replace(/\D/g, '').slice(-8);
       if (last8.length === 8) {
