@@ -67,23 +67,22 @@ export default function AdminHomeDashboard() {
     staleTime: 120_000,
   });
 
-  // Fetch reuniões (mês inteiro + futuras para "próximas")
+  // Fetch reuniões based on period filter
   const { data: reunioes = [], isLoading: reunioesLoading } = useQuery({
-    queryKey: ["dashboard-reunioes", effectiveUserId],
+    queryKey: ["dashboard-reunioes", effectiveUserId, dateStart.toISOString(), dateEnd.toISOString()],
     queryFn: async () => {
       if (!effectiveUserId) return [];
-      const mesInicio = startOfMonth(new Date());
-      const mesFim = endOfMonth(new Date());
-      // Fetch reuniões do mês atual + próximos 7 dias (o que for maior)
+      const todayStart = startOfDay(new Date());
       const sevenDaysLater = new Date();
       sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
-      const limiteMax = mesFim > sevenDaysLater ? mesFim : sevenDaysLater;
+      const fetchStart = dateStart < todayStart ? dateStart : todayStart;
+      const fetchEnd = dateEnd > sevenDaysLater ? dateEnd : sevenDaysLater;
       const { data } = await supabase
         .from("reunioes")
         .select("id, titulo, data_reuniao, status, tipo_reuniao_id, participantes")
         .eq("user_id", effectiveUserId)
-        .gte("data_reuniao", mesInicio.toISOString())
-        .lte("data_reuniao", limiteMax.toISOString())
+        .gte("data_reuniao", fetchStart.toISOString())
+        .lte("data_reuniao", fetchEnd.toISOString())
         .order("data_reuniao");
       return data || [];
     },
@@ -190,23 +189,21 @@ export default function AdminHomeDashboard() {
     // Reuniões hoje
     const reunioesHoje = reunioes.filter(r => isToday(new Date(r.data_reuniao))).length;
 
-    // Reuniões este mês
-    const mesInicio = startOfMonth(new Date());
-    const mesFim = endOfMonth(new Date());
-    const reunioesMes = reunioes.filter(r => {
+    // Reuniões no período selecionado
+    const reunioesPeriodo = reunioes.filter(r => {
       const d = new Date(r.data_reuniao);
-      return d >= mesInicio && d <= mesFim;
+      return d >= dateStart && d <= dateEnd;
     });
-    const totalMes = reunioesMes.length;
+    const totalMes = reunioesPeriodo.length;
 
-    // Comparecimento e no-show (apenas reuniões finalizadas)
-    const realizadas = reunioesMes.filter(r => r.status === "realizada" || r.status === "resumido" || r.status === "transcrito").length;
-    const noShow = reunioesMes.filter(r => r.status === "nao_compareceu").length;
+    // Comparecimento e no-show (apenas reuniões finalizadas no período)
+    const realizadas = reunioesPeriodo.filter(r => r.status === "realizada" || r.status === "resumido" || r.status === "transcrito").length;
+    const noShow = reunioesPeriodo.filter(r => r.status === "nao_compareceu").length;
     const finalizadas = realizadas + noShow;
     const taxaComparecimento = finalizadas > 0 ? Math.round((realizadas / finalizadas) * 100) : 0;
     const taxaNoShow = finalizadas > 0 ? Math.round((noShow / finalizadas) * 100) : 0;
     
-    // Conversão = realizadas / total do mês
+    // Conversão = realizadas / total do período
     const taxaConversao = totalMes > 0 ? Math.round((realizadas / totalMes) * 100) : 0;
 
 
@@ -363,7 +360,7 @@ export default function AdminHomeDashboard() {
             </h2>
              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                <QuickStat icon={CalendarDays} label="Reuniões Hoje" value={stats.reunioesHoje} accent="text-amber-500" onClick={() => navigate("/admin/reunioes")} />
-               <QuickStat icon={CalendarDays} label="Reuniões este Mês" value={stats.totalMes} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={CalendarDays} label="Reuniões no Período" value={stats.totalMes} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={CheckCircle2} label="Comparecimento" value={`${stats.taxaComparecimento}%`} accent="text-emerald-600" subtitle={`${stats.reunioesRealizadas} reuniões`} onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={AlertTriangle} label="No-show" value={`${stats.taxaNoShow}%`} accent="text-destructive" subtitle={`${stats.reunioesNoShow} reuniões`} onClick={() => navigate("/admin/reunioes")} />
                <QuickStat icon={TrendingUp} label="Conversão" value={`${stats.taxaConversao}%`} accent="text-purple-600" subtitle={`${stats.reunioesRealizadas} de ${stats.totalMes}`} onClick={() => navigate("/admin/reunioes")} />
