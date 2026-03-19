@@ -201,9 +201,23 @@ export default function AdminHomeDashboard() {
       }
     }, 0);
 
-    // For "despesas pagas" we approximate using the same logic (no payment status on despesas table)
-    const margemLucro = receitaPaga > 0 ? Math.round(((receitaPaga - despesasPrevistas) / receitaPaga) * 1000) / 10 : 0;
-    const lucroLiquido = receitaPaga - despesasPrevistas;
+    // Despesas pagas = pontuais com data no passado + recorrentes ativas até hoje
+    const hoje = new Date();
+    const despesasPagas = todasDespesas.reduce((sum, d) => {
+      if (d.recorrente) {
+        const inicio = d.data_inicio ? new Date(d.data_inicio) : null;
+        const fim = d.data_fim ? new Date(d.data_fim) : null;
+        if (inicio && inicio > dateEnd) return sum;
+        if (fim && fim < dateStart) return sum;
+        if (inicio && inicio > hoje) return sum;
+        return sum + (d.valor || 0);
+      } else {
+        if (!d.data_despesa) return sum;
+        const dd = new Date(d.data_despesa);
+        if (dd >= dateStart && dd <= dateEnd && dd <= hoje) return sum + (d.valor || 0);
+        return sum;
+      }
+    }, 0);
 
     return {
       totalTarefas: tarefas.length,
@@ -222,8 +236,7 @@ export default function AdminHomeDashboard() {
       receitaPrevista,
       receitaPaga,
       despesasPrevistas,
-      margemLucro,
-      lucroLiquido,
+      despesasPagas,
     };
   }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasPeriodo, todasDespesas, dateStart, dateEnd]);
 
