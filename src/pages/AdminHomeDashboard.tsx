@@ -182,11 +182,11 @@ export default function AdminHomeDashboard() {
       .slice(0, 8);
 
 
-    // Faturamento do período (cobrancas)
-    const faturamentoMensal = cobrancasPeriodo.reduce((sum, c) => sum + (c.valor || 0), 0);
+    // Financeiro
+    const receitaPrevista = cobrancasPeriodo.reduce((sum, c) => sum + (c.valor || 0), 0);
+    const receitaPaga = cobrancasPeriodo.filter(c => c.status === "pago").reduce((sum, c) => sum + (c.valor || 0), 0);
 
-    // Gastos do período (despesas pontuais + recorrentes ativas no período)
-    const gastosMensal = todasDespesas.reduce((sum, d) => {
+    const despesasPrevistas = todasDespesas.reduce((sum, d) => {
       if (d.recorrente) {
         const inicio = d.data_inicio ? new Date(d.data_inicio) : null;
         const fim = d.data_fim ? new Date(d.data_fim) : null;
@@ -196,12 +196,14 @@ export default function AdminHomeDashboard() {
       } else {
         if (!d.data_despesa) return sum;
         const dd = new Date(d.data_despesa);
-        if (dd >= dateStart && dd <= dateEnd) {
-          return sum + (d.valor || 0);
-        }
+        if (dd >= dateStart && dd <= dateEnd) return sum + (d.valor || 0);
         return sum;
       }
     }, 0);
+
+    // For "despesas pagas" we approximate using the same logic (no payment status on despesas table)
+    const margemLucro = receitaPaga > 0 ? Math.round(((receitaPaga - despesasPrevistas) / receitaPaga) * 1000) / 10 : 0;
+    const lucroLiquido = receitaPaga - despesasPrevistas;
 
     return {
       totalTarefas: tarefas.length,
@@ -217,8 +219,11 @@ export default function AdminHomeDashboard() {
       totalClientes: clientes.length,
       campanhasAtivas: campanhas.filter(c => c.status === "em_andamento").length,
       campanhasPausadas: campanhas.filter(c => c.status === "pausada").length,
-      faturamentoMensal,
-      gastosMensal,
+      receitaPrevista,
+      receitaPaga,
+      despesasPrevistas,
+      margemLucro,
+      lucroLiquido,
     };
   }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasPeriodo, todasDespesas, dateStart, dateEnd]);
 
