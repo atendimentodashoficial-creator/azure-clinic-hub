@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ListChecks, Users, Video, MessageSquare,
   CheckCircle2, Clock, AlertTriangle, TrendingUp, CalendarDays,
-  Building2, UsersRound, Package, Send, ArrowRight, DollarSign, Wallet
+  Building2, UsersRound, Package, Send, ArrowRight, DollarSign, Wallet,
+  Receipt, BarChart3, Target
 } from "lucide-react";
 import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
