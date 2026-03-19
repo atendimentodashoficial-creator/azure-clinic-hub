@@ -227,16 +227,10 @@ export default function AdminHomeDashboard() {
               accent="text-primary"
               onClick={() => navigate("/admin/reunioes")}
             />
-            <QuickStat
-              icon={CheckCircle2}
-              label="Concluídas"
-              value={stats.tarefasConcluidas}
-              accent="text-green-600"
-            />
           </div>
 
           {/* Second Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <QuickStat
               icon={Building2}
               label="Clientes"
