@@ -13,7 +13,8 @@ import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
 import { extractCountryCode, formatPhoneByCountry, getPhonePlaceholder, normalizePhone, stripCountryCode } from "@/utils/phoneFormat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Instagram, Link, Globe, MessageSquare, Camera, X } from "lucide-react";
+import { Plus, Instagram, Link, Globe, MessageSquare, Camera, X, Bot } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface NovoClienteDialogProps {
