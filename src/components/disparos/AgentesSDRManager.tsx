@@ -246,7 +246,7 @@ export function AgentesSDRManager({ filterTag, emptyIcon, emptyMessage }: Agente
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
               <Bot className="h-5 w-5 text-primary" />
-              System Prompts dos Agentes
+              System Prompts
             </CardTitle>
             <div className="flex items-center gap-2">
               {bulkMode ? (
