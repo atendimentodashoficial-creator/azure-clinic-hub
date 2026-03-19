@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ListChecks, Users, Video, MessageSquare,
   CheckCircle2, Clock, AlertTriangle, TrendingUp, CalendarDays,
-  Building2, UsersRound, Package, Send, ArrowRight
+  Building2, UsersRound, Package, Send, ArrowRight, DollarSign, Wallet
 } from "lucide-react";
-import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay } from "date-fns";
+import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -101,6 +101,42 @@ export default function AdminHomeDashboard() {
     staleTime: 60_000,
   });
 
+  // Fetch cobrancas do mês atual (faturamento)
+  const mesAtual = format(new Date(), "yyyy-MM");
+  const inicioMes = startOfMonth(new Date()).toISOString();
+  const fimMes = endOfMonth(new Date()).toISOString();
+
+  const { data: cobrancasMes = [] } = useQuery({
+    queryKey: ["dashboard-cobrancas-mes", effectiveUserId, mesAtual],
+    queryFn: async () => {
+      if (!effectiveUserId) return [];
+      const { data } = await supabase
+        .from("cobrancas")
+        .select("id, valor, status, data_vencimento")
+        .eq("user_id", effectiveUserId)
+        .gte("data_vencimento", inicioMes)
+        .lte("data_vencimento", fimMes);
+      return data || [];
+    },
+    enabled: !!effectiveUserId,
+    staleTime: 60_000,
+  });
+
+  // Fetch despesas do mês atual (gastos)
+  const { data: despesasMes = [] } = useQuery({
+    queryKey: ["dashboard-despesas-mes", effectiveUserId, mesAtual],
+    queryFn: async () => {
+      if (!effectiveUserId) return [];
+      const { data } = await supabase
+        .from("despesas")
+        .select("id, valor, data_despesa, recorrente, data_inicio, data_fim")
+        .eq("user_id", effectiveUserId);
+      return data || [];
+    },
+    enabled: !!effectiveUserId,
+    staleTime: 60_000,
+  });
+
   // Computed stats
   const stats = useMemo(() => {
     const tarefas = tarefasData?.tarefas || [];
@@ -145,6 +181,28 @@ export default function AdminHomeDashboard() {
       .slice(0, 8);
 
 
+    // Faturamento mensal (cobrancas do mês)
+    const faturamentoMensal = cobrancasMes.reduce((sum, c) => sum + (c.valor || 0), 0);
+
+    // Gastos mensais (despesas pontuais do mês + recorrentes ativas)
+    const mesAtualDate = new Date();
+    const gastosMensal = despesasMes.reduce((sum, d) => {
+      if (d.recorrente) {
+        const inicio = d.data_inicio ? new Date(d.data_inicio) : null;
+        const fim = d.data_fim ? new Date(d.data_fim) : null;
+        if (inicio && inicio > mesAtualDate) return sum;
+        if (fim && fim < startOfMonth(mesAtualDate)) return sum;
+        return sum + (d.valor || 0);
+      } else {
+        if (!d.data_despesa) return sum;
+        const dd = new Date(d.data_despesa);
+        if (dd >= startOfMonth(mesAtualDate) && dd <= endOfMonth(mesAtualDate)) {
+          return sum + (d.valor || 0);
+        }
+        return sum;
+      }
+    }, 0);
+
     return {
       totalTarefas: tarefas.length,
       tarefasAtivas: ativas.length,
@@ -159,8 +217,10 @@ export default function AdminHomeDashboard() {
       totalClientes: clientes.length,
       campanhasAtivas: campanhas.filter(c => c.status === "em_andamento").length,
       campanhasPausadas: campanhas.filter(c => c.status === "pausada").length,
+      faturamentoMensal,
+      gastosMensal,
     };
-  }, [tarefasData, reunioes, membros, clientes, campanhas]);
+  }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasMes, despesasMes]);
 
   const isLoading = tarefasLoading || membrosLoading || clientesLoading || reunioesLoading;
 
@@ -230,7 +290,7 @@ export default function AdminHomeDashboard() {
           </div>
 
           {/* Second Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <QuickStat
               icon={Building2}
               label="Clientes"
@@ -251,6 +311,20 @@ export default function AdminHomeDashboard() {
               value={stats.totalReunioesProximas}
               accent="text-primary"
               onClick={() => navigate("/admin/reunioes")}
+            />
+            <QuickStat
+              icon={DollarSign}
+              label="Faturamento Mensal"
+              value={stats.faturamentoMensal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              accent="text-emerald-600"
+              onClick={() => navigate("/admin/financeiro")}
+            />
+            <QuickStat
+              icon={Wallet}
+              label="Gastos Mensais"
+              value={stats.gastosMensal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              accent="text-amber-600"
+              onClick={() => navigate("/admin/despesas")}
             />
           </div>
 
@@ -454,7 +528,7 @@ function QuickStat({
 }: {
   icon: React.ElementType;
   label: string;
-  value: number;
+  value: number | string;
   accent: string;
   onClick?: () => void;
 }) {
@@ -471,7 +545,7 @@ function QuickStat({
           <Icon className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
-          <p className={cn("text-2xl font-bold", accent)}>{value}</p>
+          <p className={cn("text-2xl font-bold tabular-nums", accent)}>{value}</p>
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </div>
