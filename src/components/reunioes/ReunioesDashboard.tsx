@@ -153,7 +153,7 @@ export function ReunioesDashboard({ reunioes }: ReunioesDashboardProps) {
   );
 }
 
-function MetricCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string | number; color?: string }) {
+function MetricCard({ icon: Icon, label, value, color, subtitle }: { icon: any; label: string; value: string | number; color?: string; subtitle?: string }) {
   return (
     <Card>
       <CardContent className="p-3 flex items-center gap-3">
@@ -163,6 +163,7 @@ function MetricCard({ icon: Icon, label, value, color }: { icon: any; label: str
         <div>
           <p className="text-xs text-muted-foreground">{label}</p>
           <p className={cn("text-lg font-bold", color)}>{value}</p>
+          {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
         </div>
       </CardContent>
     </Card>
