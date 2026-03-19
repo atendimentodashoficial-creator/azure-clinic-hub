@@ -978,9 +978,8 @@ export function DisparosKanban({ chats, onChatSelect, selectedChatId, onChatsDel
 
         <div className="flex-1" />
         
-        <span className="text-sm text-muted-foreground">
-          {filteredChats.length} conversa{filteredChats.length !== 1 ? "s" : ""} • {columns.length} etapa{columns.length !== 1 ? "s" : ""}
-        </span>
+
+
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">
