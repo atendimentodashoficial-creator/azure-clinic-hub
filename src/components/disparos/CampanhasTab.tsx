@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Play, Pause, Trash2, RefreshCw, Clock, CheckCircle, XCircle, AlertCircle, Users, Pencil, Copy, BarChart3, WifiOff, RotateCcw, Wifi, ArrowRight, Type, Send, Ban, Megaphone } from "lucide-react";
+import { Play, Pause, Trash2, RefreshCw, Clock, CheckCircle, XCircle, AlertCircle, Users, Pencil, Copy, BarChart3, WifiOff, RotateCcw, Wifi, ArrowRight, Type, Send, Ban, Megaphone, Video } from "lucide-react";
 import { EditarCampanhaDialog } from "./EditarCampanhaDialog";
 import { ContatosCampanhaDialog } from "./ContatosCampanhaDialog";
 import { RelatorioCampanhaDialog } from "./RelatorioCampanhaDialog";
