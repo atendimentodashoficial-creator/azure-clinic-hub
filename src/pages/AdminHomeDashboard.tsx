@@ -406,13 +406,16 @@ export default function AdminHomeDashboard() {
             {/* Próximas Reuniões */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Video className="h-4 w-4" />
-                  Próximas Reuniões
-                  {stats.proximasReunioes.length > 0 && (
-                    <Badge variant="secondary" className="ml-auto">{stats.proximasReunioes.length}</Badge>
-                  )}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    Próximas Reuniões
+                    <Badge variant="secondary">{stats.totalReunioesProximas}</Badge>
+                  </CardTitle>
+                  <button className="text-xs text-primary hover:underline flex items-center gap-1" onClick={() => navigate("/admin/reunioes")}>
+                    Ver todas <ArrowRight className="h-3 w-3" />
+                  </button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2">
                 {stats.proximasReunioes.length > 0 ? (
@@ -444,11 +447,6 @@ export default function AdminHomeDashboard() {
                 ) : (
                   <p className="text-muted-foreground text-sm text-center py-6">Nenhuma reunião agendada</p>
                 )}
-                <div className="pt-1 text-right">
-                  <button className="text-xs text-primary hover:underline inline-flex items-center gap-1" onClick={() => navigate("/admin/reunioes")}>
-                    Ver todas <ArrowRight className="h-3 w-3" />
-                  </button>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -519,6 +517,7 @@ export default function AdminHomeDashboard() {
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
                     <UsersRound className="h-4 w-4" />
                     Equipe
+                    <Badge variant="secondary">{membros.length}</Badge>
                   </CardTitle>
                   <button
                     className="text-xs text-primary hover:underline flex items-center gap-1"
@@ -563,6 +562,7 @@ export default function AdminHomeDashboard() {
                     <CardTitle className="text-base font-semibold flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
                       Clientes
+                      <Badge variant="secondary">{clientes.filter(c => c.tipo === "interno").length}</Badge>
                     </CardTitle>
                     <button
                       className="text-xs text-primary hover:underline flex items-center gap-1"
