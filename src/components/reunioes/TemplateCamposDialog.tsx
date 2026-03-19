@@ -27,7 +27,7 @@ interface TemplateCampo {
   ativo: boolean;
 }
 
-export function TemplateCamposDialog() {
+export function TemplateCamposDialog({ iconOnly = false }: { iconOnly?: boolean }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
