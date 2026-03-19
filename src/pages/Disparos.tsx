@@ -1003,6 +1003,7 @@ export default function Disparos() {
           if (!inserted?.instancia_id || !allowedInstanciaIds.has(inserted.instancia_id)) return;
           lastSeenUpdateMs = Math.max(lastSeenUpdateMs, getUpdateTimeMs(inserted));
           pollIntervalMs = 2000;
+          stalePollCount = 0;
           pendingRef.current.set(inserted.id, inserted);
           scheduleFlush();
         }
@@ -1021,6 +1022,7 @@ export default function Disparos() {
           if (!updated?.instancia_id || !allowedInstanciaIds.has(updated.instancia_id)) return;
           lastSeenUpdateMs = Math.max(lastSeenUpdateMs, getUpdateTimeMs(updated));
           pollIntervalMs = 2000;
+          stalePollCount = 0;
           pendingRef.current.set(updated.id, updated);
           scheduleFlush();
         }
@@ -1028,6 +1030,7 @@ export default function Disparos() {
       .subscribe((status) => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           pollIntervalMs = 1200;
+          stalePollCount = API_SYNC_AFTER_STALE_POLLS;
           scheduleFallbackPoll();
         }
       });
