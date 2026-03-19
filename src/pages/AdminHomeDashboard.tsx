@@ -272,68 +272,43 @@ export default function AdminHomeDashboard() {
         </div>
       ) : (
         <>
-          {/* Quick Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <QuickStat
-              icon={ListChecks}
-              label="Tarefas Ativas"
-              value={stats.tarefasAtivas}
-              accent="text-primary"
-              onClick={() => navigate("/admin/tarefas")}
-            />
-            <QuickStat
-              icon={AlertTriangle}
-              label="Atrasadas"
-              value={stats.tarefasAtrasadas}
-              accent={stats.tarefasAtrasadas > 0 ? "text-destructive" : "text-muted-foreground"}
-              onClick={() => navigate("/admin/tarefas")}
-            />
-            <QuickStat
-              icon={Video}
-              label="Próximas Reuniões"
-              value={stats.proximasReunioes.length}
-              accent="text-primary"
-              onClick={() => navigate("/admin/reunioes")}
-            />
+          {/* Tarefas */}
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <ListChecks className="h-4 w-4" /> Tarefas
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <QuickStat icon={ListChecks} label="Ativas" value={stats.tarefasAtivas} accent="text-primary" onClick={() => navigate("/admin/tarefas")} />
+              <QuickStat icon={AlertTriangle} label="Atrasadas" value={stats.tarefasAtrasadas} accent={stats.tarefasAtrasadas > 0 ? "text-destructive" : "text-muted-foreground"} onClick={() => navigate("/admin/tarefas")} />
+              <QuickStat icon={TrendingUp} label="Urgentes" value={stats.tarefasUrgentes} accent={stats.tarefasUrgentes > 0 ? "text-amber-600" : "text-muted-foreground"} onClick={() => navigate("/admin/tarefas")} />
+              <QuickStat icon={CheckCircle2} label="Concluídas" value={stats.tarefasConcluidas} accent="text-emerald-600" onClick={() => navigate("/admin/tarefas")} />
+            </div>
           </div>
 
-          {/* Second Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <QuickStat
-              icon={Building2}
-              label="Clientes"
-              value={stats.totalClientes}
-              accent="text-primary"
-              onClick={() => navigate("/admin/tarefas-clientes")}
-            />
-            <QuickStat
-              icon={UsersRound}
-              label="Equipe"
-              value={stats.totalMembros}
-              accent="text-primary"
-              onClick={() => navigate("/admin/equipe")}
-            />
-            <QuickStat
-              icon={CalendarDays}
-              label="Reuniões (7 dias)"
-              value={stats.totalReunioesProximas}
-              accent="text-primary"
-              onClick={() => navigate("/admin/reunioes")}
-            />
-            <QuickStat
-              icon={DollarSign}
-              label="Faturamento Mensal"
-              value={stats.faturamentoMensal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-              accent="text-emerald-600"
-              onClick={() => navigate("/admin/financeiro")}
-            />
-            <QuickStat
-              icon={Wallet}
-              label="Gastos Mensais"
-              value={stats.gastosMensal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-              accent="text-amber-600"
-              onClick={() => navigate("/admin/despesas")}
-            />
+          {/* Financeiro */}
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <DollarSign className="h-4 w-4" /> Financeiro
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <QuickStat icon={DollarSign} label="Faturamento" value={stats.faturamentoMensal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-emerald-600" onClick={() => navigate("/admin/financeiro")} />
+              <QuickStat icon={Wallet} label="Gastos" value={stats.gastosMensal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="text-amber-600" onClick={() => navigate("/admin/despesas")} />
+              <QuickStat icon={Building2} label="Clientes" value={stats.totalClientes} accent="text-primary" onClick={() => navigate("/admin/tarefas-clientes")} />
+              <QuickStat icon={UsersRound} label="Equipe" value={stats.totalMembros} accent="text-primary" onClick={() => navigate("/admin/equipe")} />
+            </div>
+          </div>
+
+          {/* Reuniões */}
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Video className="h-4 w-4" /> Reuniões
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <QuickStat icon={Video} label="Próximas" value={stats.proximasReunioes.length} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+              <QuickStat icon={CalendarDays} label="Nos próx. 7 dias" value={stats.totalReunioesProximas} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+              <QuickStat icon={Send} label="Campanhas Ativas" value={stats.campanhasAtivas} accent={stats.campanhasAtivas > 0 ? "text-emerald-600" : "text-muted-foreground"} onClick={() => navigate("/admin/disparos")} />
+              <QuickStat icon={Clock} label="Campanhas Pausadas" value={stats.campanhasPausadas} accent="text-muted-foreground" onClick={() => navigate("/admin/disparos")} />
+            </div>
           </div>
 
           {/* Main Content Grid */}
