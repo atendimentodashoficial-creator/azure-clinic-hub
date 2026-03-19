@@ -259,16 +259,16 @@ export function RelatorioCampanhaDialog({
       if (allContacts && allContacts.length > 0) {
         const contactDigits = allContacts.map(c => c.numero.replace(/\D/g, '').slice(-8));
         
-        // Check reunioes_agendadas by phone
-        const { data: reunioesAgendadas } = await supabase
-          .from("reunioes_agendadas")
-          .select("participante_telefone");
+        // Check reunioes by phone
+        const { data: reunioesData } = await supabase
+          .from("reunioes")
+          .select("cliente_telefone");
 
         let totalReunioes = 0;
-        if (reunioesAgendadas) {
-          totalReunioes = reunioesAgendadas.filter(r => {
-            if (!r.participante_telefone) return false;
-            const rDigits = r.participante_telefone.replace(/\D/g, '').slice(-8);
+        if (reunioesData) {
+          totalReunioes = reunioesData.filter(r => {
+            if (!r.cliente_telefone) return false;
+            const rDigits = r.cliente_telefone.replace(/\D/g, '').slice(-8);
             return contactDigits.some(d => d === rDigits);
           }).length;
         }

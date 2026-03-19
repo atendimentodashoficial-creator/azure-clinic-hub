@@ -330,15 +330,15 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
         }
 
         const { data: reunioes } = await supabase
-          .from("reunioes_agendadas")
-          .select("participante_telefone")
+          .from("reunioes")
+          .select("cliente_telefone")
           .eq("user_id", user.id);
 
         if (reunioes) {
           const matched = new Set<string>();
           for (const r of reunioes) {
-            if (!r.participante_telefone) continue;
-            const last8 = r.participante_telefone.replace(/\D/g, "").slice(-8);
+            if (!r.cliente_telefone) continue;
+            const last8 = r.cliente_telefone.replace(/\D/g, "").slice(-8);
             if (sentNumbers.has(last8) && !matched.has(last8)) {
               matched.add(last8);
             }
