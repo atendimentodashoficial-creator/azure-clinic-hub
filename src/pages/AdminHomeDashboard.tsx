@@ -528,7 +528,7 @@ function QuickStat({
 }: {
   icon: React.ElementType;
   label: string;
-  value: number;
+  value: number | string;
   accent: string;
   onClick?: () => void;
 }) {
