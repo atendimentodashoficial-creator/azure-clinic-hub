@@ -287,6 +287,13 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
                   placeholder={docTipo === "cnpj" ? "00.000.000/0000-00" : "000.000.000-00"}
                 />
               </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-muted-foreground" />
+                  <Label className="cursor-pointer">Cliente possui I.A</Label>
+                </div>
+                <Switch checked={temIa} onCheckedChange={setTemIa} />
+              </div>
               <div className="space-y-2"><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-1"><MessageSquare className="h-4 w-4" /> Grupo WhatsApp</Label>
