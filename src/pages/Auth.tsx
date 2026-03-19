@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { ShaderBackground } from "@/components/ui/shader-background";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { toast } from "sonner";
 import noktaLogo from "@/assets/nokta-logo.png";
 
 const loginSchema = z.object({
@@ -40,9 +41,18 @@ export default function Auth() {
     e.preventDefault();
     setErrors({});
     setIsSubmitting(true);
+
+    const UI_LOGIN_TIMEOUT_MS = 40000;
+
     try {
       loginSchema.parse(loginForm);
-      await signIn(loginForm.email, loginForm.password);
+
+      await Promise.race([
+        signIn(loginForm.email, loginForm.password),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("LOGIN_UI_TIMEOUT")), UI_LOGIN_TIMEOUT_MS)
+        ),
+      ]);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
@@ -52,6 +62,11 @@ export default function Auth() {
           }
         });
         setErrors(newErrors);
+        return;
+      }
+
+      if (error?.message === "LOGIN_UI_TIMEOUT") {
+        toast.error("O login demorou além do esperado. Tente novamente.");
       }
     } finally {
       setIsSubmitting(false);
