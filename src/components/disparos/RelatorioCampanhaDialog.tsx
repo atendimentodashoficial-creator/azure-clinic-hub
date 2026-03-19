@@ -283,6 +283,7 @@ export function RelatorioCampanhaDialog({
         setReuniaoStats({ totalReunioes: 0, taxaConversaoReuniao: 0 });
       }
 
+    } catch (error) {
       console.error("Error loading report:", error);
     } finally {
       setIsLoading(false);
