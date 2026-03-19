@@ -447,11 +447,6 @@ export default function AdminHomeDashboard() {
                 ) : (
                   <p className="text-muted-foreground text-sm text-center py-6">Nenhuma reunião agendada</p>
                 )}
-                <div className="pt-1 text-right">
-                  <button className="text-xs text-primary hover:underline inline-flex items-center gap-1" onClick={() => navigate("/admin/reunioes")}>
-                    Ver todas <ArrowRight className="h-3 w-3" />
-                  </button>
-                </div>
               </CardContent>
             </Card>
           </div>
