@@ -248,7 +248,41 @@ export function RelatorioCampanhaDialog({
         });
       }
 
-    } catch (error) {
+      // Load reunion conversion stats
+      const { data: allContacts } = await supabase
+        .from("disparos_campanha_contatos")
+        .select("numero")
+        .eq("campanha_id", campanhaId)
+        .eq("status", "sent")
+        .eq("archived", false);
+
+      if (allContacts && allContacts.length > 0) {
+        const contactDigits = allContacts.map(c => c.numero.replace(/\D/g, '').slice(-8));
+        
+        // Check reunioes_agendadas by phone
+        const { data: reunioesAgendadas } = await supabase
+          .from("reunioes_agendadas")
+          .select("participante_telefone");
+
+        let totalReunioes = 0;
+        if (reunioesAgendadas) {
+          totalReunioes = reunioesAgendadas.filter(r => {
+            if (!r.participante_telefone) return false;
+            const rDigits = r.participante_telefone.replace(/\D/g, '').slice(-8);
+            return contactDigits.some(d => d === rDigits);
+          }).length;
+        }
+
+        setReuniaoStats({
+          totalReunioes,
+          taxaConversaoReuniao: allContacts.length > 0 
+            ? (totalReunioes / allContacts.length) * 100 
+            : 0
+        });
+      } else {
+        setReuniaoStats({ totalReunioes: 0, taxaConversaoReuniao: 0 });
+      }
+
       console.error("Error loading report:", error);
     } finally {
       setIsLoading(false);
