@@ -126,7 +126,7 @@ export function ReunioesPeriodFilter({
           </div>
           {count !== undefined && (
             <Badge className="h-6 px-2 text-xs rounded-md bg-primary text-primary-foreground">
-              {count} reunião(ões)
+              {count} {count === 1 ? "reunião" : "reuniões"}
             </Badge>
           )}
         </div>
