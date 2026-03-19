@@ -781,7 +781,7 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <StatsCard
           title="Campanhas"
           value={dashStats.totalCampanhas}
@@ -809,6 +809,13 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
           change={`${respostasCount} respostas de ${dashStats.totalEnviados.toLocaleString("pt-BR")}`}
           changeType={respostasCount > 0 ? "positive" : "neutral"}
           icon={Users}
+        />
+        <StatsCard
+          title="Conversão Reuniões"
+          value={dashStats.totalEnviados > 0 ? `${Math.round((reunioesCount / dashStats.totalEnviados) * 100)}%` : "0%"}
+          change={`${reunioesCount} reuniões de ${dashStats.totalEnviados.toLocaleString("pt-BR")}`}
+          changeType={reunioesCount > 0 ? "positive" : "neutral"}
+          icon={Video}
         />
       </div>
 
