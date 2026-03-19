@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
       const membroIdsFiltrados = (membrosComCargo || []).map((m: any) => m.id);
 
       if (membroIdsFiltrados.length === 0) {
+        console.log("[n8n-schedule-reuniao] FAIL: no members with cargo:", cargoFilter, "membroIds:", membroIds);
         return new Response(JSON.stringify({ error: `Nenhum profissional com cargo "${cargoFilter}" vinculado a este tipo de reunião` }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
