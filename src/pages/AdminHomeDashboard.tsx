@@ -518,17 +518,19 @@ function QuickStat({
   return (
     <Card
       className={cn(
-        "transition-all hover:shadow-elegant aspect-square flex items-center justify-center",
+        "p-4 transition-all hover:shadow-elegant",
         onClick && "cursor-pointer hover:bg-accent/50"
       )}
       onClick={onClick}
     >
-      <div className="flex flex-col items-center gap-2 text-center p-4">
-        <div className="h-11 w-11 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0">
           <Icon className="h-5 w-5 text-primary-foreground" />
         </div>
-        <p className={cn("text-xl sm:text-2xl font-bold tabular-nums leading-tight", accent)}>{value}</p>
-        <p className="text-[11px] text-muted-foreground leading-tight">{label}</p>
+        <div>
+          <p className={cn("text-xl font-bold tabular-nums leading-tight", accent)}>{value}</p>
+          <p className="text-[11px] text-muted-foreground">{label}</p>
+        </div>
       </div>
     </Card>
   );
