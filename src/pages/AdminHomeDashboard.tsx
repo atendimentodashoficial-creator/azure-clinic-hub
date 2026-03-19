@@ -237,6 +237,7 @@ export default function AdminHomeDashboard() {
       receitaPaga,
       despesasPrevistas,
       despesasPagas,
+      margemLucro: receitaPrevista > 0 ? ((receitaPrevista - despesasPrevistas) / receitaPrevista) * 100 : 0,
     };
   }, [tarefasData, reunioes, membros, clientes, campanhas, cobrancasPeriodo, todasDespesas, dateStart, dateEnd]);
 
