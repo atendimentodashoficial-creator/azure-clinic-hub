@@ -359,13 +359,14 @@ export default function AdminHomeDashboard() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <Video className="h-4 w-4" /> Operacional
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              <QuickStat icon={Video} label="Próximas Reuniões" value={stats.proximasReunioes.length} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
-              <QuickStat icon={CalendarDays} label="Reuniões (7 dias)" value={stats.totalReunioesProximas} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
-              <QuickStat icon={Building2} label="Clientes" value={stats.totalClientes} accent="text-primary" onClick={() => navigate("/admin/tarefas-clientes")} />
-              <QuickStat icon={UsersRound} label="Equipe" value={stats.totalMembros} accent="text-primary" onClick={() => navigate("/admin/equipe")} />
-              <QuickStat icon={Send} label="Campanhas Ativas" value={stats.campanhasAtivas} accent={stats.campanhasAtivas > 0 ? "text-emerald-600" : "text-muted-foreground"} onClick={() => navigate("/admin/disparos")} />
-            </div>
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+               <QuickStat icon={CalendarDays} label="Reuniões Hoje" value={stats.reunioesHoje} accent="text-amber-500" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={Video} label="Próximas Reuniões" value={stats.totalReunioesProximas} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={CalendarDays} label="Reuniões este Mês" value={stats.totalMes} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={CheckCircle2} label="Comparecimento" value={`${stats.taxaComparecimento}%`} accent="text-emerald-600" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={AlertTriangle} label="No-show" value={`${stats.taxaNoShow}%`} accent="text-destructive" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={TrendingUp} label="Conversão" value={`${stats.taxaConversao}%`} accent="text-purple-600" onClick={() => navigate("/admin/reunioes")} />
+             </div>
           </div>
 
           {/* Main Content Grid */}
