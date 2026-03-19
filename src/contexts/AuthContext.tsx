@@ -321,6 +321,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (error.message === "LOGIN_TIMEOUT") {
+        try {
+          console.warn("[Auth] Timeout detectado, tentando uma última vez via fallback REST");
+          const retrySession = await signInWithRestFallback();
+
+          if (retrySession?.user && retrySession?.session) {
+            setSession(retrySession.session);
+            setUser(retrySession.user);
+
+            if (retrySession.session.access_token) {
+              checkAndStoreAdminStatus(retrySession.session.access_token).catch((err) =>
+                console.warn("[Auth] Admin status check failed (non-blocking):", err)
+              );
+            }
+
+            toast.success("Login realizado com sucesso!");
+            navigate("/");
+            return;
+          }
+        } catch (retryError) {
+          console.error("[Auth] Retry fallback failed:", retryError);
+        }
+
         toast.error("A autenticação está lenta no momento. Tente novamente em alguns segundos.", {
           duration: 6000,
         });
