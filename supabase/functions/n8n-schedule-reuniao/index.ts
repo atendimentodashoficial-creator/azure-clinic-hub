@@ -112,6 +112,7 @@ Deno.serve(async (req) => {
         .eq("tipo_reuniao_id", tipo_reuniao_id);
 
       if (!tipoMembros || tipoMembros.length === 0) {
+        console.log("[n8n-schedule-reuniao] FAIL: no members linked to tipo_reuniao:", tipo_reuniao_id);
         return new Response(JSON.stringify({ error: "Nenhum profissional vinculado a este tipo de reunião" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
