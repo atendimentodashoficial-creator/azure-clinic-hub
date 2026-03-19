@@ -293,6 +293,7 @@ Deno.serve(async (req) => {
     });
 
     if (hasConflict) {
+      console.log("[n8n-schedule-reuniao] FAIL: conflict for", targetUserId, "at", data_hora);
       return new Response(JSON.stringify({ error: "Este profissional já possui uma reunião neste horário" }), {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
