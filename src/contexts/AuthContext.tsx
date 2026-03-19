@@ -205,23 +205,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const signInResult = await Promise.race([
+        supabase.auth.signInWithPassword({
+          email,
+          password,
+        }),
+        new Promise<{ data: null; error: Error }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: new Error("LOGIN_TIMEOUT") }), 12000)
+        ),
+      ]);
+
+      const { data, error } = signInResult as
+        | Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>
+        | { data: null; error: Error };
 
       if (error) throw error;
 
+      if (!data?.user || !data?.session) {
+        throw new Error("LOGIN_TIMEOUT");
+      }
+
       // Verificar se o usuário está expirado
-      if (data.user) {
-        const expiryDate = (data.user.user_metadata as any)?.expiry_date;
-        if (expiryDate && new Date(expiryDate) < new Date()) {
-          await supabase.auth.signOut();
-          toast.error("Sua conta expirou. Entre em contato com o suporte da Nokta para renovar o acesso.", {
-            duration: 6000,
-          });
-          throw new Error("Conta expirada");
-        }
+      const expiryDate = (data.user.user_metadata as any)?.expiry_date;
+      if (expiryDate && new Date(expiryDate) < new Date()) {
+        await supabase.auth.signOut();
+        toast.error("Sua conta expirou. Entre em contato com o suporte da Nokta para renovar o acesso.", {
+          duration: 6000,
+        });
+        throw new Error("Conta expirada");
       }
 
       // Set session/user immediately so downstream components can render
@@ -229,7 +240,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(data.user);
 
       // Fire admin check in background - don't block login flow
-      if (data.session?.access_token) {
+      if (data.session.access_token) {
         checkAndStoreAdminStatus(data.session.access_token).catch((err) =>
           console.warn("[Auth] Admin status check failed (non-blocking):", err)
         );
@@ -239,9 +250,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       navigate("/");
     } catch (error: any) {
       console.error("Error signing in:", error);
+
       if (error.message === "Conta expirada") {
         return;
       }
+
+      if (error.message === "LOGIN_TIMEOUT") {
+        try {
+          Object.keys(localStorage)
+            .filter((k) => k.startsWith("sb-") && k.endsWith("-auth-token"))
+            .forEach((k) => localStorage.removeItem(k));
+        } catch {
+          // ignore
+        }
+
+        toast.error("A autenticação demorou demais. Tente novamente em alguns segundos.", {
+          duration: 6000,
+        });
+        throw error;
+      }
+
       if (error.message?.includes("Invalid login credentials")) {
         toast.error("Email ou senha incorretos");
       } else {
