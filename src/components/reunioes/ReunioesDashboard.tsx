@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { ChevronDown, BarChart3, Users, XCircle, CheckCircle2, Calendar, Clock } from "lucide-react";
+import { ChevronDown, BarChart3, Users, XCircle, CheckCircle2, Calendar, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Reuniao {
@@ -12,6 +12,7 @@ interface Reuniao {
   data_reuniao: string;
   duracao_minutos: number | null;
   tipo_reuniao_id: string | null;
+  converteu?: boolean;
   tipos_reuniao?: { nome: string } | null;
   profissionais?: { nome: string } | null;
 }
@@ -46,11 +47,9 @@ export function ReunioesDashboard({ reunioes }: ReunioesDashboardProps) {
     const taxaNoShow = finalizadas > 0 ? Math.round((noShow / finalizadas) * 100) : 0;
     const taxaCancelamento = total > 0 ? Math.round((canceladas / total) * 100) : 0;
 
-    // Duração média
-    const comDuracao = reunioes.filter(r => r.duracao_minutos && r.duracao_minutos > 0);
-    const duracaoMedia = comDuracao.length > 0
-      ? Math.round(comDuracao.reduce((s, r) => s + (r.duracao_minutos || 0), 0) / comDuracao.length)
-      : 0;
+    // Conversão
+    const convertidas = reunioes.filter(r => (r as any).converteu === true).length;
+    const taxaConversao = total > 0 ? Math.round((convertidas / total) * 100) : 0;
 
     // Por tipo
     const porTipo: Record<string, number> = {};
@@ -70,7 +69,7 @@ export function ReunioesDashboard({ reunioes }: ReunioesDashboardProps) {
       { name: "Agendadas", value: agendadas, color: "hsl(var(--primary))" },
     ].filter(d => d.value > 0);
 
-    return { total, realizadas, noShow, canceladas, agendadas, taxaComparecimento, taxaNoShow, taxaCancelamento, duracaoMedia, tiposData, statusData };
+    return { total, realizadas, noShow, canceladas, agendadas, taxaComparecimento, taxaNoShow, taxaCancelamento, taxaConversao, convertidas, tiposData, statusData };
   }, [reunioes]);
 
   if (!stats || stats.total === 0) return null;
@@ -102,7 +101,7 @@ export function ReunioesDashboard({ reunioes }: ReunioesDashboardProps) {
           <MetricCard icon={XCircle} label="No-show" value={stats.noShow} color="text-destructive" />
           <MetricCard icon={Users} label="Comparecimento" value={`${stats.taxaComparecimento}%`} color="text-green-600" />
           <MetricCard icon={XCircle} label="Taxa No-show" value={`${stats.taxaNoShow}%`} color="text-destructive" />
-          <MetricCard icon={Clock} label="Duração média" value={stats.duracaoMedia > 0 ? `${stats.duracaoMedia}min` : "—"} />
+          <MetricCard icon={TrendingUp} label="Conversão" value={`${stats.taxaConversao}%`} color="text-blue-600" />
         </div>
 
         {/* Charts */}
