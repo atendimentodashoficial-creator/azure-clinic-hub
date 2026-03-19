@@ -216,7 +216,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (data.user) {
         const expiryDate = (data.user.user_metadata as any)?.expiry_date;
         if (expiryDate && new Date(expiryDate) < new Date()) {
-          // Fazer logout imediatamente
           await supabase.auth.signOut();
           toast.error("Sua conta expirou. Entre em contato com o suporte da Nokta para renovar o acesso.", {
             duration: 6000,
@@ -225,9 +224,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // Verificar status admin
+      // Set session/user immediately so downstream components can render
+      setSession(data.session);
+      setUser(data.user);
+
+      // Fire admin check in background - don't block login flow
       if (data.session?.access_token) {
-        await checkAndStoreAdminStatus(data.session.access_token);
+        checkAndStoreAdminStatus(data.session.access_token).catch((err) =>
+          console.warn("[Auth] Admin status check failed (non-blocking):", err)
+        );
       }
 
       toast.success("Login realizado com sucesso!");
@@ -235,10 +240,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error: any) {
       console.error("Error signing in:", error);
       if (error.message === "Conta expirada") {
-        // Já mostrou a mensagem de erro acima
         return;
       }
-      if (error.message.includes("Invalid login credentials")) {
+      if (error.message?.includes("Invalid login credentials")) {
         toast.error("Email ou senha incorretos");
       } else {
         toast.error(error.message || "Erro ao fazer login");
