@@ -203,8 +203,9 @@ export default function AdminHomeDashboard() {
     const taxaComparecimento = finalizadas > 0 ? Math.round((realizadas / finalizadas) * 100) : 0;
     const taxaNoShow = finalizadas > 0 ? Math.round((noShow / finalizadas) * 100) : 0;
     
-    // Conversão = realizadas / total do período
-    const taxaConversao = totalMes > 0 ? Math.round((realizadas / totalMes) * 100) : 0;
+    // Conversão = reuniões marcadas como convertidas / total do período
+    const convertidas = reunioesPeriodo.filter(r => (r as any).converteu === true).length;
+    const taxaConversao = totalMes > 0 ? Math.round((convertidas / totalMes) * 100) : 0;
 
 
     // Financeiro
