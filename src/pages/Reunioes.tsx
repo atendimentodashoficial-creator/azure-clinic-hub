@@ -328,8 +328,7 @@ export default function Reunioes() {
     },
     onError: () => toast.error("Erro ao atualizar conversão"),
   });
-
-
+  const isWithinOneHour = (dataReuniao: string) => {
     const now = new Date();
     const reuniaoTime = new Date(dataReuniao);
     const diffMs = reuniaoTime.getTime() - now.getTime();
