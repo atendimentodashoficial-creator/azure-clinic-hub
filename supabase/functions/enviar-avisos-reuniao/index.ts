@@ -450,7 +450,11 @@ Deno.serve(async (req) => {
   const cronHeader = req.headers.get("X-Cron-Secret") ?? "";
   const isCronRequest = CRON_SECRET && cronHeader === CRON_SECRET;
 
-  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    global: {
+      fetch: (input, init) => fetchWithTimeout(input, init, SUPABASE_REQUEST_TIMEOUT_MS),
+    },
+  });
 
   try {
     const saoPauloNow = getSaoPauloTime();

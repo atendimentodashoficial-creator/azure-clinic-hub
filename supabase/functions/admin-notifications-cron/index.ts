@@ -325,7 +325,11 @@ Deno.serve(async (req) => {
     });
   }
 
-  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    global: {
+      fetch: (input, init) => fetchWithTimeout(input, init, SUPABASE_REQUEST_TIMEOUT_MS),
+    },
+  });
 
   try {
     const saoPauloNow = getSaoPauloTime();
