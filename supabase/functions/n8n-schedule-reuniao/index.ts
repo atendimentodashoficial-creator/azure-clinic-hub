@@ -426,7 +426,7 @@ Deno.serve(async (req) => {
       throw reuniaoError || new Error("Falha ao criar reunião");
     }
 
-    // 9. Kanban auto-move for WhatsApp and Disparos
+    console.log("[n8n-schedule-reuniao] SUCCESS: reuniao created:", reuniao.id, "for member:", member.nome, "at:", data_hora);
     if (cliente_telefone) {
       const last8 = cliente_telefone.replace(/\D/g, '').slice(-8);
       if (last8.length === 8) {
