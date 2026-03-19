@@ -12,7 +12,7 @@ import {
   CheckCircle2, Clock, AlertTriangle, TrendingUp, CalendarDays,
   Building2, UsersRound, Package, Send, ArrowRight, DollarSign, Wallet
 } from "lucide-react";
-import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay } from "date-fns";
+import { format, isToday, isTomorrow, isPast, differenceInDays, startOfDay, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
