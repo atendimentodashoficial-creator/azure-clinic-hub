@@ -67,20 +67,23 @@ export default function AdminHomeDashboard() {
     staleTime: 120_000,
   });
 
-  // Fetch reuniões
+  // Fetch reuniões (mês inteiro + futuras para "próximas")
   const { data: reunioes = [], isLoading: reunioesLoading } = useQuery({
     queryKey: ["dashboard-reunioes", effectiveUserId],
     queryFn: async () => {
       if (!effectiveUserId) return [];
-      const today = new Date();
-      const sevenDaysLater = new Date(today);
-      sevenDaysLater.setDate(today.getDate() + 7);
+      const mesInicio = startOfMonth(new Date());
+      const mesFim = endOfMonth(new Date());
+      // Fetch reuniões do mês atual + próximos 7 dias (o que for maior)
+      const sevenDaysLater = new Date();
+      sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+      const limiteMax = mesFim > sevenDaysLater ? mesFim : sevenDaysLater;
       const { data } = await supabase
         .from("reunioes")
         .select("id, titulo, data_reuniao, status, tipo_reuniao_id, participantes")
         .eq("user_id", effectiveUserId)
-        .gte("data_reuniao", today.toISOString())
-        .lte("data_reuniao", sevenDaysLater.toISOString())
+        .gte("data_reuniao", mesInicio.toISOString())
+        .lte("data_reuniao", limiteMax.toISOString())
         .order("data_reuniao");
       return data || [];
     },
@@ -177,10 +180,34 @@ export default function AdminHomeDashboard() {
       last7Days.push({ dia: dayStr, criadas, concluidas: 0 });
     }
 
-    // Próximas reuniões (ordenadas por data)
+    // Próximas reuniões (futuras, ordenadas por data)
+    const now2 = new Date();
     const proximasReunioes = [...reunioes]
+      .filter(r => new Date(r.data_reuniao) >= now2 && r.status === "agendado")
       .sort((a, b) => new Date(a.data_reuniao).getTime() - new Date(b.data_reuniao).getTime())
       .slice(0, 8);
+
+    // Reuniões hoje
+    const reunioesHoje = reunioes.filter(r => isToday(new Date(r.data_reuniao))).length;
+
+    // Reuniões este mês
+    const mesInicio = startOfMonth(new Date());
+    const mesFim = endOfMonth(new Date());
+    const reunioesMes = reunioes.filter(r => {
+      const d = new Date(r.data_reuniao);
+      return d >= mesInicio && d <= mesFim;
+    });
+    const totalMes = reunioesMes.length;
+
+    // Comparecimento e no-show (apenas reuniões finalizadas)
+    const realizadas = reunioesMes.filter(r => r.status === "realizada" || r.status === "resumido" || r.status === "transcrito").length;
+    const noShow = reunioesMes.filter(r => r.status === "nao_compareceu").length;
+    const finalizadas = realizadas + noShow;
+    const taxaComparecimento = finalizadas > 0 ? Math.round((realizadas / finalizadas) * 100) : 0;
+    const taxaNoShow = finalizadas > 0 ? Math.round((noShow / finalizadas) * 100) : 0;
+    
+    // Conversão = realizadas / total do mês
+    const taxaConversao = totalMes > 0 ? Math.round((realizadas / totalMes) * 100) : 0;
 
 
     // Financeiro
@@ -230,7 +257,12 @@ export default function AdminHomeDashboard() {
       porColuna,
       last7Days,
       proximasReunioes,
-      totalReunioesProximas: reunioes.length,
+      reunioesHoje,
+      totalMes,
+      taxaComparecimento,
+      taxaNoShow,
+      taxaConversao,
+      totalReunioesProximas: proximasReunioes.length,
       totalMembros: membros.length,
       totalClientes: clientes.length,
       campanhasAtivas: campanhas.filter(c => c.status === "em_andamento").length,
@@ -327,13 +359,14 @@ export default function AdminHomeDashboard() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <Video className="h-4 w-4" /> Operacional
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              <QuickStat icon={Video} label="Próximas Reuniões" value={stats.proximasReunioes.length} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
-              <QuickStat icon={CalendarDays} label="Reuniões (7 dias)" value={stats.totalReunioesProximas} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
-              <QuickStat icon={Building2} label="Clientes" value={stats.totalClientes} accent="text-primary" onClick={() => navigate("/admin/tarefas-clientes")} />
-              <QuickStat icon={UsersRound} label="Equipe" value={stats.totalMembros} accent="text-primary" onClick={() => navigate("/admin/equipe")} />
-              <QuickStat icon={Send} label="Campanhas Ativas" value={stats.campanhasAtivas} accent={stats.campanhasAtivas > 0 ? "text-emerald-600" : "text-muted-foreground"} onClick={() => navigate("/admin/disparos")} />
-            </div>
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+               <QuickStat icon={CalendarDays} label="Reuniões Hoje" value={stats.reunioesHoje} accent="text-amber-500" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={Video} label="Próximas Reuniões" value={stats.totalReunioesProximas} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={CalendarDays} label="Reuniões este Mês" value={stats.totalMes} accent="text-primary" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={CheckCircle2} label="Comparecimento" value={`${stats.taxaComparecimento}%`} accent="text-emerald-600" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={AlertTriangle} label="No-show" value={`${stats.taxaNoShow}%`} accent="text-destructive" onClick={() => navigate("/admin/reunioes")} />
+               <QuickStat icon={TrendingUp} label="Conversão" value={`${stats.taxaConversao}%`} accent="text-purple-600" onClick={() => navigate("/admin/reunioes")} />
+             </div>
           </div>
 
           {/* Main Content Grid */}
