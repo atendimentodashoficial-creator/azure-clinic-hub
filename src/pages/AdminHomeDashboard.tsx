@@ -227,16 +227,10 @@ export default function AdminHomeDashboard() {
               accent="text-primary"
               onClick={() => navigate("/admin/reunioes")}
             />
-            <QuickStat
-              icon={CheckCircle2}
-              label="Concluídas"
-              value={stats.tarefasConcluidas}
-              accent="text-green-600"
-            />
           </div>
 
           {/* Second Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <QuickStat
               icon={Building2}
               label="Clientes"
@@ -250,13 +244,6 @@ export default function AdminHomeDashboard() {
               value={stats.totalMembros}
               accent="text-primary"
               onClick={() => navigate("/admin/equipe")}
-            />
-            <QuickStat
-              icon={Send}
-              label="Campanhas Ativas"
-              value={stats.campanhasAtivas}
-              accent={stats.campanhasAtivas > 0 ? "text-green-600" : "text-muted-foreground"}
-              onClick={() => navigate("/admin/disparos")}
             />
             <QuickStat
               icon={CalendarDays}
@@ -410,10 +397,8 @@ export default function AdminHomeDashboard() {
             </Card>
           )}
 
-          {/* Bottom Row: Equipe + Campanhas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Equipe Resumo */}
-            <Card>
+          {/* Equipe */}
+          <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -453,59 +438,6 @@ export default function AdminHomeDashboard() {
               </CardContent>
             </Card>
 
-            {/* Campanhas Ativas */}
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    <Send className="h-4 w-4" />
-                    Campanhas
-                  </CardTitle>
-                  <button
-                    className="text-xs text-primary hover:underline flex items-center gap-1"
-                    onClick={() => navigate("/admin/disparos")}
-                  >
-                    Ver todas <ArrowRight className="h-3 w-3" />
-                  </button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {campanhas.length > 0 ? (
-                  <div className="space-y-3">
-                    {campanhas.slice(0, 5).map(c => {
-                      const progress = c.total_contatos > 0 ? Math.round((c.enviados / c.total_contatos) * 100) : 0;
-                      return (
-                        <div key={c.id} className="space-y-2 p-3 rounded-lg bg-muted/50">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium truncate">{c.nome}</p>
-                            <Badge variant={c.status === "em_andamento" ? "default" : "secondary"} className="text-xs">
-                              {c.status === "em_andamento" ? "Ativa" : "Pausada"}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-primary transition-all"
-                                style={{ width: `${progress}%` }}
-                              />
-                            </div>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              {c.enviados}/{c.total_contatos}
-                            </span>
-                          </div>
-                          {c.falhas > 0 && (
-                            <p className="text-xs text-destructive">{c.falhas} falhas</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm text-center py-6">Nenhuma campanha ativa</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
         </>
       )}
     </div>
