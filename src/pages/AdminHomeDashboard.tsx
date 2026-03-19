@@ -150,6 +150,7 @@ export default function AdminHomeDashboard() {
     const now = startOfDay(new Date());
     const atrasadas = ativas.filter(t => t.data_limite && isPast(new Date(t.data_limite)) && differenceInDays(now, new Date(t.data_limite)) > 0);
     const urgentes = ativas.filter(t => t.prioridade === "alta" || t.prioridade === "urgente");
+    const paraHoje = tarefas.filter(t => t.data_limite && isToday(new Date(t.data_limite)));
 
     // Tasks by column for chart
     const porColuna = colunas.map(col => ({
