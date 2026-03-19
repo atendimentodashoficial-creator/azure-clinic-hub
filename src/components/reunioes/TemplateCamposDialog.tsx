@@ -132,7 +132,7 @@ export function TemplateCamposDialog({ iconOnly = false }: { iconOnly?: boolean 
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2" size={iconOnly ? "icon" : "default"}>
           <Settings2 className="w-4 h-4" />
-          {!iconOnly && "Configurar Template"}
+          {!iconOnly && "Template Resumo"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
