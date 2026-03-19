@@ -73,6 +73,7 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
   const [campanhaToRename, setCampanhaToRename] = useState<{ id: string; nome: string } | null>(null);
   const [newCampanhaName, setNewCampanhaName] = useState("");
   const [respostasCount, setRespostasCount] = useState(0);
+  const [reunioesCount, setReunioesCount] = useState(0);
 
   const loadCampanhas = async () => {
     try {
