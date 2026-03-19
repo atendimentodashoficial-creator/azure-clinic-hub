@@ -295,34 +295,35 @@ export function AquecimentoConfig() {
       {/* System Prompt */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-primary" />
-                System Prompt do Agente
-              </CardTitle>
-              <CardDescription>
-                Prompt principal utilizado pelo agente de I.A. no fluxo do n8n
-              </CardDescription>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              title="Expandir editor"
-              onClick={() => setExpandedPrompt(true)}
-            >
-              <Maximize2 className="h-3.5 w-3.5" />
-            </Button>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-primary" />
+              System Prompt do Agente
+            </CardTitle>
+            <CardDescription>
+              Prompt principal utilizado pelo agente de I.A. no fluxo do n8n
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
-          <Textarea
-            value={systemPrompt}
-            onChange={(e) => setSystemPrompt(e.target.value)}
-            placeholder="Você é um assistente de aquecimento de leads..."
-            className="min-h-[200px] font-mono text-sm"
-          />
+          <div className="relative">
+            <Textarea
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              placeholder="Você é um assistente de aquecimento de leads..."
+              className="min-h-[200px] font-mono text-sm resize-none"
+            />
+            <button
+              type="button"
+              onClick={() => setExpandedPrompt(true)}
+              className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize flex items-center justify-end pb-1 pr-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              title="Expandir editor"
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" className="fill-current">
+                <polygon points="10,0 10,10 0,10" />
+              </svg>
+            </button>
+          </div>
         </CardContent>
       </Card>
 
