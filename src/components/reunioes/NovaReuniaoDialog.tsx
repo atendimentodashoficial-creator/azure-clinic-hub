@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getDay } from "date-fns";
-import { User, Video, Plus, Search } from "lucide-react";
+import { format, getDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Calendar as CalendarIcon, User, Video, Plus, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { useTarefasMembros } from "@/hooks/useTarefasMembros";
 import { useEscalasMembros, useAusenciasMembros, EscalaMembro, AusenciaMembro } from "@/hooks/useEscalasMembros";
@@ -387,12 +390,35 @@ export function NovaReuniaoDialog({ open, onOpenChange, initialClienteNome, init
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Data *</Label>
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={e => { setSelectedDate(e.target.value); setSelectedTime(""); setSelectedMemberId(""); }}
-                min={new Date().toISOString().split("T")[0]}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-10 justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                    {selectedDate
+                      ? format(new Date(`${selectedDate}T00:00:00`), "dd 'de' MMM 'de' yyyy", { locale: ptBR })
+                      : "Selecionar data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate ? new Date(`${selectedDate}T00:00:00`) : undefined}
+                    onSelect={(date) => {
+                      if (!date) return;
+                      setSelectedDate(format(date, "yyyy-MM-dd"));
+                      setSelectedTime("");
+                      setSelectedMemberId("");
+                    }}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    locale={ptBR}
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>Duração (min)</Label>
