@@ -5,6 +5,51 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Parse a date string as São Paulo time.
+ * If no timezone is specified, appends -03:00 (São Paulo standard).
+ */
+function parseSaoPauloDate(dateStr: string): Date {
+  if (/[Zz]/.test(dateStr) || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+    return new Date(dateStr);
+  }
+  return new Date(dateStr + "-03:00");
+}
+
+/**
+ * Format a Date to "YYYY-MM-DD" in São Paulo timezone.
+ */
+function formatDateBR(d: Date): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  return fmt.format(d);
+}
+
+/**
+ * Format a Date to "HH:mm" in São Paulo timezone.
+ */
+function formatTimeBR(d: Date): string {
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+  return fmt.format(d);
+}
+
+/**
+ * Get day of week (0=Sunday) in São Paulo timezone.
+ */
+function getDayOfWeekBR(d: Date): number {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "short",
+  });
+  const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return dayMap[fmt.format(d)] ?? d.getDay();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -29,7 +74,6 @@ Deno.serve(async (req) => {
       cargo_filtro,
     } = body;
 
-    // Default: only consider "Closer" members
     const cargoFilter = cargo_filtro || "Closer";
 
     // Validações
@@ -48,11 +92,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Parse data_hora as São Paulo time
+    const dataHoraSolicitada = parseSaoPauloDate(data_hora);
+    console.log("[n8n-schedule-reuniao] Parsed data_hora:", data_hora, "-> UTC:", dataHoraSolicitada.toISOString(), "-> SP:", formatDateBR(dataHoraSolicitada), formatTimeBR(dataHoraSolicitada));
+
     // Rejeitar horários no passado
     const agora = new Date();
-    const dataHoraSolicitada = new Date(data_hora);
     if (dataHoraSolicitada.getTime() <= agora.getTime()) {
-      console.log("[n8n-schedule-reuniao] FAIL: past date. Requested:", data_hora, "Now:", agora.toISOString());
+      console.log("[n8n-schedule-reuniao] FAIL: past date. Requested:", dataHoraSolicitada.toISOString(), "Now:", agora.toISOString());
       return new Response(JSON.stringify({ error: "Não é possível agendar em horários que já passaram" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -83,7 +130,6 @@ Deno.serve(async (req) => {
       duracaoFinal = duracao_minutos || tipoReuniao.duracao_minutos || 60;
       tituloFinal = titulo || tipoReuniao.nome;
     } else {
-      // If only membro_id, get member's owner
       const { data: member } = await supabase
         .from("tarefas_membros")
         .select("user_id")
@@ -105,7 +151,6 @@ Deno.serve(async (req) => {
     let targetMemberId = membro_id;
 
     if (!targetMemberId && tipo_reuniao_id) {
-      // Auto-select: find member with least conflicts at that time
       const { data: tipoMembros } = await supabase
         .from("tipos_reuniao_membros")
         .select("membro_id")
@@ -121,7 +166,6 @@ Deno.serve(async (req) => {
 
       const membroIds = tipoMembros.map((tm: any) => tm.membro_id);
 
-      // Filter members by cargo (e.g. "Closer")
       const { data: membrosComCargo } = await supabase
         .from("tarefas_membros")
         .select("id")
@@ -138,13 +182,16 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check availability for each member
-      const startDate2 = new Date(data_hora);
+      // Check availability for each member using São Paulo timezone
+      const startDate2 = dataHoraSolicitada;
       const endDate2 = new Date(startDate2.getTime() + duracaoFinal * 60 * 1000);
-      const dateStr = formatDate(startDate2);
+      const dateStr = formatDateBR(startDate2);
+      const dayOfWeek = getDayOfWeekBR(startDate2);
+      const startTimeStr = formatTimeBR(startDate2);
+      const endTimeStr = formatTimeBR(endDate2);
 
-      // Get escalas for this day and check time range
-      const dayOfWeek = startDate2.getDay();
+      console.log("[n8n-schedule-reuniao] Checking availability: date=", dateStr, "dayOfWeek=", dayOfWeek, "time=", startTimeStr, "-", endTimeStr);
+
       const { data: escalas } = await supabase
         .from("escalas_membros")
         .select("membro_id, hora_inicio, hora_fim")
@@ -152,9 +199,7 @@ Deno.serve(async (req) => {
         .eq("ativo", true)
         .eq("dia_semana", dayOfWeek);
 
-      // Filter members whose schedule covers the requested time range
-      const startTimeStr = formatTime(startDate2);
-      const endTimeStr = formatTime(endDate2);
+      console.log("[n8n-schedule-reuniao] Escalas found:", JSON.stringify(escalas));
 
       // Check ausencias (substituições de escala)
       const { data: ausencias } = await supabase
@@ -171,26 +216,34 @@ Deno.serve(async (req) => {
         const membroSubstituicoes = (ausencias || []).filter((a: any) => a.membro_id === mid);
 
         if (membroSubstituicoes.length > 0) {
-          // Has substituição - check if full day block or schedule override
           const diaInteiroBloqueado = membroSubstituicoes.some((s: any) => !s.hora_inicio || !s.hora_fim);
-          if (diaInteiroBloqueado) continue; // Full day off
+          if (diaInteiroBloqueado) {
+            console.log("[n8n-schedule-reuniao] Member", mid, "blocked full day");
+            continue;
+          }
 
-          // Check if any substituição window covers the requested time
           const coversTime = membroSubstituicoes.some((s: any) =>
             s.hora_inicio <= startTimeStr && s.hora_fim >= endTimeStr
           );
-          if (coversTime) membrosDisponiveis.push(mid);
+          if (coversTime) {
+            membrosDisponiveis.push(mid);
+          } else {
+            console.log("[n8n-schedule-reuniao] Member", mid, "substituição doesn't cover time");
+          }
         } else {
-          // No substituição - check regular schedule
           const membroEscala = (escalas || []).find((e: any) =>
             e.membro_id === mid && e.hora_inicio <= startTimeStr && e.hora_fim >= endTimeStr
           );
-          if (membroEscala) membrosDisponiveis.push(mid);
+          if (membroEscala) {
+            membrosDisponiveis.push(mid);
+          } else {
+            console.log("[n8n-schedule-reuniao] Member", mid, "no matching escala for", startTimeStr, "-", endTimeStr, "on day", dayOfWeek);
+          }
         }
       }
 
       if (membrosDisponiveis.length === 0) {
-        console.log("[n8n-schedule-reuniao] FAIL: no members available on date. membroIdsFiltrados:", membroIdsFiltrados);
+        console.log("[n8n-schedule-reuniao] FAIL: no members available on date. membroIdsFiltrados:", membroIdsFiltrados, "dayOfWeek:", dayOfWeek, "time:", startTimeStr);
         return new Response(JSON.stringify({ error: "Nenhum profissional disponível nesta data" }), {
           status: 409,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -202,10 +255,9 @@ Deno.serve(async (req) => {
       const dayEndISO = (() => {
         const d = new Date(startDate2);
         d.setDate(d.getDate() + 1);
-        return `${formatDate(d)}T02:59:59.000Z`;
+        return `${formatDateBR(d)}T02:59:59.000Z`;
       })();
 
-      // For each available member, check conflicts using their effective user_id
       const candidates: { membroId: string; meetingCount: number }[] = [];
 
       for (const mid of membrosDisponiveis) {
@@ -217,7 +269,6 @@ Deno.serve(async (req) => {
 
         const memberUserId = memberData?.auth_user_id || ownerUserId;
 
-        // Get this member's meetings for the day using their user_id
         const { data: memberDayMeetings } = await supabase
           .from("reunioes")
           .select("id, data_reuniao, duracao_minutos")
@@ -226,7 +277,6 @@ Deno.serve(async (req) => {
           .gte("data_reuniao", dayStartISO)
           .lte("data_reuniao", dayEndISO);
 
-        // Check time conflict
         const hasConflict = (memberDayMeetings || []).some((r: any) => {
           const rStart = new Date(r.data_reuniao).getTime();
           const rEnd = rStart + ((r.duracao_minutos || 60) * 60 * 1000);
@@ -246,13 +296,12 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Sort by fewest meetings, then randomize ties
       candidates.sort((a, b) => a.meetingCount - b.meetingCount);
       const minCount = candidates[0].meetingCount;
       const tied = candidates.filter((c) => c.meetingCount === minCount);
       const chosen = tied[Math.floor(Math.random() * tied.length)];
       targetMemberId = chosen.membroId;
-      console.log(`Auto-selected membro ${targetMemberId} with ${chosen.meetingCount} meetings (${tied.length} tied)`);
+      console.log(`[n8n-schedule-reuniao] Auto-selected membro ${targetMemberId} with ${chosen.meetingCount} meetings (${tied.length} tied)`);
     }
 
     // 3. Get member details
@@ -270,12 +319,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    const targetUserId = member.auth_user_id || ownerUserId;
     console.log("[n8n-schedule-reuniao] Selected member:", member.nome, "targetUserId:", targetUserId);
 
-    const targetUserId = member.auth_user_id || ownerUserId;
-
     // 4. Server-side conflict check for selected member
-    const startDate = new Date(data_hora);
+    const startDate = dataHoraSolicitada;
     const endDate = new Date(startDate.getTime() + duracaoFinal * 60 * 1000);
 
     const { data: conflicting } = await supabase
@@ -326,6 +374,9 @@ Deno.serve(async (req) => {
     }
 
     const participantes = [cliente_nome || "Cliente", member.nome].filter(Boolean);
+
+    // Use the properly parsed ISO string for storage
+    const dataHoraISO = dataHoraSolicitada.toISOString();
 
     // 7. Try to create Google Calendar event with Meet link
     let meetLink: string | null = null;
@@ -407,7 +458,7 @@ Deno.serve(async (req) => {
       .insert({
         user_id: targetUserId,
         titulo: tituloFinal,
-        data_reuniao: data_hora,
+        data_reuniao: dataHoraISO,
         duracao_minutos: duracaoFinal,
         cliente_telefone: cliente_telefone || null,
         cliente_id: clienteId,
@@ -426,13 +477,15 @@ Deno.serve(async (req) => {
       throw reuniaoError || new Error("Falha ao criar reunião");
     }
 
-    console.log("[n8n-schedule-reuniao] SUCCESS: reuniao created:", reuniao.id, "for member:", member.nome, "at:", data_hora);
+    console.log("[n8n-schedule-reuniao] SUCCESS: reuniao created:", reuniao.id, "for member:", member.nome, "at:", dataHoraISO);
+
+    // 9. Kanban auto-move
     if (cliente_telefone) {
       const last8 = cliente_telefone.replace(/\D/g, '').slice(-8);
       if (last8.length === 8) {
         console.log("[KanbanAutoMove-n8n] Moving cards for last8:", last8, "ownerUserId:", ownerUserId);
 
-        // WhatsApp kanban auto-move (create chat if needed)
+        // WhatsApp kanban auto-move
         try {
           const { data: waConfig } = await supabase
             .from("whatsapp_kanban_config")
@@ -449,7 +502,6 @@ Deno.serve(async (req) => {
               .is("deleted_at", null)
               .like("normalized_number", `%${last8}`);
 
-            // If no WA chat exists, create one so card appears in WhatsApp tab
             if (!waChats || waChats.length === 0) {
               const { data: tombstone } = await supabase
                 .from("whatsapp_chat_deletions")
@@ -581,7 +633,7 @@ Deno.serve(async (req) => {
       reuniao_id: reuniao.id,
       profissional: member.nome,
       membro_id: member.id,
-      data_hora,
+      data_hora: dataHoraISO,
       duracao_minutos: duracaoFinal,
       meet_link: finalMeetLink,
       google_event_created: !!googleEventId,
@@ -598,20 +650,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-
-function formatDate(d: Date): string {
-  const y = d.getFullYear();
-  const m = (d.getMonth() + 1).toString().padStart(2, "0");
-  const day = d.getDate().toString().padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function formatTime(d: Date): string {
-  // Convert to Brasilia time (UTC-3) for comparison with escalas
-  const brasiliaOffset = -3 * 60;
-  const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
-  const brasiliaDate = new Date(utcMs + brasiliaOffset * 60000);
-  const h = brasiliaDate.getHours().toString().padStart(2, "0");
-  const min = brasiliaDate.getMinutes().toString().padStart(2, "0");
-  return `${h}:${min}`;
-}
