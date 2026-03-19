@@ -504,23 +504,15 @@ export function AvisosReuniaoTab() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Avisos de Reunião
-          </h2>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={handleNewAvisoImediato}>
-            <Zap className="h-4 w-4 mr-2" />
-            Aviso Imediato
-          </Button>
-          <Button onClick={handleNewAviso}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Lembrete
-          </Button>
-        </div>
+      <div className="flex gap-2 flex-wrap">
+        <Button variant="outline" onClick={handleNewAvisoImediato}>
+          <Zap className="h-4 w-4 mr-2" />
+          Aviso Imediato
+        </Button>
+        <Button onClick={handleNewAviso}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Lembrete
+        </Button>
       </div>
 
       {/* Avisos Imediatos */}
