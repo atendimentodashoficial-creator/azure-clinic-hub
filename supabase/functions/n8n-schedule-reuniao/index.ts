@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
         .eq("id", tipo_reuniao_id)
         .single();
       if (error || !data) {
+        console.log("[n8n-schedule-reuniao] FAIL: tipo_reuniao not found:", tipo_reuniao_id, error);
         return new Response(JSON.stringify({ error: "Tipo de reunião não encontrado" }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
