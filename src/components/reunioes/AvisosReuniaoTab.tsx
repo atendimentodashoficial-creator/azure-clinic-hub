@@ -510,9 +510,6 @@ export function AvisosReuniaoTab() {
             <Bell className="h-5 w-5" />
             Avisos de Reunião
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Configure lembretes automáticos para reuniões agendadas
-          </p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={handleNewAvisoImediato}>
