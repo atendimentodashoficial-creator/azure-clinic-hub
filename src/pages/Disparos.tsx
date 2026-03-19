@@ -1277,7 +1277,7 @@ export default function Disparos() {
       {activeTab === "conversas" ? (
         <>
           {/* Search and actions for Conversas - esconde no mobile quando chat está aberto */}
-          {showMainHeader && <div className="flex-shrink-0 border-b bg-card px-4 py-2">
+          {showMainHeader && <div className="flex-shrink-0 border-b bg-card px-0 sm:px-4 py-2">
             <div className="flex flex-col gap-2">
               {/* Actions row */}
               <div className="flex items-center gap-2 sm:h-auto h-9">
