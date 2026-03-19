@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { ChevronDown, BarChart3, Users, XCircle, CheckCircle2, Calendar, Clock } from "lucide-react";
+import { ChevronDown, BarChart3, Users, XCircle, CheckCircle2, Calendar, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Reuniao {
