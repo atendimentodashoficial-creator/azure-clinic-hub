@@ -11,7 +11,8 @@ import {
   Percent,
   Send,
   History,
-  ChevronDown
+  ChevronDown,
+  Video
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
@@ -59,6 +60,11 @@ interface RespostaStats {
   chatsComResposta: number;
 }
 
+interface ReuniaoStats {
+  totalReunioes: number;
+  taxaConversaoReuniao: number;
+}
+
 interface SnapshotData {
   id: string;
   versao: number;
@@ -96,6 +102,7 @@ export function RelatorioCampanhaDialog({
   const [campanha, setCampanha] = useState<CampanhaData | null>(null);
   const [contatoStats, setContatoStats] = useState<ContatoStats | null>(null);
   const [respostaStats, setRespostaStats] = useState<RespostaStats | null>(null);
+  const [reuniaoStats, setReuniaoStats] = useState<ReuniaoStats | null>(null);
   const [blocosCount, setBlocosCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [snapshots, setSnapshots] = useState<SnapshotData[]>([]);
@@ -239,6 +246,41 @@ export function RelatorioCampanhaDialog({
           taxaResposta: 0,
           chatsComResposta: 0
         });
+      }
+
+      // Load reunion conversion stats
+      const { data: allContacts } = await supabase
+        .from("disparos_campanha_contatos")
+        .select("numero")
+        .eq("campanha_id", campanhaId)
+        .eq("status", "sent")
+        .eq("archived", false);
+
+      if (allContacts && allContacts.length > 0) {
+        const contactDigits = allContacts.map(c => c.numero.replace(/\D/g, '').slice(-8));
+        
+        // Check reunioes_agendadas by phone
+        const { data: reunioesAgendadas } = await supabase
+          .from("reunioes_agendadas")
+          .select("participante_telefone");
+
+        let totalReunioes = 0;
+        if (reunioesAgendadas) {
+          totalReunioes = reunioesAgendadas.filter(r => {
+            if (!r.participante_telefone) return false;
+            const rDigits = r.participante_telefone.replace(/\D/g, '').slice(-8);
+            return contactDigits.some(d => d === rDigits);
+          }).length;
+        }
+
+        setReuniaoStats({
+          totalReunioes,
+          taxaConversaoReuniao: allContacts.length > 0 
+            ? (totalReunioes / allContacts.length) * 100 
+            : 0
+        });
+      } else {
+        setReuniaoStats({ totalReunioes: 0, taxaConversaoReuniao: 0 });
       }
 
     } catch (error) {
@@ -479,6 +521,30 @@ export function RelatorioCampanhaDialog({
                   <span className="text-sm">Taxa de resposta não disponível para versões anteriores</span>
                 </div>
               </Card>
+
+              <Separator />
+            </>
+          )}
+
+          {/* Taxa de Conversão em Reuniões */}
+          {!viewingSnapshot && reuniaoStats && (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Conversão em Reuniões</span>
+                  </div>
+                  <span className="text-lg font-bold text-blue-600">
+                    {reuniaoStats.taxaConversaoReuniao.toFixed(1)}%
+                  </span>
+                </div>
+                <Progress value={reuniaoStats.taxaConversaoReuniao} className="h-2" />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{reuniaoStats.totalReunioes} reuniões agendadas</span>
+                  <span>de {currentContatoStats?.enviados || 0} contatos enviados</span>
+                </div>
+              </div>
 
               <Separator />
             </>
