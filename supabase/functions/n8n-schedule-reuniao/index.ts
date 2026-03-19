@@ -190,6 +190,7 @@ Deno.serve(async (req) => {
       }
 
       if (membrosDisponiveis.length === 0) {
+        console.log("[n8n-schedule-reuniao] FAIL: no members available on date. membroIdsFiltrados:", membroIdsFiltrados);
         return new Response(JSON.stringify({ error: "Nenhum profissional disponível nesta data" }), {
           status: 409,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
