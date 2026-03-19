@@ -20,10 +20,11 @@ import {
   ArrowLeft, Building2, Mail, Phone, Globe, Instagram,
   FileText, Layers, CheckCircle2, Clock, AlertCircle,
   Link2, ExternalLink, Users, Calendar, DollarSign,
-  Upload, Download, Trash2, Paperclip, Receipt, TrendingUp,
+  Upload, Download, Trash2, Paperclip, Receipt, TrendingUp, Bot,
 } from "lucide-react";
 import { NovoClienteDialog } from "@/components/tarefas/NovoClienteDialog";
 import { CobrancasTab } from "@/components/cobrancas/CobrancasTab";
+import ClienteIATab from "@/components/tarefas/ClienteIATab";
 
 const colunaIconMap: Record<string, React.ReactNode> = {
   "Concluído": <CheckCircle2 className="h-4 w-4 text-green-500" />,
@@ -245,6 +246,9 @@ export default function TarefasClienteDetalhes() {
           <TabsTrigger value="geral" className="gap-1.5"><Building2 className="h-4 w-4" />Geral</TabsTrigger>
           <TabsTrigger value="tarefas" className="gap-1.5"><Layers className="h-4 w-4" />Tarefas ({clienteTarefas.length})</TabsTrigger>
           <TabsTrigger value="cobrancas" className="gap-1.5"><Receipt className="h-4 w-4" />Cobranças</TabsTrigger>
+          {cliente.tem_ia && (
+            <TabsTrigger value="ia" className="gap-1.5"><Bot className="h-4 w-4" />I.A</TabsTrigger>
+          )}
           <TabsTrigger value="contrato" className="gap-1.5"><Paperclip className="h-4 w-4" />Contrato</TabsTrigger>
         </TabsList>
 
@@ -388,6 +392,13 @@ export default function TarefasClienteDetalhes() {
         <TabsContent value="cobrancas">
           <CobrancasTab clienteId={cliente.id} valorContrato={financeiro.valorContrato} />
         </TabsContent>
+
+        {/* ── I.A ── */}
+        {cliente.tem_ia && (
+          <TabsContent value="ia">
+            <ClienteIATab clienteId={cliente.id} />
+          </TabsContent>
+        )}
 
         {/* ── Contrato ── */}
         <TabsContent value="contrato">

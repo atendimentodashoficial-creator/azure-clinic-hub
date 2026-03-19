@@ -13,7 +13,8 @@ import { CountryCodeSelect } from "@/components/whatsapp/CountryCodeSelect";
 import { extractCountryCode, formatPhoneByCountry, getPhonePlaceholder, normalizePhone, stripCountryCode } from "@/utils/phoneFormat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Instagram, Link, Globe, MessageSquare, Camera, X } from "lucide-react";
+import { Plus, Instagram, Link, Globe, MessageSquare, Camera, X, Bot } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface NovoClienteDialogProps {
@@ -64,6 +65,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
   const [tipo, setTipo] = useState(clienteEditando?.tipo || defaultTipo || "interno");
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(clienteEditando?.foto_perfil_url || "");
   const [gestorId, setGestorId] = useState(clienteEditando?.gestor_id || "");
+  const [temIa, setTemIa] = useState(clienteEditando?.tem_ia || false);
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const fotoInputRef = useRef<HTMLInputElement>(null);
 
@@ -71,7 +73,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
     setNome(""); setEmail(""); setSenhaAcesso(""); setTelefone(""); setCountryCode("55"); setEmpresa("");
     setCnpj(""); setDocTipo("cnpj"); setSite(""); setInstagramUrl(""); setLinktree(""); setGoogleMeuNegocio("");
     setObservacoes(""); setGrupoWhatsapp(""); setTipo(defaultTipo || "interno"); setFormTab("info"); setFotoPerfilUrl("");
-    setGestorId("");
+    setGestorId(""); setTemIa(false);
   };
 
   // Pre-fill when opened externally with initialData
@@ -153,6 +155,7 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
       grupo_whatsapp: grupoWhatsapp.trim() || null,
       foto_perfil_url: fotoPerfilUrl || null,
       gestor_id: gestorId && gestorId !== "none" ? gestorId : null,
+      tem_ia: temIa,
       tipo,
     });
     resetForm();
@@ -283,6 +286,13 @@ export function NovoClienteDialog({ onSubmit, clienteEditando, onClose, external
                   onChange={e => handleDocChange(e.target.value)}
                   placeholder={docTipo === "cnpj" ? "00.000.000/0000-00" : "000.000.000-00"}
                 />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-muted-foreground" />
+                  <Label className="cursor-pointer">Cliente possui I.A</Label>
+                </div>
+                <Switch checked={temIa} onCheckedChange={setTemIa} />
               </div>
               <div className="space-y-2"><Label>Observações</Label><Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} /></div>
               <div className="space-y-2">

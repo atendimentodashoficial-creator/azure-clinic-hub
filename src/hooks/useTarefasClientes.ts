@@ -21,6 +21,7 @@ export interface TarefaCliente {
   grupo_whatsapp: string | null;
   foto_perfil_url: string | null;
   gestor_id: string | null;
+  tem_ia: boolean;
   tipo: string;
   created_at: string;
 }
