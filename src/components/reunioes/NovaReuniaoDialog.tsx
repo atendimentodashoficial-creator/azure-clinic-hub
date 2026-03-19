@@ -389,6 +389,7 @@ export function NovaReuniaoDialog({ open, onOpenChange, initialClienteNome, init
               <Label>Data *</Label>
               <Input
                 type="date"
+                className="h-9"
                 value={selectedDate}
                 onChange={e => { setSelectedDate(e.target.value); setSelectedTime(""); setSelectedMemberId(""); }}
                 min={new Date().toISOString().split("T")[0]}
