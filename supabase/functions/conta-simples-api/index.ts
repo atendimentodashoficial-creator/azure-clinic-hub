@@ -72,16 +72,24 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Token obrigatório" });
       }
 
+      const requestedPageSize = Number(pageSize);
+      const normalizedPageSize = Number.isFinite(requestedPageSize)
+        ? Math.trunc(requestedPageSize)
+        : 50;
+      const safePageSize = Math.min(100, Math.max(5, normalizedPageSize));
+
       const requestBody: Record<string, unknown> = {
         startDate,
         endDate,
-        pageSize: pageSize || 50,
+        pageSize: safePageSize,
       };
       if (nextPageStartKey) {
         requestBody.nextPageStartKey = nextPageStartKey;
       }
 
-      console.log(`[conta-simples] Fetching statements: ${startDate} to ${endDate}`);
+      console.log(
+        `[conta-simples] Fetching statements: ${startDate} to ${endDate} (pageSize=${safePageSize})`,
+      );
 
       const statementsRes = await fetch(`${baseUrl}/statements/v1/credit-card`, {
         method: "POST",
