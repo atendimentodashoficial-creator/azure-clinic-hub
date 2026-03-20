@@ -94,12 +94,12 @@ export function ContaSimpleConfig() {
     toast.success("Credenciais salvas localmente");
   };
 
-  const authenticate = async () => {
+  const authenticate = async (silent = false) => {
     if (!apiKey || !apiSecret) {
-      toast.error("Preencha API Key e API Secret");
+      if (!silent) toast.error("Preencha API Key e API Secret");
       return;
     }
-    setIsAuthenticating(true);
+    if (!silent) setIsAuthenticating(true);
     try {
       const { data, error } = await supabase.functions.invoke("conta-simples-api", {
         body: { action: "authenticate", api_key: apiKey, api_secret: apiSecret, environment },
@@ -109,13 +109,25 @@ export function ContaSimpleConfig() {
 
       setToken(data.access_token);
       setTokenExpiresAt(Date.now() + (data.expires_in * 1000));
-      toast.success("Autenticado com sucesso!");
+      if (!silent) toast.success("Autenticado com sucesso!");
     } catch (err: any) {
-      toast.error(`Falha na autenticação: ${err.message}`);
+      if (!silent) toast.error(`Falha na autenticação: ${err.message}`);
     } finally {
-      setIsAuthenticating(false);
+      if (!silent) setIsAuthenticating(false);
     }
   };
+
+  // Auto-renew token 2 minutes before expiry
+  useEffect(() => {
+    if (!token || !tokenExpiresAt || !apiKey || !apiSecret) return;
+    const renewIn = (tokenExpiresAt - Date.now()) - 120000; // 2 min before expiry
+    if (renewIn <= 0) {
+      authenticate(true);
+      return;
+    }
+    const timer = setTimeout(() => authenticate(true), renewIn);
+    return () => clearTimeout(timer);
+  }, [token, tokenExpiresAt, apiKey, apiSecret, environment]);
 
   const isTokenValid = token && tokenExpiresAt && Date.now() < tokenExpiresAt;
 
@@ -300,7 +312,7 @@ export function ContaSimpleConfig() {
               <Button onClick={saveCredentials} variant="outline" size="sm">
                 Salvar Credenciais
               </Button>
-              <Button onClick={authenticate} disabled={isAuthenticating} size="sm">
+              <Button onClick={() => authenticate()} disabled={isAuthenticating} size="sm">
                 {isAuthenticating ? (
                   <RefreshCw className="h-4 w-4 animate-spin mr-1" />
                 ) : (
