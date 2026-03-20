@@ -535,17 +535,27 @@ export function ContaSimpleConfig() {
               </Card>
 
               {/* Sub-tabs */}
-              <div className="flex">
-                <TabsList className="h-8">
-                  <TabsTrigger value="conta-corrente" className="h-8 text-xs gap-1.5" onClick={() => setTransacoesSubTab("conta-corrente")}>
-                    <Landmark className="h-4 w-4" />
-                    Conta Corrente
-                  </TabsTrigger>
-                  <TabsTrigger value="cartoes" className="h-8 text-xs gap-1.5" onClick={() => setTransacoesSubTab("cartoes")}>
-                    <CreditCard className="h-4 w-4" />
-                    Cartões
-                  </TabsTrigger>
-                </TabsList>
+              <div className="flex items-center gap-1 rounded-lg bg-muted p-1 w-fit">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={transacoesSubTab === "conta-corrente" ? "secondary" : "ghost"}
+                  className="h-8 text-xs gap-1.5"
+                  onClick={() => setTransacoesSubTab("conta-corrente")}
+                >
+                  <Landmark className="h-4 w-4" />
+                  Conta Corrente
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={transacoesSubTab === "cartoes" ? "secondary" : "ghost"}
+                  className="h-8 text-xs gap-1.5"
+                  onClick={() => setTransacoesSubTab("cartoes")}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Cartões
+                </Button>
               </div>
 
               {/* ===== CONTA CORRENTE ===== */}
