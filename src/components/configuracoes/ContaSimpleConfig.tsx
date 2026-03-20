@@ -204,7 +204,7 @@ export function ContaSimpleConfig() {
     }
   };
 
-  // Filtered transactions
+  // Filtered transactions (by selected card + other filters)
   const filteredTransactions = transactions.filter((tx) => {
     const term = searchTerm.toLowerCase();
     if (searchTerm && !(
@@ -222,15 +222,15 @@ export function ContaSimpleConfig() {
     }
     if (filterType !== "all" && tx.type !== filterType) return false;
     if (filterCategory !== "all" && tx.category?.name !== filterCategory) return false;
-    if (filterCard !== "all" && tx.card?.maskedNumber !== filterCard) return false;
+    if (selectedCard && tx.card?.maskedNumber !== selectedCard) return false;
     return true;
   });
 
   const uniqueCategories = [...new Set(transactions.map((t) => t.category?.name).filter(Boolean))].sort();
   const uniqueCards = [...new Set(transactions.map((t) => t.card?.maskedNumber).filter(Boolean))].sort();
   const uniqueTypes = [...new Set(transactions.map((t) => t.type).filter(Boolean))].sort();
-  const hasActiveFilters = filterStatus !== "all" || filterType !== "all" || filterCategory !== "all" || filterCard !== "all";
-  const clearFilters = () => { setFilterStatus("all"); setFilterType("all"); setFilterCategory("all"); setFilterCard("all"); setSearchTerm(""); };
+  const hasActiveFilters = filterStatus !== "all" || filterType !== "all" || filterCategory !== "all" || !!selectedCard;
+  const clearFilters = () => { setFilterStatus("all"); setFilterType("all"); setFilterCategory("all"); setSelectedCard(null); setSearchTerm(""); };
 
   // Card summary
   const cardSummary = uniqueCards.map((maskedNumber) => {
