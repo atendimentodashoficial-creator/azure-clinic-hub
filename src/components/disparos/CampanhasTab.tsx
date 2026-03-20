@@ -285,6 +285,7 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
     const loadReunioes = async () => {
       if (!user?.id || campanhas.length === 0) {
         setReunioesCount(0);
+        setReunioesTotalCount(0);
         return;
       }
 
@@ -316,36 +317,57 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
 
         if (sentNumbers.size === 0) {
           setReunioesCount(0);
+          setReunioesTotalCount(0);
           return;
         }
 
-        // Filter reuniões by the selected period instead
+        // Filter reuniões by the selected period
         const startISO = new Date(dateStart.getFullYear(), dateStart.getMonth(), dateStart.getDate(), 0, 0, 0, 0).toISOString();
         const endISO = new Date(dateEnd.getFullYear(), dateEnd.getMonth(), dateEnd.getDate(), 23, 59, 59, 999).toISOString();
 
-        const { data: reunioes } = await supabase
-          .from("reunioes")
-          .select("cliente_telefone")
-          .eq("user_id", user.id)
-          .gte("created_at", startISO)
-          .lte("created_at", endISO);
+        // Fetch period reuniões AND all reuniões in parallel
+        const [{ data: reunioesPeriodo }, { data: reunioesAll }] = await Promise.all([
+          supabase
+            .from("reunioes")
+            .select("cliente_telefone")
+            .eq("user_id", user.id)
+            .gte("created_at", startISO)
+            .lte("created_at", endISO),
+          supabase
+            .from("reunioes")
+            .select("cliente_telefone")
+            .eq("user_id", user.id)
+        ]);
 
-        if (reunioes) {
-          const matched = new Set<string>();
-          for (const r of reunioes) {
+        // Count period matches
+        const matchedPeriodo = new Set<string>();
+        if (reunioesPeriodo) {
+          for (const r of reunioesPeriodo) {
             if (!r.cliente_telefone) continue;
             const last8 = r.cliente_telefone.replace(/\D/g, "").slice(-8);
-            if (sentNumbers.has(last8) && !matched.has(last8)) {
-              matched.add(last8);
+            if (sentNumbers.has(last8) && !matchedPeriodo.has(last8)) {
+              matchedPeriodo.add(last8);
             }
           }
-          setReunioesCount(matched.size);
-        } else {
-          setReunioesCount(0);
         }
+        setReunioesCount(matchedPeriodo.size);
+
+        // Count total matches (all time)
+        const matchedTotal = new Set<string>();
+        if (reunioesAll) {
+          for (const r of reunioesAll) {
+            if (!r.cliente_telefone) continue;
+            const last8 = r.cliente_telefone.replace(/\D/g, "").slice(-8);
+            if (sentNumbers.has(last8) && !matchedTotal.has(last8)) {
+              matchedTotal.add(last8);
+            }
+          }
+        }
+        setReunioesTotalCount(matchedTotal.size);
       } catch (error) {
         console.error("Error loading reunioes count:", error);
         setReunioesCount(0);
+        setReunioesTotalCount(0);
       }
     };
 
