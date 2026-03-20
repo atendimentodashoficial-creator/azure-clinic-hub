@@ -519,8 +519,12 @@ export function ContaSimpleConfig() {
                       className="w-[160px]"
                     />
                   </div>
-                  <Button onClick={fetchAll} disabled={isLoadingTransactions} size="sm">
-                    {isLoadingTransactions ? (
+                  <Button
+                    onClick={fetchAll}
+                    disabled={transacoesSubTab === "conta-corrente" ? isLoadingBank : isLoadingCards}
+                    size="sm"
+                  >
+                    {(transacoesSubTab === "conta-corrente" ? isLoadingBank : isLoadingCards) ? (
                       <RefreshCw className="h-4 w-4 animate-spin mr-1" />
                     ) : (
                       <Search className="h-4 w-4 mr-1" />
