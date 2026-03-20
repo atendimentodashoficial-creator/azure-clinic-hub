@@ -292,9 +292,43 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
       }
 
       try {
-        const allCampanhaIds = campanhas.map(c => c.id);
-        const sentNumbers = new Set<string>();
+        const startOfPeriod = new Date(dateStart.getFullYear(), dateStart.getMonth(), dateStart.getDate(), 0, 0, 0, 0);
+        const endOfPeriod = new Date(dateEnd.getFullYear(), dateEnd.getMonth(), dateEnd.getDate(), 23, 59, 59, 999);
 
+        // Split campaigns: period-filtered vs all
+        const campanhasPeriodo = campanhas.filter(c => {
+          const d = new Date(c.created_at);
+          return d >= startOfPeriod && d <= endOfPeriod;
+        });
+
+        // Collect sent numbers from period campaigns (for "no período" count)
+        const sentNumbersPeriodo = new Set<string>();
+        if (campanhasPeriodo.length > 0) {
+          const campanhaIdsPeriodo = campanhasPeriodo.map(c => c.id);
+          for (let i = 0; i < campanhaIdsPeriodo.length; i += 500) {
+            const batchIds = campanhaIdsPeriodo.slice(i, i + 500);
+            let from = 0;
+            while (true) {
+              const { data } = await supabase
+                .from("disparos_campanha_contatos")
+                .select("numero")
+                .in("campanha_id", batchIds)
+                .in("status", ["sent", "delivered"])
+                .range(from, from + 999);
+              if (!data || data.length === 0) break;
+              data.forEach((d: any) => {
+                const cleaned = d.numero?.replace(/\D/g, "");
+                if (cleaned) sentNumbersPeriodo.add(cleaned.slice(-8));
+              });
+              if (data.length < 1000) break;
+              from += 1000;
+            }
+          }
+        }
+
+        // Collect sent numbers from ALL campaigns (for "hoje" count)
+        const allCampanhaIds = campanhas.map(c => c.id);
+        const sentNumbersAll = new Set<string>();
         for (let i = 0; i < allCampanhaIds.length; i += 500) {
           const batchIds = allCampanhaIds.slice(i, i + 500);
           let from = 0;
@@ -308,35 +342,26 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
             if (!data || data.length === 0) break;
             data.forEach((d: any) => {
               const cleaned = d.numero?.replace(/\D/g, "");
-              if (cleaned) sentNumbers.add(cleaned.slice(-8));
+              if (cleaned) sentNumbersAll.add(cleaned.slice(-8));
             });
             if (data.length < 1000) break;
             from += 1000;
           }
         }
 
-        if (sentNumbers.size === 0) {
+        if (sentNumbersAll.size === 0) {
           setReunioesCount(0);
           setReunioesTotalCount(0);
           setReunioesHojeCount(0);
           return;
         }
 
-        const startISO = new Date(dateStart.getFullYear(), dateStart.getMonth(), dateStart.getDate(), 0, 0, 0, 0).toISOString();
-        const endISO = new Date(dateEnd.getFullYear(), dateEnd.getMonth(), dateEnd.getDate(), 23, 59, 59, 999).toISOString();
-
         const today = new Date();
         const todayStartISO = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
         const todayEndISO = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
 
-        // Fetch period, today, and all reuniões in parallel
-        const [{ data: reunioesPeriodo }, { data: reunioesHoje }, { data: reunioesAll }] = await Promise.all([
-          supabase
-            .from("reunioes")
-            .select("cliente_telefone")
-            .eq("user_id", user.id)
-            .gte("created_at", startISO)
-            .lte("created_at", endISO),
+        // Fetch today's reuniões and all reuniões
+        const [{ data: reunioesHoje }, { data: reunioesAll }] = await Promise.all([
           supabase
             .from("reunioes")
             .select("cliente_telefone")
@@ -349,7 +374,7 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
             .eq("user_id", user.id)
         ]);
 
-        const countMatches = (reunioes: typeof reunioesAll) => {
+        const countMatches = (reunioes: typeof reunioesAll, sentNumbers: Set<string>) => {
           const matched = new Set<string>();
           if (reunioes) {
             for (const r of reunioes) {
@@ -363,9 +388,12 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
           return matched.size;
         };
 
-        setReunioesCount(countMatches(reunioesPeriodo));
-        setReunioesHojeCount(countMatches(reunioesHoje));
-        setReunioesTotalCount(countMatches(reunioesAll));
+        // "no período": reuniões de qualquer data, mas só de contatos disparados no período
+        setReunioesCount(countMatches(reunioesAll, sentNumbersPeriodo));
+        // "hoje": reuniões de hoje, de contatos de qualquer campanha
+        setReunioesHojeCount(countMatches(reunioesHoje, sentNumbersAll));
+        // total: todas reuniões de contatos de qualquer campanha
+        setReunioesTotalCount(countMatches(reunioesAll, sentNumbersAll));
       } catch (error) {
         console.error("Error loading reunioes count:", error);
         setReunioesCount(0);
@@ -827,8 +855,8 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
         <StatsCard
           title="Conversão Reuniões"
           value={dashStats.totalEnviados > 0 ? `${Math.round((reunioesCount / dashStats.totalEnviados) * 100)}%` : "0%"}
-          change={`${reunioesHojeCount} hoje · ${reunioesTotalCount} total`}
-          changeType={reunioesCount > 0 ? "positive" : "neutral"}
+          change={`${reunioesCount} no período · ${reunioesHojeCount} hoje`}
+          changeType={reunioesHojeCount > 0 ? "positive" : "neutral"}
           icon={Video}
         />
       </div>
