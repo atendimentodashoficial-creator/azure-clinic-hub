@@ -287,12 +287,11 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
       if (!user?.id || campanhas.length === 0) {
         setReunioesCount(0);
         setReunioesTotalCount(0);
+        setReunioesHojeCount(0);
         return;
       }
 
       try {
-        // Collect sent numbers from ALL campaigns (not just period-filtered)
-        // because a contact sent yesterday can convert to a reunion today
         const allCampanhaIds = campanhas.map(c => c.id);
         const sentNumbers = new Set<string>();
 
@@ -319,15 +318,19 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
         if (sentNumbers.size === 0) {
           setReunioesCount(0);
           setReunioesTotalCount(0);
+          setReunioesHojeCount(0);
           return;
         }
 
-        // Filter reuniões by the selected period
         const startISO = new Date(dateStart.getFullYear(), dateStart.getMonth(), dateStart.getDate(), 0, 0, 0, 0).toISOString();
         const endISO = new Date(dateEnd.getFullYear(), dateEnd.getMonth(), dateEnd.getDate(), 23, 59, 59, 999).toISOString();
 
-        // Fetch period reuniões AND all reuniões in parallel
-        const [{ data: reunioesPeriodo }, { data: reunioesAll }] = await Promise.all([
+        const today = new Date();
+        const todayStartISO = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
+        const todayEndISO = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+
+        // Fetch period, today, and all reuniões in parallel
+        const [{ data: reunioesPeriodo }, { data: reunioesHoje }, { data: reunioesAll }] = await Promise.all([
           supabase
             .from("reunioes")
             .select("cliente_telefone")
@@ -338,37 +341,36 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
             .from("reunioes")
             .select("cliente_telefone")
             .eq("user_id", user.id)
+            .gte("created_at", todayStartISO)
+            .lte("created_at", todayEndISO),
+          supabase
+            .from("reunioes")
+            .select("cliente_telefone")
+            .eq("user_id", user.id)
         ]);
 
-        // Count period matches
-        const matchedPeriodo = new Set<string>();
-        if (reunioesPeriodo) {
-          for (const r of reunioesPeriodo) {
-            if (!r.cliente_telefone) continue;
-            const last8 = r.cliente_telefone.replace(/\D/g, "").slice(-8);
-            if (sentNumbers.has(last8) && !matchedPeriodo.has(last8)) {
-              matchedPeriodo.add(last8);
+        const countMatches = (reunioes: typeof reunioesAll) => {
+          const matched = new Set<string>();
+          if (reunioes) {
+            for (const r of reunioes) {
+              if (!r.cliente_telefone) continue;
+              const last8 = r.cliente_telefone.replace(/\D/g, "").slice(-8);
+              if (sentNumbers.has(last8) && !matched.has(last8)) {
+                matched.add(last8);
+              }
             }
           }
-        }
-        setReunioesCount(matchedPeriodo.size);
+          return matched.size;
+        };
 
-        // Count total matches (all time)
-        const matchedTotal = new Set<string>();
-        if (reunioesAll) {
-          for (const r of reunioesAll) {
-            if (!r.cliente_telefone) continue;
-            const last8 = r.cliente_telefone.replace(/\D/g, "").slice(-8);
-            if (sentNumbers.has(last8) && !matchedTotal.has(last8)) {
-              matchedTotal.add(last8);
-            }
-          }
-        }
-        setReunioesTotalCount(matchedTotal.size);
+        setReunioesCount(countMatches(reunioesPeriodo));
+        setReunioesHojeCount(countMatches(reunioesHoje));
+        setReunioesTotalCount(countMatches(reunioesAll));
       } catch (error) {
         console.error("Error loading reunioes count:", error);
         setReunioesCount(0);
         setReunioesTotalCount(0);
+        setReunioesHojeCount(0);
       }
     };
 
