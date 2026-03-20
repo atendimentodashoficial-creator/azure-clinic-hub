@@ -72,9 +72,17 @@ export default function Configuracoes() {
           <Conexoes />
         </TabsContent>
 
+        <TabsContent value="conta-simples">
+          <ContaSimpleConfig />
+        </TabsContent>
+
         <TabsContent value="reset">
           <ResetDataConfig />
         </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
       </Tabs>
     </div>
   );
