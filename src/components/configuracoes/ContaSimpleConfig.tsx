@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   CreditCard, Key, RefreshCw, Download, Eye, EyeOff, Filter,
-  ArrowUpRight, ArrowDownLeft, CheckCircle2, XCircle, Clock, Search, FileText, Wallet, X
+  ArrowUpRight, ArrowDownLeft, CheckCircle2, XCircle, Clock, Search, FileText, Wallet, X, Landmark
 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -50,6 +50,20 @@ interface CardTransaction {
   attachments: { id: string; name: string }[];
 }
 
+interface BankTransaction {
+  id: string;
+  operation: string;
+  transactionDate: string;
+  status: string;
+  type: string;
+  description: string;
+  amountBrl: number;
+  isCanceled: boolean;
+  category: { id: string; name: string };
+  costCenter: { id: string; name: string };
+  attachments: { id: string; name: string }[];
+}
+
 export function ContaSimpleConfig() {
   const { user } = useAuth();
   const { ownerId } = useOwnerId();
@@ -65,15 +79,25 @@ export function ContaSimpleConfig() {
   // Transaction filters
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [transactions, setTransactions] = useState<CardTransaction[]>([]);
-  const [isLoadingTx, setIsLoadingTx] = useState(false);
-  const [nextPageKey, setNextPageKey] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [filterCard, setFilterCard] = useState<string>("all");
-  const [transacoesSubTab, setTransacoesSubTab] = useState("transacoes");
+
+  // Card transactions
+  const [cardTransactions, setCardTransactions] = useState<CardTransaction[]>([]);
+  const [isLoadingCards, setIsLoadingCards] = useState(false);
+  const [cardNextPageKey, setCardNextPageKey] = useState<string | null>(null);
+  const [cardSearchTerm, setCardSearchTerm] = useState("");
+  const [cardFilterStatus, setCardFilterStatus] = useState<string>("all");
+  const [cardFilterCategory, setCardFilterCategory] = useState<string>("all");
+  const [cardFilterCard, setCardFilterCard] = useState<string>("all");
+
+  // Bank account transactions
+  const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
+  const [isLoadingBank, setIsLoadingBank] = useState(false);
+  const [bankNextPageKey, setBankNextPageKey] = useState<string | null>(null);
+  const [bankSearchTerm, setBankSearchTerm] = useState("");
+  const [bankFilterStatus, setBankFilterStatus] = useState<string>("all");
+  const [bankFilterType, setBankFilterType] = useState<string>("all");
+
+  const [transacoesSubTab, setTransacoesSubTab] = useState("conta-corrente");
 
   // Load saved credentials from localStorage
   useEffect(() => {
@@ -136,12 +160,12 @@ export function ContaSimpleConfig() {
 
   const isTokenValid = token && tokenExpiresAt && Date.now() < tokenExpiresAt;
 
-  const fetchTransactions = async (pageKey?: string) => {
+  const fetchCardTransactions = async (pageKey?: string) => {
     if (!isTokenValid) {
       toast.error("Autentique-se primeiro");
       return;
     }
-    setIsLoadingTx(true);
+    setIsLoadingCards(true);
     try {
       const { data, error } = await supabase.functions.invoke("conta-simples-api", {
         body: {
@@ -150,7 +174,8 @@ export function ContaSimpleConfig() {
           startDate,
           endDate,
           environment,
-          pageSize: 50,
+          statementType: "credit-card",
+          limit: 50,
           ...(pageKey ? { nextPageStartKey: pageKey } : {}),
         },
       });
@@ -159,15 +184,59 @@ export function ContaSimpleConfig() {
 
       const txs = data.transactions || data.data || [];
       if (pageKey) {
-        setTransactions((prev) => [...prev, ...txs]);
+        setCardTransactions((prev) => [...prev, ...txs]);
       } else {
-        setTransactions(txs);
+        setCardTransactions(txs);
       }
-      setNextPageKey(data.nextPageStartKey || null);
+      setCardNextPageKey(data.nextPageStartKey || null);
     } catch (err: any) {
-      toast.error(`Erro ao buscar transações: ${err.message}`);
+      toast.error(`Erro ao buscar transações de cartão: ${err.message}`);
     } finally {
-      setIsLoadingTx(false);
+      setIsLoadingCards(false);
+    }
+  };
+
+  const fetchBankTransactions = async (pageKey?: string) => {
+    if (!isTokenValid) {
+      toast.error("Autentique-se primeiro");
+      return;
+    }
+    setIsLoadingBank(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("conta-simples-api", {
+        body: {
+          action: "credit-card-statements",
+          token,
+          startDate,
+          endDate,
+          environment,
+          statementType: "bank-account",
+          limit: 50,
+          ...(pageKey ? { nextPageStartKey: pageKey } : {}),
+        },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      const txs = data.transactions || data.data || [];
+      if (pageKey) {
+        setBankTransactions((prev) => [...prev, ...txs]);
+      } else {
+        setBankTransactions(txs);
+      }
+      setBankNextPageKey(data.nextPageStartKey || null);
+    } catch (err: any) {
+      toast.error(`Erro ao buscar extrato bancário: ${err.message}`);
+    } finally {
+      setIsLoadingBank(false);
+    }
+  };
+
+  const fetchAll = () => {
+    if (transacoesSubTab === "conta-corrente") {
+      fetchBankTransactions();
+    } else {
+      fetchCardTransactions();
     }
   };
 
@@ -203,43 +272,54 @@ export function ContaSimpleConfig() {
     }
   };
 
-  const filteredTransactions = transactions.filter((tx) => {
-    const term = searchTerm.toLowerCase();
-    if (searchTerm && !(
+  // Card filters
+  const filteredCardTransactions = cardTransactions.filter((tx) => {
+    const term = cardSearchTerm.toLowerCase();
+    if (cardSearchTerm && !(
       tx.merchant?.toLowerCase().includes(term) ||
       tx.card?.responsibleName?.toLowerCase().includes(term) ||
       tx.card?.maskedNumber?.includes(term) ||
       tx.category?.name?.toLowerCase().includes(term)
     )) return false;
 
-    if (filterStatus !== "all") {
-      if (filterStatus === "canceled" && !tx.isCanceled) return false;
-      if (filterStatus === "PROCESSED" && (tx.status !== "PROCESSED" || tx.isCanceled)) return false;
-      if (filterStatus === "PENDING" && (tx.status !== "PENDING" || tx.isCanceled)) return false;
+    if (cardFilterStatus !== "all") {
+      if (cardFilterStatus === "canceled" && !tx.isCanceled) return false;
+      if (cardFilterStatus === "PROCESSED" && (tx.status !== "PROCESSED" || tx.isCanceled)) return false;
+      if (cardFilterStatus === "PENDING" && (tx.status !== "PENDING" || tx.isCanceled)) return false;
     }
-    if (filterType !== "all" && tx.operation !== filterType) return false;
-    if (filterCategory !== "all" && tx.category?.name !== filterCategory) return false;
-    if (filterCard !== "all" && tx.card?.maskedNumber !== filterCard) return false;
+    if (cardFilterCategory !== "all" && tx.category?.name !== cardFilterCategory) return false;
+    if (cardFilterCard !== "all" && tx.card?.maskedNumber !== cardFilterCard) return false;
 
     return true;
   });
 
-  const uniqueCategories = [...new Set(transactions.map((t) => t.category?.name).filter(Boolean))].sort();
-  const uniqueCards = [...new Set(transactions.map((t) => t.card?.maskedNumber).filter(Boolean))].sort();
+  const uniqueCategories = [...new Set(cardTransactions.map((t) => t.category?.name).filter(Boolean))].sort();
+  const uniqueCards = [...new Set(cardTransactions.map((t) => t.card?.maskedNumber).filter(Boolean))].sort();
+  const hasActiveCardFilters = cardFilterStatus !== "all" || cardFilterCategory !== "all" || cardFilterCard !== "all";
+  const clearCardFilters = () => { setCardFilterStatus("all"); setCardFilterCategory("all"); setCardFilterCard("all"); setCardSearchTerm(""); };
 
-  const hasActiveFilters = filterStatus !== "all" || filterType !== "all" || filterCategory !== "all" || filterCard !== "all";
-
-  const clearFilters = () => {
-    setFilterStatus("all");
-    setFilterType("all");
-    setFilterCategory("all");
-    setFilterCard("all");
-    setSearchTerm("");
-  };
+  // Bank filters
+  const filteredBankTransactions = bankTransactions.filter((tx) => {
+    const term = bankSearchTerm.toLowerCase();
+    if (bankSearchTerm && !(
+      (tx as any).description?.toLowerCase().includes(term) ||
+      (tx as any).merchant?.toLowerCase().includes(term) ||
+      tx.category?.name?.toLowerCase().includes(term)
+    )) return false;
+    if (bankFilterStatus !== "all") {
+      if (bankFilterStatus === "canceled" && !tx.isCanceled) return false;
+      if (bankFilterStatus === "PROCESSED" && (tx.status !== "PROCESSED" || tx.isCanceled)) return false;
+      if (bankFilterStatus === "PENDING" && (tx.status !== "PENDING" || tx.isCanceled)) return false;
+    }
+    if (bankFilterType !== "all" && tx.operation !== bankFilterType) return false;
+    return true;
+  });
+  const hasActiveBankFilters = bankFilterStatus !== "all" || bankFilterType !== "all";
+  const clearBankFilters = () => { setBankFilterStatus("all"); setBankFilterType("all"); setBankSearchTerm(""); };
 
   // Card summary for sub-tab
   const cardSummary = uniqueCards.map((maskedNumber) => {
-    const cardTxs = transactions.filter((t) => t.card?.maskedNumber === maskedNumber && !t.isCanceled);
+    const cardTxs = cardTransactions.filter((t) => t.card?.maskedNumber === maskedNumber && !t.isCanceled);
     const firstTx = cardTxs[0];
     return {
       maskedNumber,
@@ -288,8 +368,8 @@ export function ContaSimpleConfig() {
             Configuração
           </TabsTrigger>
           <TabsTrigger value="transacoes" className="gap-1.5">
-            <CreditCard className="h-4 w-4" />
-            Transações
+            <Landmark className="h-4 w-4" />
+            Extrato
           </TabsTrigger>
         </TabsList>
 
@@ -439,8 +519,8 @@ export function ContaSimpleConfig() {
                       className="w-[160px]"
                     />
                   </div>
-                  <Button onClick={() => fetchTransactions()} disabled={isLoadingTx} size="sm">
-                    {isLoadingTx ? (
+                  <Button onClick={fetchAll} disabled={isLoadingBank || isLoadingCards} size="sm">
+                    {(isLoadingBank || isLoadingCards) ? (
                       <RefreshCw className="h-4 w-4 animate-spin mr-1" />
                     ) : (
                       <Search className="h-4 w-4 mr-1" />
@@ -450,75 +530,37 @@ export function ContaSimpleConfig() {
                 </div>
               </Card>
 
-              {/* Sub-tabs: Transações / Cartões */}
-              {transactions.length > 0 && (
+              {/* Sub-tabs */}
+              <div className="flex">
                 <TabsList className="h-8">
-                  <TabsTrigger value="transacoes" className="h-8 text-xs gap-1.5" onClick={() => setTransacoesSubTab("transacoes")}>
-                    <CreditCard className="h-4 w-4" />
-                    Transações
+                  <TabsTrigger value="conta-corrente" className="h-8 text-xs gap-1.5" onClick={() => setTransacoesSubTab("conta-corrente")}>
+                    <Landmark className="h-4 w-4" />
+                    Conta Corrente
                   </TabsTrigger>
                   <TabsTrigger value="cartoes" className="h-8 text-xs gap-1.5" onClick={() => setTransacoesSubTab("cartoes")}>
-                    <Wallet className="h-4 w-4" />
+                    <CreditCard className="h-4 w-4" />
                     Cartões
                   </TabsTrigger>
                 </TabsList>
-              )}
+              </div>
 
-              {/* Cartões sub-tab */}
-              {transacoesSubTab === "cartoes" && transactions.length > 0 && (
-                <Card className="overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Cartão</TableHead>
-                          <TableHead>Responsável</TableHead>
-                          <TableHead>Tipo</TableHead>
-                          <TableHead className="text-right">Total Gasto</TableHead>
-                          <TableHead className="text-center">Transações</TableHead>
-                          <TableHead>Última Transação</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {cardSummary.map((card) => (
-                          <TableRow key={card.maskedNumber}>
-                            <TableCell className="font-mono text-sm">{card.maskedNumber}</TableCell>
-                            <TableCell className="text-sm">{card.responsibleName}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-xs">{card.type}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right font-mono text-sm text-red-500">
-                              R$ {card.totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                            </TableCell>
-                            <TableCell className="text-center text-sm">{card.totalTransacoes}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {card.ultimaTransacao ? format(new Date(card.ultimaTransacao), "dd/MM/yy HH:mm") : "—"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </Card>
-              )}
-
-              {/* Transações sub-tab */}
-              {transacoesSubTab === "transacoes" && (
+              {/* ===== CONTA CORRENTE ===== */}
+              {transacoesSubTab === "conta-corrente" && (
                 <>
-                  {/* Filters row */}
-                  {transactions.length > 0 && (
+                  {/* Bank filters */}
+                  {bankTransactions.length > 0 && (
                     <Card className="p-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="relative flex-1 min-w-[200px]">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Buscar estabelecimento, responsável..."
+                            value={bankSearchTerm}
+                            onChange={(e) => setBankSearchTerm(e.target.value)}
+                            placeholder="Buscar descrição, categoria..."
                             className="pl-9 h-8 text-xs"
                           />
                         </div>
-                        <Select value={filterStatus} onValueChange={setFilterStatus}>
+                        <Select value={bankFilterStatus} onValueChange={setBankFilterStatus}>
                           <SelectTrigger className="w-[130px] h-8 text-xs">
                             <SelectValue placeholder="Status" />
                           </SelectTrigger>
@@ -529,7 +571,7 @@ export function ContaSimpleConfig() {
                             <SelectItem value="canceled">Cancelada</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Select value={filterType} onValueChange={setFilterType}>
+                        <Select value={bankFilterType} onValueChange={setBankFilterType}>
                           <SelectTrigger className="w-[130px] h-8 text-xs">
                             <SelectValue placeholder="Tipo" />
                           </SelectTrigger>
@@ -539,8 +581,189 @@ export function ContaSimpleConfig() {
                             <SelectItem value="CASH_IN">Entrada</SelectItem>
                           </SelectContent>
                         </Select>
+                        {hasActiveBankFilters && (
+                          <Button variant="ghost" size="sm" onClick={clearBankFilters} className="h-8 text-xs gap-1">
+                            <X className="h-3 w-3" />
+                            Limpar
+                          </Button>
+                        )}
+                      </div>
+                      {hasActiveBankFilters && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {filteredBankTransactions.length} de {bankTransactions.length} movimentações
+                        </p>
+                      )}
+                    </Card>
+                  )}
+
+                  {filteredBankTransactions.length > 0 ? (
+                    <Card className="overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[40px]"></TableHead>
+                              <TableHead>Data</TableHead>
+                              <TableHead>Descrição</TableHead>
+                              <TableHead>Categoria</TableHead>
+                              <TableHead className="text-right">Valor</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="w-[60px]"></TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredBankTransactions.map((tx) => (
+                              <TableRow key={tx.id}>
+                                <TableCell>{getOperationIcon(tx.operation)}</TableCell>
+                                <TableCell className="text-sm whitespace-nowrap">
+                                  {format(new Date(tx.transactionDate), "dd/MM/yy HH:mm")}
+                                </TableCell>
+                                <TableCell className="text-sm font-medium max-w-[250px] truncate">
+                                  {(tx as any).description || (tx as any).merchant || "—"}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className="text-xs">
+                                    {tx.category?.name || "—"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right font-mono text-sm">
+                                  <span className={tx.operation === "CASH_IN" ? "text-green-500" : "text-foreground"}>
+                                    {tx.operation === "CASH_IN" ? "+" : "-"} R${" "}
+                                    {tx.amountBrl?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                  </span>
+                                </TableCell>
+                                <TableCell>{getStatusBadge(tx.status, tx.isCanceled)}</TableCell>
+                                <TableCell>
+                                  {tx.attachments?.length > 0 && (
+                                    <Button variant="ghost" size="sm" onClick={() => downloadAttachment(tx.attachments[0].id, tx.attachments[0].name)} title="Baixar comprovante">
+                                      <FileText className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      {bankNextPageKey && (
+                        <div className="p-3 border-t text-center">
+                          <Button variant="outline" size="sm" onClick={() => fetchBankTransactions(bankNextPageKey)} disabled={isLoadingBank}>
+                            {isLoadingBank ? <RefreshCw className="h-4 w-4 animate-spin mr-1" /> : null}
+                            Carregar mais
+                          </Button>
+                        </div>
+                      )}
+                    </Card>
+                  ) : bankTransactions.length === 0 && !isLoadingBank ? (
+                    <Card className="p-8 text-center text-muted-foreground">
+                      <Landmark className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                      <p>Clique em "Buscar" para consultar o extrato da conta corrente.</p>
+                    </Card>
+                  ) : null}
+
+                  {isLoadingBank && bankTransactions.length === 0 && (
+                    <Card className="p-8 text-center text-muted-foreground">
+                      <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin opacity-40" />
+                      <p>Carregando extrato...</p>
+                    </Card>
+                  )}
+
+                  {/* Bank summary */}
+                  {bankTransactions.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground">Total</p>
+                        <p className="text-xl font-bold">{bankTransactions.length}</p>
+                      </Card>
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground">Entradas</p>
+                        <p className="text-xl font-bold text-green-500">
+                          R$ {bankTransactions.filter((t) => t.operation === "CASH_IN" && !t.isCanceled).reduce((s, t) => s + (t.amountBrl || 0), 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </p>
+                      </Card>
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground">Saídas</p>
+                        <p className="text-xl font-bold text-red-500">
+                          R$ {bankTransactions.filter((t) => t.operation === "CASH_OUT" && !t.isCanceled).reduce((s, t) => s + (t.amountBrl || 0), 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </p>
+                      </Card>
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground">Canceladas</p>
+                        <p className="text-xl font-bold text-muted-foreground">{bankTransactions.filter((t) => t.isCanceled).length}</p>
+                      </Card>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* ===== CARTÕES ===== */}
+              {transacoesSubTab === "cartoes" && (
+                <>
+                  {/* Card summary table */}
+                  {cardSummary.length > 0 && (
+                    <Card className="overflow-hidden">
+                      <div className="p-3 border-b">
+                        <h3 className="text-sm font-medium">Resumo por Cartão</h3>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Cartão</TableHead>
+                              <TableHead>Responsável</TableHead>
+                              <TableHead>Tipo</TableHead>
+                              <TableHead className="text-right">Total Gasto</TableHead>
+                              <TableHead className="text-center">Transações</TableHead>
+                              <TableHead>Última Transação</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {cardSummary.map((card) => (
+                              <TableRow key={card.maskedNumber} className="cursor-pointer hover:bg-muted/50" onClick={() => { setCardFilterCard(card.maskedNumber!); }}>
+                                <TableCell className="font-mono text-sm">{card.maskedNumber}</TableCell>
+                                <TableCell className="text-sm">{card.responsibleName}</TableCell>
+                                <TableCell><Badge variant="outline" className="text-xs">{card.type}</Badge></TableCell>
+                                <TableCell className="text-right font-mono text-sm text-red-500">
+                                  R$ {card.totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                </TableCell>
+                                <TableCell className="text-center text-sm">{card.totalTransacoes}</TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {card.ultimaTransacao ? format(new Date(card.ultimaTransacao), "dd/MM/yy HH:mm") : "—"}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </Card>
+                  )}
+
+                  {/* Card transactions filters */}
+                  {cardTransactions.length > 0 && (
+                    <Card className="p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="relative flex-1 min-w-[200px]">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            value={cardSearchTerm}
+                            onChange={(e) => setCardSearchTerm(e.target.value)}
+                            placeholder="Buscar estabelecimento, responsável..."
+                            className="pl-9 h-8 text-xs"
+                          />
+                        </div>
+                        <Select value={cardFilterStatus} onValueChange={setCardFilterStatus}>
+                          <SelectTrigger className="w-[130px] h-8 text-xs">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos Status</SelectItem>
+                            <SelectItem value="PROCESSED">Processada</SelectItem>
+                            <SelectItem value="PENDING">Pendente</SelectItem>
+                            <SelectItem value="canceled">Cancelada</SelectItem>
+                          </SelectContent>
+                        </Select>
                         {uniqueCategories.length > 0 && (
-                          <Select value={filterCategory} onValueChange={setFilterCategory}>
+                          <Select value={cardFilterCategory} onValueChange={setCardFilterCategory}>
                             <SelectTrigger className="w-[150px] h-8 text-xs">
                               <SelectValue placeholder="Categoria" />
                             </SelectTrigger>
@@ -553,7 +776,7 @@ export function ContaSimpleConfig() {
                           </Select>
                         )}
                         {uniqueCards.length > 1 && (
-                          <Select value={filterCard} onValueChange={setFilterCard}>
+                          <Select value={cardFilterCard} onValueChange={setCardFilterCard}>
                             <SelectTrigger className="w-[150px] h-8 text-xs">
                               <SelectValue placeholder="Cartão" />
                             </SelectTrigger>
@@ -565,22 +788,22 @@ export function ContaSimpleConfig() {
                             </SelectContent>
                           </Select>
                         )}
-                        {hasActiveFilters && (
-                          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
+                        {hasActiveCardFilters && (
+                          <Button variant="ghost" size="sm" onClick={clearCardFilters} className="h-8 text-xs gap-1">
                             <X className="h-3 w-3" />
                             Limpar
                           </Button>
                         )}
                       </div>
-                      {hasActiveFilters && (
+                      {hasActiveCardFilters && (
                         <p className="text-xs text-muted-foreground mt-2">
-                          {filteredTransactions.length} de {transactions.length} transações
+                          {filteredCardTransactions.length} de {cardTransactions.length} transações
                         </p>
                       )}
                     </Card>
                   )}
 
-              {filteredTransactions.length > 0 ? (
+              {filteredCardTransactions.length > 0 ? (
                 <Card className="overflow-hidden">
                   <div className="overflow-x-auto">
                     <Table>
@@ -597,7 +820,7 @@ export function ContaSimpleConfig() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredTransactions.map((tx) => (
+                        {filteredCardTransactions.map((tx) => (
                           <TableRow key={tx.id}>
                             <TableCell>{getOperationIcon(tx.operation)}</TableCell>
                             <TableCell className="text-sm whitespace-nowrap">
@@ -647,15 +870,15 @@ export function ContaSimpleConfig() {
                     </Table>
                   </div>
 
-                  {nextPageKey && (
+                  {cardNextPageKey && (
                     <div className="p-3 border-t text-center">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => fetchTransactions(nextPageKey)}
-                        disabled={isLoadingTx}
+                        onClick={() => fetchCardTransactions(cardNextPageKey)}
+                        disabled={isLoadingCards}
                       >
-                        {isLoadingTx ? (
+                        {isLoadingCards ? (
                           <RefreshCw className="h-4 w-4 animate-spin mr-1" />
                         ) : null}
                         Carregar mais
@@ -663,34 +886,32 @@ export function ContaSimpleConfig() {
                     </div>
                   )}
                 </Card>
-              ) : transactions.length === 0 && !isLoadingTx && transacoesSubTab === "transacoes" ? (
+              ) : cardTransactions.length === 0 && !isLoadingCards ? (
                 <Card className="p-8 text-center text-muted-foreground">
                   <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                  <p>Clique em "Buscar" para consultar as transações do período.</p>
+                  <p>Clique em "Buscar" para consultar as transações de cartão do período.</p>
                 </Card>
               ) : null}
-                </>
-              )}
 
-              {isLoadingTx && transactions.length === 0 && (
+              {isLoadingCards && cardTransactions.length === 0 && (
                 <Card className="p-8 text-center text-muted-foreground">
                   <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin opacity-40" />
-                  <p>Carregando transações...</p>
+                  <p>Carregando transações de cartão...</p>
                 </Card>
               )}
 
               {/* Summary cards */}
-              {transactions.length > 0 && transacoesSubTab === "transacoes" && (
+              {cardTransactions.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Card className="p-3">
-                    <p className="text-xs text-muted-foreground">Total de Transações</p>
-                    <p className="text-xl font-bold">{transactions.length}</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="text-xl font-bold">{cardTransactions.length}</p>
                   </Card>
                   <Card className="p-3">
                     <p className="text-xs text-muted-foreground">Saídas</p>
                     <p className="text-xl font-bold text-red-500">
                       R${" "}
-                      {transactions
+                      {cardTransactions
                         .filter((t) => t.operation === "CASH_OUT" && !t.isCanceled)
                         .reduce((s, t) => s + t.amountBrl, 0)
                         .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -699,16 +920,18 @@ export function ContaSimpleConfig() {
                   <Card className="p-3">
                     <p className="text-xs text-muted-foreground">Conciliadas</p>
                     <p className="text-xl font-bold text-green-500">
-                      {transactions.filter((t) => t.isConciled).length}
+                      {cardTransactions.filter((t) => t.isConciled).length}
                     </p>
                   </Card>
                   <Card className="p-3">
                     <p className="text-xs text-muted-foreground">Canceladas</p>
                     <p className="text-xl font-bold text-muted-foreground">
-                      {transactions.filter((t) => t.isCanceled).length}
+                      {cardTransactions.filter((t) => t.isCanceled).length}
                     </p>
                   </Card>
                 </div>
+              )}
+                </>
               )}
             </>
           )}
