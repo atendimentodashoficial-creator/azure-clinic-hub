@@ -159,12 +159,12 @@ export function ContaSimpleConfig() {
 
   const isTokenValid = token && tokenExpiresAt && Date.now() < tokenExpiresAt;
 
-  const fetchCardTransactions = async (pageKey?: string) => {
+  const fetchTransactions = async (pageKey?: string) => {
     if (!isTokenValid) {
       toast.error("Autentique-se primeiro");
       return;
     }
-    setIsLoadingCards(true);
+    setIsLoadingTransactions(true);
     try {
       const { data, error } = await supabase.functions.invoke("conta-simples-api", {
         body: {
@@ -173,8 +173,7 @@ export function ContaSimpleConfig() {
           startDate,
           endDate,
           environment,
-          statementType: "credit-card",
-          limit: 50,
+          limit: 100,
           ...(pageKey ? { nextPageStartKey: pageKey } : {}),
         },
       });
@@ -183,60 +182,24 @@ export function ContaSimpleConfig() {
 
       const txs = data.transactions || data.data || [];
       if (pageKey) {
-        setCardTransactions((prev) => [...prev, ...txs]);
+        setAllTransactions((prev) => [...prev, ...txs]);
       } else {
-        setCardTransactions(txs);
+        setAllTransactions(txs);
       }
-      setCardNextPageKey(data.nextPageStartKey || null);
+      setNextPageKey(data.nextPageStartKey || null);
     } catch (err: any) {
-      toast.error(`Erro ao buscar transações de cartão: ${err.message}`);
+      toast.error(`Erro ao buscar transações: ${err.message}`);
     } finally {
-      setIsLoadingCards(false);
+      setIsLoadingTransactions(false);
     }
   };
 
-  const fetchBankTransactions = async (pageKey?: string) => {
-    if (!isTokenValid) {
-      toast.error("Autentique-se primeiro");
-      return;
-    }
-    setIsLoadingBank(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("conta-simples-api", {
-        body: {
-          action: "credit-card-statements",
-          token,
-          startDate,
-          endDate,
-          environment,
-          statementType: "bank-account",
-          limit: 50,
-          ...(pageKey ? { nextPageStartKey: pageKey } : {}),
-        },
-      });
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
-
-      const txs = data.transactions || data.data || [];
-      if (pageKey) {
-        setBankTransactions((prev) => [...prev, ...txs]);
-      } else {
-        setBankTransactions(txs);
-      }
-      setBankNextPageKey(data.nextPageStartKey || null);
-    } catch (err: any) {
-      toast.error(`Erro ao buscar extrato bancário: ${err.message}`);
-    } finally {
-      setIsLoadingBank(false);
-    }
-  };
+  // Split transactions client-side: with card = cartões, without card = conta corrente
+  const cardTransactions = allTransactions.filter((tx) => tx.card && tx.card.maskedNumber);
+  const bankTransactions = allTransactions.filter((tx) => !tx.card || !tx.card.maskedNumber);
 
   const fetchAll = () => {
-    if (transacoesSubTab === "conta-corrente") {
-      fetchBankTransactions();
-    } else {
-      fetchCardTransactions();
-    }
+    fetchTransactions();
   };
 
   const downloadAttachment = async (attachmentId: string, fileName: string) => {
