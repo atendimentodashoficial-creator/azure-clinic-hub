@@ -94,10 +94,9 @@ export function ContaSimpleConfig() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [filterCard, setFilterCard] = useState<string>("all");
 
-  // Sub-tab
-  const [subTab, setSubTab] = useState("transacoes");
+  // Selected card (null = show all)
+  const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ownerId) return;
@@ -205,7 +204,7 @@ export function ContaSimpleConfig() {
     }
   };
 
-  // Filtered transactions
+  // Filtered transactions (by selected card + other filters)
   const filteredTransactions = transactions.filter((tx) => {
     const term = searchTerm.toLowerCase();
     if (searchTerm && !(
@@ -223,15 +222,15 @@ export function ContaSimpleConfig() {
     }
     if (filterType !== "all" && tx.type !== filterType) return false;
     if (filterCategory !== "all" && tx.category?.name !== filterCategory) return false;
-    if (filterCard !== "all" && tx.card?.maskedNumber !== filterCard) return false;
+    if (selectedCard && tx.card?.maskedNumber !== selectedCard) return false;
     return true;
   });
 
   const uniqueCategories = [...new Set(transactions.map((t) => t.category?.name).filter(Boolean))].sort();
   const uniqueCards = [...new Set(transactions.map((t) => t.card?.maskedNumber).filter(Boolean))].sort();
   const uniqueTypes = [...new Set(transactions.map((t) => t.type).filter(Boolean))].sort();
-  const hasActiveFilters = filterStatus !== "all" || filterType !== "all" || filterCategory !== "all" || filterCard !== "all";
-  const clearFilters = () => { setFilterStatus("all"); setFilterType("all"); setFilterCategory("all"); setFilterCard("all"); setSearchTerm(""); };
+  const hasActiveFilters = filterStatus !== "all" || filterType !== "all" || filterCategory !== "all" || !!selectedCard;
+  const clearFilters = () => { setFilterStatus("all"); setFilterType("all"); setFilterCategory("all"); setSelectedCard(null); setSearchTerm(""); };
 
   // Card summary
   const cardSummary = uniqueCards.map((maskedNumber) => {
@@ -280,9 +279,9 @@ export function ContaSimpleConfig() {
             <Key className="h-4 w-4" />
             Configuração
           </TabsTrigger>
-          <TabsTrigger value="transacoes" className="gap-1.5">
+          <TabsTrigger value="cartoes" className="gap-1.5">
             <CreditCard className="h-4 w-4" />
-            Extrato
+            Cartões
           </TabsTrigger>
         </TabsList>
 
@@ -349,11 +348,11 @@ export function ContaSimpleConfig() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="transacoes" className="space-y-4">
+        <TabsContent value="cartoes" className="space-y-4">
           {!isTokenValid ? (
             <Card className="p-8 text-center">
               <Key className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-40" />
-              <p className="text-muted-foreground">Autentique-se na aba "Configuração" para consultar transações.</p>
+              <p className="text-muted-foreground">Autentique-se na aba "Configuração" para consultar cartões.</p>
             </Card>
           ) : (
             <>
@@ -375,87 +374,147 @@ export function ContaSimpleConfig() {
                 </div>
               </Card>
 
-              {/* Sub-tabs */}
-              <div className="flex items-center gap-1 rounded-lg bg-muted p-1 w-fit">
-                <Button type="button" size="sm" variant={subTab === "transacoes" ? "secondary" : "ghost"} className="h-8 text-xs gap-1.5" onClick={() => setSubTab("transacoes")}>
-                  <CreditCard className="h-4 w-4" />
-                  Transações
-                </Button>
-                <Button type="button" size="sm" variant={subTab === "cartoes" ? "secondary" : "ghost"} className="h-8 text-xs gap-1.5" onClick={() => setSubTab("cartoes")}>
-                  <CreditCard className="h-4 w-4" />
-                  Por Cartão
-                </Button>
-              </div>
+              {/* Card summary list */}
+              {cardSummary.length > 0 ? (
+                <Card className="overflow-hidden">
+                  <div className="p-3 border-b flex items-center justify-between">
+                    <h3 className="text-sm font-medium">Resumo por Cartão</h3>
+                    {selectedCard && (
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setSelectedCard(null)}>
+                        <X className="h-3 w-3" />
+                        Ver todos
+                      </Button>
+                    )}
+                  </div>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cartão</TableHead>
+                          <TableHead>Responsável</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead className="text-right">Total Gasto</TableHead>
+                          <TableHead className="text-center">Transações</TableHead>
+                          <TableHead>Última Transação</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {cardSummary.map((card) => (
+                          <TableRow
+                            key={card.maskedNumber}
+                            className={`cursor-pointer transition-colors ${selectedCard === card.maskedNumber ? "bg-primary/10" : "hover:bg-muted/50"}`}
+                            onClick={() => setSelectedCard(selectedCard === card.maskedNumber ? null : card.maskedNumber)}
+                          >
+                            <TableCell className="font-mono text-sm">•••• {card.maskedNumber}</TableCell>
+                            <TableCell className="text-sm">{card.responsibleName}</TableCell>
+                            <TableCell><Badge variant="outline" className="text-xs">{card.type}</Badge></TableCell>
+                            <TableCell className="text-right font-mono text-sm text-destructive">
+                              R$ {card.totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell className="text-center text-sm">{card.totalTransacoes}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {card.ultimaTransacao ? format(new Date(card.ultimaTransacao), "dd/MM/yy HH:mm") : "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              ) : transactions.length === 0 && !isLoading ? (
+                <Card className="p-8 text-center text-muted-foreground">
+                  <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                  <p>Clique em "Buscar" para consultar os cartões do período.</p>
+                </Card>
+              ) : null}
 
-              {/* ===== TRANSAÇÕES ===== */}
-              {subTab === "transacoes" && (
+              {isLoading && transactions.length === 0 && (
+                <Card className="p-8 text-center text-muted-foreground">
+                  <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin opacity-40" />
+                  <p>Carregando transações...</p>
+                </Card>
+              )}
+
+              {/* Transactions table (filtered by selected card or all) */}
+              {transactions.length > 0 && (
                 <>
-                  {/* Filters */}
-                  {transactions.length > 0 && (
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <Card className="p-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="relative flex-1 min-w-[200px]">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar estabelecimento, responsável..." className="pl-9 h-8 text-xs" />
-                        </div>
-                        <Select value={filterStatus} onValueChange={setFilterStatus}>
-                          <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                      <p className="text-xl font-bold">{filteredTransactions.length}</p>
+                    </Card>
+                    <Card className="p-3">
+                      <p className="text-xs text-muted-foreground">Saídas</p>
+                      <p className="text-xl font-bold text-destructive">
+                        R$ {filteredTransactions.filter((t) => t.operation === "CASH_OUT" && !t.isCanceled).reduce((s, t) => s + t.amountBrl, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </p>
+                    </Card>
+                    <Card className="p-3">
+                      <p className="text-xs text-muted-foreground">Conciliadas</p>
+                      <p className="text-xl font-bold">{filteredTransactions.filter((t) => t.isConciled).length}</p>
+                    </Card>
+                    <Card className="p-3">
+                      <p className="text-xs text-muted-foreground">Canceladas</p>
+                      <p className="text-xl font-bold text-muted-foreground">{filteredTransactions.filter((t) => t.isCanceled).length}</p>
+                    </Card>
+                  </div>
+
+                  {/* Filters */}
+                  <Card className="p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="relative flex-1 min-w-[200px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar estabelecimento, responsável..." className="pl-9 h-8 text-xs" />
+                      </div>
+                      <Select value={filterStatus} onValueChange={setFilterStatus}>
+                        <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos Status</SelectItem>
+                          <SelectItem value="PROCESSED">Processada</SelectItem>
+                          <SelectItem value="PENDING">Pendente</SelectItem>
+                          <SelectItem value="canceled">Cancelada</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {uniqueTypes.length > 1 && (
+                        <Select value={filterType} onValueChange={setFilterType}>
+                          <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Tipo" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">Todos Status</SelectItem>
-                            <SelectItem value="PROCESSED">Processada</SelectItem>
-                            <SelectItem value="PENDING">Pendente</SelectItem>
-                            <SelectItem value="canceled">Cancelada</SelectItem>
+                            <SelectItem value="all">Todos Tipos</SelectItem>
+                            {uniqueTypes.map((t) => (
+                              <SelectItem key={t} value={t}>{TYPE_LABELS[t] || t}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
-                        {uniqueTypes.length > 1 && (
-                          <Select value={filterType} onValueChange={setFilterType}>
-                            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Tipo" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todos Tipos</SelectItem>
-                              {uniqueTypes.map((t) => (
-                                <SelectItem key={t} value={t}>{TYPE_LABELS[t] || t}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                        {uniqueCategories.length > 1 && (
-                          <Select value={filterCategory} onValueChange={setFilterCategory}>
-                            <SelectTrigger className="w-[150px] h-8 text-xs"><SelectValue placeholder="Categoria" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todas Categorias</SelectItem>
-                              {uniqueCategories.map((cat) => (
-                                <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                        {uniqueCards.length > 1 && (
-                          <Select value={filterCard} onValueChange={setFilterCard}>
-                            <SelectTrigger className="w-[150px] h-8 text-xs"><SelectValue placeholder="Cartão" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todos Cartões</SelectItem>
-                              {uniqueCards.map((c) => (
-                                <SelectItem key={c} value={c!}>{c}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                        {hasActiveFilters && (
-                          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
-                            <X className="h-3 w-3" />
-                            Limpar
-                          </Button>
-                        )}
-                      </div>
-                      {hasActiveFilters && (
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {filteredTransactions.length} de {transactions.length} transações
-                        </p>
                       )}
-                    </Card>
-                  )}
+                      {uniqueCategories.length > 1 && (
+                        <Select value={filterCategory} onValueChange={setFilterCategory}>
+                          <SelectTrigger className="w-[150px] h-8 text-xs"><SelectValue placeholder="Categoria" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todas Categorias</SelectItem>
+                            {uniqueCategories.map((cat) => (
+                              <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {hasActiveFilters && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
+                          <X className="h-3 w-3" />
+                          Limpar
+                        </Button>
+                      )}
+                    </div>
+                    {(hasActiveFilters || searchTerm) && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {filteredTransactions.length} de {transactions.length} transações
+                        {selectedCard && <span> · Cartão •••• {selectedCard}</span>}
+                      </p>
+                    )}
+                  </Card>
 
-                  {filteredTransactions.length > 0 ? (
+                  {/* Transactions table */}
+                  {filteredTransactions.length > 0 && (
                     <Card className="overflow-hidden">
                       <div className="overflow-x-auto">
                         <Table>
@@ -465,7 +524,7 @@ export function ContaSimpleConfig() {
                               <TableHead>Data</TableHead>
                               <TableHead>Estabelecimento</TableHead>
                               <TableHead>Tipo</TableHead>
-                              <TableHead>Cartão</TableHead>
+                              {!selectedCard && <TableHead>Cartão</TableHead>}
                               <TableHead>Categoria</TableHead>
                               <TableHead className="text-right">Valor</TableHead>
                               <TableHead>Status</TableHead>
@@ -483,15 +542,17 @@ export function ContaSimpleConfig() {
                                 <TableCell>
                                   <Badge variant="outline" className="text-[10px]">{TYPE_LABELS[tx.type] || tx.type}</Badge>
                                 </TableCell>
-                                <TableCell className="text-xs text-muted-foreground">
-                                  <div>{tx.card?.maskedNumber}</div>
-                                  <div className="text-[10px]">{tx.card?.responsibleName}</div>
-                                </TableCell>
+                                {!selectedCard && (
+                                  <TableCell className="text-xs text-muted-foreground">
+                                    <div>{tx.card?.maskedNumber}</div>
+                                    <div className="text-[10px]">{tx.card?.responsibleName}</div>
+                                  </TableCell>
+                                )}
                                 <TableCell>
                                   <Badge variant="outline" className="text-xs">{tx.category?.name || "—"}</Badge>
                                 </TableCell>
                                 <TableCell className="text-right font-mono text-sm">
-                                  <span className={tx.operation === "CASH_IN" ? "text-green-500" : "text-foreground"}>
+                                  <span className={tx.operation === "CASH_IN" ? "text-green-600 dark:text-green-400" : "text-foreground"}>
                                     {tx.operation === "CASH_IN" ? "+" : "-"} R$ {tx.amountBrl.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                                   </span>
                                   {tx.installment > 1 && (
@@ -519,94 +580,6 @@ export function ContaSimpleConfig() {
                           </Button>
                         </div>
                       )}
-                    </Card>
-                  ) : transactions.length === 0 && !isLoading ? (
-                    <Card className="p-8 text-center text-muted-foreground">
-                      <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                      <p>Clique em "Buscar" para consultar as transações do período.</p>
-                    </Card>
-                  ) : null}
-
-                  {isLoading && transactions.length === 0 && (
-                    <Card className="p-8 text-center text-muted-foreground">
-                      <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin opacity-40" />
-                      <p>Carregando transações...</p>
-                    </Card>
-                  )}
-
-                  {/* Summary cards */}
-                  {transactions.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <Card className="p-3">
-                        <p className="text-xs text-muted-foreground">Total</p>
-                        <p className="text-xl font-bold">{transactions.length}</p>
-                      </Card>
-                      <Card className="p-3">
-                        <p className="text-xs text-muted-foreground">Saídas</p>
-                        <p className="text-xl font-bold text-red-500">
-                          R$ {transactions.filter((t) => t.operation === "CASH_OUT" && !t.isCanceled).reduce((s, t) => s + t.amountBrl, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                        </p>
-                      </Card>
-                      <Card className="p-3">
-                        <p className="text-xs text-muted-foreground">Conciliadas</p>
-                        <p className="text-xl font-bold text-green-500">{transactions.filter((t) => t.isConciled).length}</p>
-                      </Card>
-                      <Card className="p-3">
-                        <p className="text-xs text-muted-foreground">Canceladas</p>
-                        <p className="text-xl font-bold text-muted-foreground">{transactions.filter((t) => t.isCanceled).length}</p>
-                      </Card>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* ===== POR CARTÃO ===== */}
-              {subTab === "cartoes" && (
-                <>
-                  {cardSummary.length > 0 ? (
-                    <Card className="overflow-hidden">
-                      <div className="p-3 border-b">
-                        <h3 className="text-sm font-medium">Resumo por Cartão</h3>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Cartão</TableHead>
-                              <TableHead>Responsável</TableHead>
-                              <TableHead>Tipo</TableHead>
-                              <TableHead className="text-right">Total Gasto</TableHead>
-                              <TableHead className="text-center">Transações</TableHead>
-                              <TableHead>Última Transação</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {cardSummary.map((card) => (
-                              <TableRow
-                                key={card.maskedNumber}
-                                className="cursor-pointer hover:bg-muted/50"
-                                onClick={() => { setFilterCard(card.maskedNumber!); setSubTab("transacoes"); }}
-                              >
-                                <TableCell className="font-mono text-sm">{card.maskedNumber}</TableCell>
-                                <TableCell className="text-sm">{card.responsibleName}</TableCell>
-                                <TableCell><Badge variant="outline" className="text-xs">{card.type}</Badge></TableCell>
-                                <TableCell className="text-right font-mono text-sm text-red-500">
-                                  R$ {card.totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                                </TableCell>
-                                <TableCell className="text-center text-sm">{card.totalTransacoes}</TableCell>
-                                <TableCell className="text-sm text-muted-foreground">
-                                  {card.ultimaTransacao ? format(new Date(card.ultimaTransacao), "dd/MM/yy HH:mm") : "—"}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </Card>
-                  ) : (
-                    <Card className="p-8 text-center text-muted-foreground">
-                      <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                      <p>Busque transações primeiro para ver o resumo por cartão.</p>
                     </Card>
                   )}
                 </>
