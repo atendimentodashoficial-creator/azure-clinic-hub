@@ -83,7 +83,3 @@ export default function Configuracoes() {
     </div>
   );
 }
-      </Tabs>
-    </div>
-  );
-}
