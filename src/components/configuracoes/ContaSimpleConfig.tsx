@@ -284,6 +284,10 @@ export function ContaSimpleConfig() {
             <CreditCard className="h-4 w-4" />
             Cartões
           </TabsTrigger>
+          <TabsTrigger value="conta-pj" className="gap-1.5">
+            <Building2 className="h-4 w-4" />
+            Conta PJ
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="config" className="space-y-4">
