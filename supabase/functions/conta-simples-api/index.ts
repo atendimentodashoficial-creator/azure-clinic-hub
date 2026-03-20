@@ -6,19 +6,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify user auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Não autorizado" }, 401);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -29,10 +31,7 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Não autorizado" }, 401);
     }
 
     const body = await req.json();
@@ -43,8 +42,10 @@ Deno.serve(async (req) => {
       : "https://api-sandbox.contasimples.com";
 
     if (action === "authenticate") {
-      // OAuth 2.0 Client Credentials
       const credentials = btoa(`${api_key}:${api_secret}`);
+      
+      console.log(`[conta-simples] Authenticating with ${baseUrl}`);
+      
       const tokenRes = await fetch(`${baseUrl}/oauth/v1/access-token`, {
         method: "POST",
         headers: {
@@ -55,25 +56,20 @@ Deno.serve(async (req) => {
       });
 
       const tokenData = await tokenRes.json();
+      
       if (!tokenRes.ok) {
-        return new Response(
-          JSON.stringify({ error: "Falha na autenticação", details: tokenData }),
-          { status: tokenRes.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        console.error(`[conta-simples] Auth failed [${tokenRes.status}]:`, JSON.stringify(tokenData));
+        return jsonResponse({ error: "Falha na autenticação", details: tokenData });
       }
 
-      return new Response(JSON.stringify(tokenData), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.log("[conta-simples] Auth success, token expires in:", tokenData.expires_in);
+      return jsonResponse(tokenData);
     }
 
     if (action === "credit-card-statements") {
       const { token, startDate, endDate, pageSize, nextPageStartKey } = params;
       if (!token) {
-        return new Response(JSON.stringify({ error: "Token obrigatório" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Token obrigatório" });
       }
 
       const requestBody: Record<string, unknown> = {
@@ -85,6 +81,8 @@ Deno.serve(async (req) => {
         requestBody.nextPageStartKey = nextPageStartKey;
       }
 
+      console.log(`[conta-simples] Fetching statements: ${startDate} to ${endDate}`);
+
       const statementsRes = await fetch(`${baseUrl}/statements/v1/credit-card`, {
         method: "POST",
         headers: {
@@ -95,25 +93,23 @@ Deno.serve(async (req) => {
       });
 
       const statementsData = await statementsRes.json();
+      
       if (!statementsRes.ok) {
-        return new Response(
-          JSON.stringify({ error: "Falha ao buscar transações", details: statementsData }),
-          { status: statementsRes.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        console.error(`[conta-simples] Statements failed [${statementsRes.status}]:`, JSON.stringify(statementsData));
+        return jsonResponse({ 
+          error: `Falha ao buscar transações (${statementsRes.status})`, 
+          details: statementsData 
+        });
       }
 
-      return new Response(JSON.stringify(statementsData), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.log("[conta-simples] Statements fetched successfully");
+      return jsonResponse(statementsData);
     }
 
     if (action === "download-attachment") {
       const { token, attachmentId } = params;
       if (!token || !attachmentId) {
-        return new Response(JSON.stringify({ error: "Token e attachmentId obrigatórios" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Token e attachmentId obrigatórios" });
       }
 
       const attachRes = await fetch(`${baseUrl}/attachments/v1/content/${attachmentId}`, {
@@ -124,31 +120,23 @@ Deno.serve(async (req) => {
       });
 
       if (!attachRes.ok) {
-        return new Response(
-          JSON.stringify({ error: "Falha ao baixar anexo" }),
-          { status: attachRes.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        const errText = await attachRes.text();
+        console.error(`[conta-simples] Attachment failed [${attachRes.status}]:`, errText);
+        return jsonResponse({ error: `Falha ao baixar anexo (${attachRes.status})` });
       }
 
       const contentType = attachRes.headers.get("content-type") || "application/octet-stream";
       const arrayBuffer = await attachRes.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-      return new Response(
-        JSON.stringify({ content: base64, contentType }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ content: base64, contentType });
     }
 
-    return new Response(JSON.stringify({ error: "Ação inválida" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Ação inválida" });
   } catch (error) {
-    console.error("Conta Simples API error:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Erro interno" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("[conta-simples] Unexpected error:", error);
+    return jsonResponse({ 
+      error: error instanceof Error ? error.message : "Erro interno" 
+    });
   }
 });
