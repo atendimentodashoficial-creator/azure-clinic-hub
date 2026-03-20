@@ -592,6 +592,9 @@ export function ContaSimpleConfig() {
             </>
           )}
         </TabsContent>
+        <TabsContent value="conta-pj" className="space-y-4">
+          <ContaPJConfig />
+        </TabsContent>
       </Tabs>
     </div>
   );
