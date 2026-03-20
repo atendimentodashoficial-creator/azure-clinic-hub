@@ -12,10 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import {
-  CreditCard, Key, RefreshCw, Eye, EyeOff,
+  CreditCard, Key, RefreshCw, Eye, EyeOff, Building2,
   ArrowUpRight, ArrowDownLeft, CheckCircle2, Clock, Search, FileText, X
 } from "lucide-react";
 import { format, subDays } from "date-fns";
+import { ContaPJConfig } from "./ContaPJConfig";
 
 interface ContaSimplesCreds {
   api_key: string;
@@ -282,6 +283,10 @@ export function ContaSimpleConfig() {
           <TabsTrigger value="cartoes" className="gap-1.5">
             <CreditCard className="h-4 w-4" />
             Cartões
+          </TabsTrigger>
+          <TabsTrigger value="conta-pj" className="gap-1.5">
+            <Building2 className="h-4 w-4" />
+            Conta PJ
           </TabsTrigger>
         </TabsList>
 
@@ -586,6 +591,9 @@ export function ContaSimpleConfig() {
               )}
             </>
           )}
+        </TabsContent>
+        <TabsContent value="conta-pj" className="space-y-4">
+          <ContaPJConfig />
         </TabsContent>
       </Tabs>
     </div>
