@@ -76,9 +76,6 @@ export default function Configuracoes() {
           <ContaSimpleConfig />
         </TabsContent>
 
-        <TabsContent value="conta-pj">
-          <ContaPJConfig />
-        </TabsContent>
 
         <TabsContent value="reset">
           <ResetDataConfig />
