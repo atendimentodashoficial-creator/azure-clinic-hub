@@ -874,15 +874,15 @@ export function ContaSimpleConfig() {
                     </Table>
                   </div>
 
-                  {nextPageKey && (
+                  {cardNextPageKey && (
                     <div className="p-3 border-t text-center">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => fetchTransactions(nextPageKey)}
-                        disabled={isLoadingTransactions}
+                        onClick={() => fetchCardTransactions(cardNextPageKey)}
+                        disabled={isLoadingCards}
                       >
-                        {isLoadingTransactions ? (
+                        {isLoadingCards ? (
                           <RefreshCw className="h-4 w-4 animate-spin mr-1" />
                         ) : null}
                         Carregar mais
@@ -890,14 +890,14 @@ export function ContaSimpleConfig() {
                     </div>
                   )}
                 </Card>
-              ) : cardTransactions.length === 0 && !isLoadingTransactions ? (
+              ) : cardTransactions.length === 0 && !isLoadingCards ? (
                 <Card className="p-8 text-center text-muted-foreground">
                   <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-40" />
                   <p>Clique em "Buscar" para consultar as transações de cartão do período.</p>
                 </Card>
               ) : null}
 
-              {isLoadingTransactions && cardTransactions.length === 0 && (
+              {isLoadingCards && cardTransactions.length === 0 && (
                 <Card className="p-8 text-center text-muted-foreground">
                   <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin opacity-40" />
                   <p>Carregando transações de cartão...</p>
