@@ -312,7 +312,7 @@ export function ContaSimpleConfig() {
               <Button onClick={saveCredentials} variant="outline" size="sm">
                 Salvar Credenciais
               </Button>
-              <Button onClick={authenticate} disabled={isAuthenticating} size="sm">
+              <Button onClick={() => authenticate()} disabled={isAuthenticating} size="sm">
                 {isAuthenticating ? (
                   <RefreshCw className="h-4 w-4 animate-spin mr-1" />
                 ) : (
