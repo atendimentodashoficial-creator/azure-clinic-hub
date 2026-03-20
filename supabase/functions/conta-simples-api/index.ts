@@ -67,12 +67,12 @@ Deno.serve(async (req) => {
     }
 
     if (action === "credit-card-statements") {
-      const { token, startDate, endDate, pageSize, nextPageStartKey } = params;
+      const { token, startDate, endDate, pageSize, limit, nextPageStartKey } = params;
       if (!token) {
         return jsonResponse({ error: "Token obrigatório" });
       }
 
-      const requestedPageSize = Number(pageSize);
+      const requestedPageSize = Number(limit ?? pageSize);
       const normalizedPageSize = Number.isFinite(requestedPageSize)
         ? Math.trunc(requestedPageSize)
         : 50;
@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       const requestBody: Record<string, unknown> = {
         startDate,
         endDate,
-        pageSize: safePageSize,
+        limit: safePageSize,
       };
       if (nextPageStartKey) {
         requestBody.nextPageStartKey = nextPageStartKey;
