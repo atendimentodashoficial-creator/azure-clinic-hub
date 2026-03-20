@@ -287,25 +287,14 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
         return;
       }
 
-      const startOfPeriod = new Date(dateStart.getFullYear(), dateStart.getMonth(), dateStart.getDate(), 0, 0, 0, 0);
-      const endOfPeriod = new Date(dateEnd.getFullYear(), dateEnd.getMonth(), dateEnd.getDate(), 23, 59, 59, 999);
-
-      const campanhasPeriodo = campanhas.filter(c => {
-        const d = new Date(c.created_at);
-        return d >= startOfPeriod && d <= endOfPeriod;
-      });
-
-      if (campanhasPeriodo.length === 0) {
-        setReunioesCount(0);
-        return;
-      }
-
       try {
-        const campanhaIds = campanhasPeriodo.map(c => c.id);
+        // Collect sent numbers from ALL campaigns (not just period-filtered)
+        // because a contact sent yesterday can convert to a reunion today
+        const allCampanhaIds = campanhas.map(c => c.id);
         const sentNumbers = new Set<string>();
 
-        for (let i = 0; i < campanhaIds.length; i += 500) {
-          const batchIds = campanhaIds.slice(i, i + 500);
+        for (let i = 0; i < allCampanhaIds.length; i += 500) {
+          const batchIds = allCampanhaIds.slice(i, i + 500);
           let from = 0;
           while (true) {
             const { data } = await supabase
@@ -329,10 +318,16 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
           return;
         }
 
+        // Filter reuniões by the selected period instead
+        const startISO = new Date(dateStart.getFullYear(), dateStart.getMonth(), dateStart.getDate(), 0, 0, 0, 0).toISOString();
+        const endISO = new Date(dateEnd.getFullYear(), dateEnd.getMonth(), dateEnd.getDate(), 23, 59, 59, 999).toISOString();
+
         const { data: reunioes } = await supabase
           .from("reunioes")
           .select("cliente_telefone")
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .gte("created_at", startISO)
+          .lte("created_at", endISO);
 
         if (reunioes) {
           const matched = new Set<string>();
