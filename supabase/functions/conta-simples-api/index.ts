@@ -113,32 +113,57 @@ Deno.serve(async (req) => {
           `[conta-simples] Fetching ${isBankStatements ? "bank-account" : "credit-card"} statements via ${endpoint}: ${startDate} to ${endDate} (limit=${safePageSize})`,
         );
 
-        const statementsRes = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        });
+        let statementsRes: Response;
+        try {
+          statementsRes = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+          });
+        } catch (fetchErr) {
+          console.error(`[conta-simples] Fetch error for ${endpoint}:`, fetchErr);
+          lastStatus = 0;
+          lastDetails = String(fetchErr);
+          continue;
+        }
 
-        const statementsData = await statementsRes.json();
+        const rawText = await statementsRes.text();
+        let statementsData: unknown;
+        try {
+          statementsData = JSON.parse(rawText);
+        } catch {
+          console.error(`[conta-simples] Non-JSON response from ${endpoint} [${statementsRes.status}]:`, rawText.slice(0, 200));
+          lastStatus = statementsRes.status;
+          lastDetails = rawText.slice(0, 500);
+          if (isBankStatements) continue;
+          return jsonResponse({
+            error: `Falha ao buscar transações (${statementsRes.status})`,
+            details: { endpoint, response: rawText.slice(0, 500) },
+          });
+        }
 
         if (statementsRes.ok) {
-          console.log("[conta-simples] Statements fetched successfully");
+          console.log("[conta-simples] Statements fetched successfully via", endpoint);
           return jsonResponse(statementsData);
         }
 
         lastStatus = statementsRes.status;
         lastDetails = statementsData;
 
-        if (!(isBankStatements && statementsRes.status === 404)) {
-          console.error(`[conta-simples] Statements failed [${statementsRes.status}] (${endpoint}):`, JSON.stringify(statementsData));
-          return jsonResponse({
-            error: `Falha ao buscar transações (${statementsRes.status})`,
-            details: { endpoint, response: statementsData },
-          });
+        // For bank-account probing, only continue on 404 or 401 (wrong endpoint)
+        if (isBankStatements && (statementsRes.status === 404 || statementsRes.status === 401)) {
+          console.warn(`[conta-simples] Endpoint ${endpoint} returned ${statementsRes.status}, trying next...`);
+          continue;
         }
+
+        console.error(`[conta-simples] Statements failed [${statementsRes.status}] (${endpoint}):`, JSON.stringify(statementsData));
+        return jsonResponse({
+          error: `Falha ao buscar transações (${statementsRes.status})`,
+          details: { endpoint, response: statementsData },
+        });
       }
 
       console.error("[conta-simples] No valid bank statements endpoint found", JSON.stringify({ endpointCandidates, lastStatus, lastDetails }));
