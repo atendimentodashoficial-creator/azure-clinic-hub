@@ -94,10 +94,9 @@ export function ContaSimpleConfig() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [filterCard, setFilterCard] = useState<string>("all");
 
-  // Sub-tab
-  const [subTab, setSubTab] = useState("transacoes");
+  // Selected card (null = show all)
+  const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ownerId) return;
