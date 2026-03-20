@@ -1,4 +1,4 @@
-import { Settings, Video, MessageSquare, Link, RotateCcw } from "lucide-react";
+import { Settings, Video, MessageSquare, Link, RotateCcw, CreditCard } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -7,12 +7,14 @@ import MensagensPredefinidas from "./MensagensPredefinidas";
 import Conexoes from "./Conexoes";
 import { ResetDataConfig } from "@/components/configuracoes/ResetDataConfig";
 import { TiposReuniaoConfig } from "@/components/configuracoes/TiposReuniaoConfig";
+import { ContaSimpleConfig } from "@/components/configuracoes/ContaSimpleConfig";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
 
 const tabOptions = [
   { value: "tipos-reuniao", label: "Tipos Reunião", icon: Video },
   { value: "mensagens", label: "Mensagens", icon: MessageSquare },
   { value: "conexoes", label: "Conexões", icon: Link },
+  { value: "conta-simples", label: "Conta Simples", icon: CreditCard },
   { value: "reset", label: "Reset", icon: RotateCcw },
 ];
 
@@ -68,6 +70,10 @@ export default function Configuracoes() {
 
         <TabsContent value="conexoes">
           <Conexoes />
+        </TabsContent>
+
+        <TabsContent value="conta-simples">
+          <ContaSimpleConfig />
         </TabsContent>
 
         <TabsContent value="reset">
