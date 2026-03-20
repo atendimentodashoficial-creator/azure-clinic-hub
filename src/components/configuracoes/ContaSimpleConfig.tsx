@@ -14,8 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
-  CreditCard, Key, RefreshCw, Download, Eye, EyeOff,
-  ArrowUpRight, ArrowDownLeft, CheckCircle2, XCircle, Clock, Search, FileText
+  CreditCard, Key, RefreshCw, Download, Eye, EyeOff, Filter,
+  ArrowUpRight, ArrowDownLeft, CheckCircle2, XCircle, Clock, Search, FileText, Wallet, X
 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -69,6 +69,11 @@ export function ContaSimpleConfig() {
   const [isLoadingTx, setIsLoadingTx] = useState(false);
   const [nextPageKey, setNextPageKey] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterCard, setFilterCard] = useState<string>("all");
+  const [transacoesSubTab, setTransacoesSubTab] = useState("transacoes");
 
   // Load saved credentials from localStorage
   useEffect(() => {
@@ -199,14 +204,51 @@ export function ContaSimpleConfig() {
   };
 
   const filteredTransactions = transactions.filter((tx) => {
-    if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
-    return (
+    if (searchTerm && !(
       tx.merchant?.toLowerCase().includes(term) ||
       tx.card?.responsibleName?.toLowerCase().includes(term) ||
       tx.card?.maskedNumber?.includes(term) ||
       tx.category?.name?.toLowerCase().includes(term)
-    );
+    )) return false;
+
+    if (filterStatus !== "all") {
+      if (filterStatus === "canceled" && !tx.isCanceled) return false;
+      if (filterStatus === "PROCESSED" && (tx.status !== "PROCESSED" || tx.isCanceled)) return false;
+      if (filterStatus === "PENDING" && (tx.status !== "PENDING" || tx.isCanceled)) return false;
+    }
+    if (filterType !== "all" && tx.operation !== filterType) return false;
+    if (filterCategory !== "all" && tx.category?.name !== filterCategory) return false;
+    if (filterCard !== "all" && tx.card?.maskedNumber !== filterCard) return false;
+
+    return true;
+  });
+
+  const uniqueCategories = [...new Set(transactions.map((t) => t.category?.name).filter(Boolean))].sort();
+  const uniqueCards = [...new Set(transactions.map((t) => t.card?.maskedNumber).filter(Boolean))].sort();
+
+  const hasActiveFilters = filterStatus !== "all" || filterType !== "all" || filterCategory !== "all" || filterCard !== "all";
+
+  const clearFilters = () => {
+    setFilterStatus("all");
+    setFilterType("all");
+    setFilterCategory("all");
+    setFilterCard("all");
+    setSearchTerm("");
+  };
+
+  // Card summary for sub-tab
+  const cardSummary = uniqueCards.map((maskedNumber) => {
+    const cardTxs = transactions.filter((t) => t.card?.maskedNumber === maskedNumber && !t.isCanceled);
+    const firstTx = cardTxs[0];
+    return {
+      maskedNumber,
+      responsibleName: firstTx?.card?.responsibleName || "—",
+      type: firstTx?.card?.type || "—",
+      totalGasto: cardTxs.filter((t) => t.operation === "CASH_OUT").reduce((s, t) => s + t.amountBrl, 0),
+      totalTransacoes: cardTxs.length,
+      ultimaTransacao: cardTxs.length > 0 ? cardTxs.sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())[0]?.transactionDate : null,
+    };
   });
 
   const getOperationIcon = (op: string) => {
@@ -376,7 +418,8 @@ export function ContaSimpleConfig() {
             </Card>
           ) : (
             <>
-              <Card className="p-4">
+              {/* Period + fetch */}
+              <Card className="p-4 space-y-3">
                 <div className="flex flex-wrap items-end gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs">Data Início</Label>
@@ -407,17 +450,135 @@ export function ContaSimpleConfig() {
                 </div>
               </Card>
 
+              {/* Sub-tabs: Transações / Cartões */}
               {transactions.length > 0 && (
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Filtrar por estabelecimento, responsável, cartão..."
-                    className="pl-9"
-                  />
-                </div>
+                <TabsList className="h-8">
+                  <TabsTrigger value="transacoes" className="h-8 text-xs gap-1.5" onClick={() => setTransacoesSubTab("transacoes")}>
+                    <CreditCard className="h-4 w-4" />
+                    Transações
+                  </TabsTrigger>
+                  <TabsTrigger value="cartoes" className="h-8 text-xs gap-1.5" onClick={() => setTransacoesSubTab("cartoes")}>
+                    <Wallet className="h-4 w-4" />
+                    Cartões
+                  </TabsTrigger>
+                </TabsList>
               )}
+
+              {/* Cartões sub-tab */}
+              {transacoesSubTab === "cartoes" && transactions.length > 0 && (
+                <Card className="overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cartão</TableHead>
+                          <TableHead>Responsável</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead className="text-right">Total Gasto</TableHead>
+                          <TableHead className="text-center">Transações</TableHead>
+                          <TableHead>Última Transação</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {cardSummary.map((card) => (
+                          <TableRow key={card.maskedNumber}>
+                            <TableCell className="font-mono text-sm">{card.maskedNumber}</TableCell>
+                            <TableCell className="text-sm">{card.responsibleName}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">{card.type}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm text-red-500">
+                              R$ {card.totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell className="text-center text-sm">{card.totalTransacoes}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {card.ultimaTransacao ? format(new Date(card.ultimaTransacao), "dd/MM/yy HH:mm") : "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              )}
+
+              {/* Transações sub-tab */}
+              {transacoesSubTab === "transacoes" && (
+                <>
+                  {/* Filters row */}
+                  {transactions.length > 0 && (
+                    <Card className="p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="relative flex-1 min-w-[200px]">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Buscar estabelecimento, responsável..."
+                            className="pl-9 h-8 text-xs"
+                          />
+                        </div>
+                        <Select value={filterStatus} onValueChange={setFilterStatus}>
+                          <SelectTrigger className="w-[130px] h-8 text-xs">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos Status</SelectItem>
+                            <SelectItem value="PROCESSED">Processada</SelectItem>
+                            <SelectItem value="PENDING">Pendente</SelectItem>
+                            <SelectItem value="canceled">Cancelada</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select value={filterType} onValueChange={setFilterType}>
+                          <SelectTrigger className="w-[130px] h-8 text-xs">
+                            <SelectValue placeholder="Tipo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos Tipos</SelectItem>
+                            <SelectItem value="CASH_OUT">Saída</SelectItem>
+                            <SelectItem value="CASH_IN">Entrada</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {uniqueCategories.length > 0 && (
+                          <Select value={filterCategory} onValueChange={setFilterCategory}>
+                            <SelectTrigger className="w-[150px] h-8 text-xs">
+                              <SelectValue placeholder="Categoria" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todas Categorias</SelectItem>
+                              {uniqueCategories.map((cat) => (
+                                <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                        {uniqueCards.length > 1 && (
+                          <Select value={filterCard} onValueChange={setFilterCard}>
+                            <SelectTrigger className="w-[150px] h-8 text-xs">
+                              <SelectValue placeholder="Cartão" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todos Cartões</SelectItem>
+                              {uniqueCards.map((c) => (
+                                <SelectItem key={c} value={c!}>{c}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                        {hasActiveFilters && (
+                          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
+                            <X className="h-3 w-3" />
+                            Limpar
+                          </Button>
+                        )}
+                      </div>
+                      {hasActiveFilters && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {filteredTransactions.length} de {transactions.length} transações
+                        </p>
+                      )}
+                    </Card>
+                  )}
 
               {filteredTransactions.length > 0 ? (
                 <Card className="overflow-hidden">
@@ -502,12 +663,14 @@ export function ContaSimpleConfig() {
                     </div>
                   )}
                 </Card>
-              ) : transactions.length === 0 && !isLoadingTx ? (
+              ) : transactions.length === 0 && !isLoadingTx && transacoesSubTab === "transacoes" ? (
                 <Card className="p-8 text-center text-muted-foreground">
                   <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-40" />
                   <p>Clique em "Buscar" para consultar as transações do período.</p>
                 </Card>
               ) : null}
+                </>
+              )}
 
               {isLoadingTx && transactions.length === 0 && (
                 <Card className="p-8 text-center text-muted-foreground">
@@ -517,7 +680,7 @@ export function ContaSimpleConfig() {
               )}
 
               {/* Summary cards */}
-              {transactions.length > 0 && (
+              {transactions.length > 0 && transacoesSubTab === "transacoes" && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Card className="p-3">
                     <p className="text-xs text-muted-foreground">Total de Transações</p>
