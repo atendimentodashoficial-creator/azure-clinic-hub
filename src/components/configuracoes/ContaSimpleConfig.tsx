@@ -279,9 +279,9 @@ export function ContaSimpleConfig() {
             <Key className="h-4 w-4" />
             Configuração
           </TabsTrigger>
-          <TabsTrigger value="transacoes" className="gap-1.5">
+          <TabsTrigger value="cartoes" className="gap-1.5">
             <CreditCard className="h-4 w-4" />
-            Extrato
+            Cartões
           </TabsTrigger>
         </TabsList>
 
