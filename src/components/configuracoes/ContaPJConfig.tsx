@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { PeriodFilter, usePeriodFilter } from "@/components/filters/PeriodFilter";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 export interface TransacaoPJ {
   id: string;
@@ -100,6 +101,21 @@ function saveTxCategories(map: Record<string, string>) {
   localStorage.setItem(STORAGE_KEY_TX_CATEGORIES, JSON.stringify(map));
 }
 
+const CHART_COLORS = [
+  "hsl(var(--primary))",
+  "hsl(210, 70%, 55%)",
+  "hsl(150, 60%, 45%)",
+  "hsl(45, 80%, 50%)",
+  "hsl(0, 65%, 55%)",
+  "hsl(280, 60%, 55%)",
+  "hsl(30, 70%, 50%)",
+  "hsl(190, 60%, 45%)",
+  "hsl(330, 60%, 55%)",
+  "hsl(120, 50%, 40%)",
+  "hsl(60, 70%, 45%)",
+  "hsl(240, 50%, 55%)",
+];
+
 export function ContaPJConfig() {
   const [transactions, setTransactions] = useState<TransacaoPJ[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -110,23 +126,67 @@ export function ContaPJConfig() {
   const [filterCategoria, setFilterCategoria] = useState("all");
   const { periodFilter, setPeriodFilter, dateStart, setDateStart, dateEnd, setDateEnd } = usePeriodFilter("max");
 
-  // Custom categories
   const [customCategories, setCustomCategories] = useState<string[]>(loadCustomCategories);
   const [showCatDialog, setShowCatDialog] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [editingCat, setEditingCat] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
 
-  // Category assignment per transaction
   const [txCategoryMap, setTxCategoryMap] = useState<Record<string, string>>(loadTxCategories);
 
-  const updateTxCategory = (txId: string, category: string) => {
-    const newMap = { ...txCategoryMap, [txId]: category === "__none__" ? "" : category };
+  // Bulk category dialog
+  const [bulkDialog, setBulkDialog] = useState<{
+    open: boolean;
+    cpfCnpj: string;
+    category: string;
+    matchingIds: string[];
+  }>({ open: false, cpfCnpj: "", category: "", matchingIds: [] });
+
+  const applyCategory = (txId: string, category: string) => {
+    const cat = category === "__none__" ? "" : category;
+    const newMap = { ...txCategoryMap, [txId]: cat };
     setTxCategoryMap(newMap);
     saveTxCategories(newMap);
     setTransactions(prev => prev.map(tx =>
-      tx.id === txId ? { ...tx, categoriaCustom: category === "__none__" ? "" : category } : tx
+      tx.id === txId ? { ...tx, categoriaCustom: cat } : tx
     ));
+  };
+
+  const updateTxCategory = (txId: string, category: string) => {
+    applyCategory(txId, category);
+
+    // Check if there are other transactions with the same CPF/CNPJ
+    const tx = transactions.find(t => t.id === txId);
+    if (!tx || !tx.cpfCnpjOrigemDestino.trim()) return;
+
+    const cat = category === "__none__" ? "" : category;
+    const sameDoc = transactions.filter(
+      t => t.id !== txId &&
+        t.cpfCnpjOrigemDestino.trim() === tx.cpfCnpjOrigemDestino.trim() &&
+        (t.categoriaCustom || t.categoriaOriginal) !== cat
+    );
+
+    if (sameDoc.length > 0) {
+      setBulkDialog({
+        open: true,
+        cpfCnpj: tx.cpfCnpjOrigemDestino.trim(),
+        category: cat,
+        matchingIds: sameDoc.map(t => t.id),
+      });
+    }
+  };
+
+  const applyBulkCategory = () => {
+    const { matchingIds, category } = bulkDialog;
+    const newMap = { ...txCategoryMap };
+    matchingIds.forEach(id => { newMap[id] = category; });
+    setTxCategoryMap(newMap);
+    saveTxCategories(newMap);
+    setTransactions(prev => prev.map(tx =>
+      matchingIds.includes(tx.id) ? { ...tx, categoriaCustom: category } : tx
+    ));
+    setBulkDialog({ open: false, cpfCnpj: "", category: "", matchingIds: [] });
+    toast.success(`Categoria aplicada a ${matchingIds.length} transações`);
   };
 
   const addCategory = () => {
@@ -140,10 +200,7 @@ export function ContaPJConfig() {
     toast.success("Categoria criada");
   };
 
-  const startEditCat = (cat: string) => {
-    setEditingCat(cat);
-    setEditCatName(cat);
-  };
+  const startEditCat = (cat: string) => { setEditingCat(cat); setEditCatName(cat); };
 
   const saveEditCat = () => {
     const name = editCatName.trim();
@@ -152,11 +209,8 @@ export function ContaPJConfig() {
     const updated = customCategories.map(c => c === editingCat ? name : c).sort();
     setCustomCategories(updated);
     saveCustomCategories(updated);
-    // Update all transactions that had the old category
     const newMap = { ...txCategoryMap };
-    for (const key in newMap) {
-      if (newMap[key] === editingCat) newMap[key] = name;
-    }
+    for (const key in newMap) { if (newMap[key] === editingCat) newMap[key] = name; }
     setTxCategoryMap(newMap);
     saveTxCategories(newMap);
     setTransactions(prev => prev.map(tx =>
@@ -170,11 +224,8 @@ export function ContaPJConfig() {
     const updated = customCategories.filter(c => c !== cat);
     setCustomCategories(updated);
     saveCustomCategories(updated);
-    // Remove from transaction mappings
     const newMap = { ...txCategoryMap };
-    for (const key in newMap) {
-      if (newMap[key] === cat) delete newMap[key];
-    }
+    for (const key in newMap) { if (newMap[key] === cat) delete newMap[key]; }
     setTxCategoryMap(newMap);
     saveTxCategories(newMap);
     setTransactions(prev => prev.map(tx =>
@@ -259,7 +310,6 @@ export function ContaPJConfig() {
     return Array.from(set).sort();
   }, [transactions]);
 
-  // Merge original + custom categories for filter
   const allCategories = useMemo(() => {
     const fromTx = new Set(transactions.map(t => t.categoriaCustom || t.categoriaOriginal).filter(Boolean));
     customCategories.forEach(c => fromTx.add(c));
@@ -297,6 +347,26 @@ export function ContaPJConfig() {
     return { credito: totalCredito, debito: totalDebito, liquido: totalCredito - totalDebito, count: filtered.length };
   }, [filtered]);
 
+  // Chart data by category
+  const categoryChartData = useMemo(() => {
+    const map: Record<string, { credito: number; debito: number }> = {};
+    filtered.forEach(tx => {
+      const cat = tx.categoriaCustom || tx.categoriaOriginal || "Sem categoria";
+      if (!map[cat]) map[cat] = { credito: 0, debito: 0 };
+      map[cat].credito += tx.credito;
+      map[cat].debito += tx.debito;
+    });
+    return Object.entries(map)
+      .map(([name, vals]) => ({ name, credito: vals.credito, debito: vals.debito, total: vals.credito + vals.debito }))
+      .sort((a, b) => b.total - a.total);
+  }, [filtered]);
+
+  const pieData = useMemo(() => {
+    return categoryChartData
+      .filter(d => d.debito > 0)
+      .map(d => ({ name: d.name, value: d.debito }));
+  }, [categoryChartData]);
+
   const hasActiveFilters = filterTipo !== "all" || filterConciliado !== "all" || filterCategoria !== "all" || searchTerm !== "";
 
   const clearFilters = () => {
@@ -306,9 +376,33 @@ export function ContaPJConfig() {
     setSearchTerm("");
   };
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="rounded-lg border bg-background p-2.5 shadow-xl text-xs">
+        <p className="font-medium mb-1">{label}</p>
+        {payload.map((p: any, i: number) => (
+          <p key={i} style={{ color: p.color }}>
+            {p.name === "credito" ? "Entradas" : "Saídas"}: {formatCurrency(p.value)}
+          </p>
+        ))}
+      </div>
+    );
+  };
+
+  const PieTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="rounded-lg border bg-background p-2.5 shadow-xl text-xs">
+        <p className="font-medium">{payload[0].name}</p>
+        <p>{formatCurrency(payload[0].value)}</p>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
-      {/* Header with categories button */}
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           {fileName && (
@@ -405,6 +499,71 @@ export function ContaPJConfig() {
             </Card>
           </div>
 
+          {/* Charts */}
+          {categoryChartData.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Bar Chart */}
+              <Card>
+                <CardContent className="pt-4 pb-2 px-4">
+                  <p className="text-sm font-medium mb-3">Entradas e Saídas por Categoria</p>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={categoryChartData} margin={{ top: 5, right: 5, left: 5, bottom: 60 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 10 }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={70}
+                          className="fill-muted-foreground"
+                        />
+                        <YAxis
+                          tick={{ fontSize: 10 }}
+                          tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                          className="fill-muted-foreground"
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Bar dataKey="credito" name="credito" fill="hsl(150, 60%, 45%)" radius={[3, 3, 0, 0]} />
+                        <Bar dataKey="debito" name="debito" fill="hsl(0, 65%, 55%)" radius={[3, 3, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Pie Chart */}
+              <Card>
+                <CardContent className="pt-4 pb-2 px-4">
+                  <p className="text-sm font-medium mb-3">Distribuição de Saídas por Categoria</p>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                          labelLine={false}
+                          style={{ fontSize: 10 }}
+                        >
+                          {pieData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<PieTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-2">
             <PeriodFilter
@@ -461,7 +620,6 @@ export function ContaPJConfig() {
                       <TableHead className="whitespace-nowrap">Tipo</TableHead>
                       <TableHead className="text-right whitespace-nowrap">Crédito</TableHead>
                       <TableHead className="text-right whitespace-nowrap">Débito</TableHead>
-                      <TableHead className="text-right whitespace-nowrap">Saldo</TableHead>
                       <TableHead className="whitespace-nowrap">CPF/CNPJ</TableHead>
                       <TableHead className="whitespace-nowrap min-w-[140px]">Categoria</TableHead>
                       <TableHead className="whitespace-nowrap">Conciliado</TableHead>
@@ -470,7 +628,7 @@ export function ContaPJConfig() {
                   <TableBody>
                     {filtered.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                           Nenhuma transação encontrada
                         </TableCell>
                       </TableRow>
@@ -492,9 +650,6 @@ export function ContaPJConfig() {
                             </TableCell>
                             <TableCell className="text-right text-xs text-red-600 font-medium whitespace-nowrap">
                               {tx.debito > 0 ? formatCurrency(tx.debito) : ""}
-                            </TableCell>
-                            <TableCell className="text-right text-xs font-medium whitespace-nowrap">
-                              {formatCurrency(tx.saldo)}
                             </TableCell>
                             <TableCell className="text-xs whitespace-nowrap">{tx.cpfCnpjOrigemDestino}</TableCell>
                             <TableCell>
@@ -532,6 +687,27 @@ export function ContaPJConfig() {
           </Card>
         </>
       )}
+
+      {/* Bulk category dialog */}
+      <Dialog open={bulkDialog.open} onOpenChange={(open) => !open && setBulkDialog(prev => ({ ...prev, open: false }))}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Aplicar a mesmas transações?</DialogTitle>
+            <DialogDescription>
+              Encontramos <strong>{bulkDialog.matchingIds.length}</strong> outra(s) transação(ões) com o CPF/CNPJ <strong>{bulkDialog.cpfCnpj}</strong>.
+              Deseja aplicar a categoria "<strong>{bulkDialog.category || "Sem categoria"}</strong>" a todas?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkDialog(prev => ({ ...prev, open: false }))}>
+              Não, apenas esta
+            </Button>
+            <Button onClick={applyBulkCategory}>
+              Sim, aplicar a todas
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Categories management dialog */}
       <Dialog open={showCatDialog} onOpenChange={setShowCatDialog}>
