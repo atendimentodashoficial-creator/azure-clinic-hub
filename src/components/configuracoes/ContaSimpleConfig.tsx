@@ -607,23 +607,23 @@ export function ContaSimpleConfig() {
                           </TableBody>
                         </Table>
                       </div>
-                      {bankNextPageKey && (
+                      {nextPageKey && (
                         <div className="p-3 border-t text-center">
-                          <Button variant="outline" size="sm" onClick={() => fetchBankTransactions(bankNextPageKey)} disabled={isLoadingBank}>
-                            {isLoadingBank ? <RefreshCw className="h-4 w-4 animate-spin mr-1" /> : null}
+                          <Button variant="outline" size="sm" onClick={() => fetchTransactions(nextPageKey)} disabled={isLoadingTransactions}>
+                            {isLoadingTransactions ? <RefreshCw className="h-4 w-4 animate-spin mr-1" /> : null}
                             Carregar mais
                           </Button>
                         </div>
                       )}
                     </Card>
-                  ) : bankTransactions.length === 0 && !isLoadingBank ? (
+                  ) : bankTransactions.length === 0 && !isLoadingTransactions ? (
                     <Card className="p-8 text-center text-muted-foreground">
                       <Landmark className="h-8 w-8 mx-auto mb-2 opacity-40" />
                       <p>Clique em "Buscar" para consultar o extrato da conta corrente.</p>
                     </Card>
                   ) : null}
 
-                  {isLoadingBank && bankTransactions.length === 0 && (
+                  {isLoadingTransactions && bankTransactions.length === 0 && (
                     <Card className="p-8 text-center text-muted-foreground">
                       <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin opacity-40" />
                       <p>Carregando extrato...</p>
