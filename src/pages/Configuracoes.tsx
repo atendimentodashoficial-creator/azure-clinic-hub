@@ -1,4 +1,4 @@
-import { Settings, Video, MessageSquare, Link, RotateCcw, CreditCard } from "lucide-react";
+import { Settings, Video, MessageSquare, Link, RotateCcw, CreditCard, Building2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -8,6 +8,7 @@ import Conexoes from "./Conexoes";
 import { ResetDataConfig } from "@/components/configuracoes/ResetDataConfig";
 import { TiposReuniaoConfig } from "@/components/configuracoes/TiposReuniaoConfig";
 import { ContaSimpleConfig } from "@/components/configuracoes/ContaSimpleConfig";
+import { ContaPJConfig } from "@/components/configuracoes/ContaPJConfig";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
 
 const tabOptions = [
@@ -15,6 +16,7 @@ const tabOptions = [
   { value: "mensagens", label: "Mensagens", icon: MessageSquare },
   { value: "conexoes", label: "Conexões", icon: Link },
   { value: "conta-simples", label: "Conta Simples", icon: CreditCard },
+  { value: "conta-pj", label: "Conta PJ", icon: Building2 },
   { value: "reset", label: "Reset", icon: RotateCcw },
 ];
 
@@ -74,6 +76,10 @@ export default function Configuracoes() {
 
         <TabsContent value="conta-simples">
           <ContaSimpleConfig />
+        </TabsContent>
+
+        <TabsContent value="conta-pj">
+          <ContaPJConfig />
         </TabsContent>
 
         <TabsContent value="reset">
