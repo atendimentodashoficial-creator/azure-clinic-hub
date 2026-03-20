@@ -80,19 +80,18 @@ export function ContaSimpleConfig() {
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
 
-  // Card transactions
-  const [cardTransactions, setCardTransactions] = useState<CardTransaction[]>([]);
-  const [isLoadingCards, setIsLoadingCards] = useState(false);
-  const [cardNextPageKey, setCardNextPageKey] = useState<string | null>(null);
+  // All transactions (single fetch, split client-side)
+  const [allTransactions, setAllTransactions] = useState<any[]>([]);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
+  const [nextPageKey, setNextPageKey] = useState<string | null>(null);
+
+  // Card filters
   const [cardSearchTerm, setCardSearchTerm] = useState("");
   const [cardFilterStatus, setCardFilterStatus] = useState<string>("all");
   const [cardFilterCategory, setCardFilterCategory] = useState<string>("all");
   const [cardFilterCard, setCardFilterCard] = useState<string>("all");
 
-  // Bank account transactions
-  const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
-  const [isLoadingBank, setIsLoadingBank] = useState(false);
-  const [bankNextPageKey, setBankNextPageKey] = useState<string | null>(null);
+  // Bank filters
   const [bankSearchTerm, setBankSearchTerm] = useState("");
   const [bankFilterStatus, setBankFilterStatus] = useState<string>("all");
   const [bankFilterType, setBankFilterType] = useState<string>("all");
