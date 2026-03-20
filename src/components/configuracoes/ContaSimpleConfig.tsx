@@ -160,12 +160,12 @@ export function ContaSimpleConfig() {
 
   const isTokenValid = token && tokenExpiresAt && Date.now() < tokenExpiresAt;
 
-  const fetchTransactions = async (pageKey?: string) => {
+  const fetchCardTransactions = async (pageKey?: string) => {
     if (!isTokenValid) {
       toast.error("Autentique-se primeiro");
       return;
     }
-    setIsLoadingTransactions(true);
+    setIsLoadingCards(true);
     try {
       const { data, error } = await supabase.functions.invoke("conta-simples-api", {
         body: {
@@ -174,7 +174,8 @@ export function ContaSimpleConfig() {
           startDate,
           endDate,
           environment,
-          limit: 100,
+          statementType: "credit-card",
+          limit: 50,
           ...(pageKey ? { nextPageStartKey: pageKey } : {}),
         },
       });
@@ -183,24 +184,60 @@ export function ContaSimpleConfig() {
 
       const txs = data.transactions || data.data || [];
       if (pageKey) {
-        setAllTransactions((prev) => [...prev, ...txs]);
+        setCardTransactions((prev) => [...prev, ...txs]);
       } else {
-        setAllTransactions(txs);
+        setCardTransactions(txs);
       }
-      setNextPageKey(data.nextPageStartKey || null);
+      setCardNextPageKey(data.nextPageStartKey || null);
     } catch (err: any) {
-      toast.error(`Erro ao buscar transações: ${err.message}`);
+      toast.error(`Erro ao buscar transações de cartão: ${err.message}`);
     } finally {
-      setIsLoadingTransactions(false);
+      setIsLoadingCards(false);
     }
   };
 
-  // Split transactions client-side: with card = cartões, without card = conta corrente
-  const cardTransactions = allTransactions.filter((tx) => tx.card && tx.card.maskedNumber);
-  const bankTransactions = allTransactions.filter((tx) => !tx.card || !tx.card.maskedNumber);
+  const fetchBankTransactions = async (pageKey?: string) => {
+    if (!isTokenValid) {
+      toast.error("Autentique-se primeiro");
+      return;
+    }
+    setIsLoadingBank(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("conta-simples-api", {
+        body: {
+          action: "credit-card-statements",
+          token,
+          startDate,
+          endDate,
+          environment,
+          statementType: "bank-account",
+          limit: 50,
+          ...(pageKey ? { nextPageStartKey: pageKey } : {}),
+        },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      const txs = data.transactions || data.data || [];
+      if (pageKey) {
+        setBankTransactions((prev) => [...prev, ...txs]);
+      } else {
+        setBankTransactions(txs);
+      }
+      setBankNextPageKey(data.nextPageStartKey || null);
+    } catch (err: any) {
+      toast.error(`Erro ao buscar extrato bancário: ${err.message}`);
+    } finally {
+      setIsLoadingBank(false);
+    }
+  };
 
   const fetchAll = () => {
-    fetchTransactions();
+    if (transacoesSubTab === "conta-corrente") {
+      fetchBankTransactions();
+      return;
+    }
+    fetchCardTransactions();
   };
 
   const downloadAttachment = async (attachmentId: string, fileName: string) => {
