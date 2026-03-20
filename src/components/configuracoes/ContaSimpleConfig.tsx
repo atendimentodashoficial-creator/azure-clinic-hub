@@ -120,7 +120,7 @@ export function ContaSimpleConfig() {
   // Auto-renew token 2 minutes before expiry
   useEffect(() => {
     if (!token || !tokenExpiresAt || !apiKey || !apiSecret) return;
-    const renewIn = (tokenExpiresAt - Date.now()) - 120000; // 2 min before expiry
+    const renewIn = (tokenExpiresAt - Date.now()) - 60000; // 1 min before expiry (renews at ~29 min)
     if (renewIn <= 0) {
       authenticate(true);
       return;
