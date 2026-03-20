@@ -12,10 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import {
-  CreditCard, Key, RefreshCw, Eye, EyeOff,
+  CreditCard, Key, RefreshCw, Eye, EyeOff, Building2,
   ArrowUpRight, ArrowDownLeft, CheckCircle2, Clock, Search, FileText, X
 } from "lucide-react";
 import { format, subDays } from "date-fns";
+import { ContaPJConfig } from "./ContaPJConfig";
 
 interface ContaSimplesCreds {
   api_key: string;
