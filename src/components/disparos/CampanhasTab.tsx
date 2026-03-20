@@ -827,7 +827,7 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
         <StatsCard
           title="Conversão Reuniões"
           value={dashStats.totalEnviados > 0 ? `${Math.round((reunioesCount / dashStats.totalEnviados) * 100)}%` : "0%"}
-          change={`${reunioesCount} no período · ${reunioesTotalCount} total`}
+          change={`${reunioesHojeCount} hoje · ${reunioesTotalCount} total`}
           changeType={reunioesCount > 0 ? "positive" : "neutral"}
           icon={Video}
         />
