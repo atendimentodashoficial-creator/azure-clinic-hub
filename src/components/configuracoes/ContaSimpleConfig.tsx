@@ -80,19 +80,18 @@ export function ContaSimpleConfig() {
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
 
-  // Card transactions
-  const [cardTransactions, setCardTransactions] = useState<CardTransaction[]>([]);
-  const [isLoadingCards, setIsLoadingCards] = useState(false);
-  const [cardNextPageKey, setCardNextPageKey] = useState<string | null>(null);
+  // All transactions (single fetch, split client-side)
+  const [allTransactions, setAllTransactions] = useState<any[]>([]);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
+  const [nextPageKey, setNextPageKey] = useState<string | null>(null);
+
+  // Card filters
   const [cardSearchTerm, setCardSearchTerm] = useState("");
   const [cardFilterStatus, setCardFilterStatus] = useState<string>("all");
   const [cardFilterCategory, setCardFilterCategory] = useState<string>("all");
   const [cardFilterCard, setCardFilterCard] = useState<string>("all");
 
-  // Bank account transactions
-  const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
-  const [isLoadingBank, setIsLoadingBank] = useState(false);
-  const [bankNextPageKey, setBankNextPageKey] = useState<string | null>(null);
+  // Bank filters
   const [bankSearchTerm, setBankSearchTerm] = useState("");
   const [bankFilterStatus, setBankFilterStatus] = useState<string>("all");
   const [bankFilterType, setBankFilterType] = useState<string>("all");
@@ -160,12 +159,12 @@ export function ContaSimpleConfig() {
 
   const isTokenValid = token && tokenExpiresAt && Date.now() < tokenExpiresAt;
 
-  const fetchCardTransactions = async (pageKey?: string) => {
+  const fetchTransactions = async (pageKey?: string) => {
     if (!isTokenValid) {
       toast.error("Autentique-se primeiro");
       return;
     }
-    setIsLoadingCards(true);
+    setIsLoadingTransactions(true);
     try {
       const { data, error } = await supabase.functions.invoke("conta-simples-api", {
         body: {
@@ -174,8 +173,7 @@ export function ContaSimpleConfig() {
           startDate,
           endDate,
           environment,
-          statementType: "credit-card",
-          limit: 50,
+          limit: 100,
           ...(pageKey ? { nextPageStartKey: pageKey } : {}),
         },
       });
@@ -184,60 +182,24 @@ export function ContaSimpleConfig() {
 
       const txs = data.transactions || data.data || [];
       if (pageKey) {
-        setCardTransactions((prev) => [...prev, ...txs]);
+        setAllTransactions((prev) => [...prev, ...txs]);
       } else {
-        setCardTransactions(txs);
+        setAllTransactions(txs);
       }
-      setCardNextPageKey(data.nextPageStartKey || null);
+      setNextPageKey(data.nextPageStartKey || null);
     } catch (err: any) {
-      toast.error(`Erro ao buscar transações de cartão: ${err.message}`);
+      toast.error(`Erro ao buscar transações: ${err.message}`);
     } finally {
-      setIsLoadingCards(false);
+      setIsLoadingTransactions(false);
     }
   };
 
-  const fetchBankTransactions = async (pageKey?: string) => {
-    if (!isTokenValid) {
-      toast.error("Autentique-se primeiro");
-      return;
-    }
-    setIsLoadingBank(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("conta-simples-api", {
-        body: {
-          action: "credit-card-statements",
-          token,
-          startDate,
-          endDate,
-          environment,
-          statementType: "bank-account",
-          limit: 50,
-          ...(pageKey ? { nextPageStartKey: pageKey } : {}),
-        },
-      });
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
-
-      const txs = data.transactions || data.data || [];
-      if (pageKey) {
-        setBankTransactions((prev) => [...prev, ...txs]);
-      } else {
-        setBankTransactions(txs);
-      }
-      setBankNextPageKey(data.nextPageStartKey || null);
-    } catch (err: any) {
-      toast.error(`Erro ao buscar extrato bancário: ${err.message}`);
-    } finally {
-      setIsLoadingBank(false);
-    }
-  };
+  // Split transactions client-side: with card = cartões, without card = conta corrente
+  const cardTransactions = allTransactions.filter((tx) => tx.card && tx.card.maskedNumber);
+  const bankTransactions = allTransactions.filter((tx) => !tx.card || !tx.card.maskedNumber);
 
   const fetchAll = () => {
-    if (transacoesSubTab === "conta-corrente") {
-      fetchBankTransactions();
-    } else {
-      fetchCardTransactions();
-    }
+    fetchTransactions();
   };
 
   const downloadAttachment = async (attachmentId: string, fileName: string) => {
@@ -519,8 +481,8 @@ export function ContaSimpleConfig() {
                       className="w-[160px]"
                     />
                   </div>
-                  <Button onClick={fetchAll} disabled={isLoadingBank || isLoadingCards} size="sm">
-                    {(isLoadingBank || isLoadingCards) ? (
+                  <Button onClick={fetchAll} disabled={isLoadingTransactions} size="sm">
+                    {isLoadingTransactions ? (
                       <RefreshCw className="h-4 w-4 animate-spin mr-1" />
                     ) : (
                       <Search className="h-4 w-4 mr-1" />
@@ -645,23 +607,23 @@ export function ContaSimpleConfig() {
                           </TableBody>
                         </Table>
                       </div>
-                      {bankNextPageKey && (
+                      {nextPageKey && (
                         <div className="p-3 border-t text-center">
-                          <Button variant="outline" size="sm" onClick={() => fetchBankTransactions(bankNextPageKey)} disabled={isLoadingBank}>
-                            {isLoadingBank ? <RefreshCw className="h-4 w-4 animate-spin mr-1" /> : null}
+                          <Button variant="outline" size="sm" onClick={() => fetchTransactions(nextPageKey)} disabled={isLoadingTransactions}>
+                            {isLoadingTransactions ? <RefreshCw className="h-4 w-4 animate-spin mr-1" /> : null}
                             Carregar mais
                           </Button>
                         </div>
                       )}
                     </Card>
-                  ) : bankTransactions.length === 0 && !isLoadingBank ? (
+                  ) : bankTransactions.length === 0 && !isLoadingTransactions ? (
                     <Card className="p-8 text-center text-muted-foreground">
                       <Landmark className="h-8 w-8 mx-auto mb-2 opacity-40" />
                       <p>Clique em "Buscar" para consultar o extrato da conta corrente.</p>
                     </Card>
                   ) : null}
 
-                  {isLoadingBank && bankTransactions.length === 0 && (
+                  {isLoadingTransactions && bankTransactions.length === 0 && (
                     <Card className="p-8 text-center text-muted-foreground">
                       <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin opacity-40" />
                       <p>Carregando extrato...</p>
@@ -870,15 +832,15 @@ export function ContaSimpleConfig() {
                     </Table>
                   </div>
 
-                  {cardNextPageKey && (
+                  {nextPageKey && (
                     <div className="p-3 border-t text-center">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => fetchCardTransactions(cardNextPageKey)}
-                        disabled={isLoadingCards}
+                        onClick={() => fetchTransactions(nextPageKey)}
+                        disabled={isLoadingTransactions}
                       >
-                        {isLoadingCards ? (
+                        {isLoadingTransactions ? (
                           <RefreshCw className="h-4 w-4 animate-spin mr-1" />
                         ) : null}
                         Carregar mais
@@ -886,14 +848,14 @@ export function ContaSimpleConfig() {
                     </div>
                   )}
                 </Card>
-              ) : cardTransactions.length === 0 && !isLoadingCards ? (
+              ) : cardTransactions.length === 0 && !isLoadingTransactions ? (
                 <Card className="p-8 text-center text-muted-foreground">
                   <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-40" />
                   <p>Clique em "Buscar" para consultar as transações de cartão do período.</p>
                 </Card>
               ) : null}
 
-              {isLoadingCards && cardTransactions.length === 0 && (
+              {isLoadingTransactions && cardTransactions.length === 0 && (
                 <Card className="p-8 text-center text-muted-foreground">
                   <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin opacity-40" />
                   <p>Carregando transações de cartão...</p>

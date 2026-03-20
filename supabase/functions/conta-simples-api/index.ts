@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "credit-card-statements") {
-      const { token, startDate, endDate, pageSize, limit, nextPageStartKey, statementType } = params;
+      const { token, startDate, endDate, pageSize, limit, nextPageStartKey } = params;
       if (!token) {
         return jsonResponse({ error: "Token obrigatório" });
       }
@@ -87,13 +87,10 @@ Deno.serve(async (req) => {
         requestBody.nextPageStartKey = nextPageStartKey;
       }
 
-      // Determine endpoint based on statementType
-      const endpoint = statementType === "bank-account"
-        ? `${baseUrl}/statements/v1/bank-account`
-        : `${baseUrl}/statements/v1/credit-card`;
+      const endpoint = `${baseUrl}/statements/v1/credit-card`;
 
       console.log(
-        `[conta-simples] Fetching ${statementType || "credit-card"} statements: ${startDate} to ${endDate} (limit=${safePageSize})`,
+        `[conta-simples] Fetching credit-card statements: ${startDate} to ${endDate} (limit=${safePageSize})`,
       );
 
       const statementsRes = await fetch(endpoint, {
