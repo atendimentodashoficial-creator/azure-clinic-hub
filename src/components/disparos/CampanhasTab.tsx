@@ -290,6 +290,8 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
         setReunioesCount(0);
         setReunioesTotalCount(0);
         setReunioesHojeCount(0);
+        setReunioesDoProprioDia(0);
+        setReunioesDeOutrosDias(0);
         return;
       }
 
@@ -355,12 +357,38 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
           setReunioesCount(0);
           setReunioesTotalCount(0);
           setReunioesHojeCount(0);
+          setReunioesDoProprioDia(0);
+          setReunioesDeOutrosDias(0);
           return;
         }
 
         const today = new Date();
         const todayStartISO = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
         const todayEndISO = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+
+        // Collect sent numbers from TODAY's dispatches only
+        const sentNumbersHoje = new Set<string>();
+        for (let i = 0; i < allCampanhaIds.length; i += 500) {
+          const batchIds = allCampanhaIds.slice(i, i + 500);
+          let from = 0;
+          while (true) {
+            const { data } = await supabase
+              .from("disparos_campanha_contatos")
+              .select("numero")
+              .in("campanha_id", batchIds)
+              .in("status", ["sent", "delivered"])
+              .gte("enviado_em", todayStartISO)
+              .lte("enviado_em", todayEndISO)
+              .range(from, from + 999);
+            if (!data || data.length === 0) break;
+            data.forEach((d: any) => {
+              const cleaned = d.numero?.replace(/\D/g, "");
+              if (cleaned) sentNumbersHoje.add(cleaned.slice(-8));
+            });
+            if (data.length < 1000) break;
+            from += 1000;
+          }
+        }
 
         // Fetch today's reuniões and all reuniões
         const [{ data: reunioesHoje }, { data: reunioesAll }] = await Promise.all([
@@ -393,14 +421,23 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
         // "no período": reuniões de qualquer data, mas só de contatos disparados no período
         setReunioesCount(countMatches(reunioesAll, sentNumbersPeriodo));
         // "hoje": reuniões de hoje, de contatos de qualquer campanha
-        setReunioesHojeCount(countMatches(reunioesHoje, sentNumbersAll));
+        const hojeTotal = countMatches(reunioesHoje, sentNumbersAll);
+        setReunioesHojeCount(hojeTotal);
         // total: todas reuniões de contatos de qualquer campanha
         setReunioesTotalCount(countMatches(reunioesAll, sentNumbersAll));
+
+        // Breakdown: reuniões marcadas hoje vindas de disparos de hoje vs de outros dias
+        const doProprioDia = countMatches(reunioesHoje, sentNumbersHoje);
+        setReunioesDoProprioDia(doProprioDia);
+        setReunioesDeOutrosDias(hojeTotal - doProprioDia);
       } catch (error) {
         console.error("Error loading reunioes count:", error);
         setReunioesCount(0);
         setReunioesTotalCount(0);
         setReunioesHojeCount(0);
+        setReunioesDoProprioDia(0);
+        setReunioesDeOutrosDias(0);
+      }
       }
     };
 
