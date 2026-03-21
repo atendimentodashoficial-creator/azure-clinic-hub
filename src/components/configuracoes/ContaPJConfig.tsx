@@ -490,6 +490,33 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
 
   const pieData = useMemo(() => categoryChartData.filter(d => d.debito > 0).map(d => ({ name: d.name, value: d.debito })), [categoryChartData]);
 
+  // Card summary for cartao mode
+  const cardSummary = useMemo(() => {
+    if (tipo !== "cartao") return [];
+    const map: Record<string, { cartao: string; nomeCartao: string; totalGasto: number; totalTransacoes: number; ultimaTransacao: string | null }> = {};
+    filtered.forEach(tx => {
+      const key = tx.cartao || "desconhecido";
+      if (!map[key]) map[key] = { cartao: key, nomeCartao: tx.nomeCartao || tx.cpfCnpjOrigemDestino || "", totalGasto: 0, totalTransacoes: 0, ultimaTransacao: null };
+      map[key].totalGasto += tx.debito;
+      map[key].totalTransacoes += 1;
+      if (!map[key].ultimaTransacao || tx.dataHora > map[key].ultimaTransacao!) map[key].ultimaTransacao = tx.dataHora;
+    });
+    return Object.values(map).sort((a, b) => b.totalGasto - a.totalGasto);
+  }, [filtered, tipo]);
+
+  const cardFiltered = useMemo(() => {
+    if (!selectedCard) return filtered;
+    return filtered.filter(tx => tx.cartao === selectedCard);
+  }, [filtered, selectedCard]);
+
+  const cardTotals = useMemo(() => {
+    const list = tipo === "cartao" ? cardFiltered : filtered;
+    const totalDebito = list.reduce((s, t) => s + t.debito, 0);
+    const conciliadas = list.filter(t => (t.conciliado || "").toUpperCase() === "SIM").length;
+    const canceladas = list.filter(t => (t.situacao || "").toLowerCase().includes("cancel")).length;
+    return { total: list.length, debito: totalDebito, conciliadas, canceladas };
+  }, [cardFiltered, filtered, tipo]);
+
   const hasActiveFilters = filterTipo !== "all" || filterConciliado !== "all" || filterCategoria !== "all" || searchTerm !== "";
   const clearFilters = () => { setFilterTipo("all"); setFilterConciliado("all"); setFilterCategoria("all"); setSearchTerm(""); };
 
