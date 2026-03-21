@@ -329,9 +329,18 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true }) as unknown[][];
 
         let headerIdx = -1;
+        let formatType: "pj" | "cartao" = "pj";
         for (let i = 0; i < Math.min(rows.length, 20); i++) {
-          if (Array.isArray(rows[i]) && rows[i].some((c) => String(c).toLowerCase().includes("data hora"))) {
+          if (!Array.isArray(rows[i])) continue;
+          const rowStr = rows[i].map(c => String(c).toLowerCase());
+          if (rowStr.some(c => c.includes("data hora"))) {
             headerIdx = i;
+            formatType = "pj";
+            break;
+          }
+          if (rowStr.some(c => c.includes("data de realiza"))) {
+            headerIdx = i;
+            formatType = "cartao";
             break;
           }
         }
@@ -339,31 +348,65 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
         if (headerIdx === -1) { toast.error("Formato não reconhecido"); setLoading(false); return; }
 
         const parsed: TransacaoPJ[] = [];
-        for (let i = headerIdx + 1; i < rows.length; i++) {
-          const row = rows[i] as unknown[];
-          if (!row || !row[0]) continue;
-          const dt = parseExcelDate(row[0]);
-          if (!dt) continue;
-          const id = `${dt.getTime()}-${i}`;
-          parsed.push({
-            id,
-            dataHora: dt.toISOString(),
-            historico: String(row[1] ?? ""),
-            cartao: String(row[2] ?? ""),
-            nomeCartao: String(row[3] ?? ""),
-            credito: parseCurrency(row[4]),
-            debito: parseCurrency(row[5]),
-            saldo: parseCurrency(row[6]),
-            situacao: String(row[7] ?? ""),
-            descricao: String(row[8] ?? ""),
-            categoriaOriginal: String(row[9] ?? ""),
-            categoriaCustom: String(row[9] ?? ""),
-            centroCusto: String(row[10] ?? ""),
-            valorIOF: parseCurrency(row[11]),
-            cotacaoDolar: parseCurrency(row[12]),
-            cpfCnpjOrigemDestino: String(row[13] ?? ""),
-            conciliado: String(row[14] ?? ""),
-          });
+
+        if (formatType === "cartao") {
+          // Cartão format: Data realização | Status | Data processamento | Tipo | Estabelecimento | Entrada | Saída | Cotação Dólar | Cartão | Nome Cartão | Carteira digital | Token | Categoria | Centro de custo | Email | Observação | Conciliação
+          for (let i = headerIdx + 1; i < rows.length; i++) {
+            const row = rows[i] as unknown[];
+            if (!row || !row[0]) continue;
+            const dt = parseExcelDate(row[0]);
+            if (!dt) continue;
+            const id = `${dt.getTime()}-${i}`;
+            const status = String(row[1] ?? "");
+            const estabelecimento = String(row[4] ?? "");
+            parsed.push({
+              id,
+              dataHora: dt.toISOString(),
+              historico: `${String(row[3] ?? "")} - ${estabelecimento}`.trim(),
+              cartao: String(row[8] ?? ""),
+              nomeCartao: String(row[9] ?? ""),
+              credito: parseCurrency(row[5]),
+              debito: Math.abs(parseCurrency(row[6])),
+              saldo: 0,
+              situacao: status,
+              descricao: String(row[15] ?? ""),
+              categoriaOriginal: String(row[12] ?? ""),
+              categoriaCustom: String(row[12] ?? ""),
+              centroCusto: String(row[13] ?? ""),
+              valorIOF: 0,
+              cotacaoDolar: parseCurrency(row[7]),
+              cpfCnpjOrigemDestino: estabelecimento,
+              conciliado: String(row[16] ?? ""),
+            });
+          }
+        } else {
+          // PJ format
+          for (let i = headerIdx + 1; i < rows.length; i++) {
+            const row = rows[i] as unknown[];
+            if (!row || !row[0]) continue;
+            const dt = parseExcelDate(row[0]);
+            if (!dt) continue;
+            const id = `${dt.getTime()}-${i}`;
+            parsed.push({
+              id,
+              dataHora: dt.toISOString(),
+              historico: String(row[1] ?? ""),
+              cartao: String(row[2] ?? ""),
+              nomeCartao: String(row[3] ?? ""),
+              credito: parseCurrency(row[4]),
+              debito: parseCurrency(row[5]),
+              saldo: parseCurrency(row[6]),
+              situacao: String(row[7] ?? ""),
+              descricao: String(row[8] ?? ""),
+              categoriaOriginal: String(row[9] ?? ""),
+              categoriaCustom: String(row[9] ?? ""),
+              centroCusto: String(row[10] ?? ""),
+              valorIOF: parseCurrency(row[11]),
+              cotacaoDolar: parseCurrency(row[12]),
+              cpfCnpjOrigemDestino: String(row[13] ?? ""),
+              conciliado: String(row[14] ?? ""),
+            });
+          }
         }
 
         parsed.sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime());
