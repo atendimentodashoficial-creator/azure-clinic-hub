@@ -151,7 +151,10 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
   // Card-specific state (for tipo === "cartao")
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
-  // Load saved extratos list
+  // Derive customCategories from DB for compatibility
+  const customCategories = useMemo(() => categoriasDB.map(c => c.nome).sort(), [categoriasDB]);
+
+
   useEffect(() => {
     if (!ownerId) return;
     loadExtratosList();
