@@ -541,7 +541,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
         <Card>
           <CardContent className="pt-6">
             <label
-              htmlFor="pj-upload-main"
+              htmlFor={`upload-main-${tipo}`}
               className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-muted-foreground/25 rounded-lg p-10 cursor-pointer hover:border-primary/50 transition-colors"
             >
               <Upload className="h-10 w-10 text-muted-foreground" />
@@ -549,7 +549,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
                 <p className="text-sm font-medium">Arraste ou clique para importar o extrato</p>
                 <p className="text-xs text-muted-foreground mt-1">Arquivo .xlsx exportado da Conta Simples</p>
               </div>
-              <input id="pj-upload-main" type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
+              <input id={`upload-main-${tipo}`} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
             </label>
           </CardContent>
         </Card>
