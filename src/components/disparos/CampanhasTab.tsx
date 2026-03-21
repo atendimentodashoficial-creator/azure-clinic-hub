@@ -438,7 +438,6 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
         setReunioesDoProprioDia(0);
         setReunioesDeOutrosDias(0);
       }
-      }
     };
 
     loadReunioes();
