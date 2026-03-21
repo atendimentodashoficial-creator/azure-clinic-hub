@@ -258,7 +258,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
       setActiveExtratoId(null);
       setTransactions([]);
       setFileName(null);
-      setCustomCategories([]);
+      // Categories are global, no need to clear
       setTxCategoryMap({});
     }
     setShowDeleteConfirm(null);
