@@ -121,11 +121,17 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
   const [filterCategoria, setFilterCategoria] = useState("all");
   const { periodFilter, setPeriodFilter, dateStart, setDateStart, dateEnd, setDateEnd } = usePeriodFilter("max");
 
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  // Global shared categories from categorias_despesas table
+  const { data: categoriasDB = [] } = useCategoriasDespesas();
+  const createCategoria = useCreateCategoriaDespesa();
+  const updateCategoria = useUpdateCategoriaDespesa();
+  const deleteCategoriaMutation = useDeleteCategoriaDespesa();
+
   const [showCatDialog, setShowCatDialog] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [editingCat, setEditingCat] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [txCategoryMap, setTxCategoryMap] = useState<Record<string, string>>({});
 
   // Saved extratos
