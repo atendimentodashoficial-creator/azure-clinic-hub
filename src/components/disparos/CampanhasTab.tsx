@@ -76,6 +76,8 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
   const [reunioesCount, setReunioesCount] = useState(0);
   const [reunioesTotalCount, setReunioesTotalCount] = useState(0);
   const [reunioesHojeCount, setReunioesHojeCount] = useState(0);
+  const [reunioesDoProprioDia, setReunioesDoProprioDia] = useState(0);
+  const [reunioesDeOutrosDias, setReunioesDeOutrosDias] = useState(0);
 
   const loadCampanhas = async () => {
     try {
