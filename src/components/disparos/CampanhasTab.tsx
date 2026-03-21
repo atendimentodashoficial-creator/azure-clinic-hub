@@ -362,12 +362,11 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
           return;
         }
 
-        const today = new Date();
-        const todayStartISO = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
-        const todayEndISO = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+        const periodStartISO = startOfPeriod.toISOString();
+        const periodEndISO = endOfPeriod.toISOString();
 
-        // Collect sent numbers from TODAY's dispatches only
-        const sentNumbersHoje = new Set<string>();
+        // Collect sent numbers dispatched WITHIN the selected period
+        const sentNumbersDoPeriodo = new Set<string>();
         for (let i = 0; i < allCampanhaIds.length; i += 500) {
           const batchIds = allCampanhaIds.slice(i, i + 500);
           let from = 0;
@@ -377,27 +376,27 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
               .select("numero")
               .in("campanha_id", batchIds)
               .in("status", ["sent", "delivered"])
-              .gte("enviado_em", todayStartISO)
-              .lte("enviado_em", todayEndISO)
+              .gte("enviado_em", periodStartISO)
+              .lte("enviado_em", periodEndISO)
               .range(from, from + 999);
             if (!data || data.length === 0) break;
             data.forEach((d: any) => {
               const cleaned = d.numero?.replace(/\D/g, "");
-              if (cleaned) sentNumbersHoje.add(cleaned.slice(-8));
+              if (cleaned) sentNumbersDoPeriodo.add(cleaned.slice(-8));
             });
             if (data.length < 1000) break;
             from += 1000;
           }
         }
 
-        // Fetch today's reuniões and all reuniões
-        const [{ data: reunioesHoje }, { data: reunioesAll }] = await Promise.all([
+        // Fetch reuniões created within the selected period and all reuniões
+        const [{ data: reunioesPeriodo }, { data: reunioesAll }] = await Promise.all([
           supabase
             .from("reunioes")
             .select("cliente_telefone")
             .eq("user_id", user.id)
-            .gte("created_at", todayStartISO)
-            .lte("created_at", todayEndISO),
+            .gte("created_at", periodStartISO)
+            .lte("created_at", periodEndISO),
           supabase
             .from("reunioes")
             .select("cliente_telefone")
@@ -420,16 +419,16 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
 
         // "no período": reuniões de qualquer data, mas só de contatos disparados no período
         setReunioesCount(countMatches(reunioesAll, sentNumbersPeriodo));
-        // "hoje": reuniões de hoje, de contatos de qualquer campanha
-        const hojeTotal = countMatches(reunioesHoje, sentNumbersAll);
-        setReunioesHojeCount(hojeTotal);
-        // total: todas reuniões de contatos de qualquer campanha
+        // Reuniões marcadas no período filtrado, de contatos de qualquer campanha
+        const periodTotal = countMatches(reunioesPeriodo, sentNumbersAll);
+        setReunioesHojeCount(periodTotal);
+        // total
         setReunioesTotalCount(countMatches(reunioesAll, sentNumbersAll));
 
-        // Breakdown: reuniões marcadas hoje vindas de disparos de hoje vs de outros dias
-        const doProprioDia = countMatches(reunioesHoje, sentNumbersHoje);
-        setReunioesDoProprioDia(doProprioDia);
-        setReunioesDeOutrosDias(hojeTotal - doProprioDia);
+        // Breakdown: reuniões marcadas no período vindas de disparos do período vs de outros dias
+        const doProprioPeriodo = countMatches(reunioesPeriodo, sentNumbersDoPeriodo);
+        setReunioesDoProprioDia(doProprioPeriodo);
+        setReunioesDeOutrosDias(periodTotal - doProprioPeriodo);
       } catch (error) {
         console.error("Error loading reunioes count:", error);
         setReunioesCount(0);
