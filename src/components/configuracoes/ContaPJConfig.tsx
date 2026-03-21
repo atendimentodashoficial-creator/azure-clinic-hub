@@ -515,35 +515,42 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
     <div className="space-y-4">
       {/* Saved extratos selector */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
           <FolderOpen className="h-4 w-4 text-muted-foreground" />
           {loadingExtratos ? (
             <Loader2 className="h-4 w-4 animate-spin" />
-          ) : savedExtratos.length > 0 ? (
-            <div className="flex items-center gap-2 flex-wrap">
-              {savedExtratos.map(ext => (
-                <div key={ext.id} className="flex items-center gap-0.5">
-                  <Button
-                    variant={activeExtratoId === ext.id ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => loadExtrato(ext.id)}
-                  >
-                    {ext.nome}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                    onClick={() => setShowDeleteConfirm(ext.id)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
           ) : (
-            <span className="text-xs text-muted-foreground">Nenhum extrato salvo</span>
+            <Select
+              value={activeExtratoId || "__none__"}
+              onValueChange={(val) => {
+                if (val === "__none__") return;
+                loadExtrato(val);
+              }}
+            >
+              <SelectTrigger className="w-[200px] h-9 text-xs">
+                <SelectValue placeholder="Selecionar extrato" />
+              </SelectTrigger>
+              <SelectContent>
+                {savedExtratos.length === 0 ? (
+                  <SelectItem value="__none__" disabled>Nenhum extrato salvo</SelectItem>
+                ) : (
+                  savedExtratos.map(ext => (
+                    <SelectItem key={ext.id} value={ext.id}>{ext.nome}</SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          )}
+          {activeExtratoId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+              onClick={() => setShowDeleteConfirm(activeExtratoId)}
+              title="Excluir extrato"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
           )}
         </div>
         <div className="flex items-center gap-2">
