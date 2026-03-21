@@ -132,6 +132,9 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
     open: boolean; cpfCnpj: string; category: string; matchingIds: string[];
   }>({ open: false, cpfCnpj: "", category: "", matchingIds: [] });
 
+  // Card-specific state (for tipo === "cartao")
+  const [selectedCard, setSelectedCard] = useState<string | null>(null);
+
   // Load saved extratos list
   useEffect(() => {
     if (!ownerId) return;
