@@ -1212,6 +1212,42 @@ export type Database = {
           },
         ]
       }
+      conta_pj_extratos: {
+        Row: {
+          arquivo_nome: string | null
+          categorias_custom: Json
+          created_at: string
+          id: string
+          nome: string
+          transacoes: Json
+          tx_categorias_map: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          categorias_custom?: Json
+          created_at?: string
+          id?: string
+          nome: string
+          transacoes?: Json
+          tx_categorias_map?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          arquivo_nome?: string | null
+          categorias_custom?: Json
+          created_at?: string
+          id?: string
+          nome?: string
+          transacoes?: Json
+          tx_categorias_map?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       despesas: {
         Row: {
           categoria_id: string | null
