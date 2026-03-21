@@ -13,6 +13,7 @@ import { PeriodFilter, usePeriodFilter } from "@/components/filters/PeriodFilter
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useOwnerId } from "@/hooks/useOwnerId";
+import { useCategoriasDespesas, useCreateCategoriaDespesa, useUpdateCategoriaDespesa, useDeleteCategoriaDespesa } from "@/hooks/useCategoriasDespesas";
 import * as XLSX from "xlsx";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
