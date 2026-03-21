@@ -597,7 +597,10 @@ export function ContaSimpleConfig() {
           )}
         </TabsContent>
         <TabsContent value="conta-pj" className="space-y-4">
-          <ContaPJConfig />
+          <ContaPJConfig tipo="pj" label="Conta PJ" />
+        </TabsContent>
+        <TabsContent value="extrato-cartao" className="space-y-4">
+          <ContaPJConfig tipo="cartao" label="Extrato Cartão" />
         </TabsContent>
       </Tabs>
     </div>

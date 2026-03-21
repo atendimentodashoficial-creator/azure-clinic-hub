@@ -203,6 +203,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
         user_id: ownerId,
         nome: saveNome.trim(),
         arquivo_nome: fileName,
+        tipo,
         transacoes: transactions as any,
         categorias_custom: customCategories as any,
         tx_categorias_map: txCategoryMap as any,
