@@ -524,14 +524,14 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
             <Tag className="h-3.5 w-3.5 mr-1.5" />
             Categorias
           </Button>
-          <label htmlFor="pj-upload" className="cursor-pointer">
+          <label htmlFor={`upload-${tipo}`} className="cursor-pointer">
             <Button variant="outline" size="sm" asChild>
               <span>
                 <Upload className="h-3.5 w-3.5 mr-1.5" />
                 {transactions.length > 0 ? "Importar novo" : "Importar extrato"}
               </span>
             </Button>
-            <input id="pj-upload" type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
+            <input id={`upload-${tipo}`} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
           </label>
         </div>
       </div>
