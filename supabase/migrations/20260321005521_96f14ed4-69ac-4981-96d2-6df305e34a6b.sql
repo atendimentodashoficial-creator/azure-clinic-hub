@@ -1,0 +1,1 @@
+ALTER TABLE public.conta_pj_extratos ADD COLUMN tipo text NOT NULL DEFAULT 'pj';

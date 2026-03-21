@@ -1219,6 +1219,7 @@ export type Database = {
           created_at: string
           id: string
           nome: string
+          tipo: string
           transacoes: Json
           tx_categorias_map: Json
           updated_at: string
@@ -1230,6 +1231,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome: string
+          tipo?: string
           transacoes?: Json
           tx_categorias_map?: Json
           updated_at?: string
@@ -1241,6 +1243,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
+          tipo?: string
           transacoes?: Json
           tx_categorias_map?: Json
           updated_at?: string

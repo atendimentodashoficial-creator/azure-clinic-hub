@@ -288,6 +288,10 @@ export function ContaSimpleConfig() {
             <Building2 className="h-4 w-4" />
             Conta PJ
           </TabsTrigger>
+          <TabsTrigger value="extrato-cartao" className="gap-1.5">
+            <FileText className="h-4 w-4" />
+            Extrato Cartão
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="config" className="space-y-4">
@@ -593,7 +597,10 @@ export function ContaSimpleConfig() {
           )}
         </TabsContent>
         <TabsContent value="conta-pj" className="space-y-4">
-          <ContaPJConfig />
+          <ContaPJConfig tipo="pj" label="Conta PJ" />
+        </TabsContent>
+        <TabsContent value="extrato-cartao" className="space-y-4">
+          <ContaPJConfig tipo="cartao" label="Extrato Cartão" />
         </TabsContent>
       </Tabs>
     </div>

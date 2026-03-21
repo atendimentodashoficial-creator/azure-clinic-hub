@@ -93,7 +93,12 @@ const CHART_COLORS = [
   "hsl(330, 60%, 55%)", "hsl(120, 50%, 40%)", "hsl(60, 70%, 45%)", "hsl(240, 50%, 55%)",
 ];
 
-export function ContaPJConfig() {
+interface ContaPJConfigProps {
+  tipo?: string;
+  label?: string;
+}
+
+export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfigProps) {
   const { ownerId } = useOwnerId();
   const [transactions, setTransactions] = useState<TransacaoPJ[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -139,6 +144,7 @@ export function ContaPJConfig() {
       .from("conta_pj_extratos")
       .select("id, nome, arquivo_nome, created_at")
       .eq("user_id", ownerId)
+      .eq("tipo", tipo)
       .order("created_at", { ascending: false });
     setSavedExtratos((data as any[]) || []);
     setLoadingExtratos(false);
@@ -197,6 +203,7 @@ export function ContaPJConfig() {
         user_id: ownerId,
         nome: saveNome.trim(),
         arquivo_nome: fileName,
+        tipo,
         transacoes: transactions as any,
         categorias_custom: customCategories as any,
         tx_categorias_map: txCategoryMap as any,
@@ -517,14 +524,14 @@ export function ContaPJConfig() {
             <Tag className="h-3.5 w-3.5 mr-1.5" />
             Categorias
           </Button>
-          <label htmlFor="pj-upload" className="cursor-pointer">
+          <label htmlFor={`upload-${tipo}`} className="cursor-pointer">
             <Button variant="outline" size="sm" asChild>
               <span>
                 <Upload className="h-3.5 w-3.5 mr-1.5" />
                 {transactions.length > 0 ? "Importar novo" : "Importar extrato"}
               </span>
             </Button>
-            <input id="pj-upload" type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
+            <input id={`upload-${tipo}`} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
           </label>
         </div>
       </div>
@@ -534,7 +541,7 @@ export function ContaPJConfig() {
         <Card>
           <CardContent className="pt-6">
             <label
-              htmlFor="pj-upload-main"
+              htmlFor={`upload-main-${tipo}`}
               className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-muted-foreground/25 rounded-lg p-10 cursor-pointer hover:border-primary/50 transition-colors"
             >
               <Upload className="h-10 w-10 text-muted-foreground" />
@@ -542,7 +549,7 @@ export function ContaPJConfig() {
                 <p className="text-sm font-medium">Arraste ou clique para importar o extrato</p>
                 <p className="text-xs text-muted-foreground mt-1">Arquivo .xlsx exportado da Conta Simples</p>
               </div>
-              <input id="pj-upload-main" type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
+              <input id={`upload-main-${tipo}`} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
             </label>
           </CardContent>
         </Card>
