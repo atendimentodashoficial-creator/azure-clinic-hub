@@ -190,7 +190,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
 
     const d = data as any;
     setTransactions(d.transacoes || []);
-    setCustomCategories(d.categorias_custom || []);
+    // Categories now come from global categorias_despesas table
     setTxCategoryMap(d.tx_categorias_map || {});
     setFileName(d.arquivo_nome);
     setActiveExtratoId(extratoId);
