@@ -891,8 +891,8 @@ export function CampanhasTab({ onRefresh }: CampanhasTabProps) {
         />
         <StatsCard
           title="Conversão Reuniões"
-          value={`${reunioesHojeCount} hoje`}
-          change={`${reunioesDoProprioDia} do próprio dia · ${reunioesDeOutrosDias} de outros dias`}
+          value={`${reunioesHojeCount} no período`}
+          change={`${reunioesDoProprioDia} do próprio período · ${reunioesDeOutrosDias} de outros dias`}
           changeType={reunioesHojeCount > 0 ? "positive" : "neutral"}
           icon={Video}
         />
