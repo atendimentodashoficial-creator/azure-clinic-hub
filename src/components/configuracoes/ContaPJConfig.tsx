@@ -775,7 +775,45 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
                 </Card>
               </div>
 
-              {/* Filters */}
+              {/* Charts */}
+              {cardCategoryChartData.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <Card>
+                    <CardContent className="pt-4 pb-2 px-4">
+                      <p className="text-sm font-medium mb-3">Entradas e Saídas por Categoria</p>
+                      <div className="h-[280px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={cardCategoryChartData} margin={{ top: 5, right: 5, left: 5, bottom: 60 }}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                            <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={70} className="fill-muted-foreground" />
+                            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="fill-muted-foreground" />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar dataKey="credito" name="credito" fill="hsl(150, 60%, 45%)" radius={[3, 3, 0, 0]} />
+                            <Bar dataKey="debito" name="debito" fill="hsl(0, 65%, 55%)" radius={[3, 3, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4 pb-2 px-4">
+                      <p className="text-sm font-medium mb-3">Distribuição de Saídas por Categoria</p>
+                      <div className="h-[280px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={cardPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2} dataKey="value"
+                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`} labelLine={false} style={{ fontSize: 10 }}>
+                              {cardPieData.map((_, index) => <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip content={<PieTooltip />} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
               <Card className="p-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="relative flex-1 min-w-[200px]">
