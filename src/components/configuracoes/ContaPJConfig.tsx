@@ -93,7 +93,12 @@ const CHART_COLORS = [
   "hsl(330, 60%, 55%)", "hsl(120, 50%, 40%)", "hsl(60, 70%, 45%)", "hsl(240, 50%, 55%)",
 ];
 
-export function ContaPJConfig() {
+interface ContaPJConfigProps {
+  tipo?: string;
+  label?: string;
+}
+
+export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfigProps) {
   const { ownerId } = useOwnerId();
   const [transactions, setTransactions] = useState<TransacaoPJ[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
