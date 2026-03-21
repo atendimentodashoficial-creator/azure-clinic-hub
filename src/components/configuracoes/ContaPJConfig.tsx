@@ -655,160 +655,347 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
             </div>
           )}
 
-          {/* Summary cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card>
-              <CardContent className="pt-4 pb-3 px-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><TrendingUp className="h-3.5 w-3.5 text-green-500" />Entradas</div>
-                <p className="text-lg font-bold text-green-600">{formatCurrency(totals.credito)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4 pb-3 px-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><TrendingDown className="h-3.5 w-3.5 text-red-500" />Saídas</div>
-                <p className="text-lg font-bold text-red-600">{formatCurrency(totals.debito)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4 pb-3 px-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Wallet className="h-3.5 w-3.5" />Líquido</div>
-                <p className={`text-lg font-bold ${totals.liquido >= 0 ? "text-green-600" : "text-red-600"}`}>{formatCurrency(totals.liquido)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4 pb-3 px-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Filter className="h-3.5 w-3.5" />Transações</div>
-                <p className="text-lg font-bold">{totals.count}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Charts */}
-          {categoryChartData.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Card>
-                <CardContent className="pt-4 pb-2 px-4">
-                  <p className="text-sm font-medium mb-3">Entradas e Saídas por Categoria</p>
-                  <div className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={categoryChartData} margin={{ top: 5, right: 5, left: 5, bottom: 60 }}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                        <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={70} className="fill-muted-foreground" />
-                        <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="fill-muted-foreground" />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Bar dataKey="credito" name="credito" fill="hsl(150, 60%, 45%)" radius={[3, 3, 0, 0]} />
-                        <Bar dataKey="debito" name="debito" fill="hsl(0, 65%, 55%)" radius={[3, 3, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+          {tipo === "cartao" ? (
+            <>
+              {/* Card Summary Table */}
+              {cardSummary.length > 0 && (
+                <Card className="overflow-hidden">
+                  <div className="p-3 border-b flex items-center justify-between">
+                    <h3 className="text-sm font-medium">Resumo por Cartão</h3>
+                    {selectedCard && (
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setSelectedCard(null)}>
+                        <X className="h-3 w-3" />
+                        Ver todos
+                      </Button>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-4 pb-2 px-4">
-                  <p className="text-sm font-medium mb-3">Distribuição de Saídas por Categoria</p>
-                  <div className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2} dataKey="value"
-                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`} labelLine={false} style={{ fontSize: 10 }}>
-                          {pieData.map((_, index) => <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
-                        </Pie>
-                        <Tooltip content={<PieTooltip />} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-2">
-            <PeriodFilter value={periodFilter} onChange={setPeriodFilter} dateStart={dateStart} dateEnd={dateEnd} onDateStartChange={setDateStart} onDateEndChange={setDateEnd} />
-            <Select value={filterTipo} onValueChange={setFilterTipo}>
-              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                {tipos.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas categorias</SelectItem>
-                {allCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filterConciliado} onValueChange={setFilterConciliado}>
-              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Conciliado" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="SIM">Conciliado</SelectItem>
-                <SelectItem value="NÃO">Não conciliado</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 w-[180px] h-9" />
-            </div>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs"><X className="h-3.5 w-3.5 mr-1" />Limpar</Button>
-            )}
-          </div>
-
-          {/* Transactions table */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="max-h-[500px] overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="whitespace-nowrap">Data/Hora</TableHead>
-                      <TableHead>Histórico</TableHead>
-                      <TableHead className="whitespace-nowrap">Tipo</TableHead>
-                      <TableHead className="text-right whitespace-nowrap">Crédito</TableHead>
-                      <TableHead className="text-right whitespace-nowrap">Débito</TableHead>
-                      <TableHead className="whitespace-nowrap">CPF/CNPJ</TableHead>
-                      <TableHead className="whitespace-nowrap min-w-[140px]">Categoria</TableHead>
-                      <TableHead className="whitespace-nowrap">Conciliado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filtered.length === 0 ? (
-                      <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma transação encontrada</TableCell></TableRow>
-                    ) : (
-                      filtered.map((tx) => {
-                        const tipo = detectTipo(tx.historico);
-                        const currentCat = tx.categoriaCustom || tx.categoriaOriginal;
-                        return (
-                          <TableRow key={tx.id}>
-                            <TableCell className="whitespace-nowrap text-xs">{formatDate(txDate(tx))}</TableCell>
-                            <TableCell className="text-xs max-w-[280px] truncate" title={tx.historico}>{tx.historico}</TableCell>
-                            <TableCell><Badge variant="outline" className="text-[10px] whitespace-nowrap">{tipo}</Badge></TableCell>
-                            <TableCell className="text-right text-xs text-green-600 font-medium whitespace-nowrap">{tx.credito > 0 ? formatCurrency(tx.credito) : ""}</TableCell>
-                            <TableCell className="text-right text-xs text-red-600 font-medium whitespace-nowrap">{tx.debito > 0 ? formatCurrency(tx.debito) : ""}</TableCell>
-                            <TableCell className="text-xs whitespace-nowrap">{tx.cpfCnpjOrigemDestino}</TableCell>
-                            <TableCell>
-                              <Select value={currentCat || "__none__"} onValueChange={(val) => updateTxCategory(tx.id, val)}>
-                                <SelectTrigger className="h-7 text-xs w-[130px]"><SelectValue placeholder="Sem categoria" /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="__none__">Sem categoria</SelectItem>
-                                  {allCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cartão</TableHead>
+                          <TableHead>Responsável</TableHead>
+                          <TableHead className="text-right">Total Gasto</TableHead>
+                          <TableHead className="text-center">Transações</TableHead>
+                          <TableHead>Última Transação</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {cardSummary.map((card) => (
+                          <TableRow
+                            key={card.cartao}
+                            className={`cursor-pointer transition-colors ${selectedCard === card.cartao ? "bg-primary/10" : "hover:bg-muted/50"}`}
+                            onClick={() => setSelectedCard(selectedCard === card.cartao ? null : card.cartao)}
+                          >
+                            <TableCell className="font-mono text-sm">•••• •••• {card.cartao}</TableCell>
+                            <TableCell className="text-sm">{card.nomeCartao}</TableCell>
+                            <TableCell className="text-right font-mono text-sm text-destructive">
+                              {formatCurrency(card.totalGasto)}
                             </TableCell>
-                            <TableCell>
-                              <Badge variant={(tx.conciliado || "").toUpperCase() === "SIM" ? "default" : "secondary"} className="text-[10px]">{tx.conciliado || "—"}</Badge>
+                            <TableCell className="text-center text-sm">{card.totalTransacoes}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {card.ultimaTransacao ? format(new Date(card.ultimaTransacao), "dd/MM/yy HH:mm") : "—"}
                             </TableCell>
                           </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              )}
+
+              {/* Summary cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Card className="p-3">
+                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="text-xl font-bold">{cardTotals.total}</p>
+                </Card>
+                <Card className="p-3">
+                  <p className="text-xs text-muted-foreground">Saídas</p>
+                  <p className="text-xl font-bold text-destructive">{formatCurrency(cardTotals.debito)}</p>
+                </Card>
+                <Card className="p-3">
+                  <p className="text-xs text-muted-foreground">Conciliadas</p>
+                  <p className="text-xl font-bold">{cardTotals.conciliadas}</p>
+                </Card>
+                <Card className="p-3">
+                  <p className="text-xs text-muted-foreground">Canceladas</p>
+                  <p className="text-xl font-bold text-muted-foreground">{cardTotals.canceladas}</p>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Filters */}
+              <Card className="p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar estabelecimento, responsável..." className="pl-9 h-8 text-xs" />
+                  </div>
+                  <Select value={filterConciliado} onValueChange={setFilterConciliado}>
+                    <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos Status</SelectItem>
+                      <SelectItem value="SIM">Conciliado</SelectItem>
+                      <SelectItem value="NÃO">Não conciliado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterTipo} onValueChange={setFilterTipo}>
+                    <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos Tipos</SelectItem>
+                      {tipos.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterCategoria} onValueChange={setFilterCategoria}>
+                    <SelectTrigger className="w-[150px] h-8 text-xs"><SelectValue placeholder="Categoria" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas Categorias</SelectItem>
+                      {allCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {hasActiveFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
+                      <X className="h-3 w-3" />
+                      Limpar
+                    </Button>
+                  )}
+                </div>
+                {(hasActiveFilters || selectedCard) && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {cardFiltered.length} de {transactions.length} transações
+                    {selectedCard && <span> · Cartão •••• {selectedCard}</span>}
+                  </p>
+                )}
+              </Card>
+
+              {/* Transactions table */}
+              {cardFiltered.length > 0 && (
+                <Card className="overflow-hidden">
+                  <div className="overflow-x-auto max-h-[500px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[40px]"></TableHead>
+                          <TableHead>Data</TableHead>
+                          <TableHead>Estabelecimento</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          {!selectedCard && <TableHead>Cartão</TableHead>}
+                          <TableHead className="min-w-[140px]">Categoria</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {cardFiltered.map((tx) => {
+                          const tipoTx = detectTipo(tx.historico);
+                          const currentCat = tx.categoriaCustom || tx.categoriaOriginal;
+                          const isCredit = tx.credito > 0 && tx.debito === 0;
+                          return (
+                            <TableRow key={tx.id}>
+                              <TableCell>
+                                {isCredit
+                                  ? <ArrowDownLeft className="h-4 w-4 text-emerald-500" />
+                                  : <ArrowUpRight className="h-4 w-4 text-destructive" />}
+                              </TableCell>
+                              <TableCell className="text-sm whitespace-nowrap">
+                                {format(txDate(tx), "dd/MM/yy HH:mm")}
+                              </TableCell>
+                              <TableCell className="text-sm font-medium max-w-[200px] truncate" title={tx.historico}>{tx.historico}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="text-[10px]">{tipoTx}</Badge>
+                              </TableCell>
+                              {!selectedCard && (
+                                <TableCell className="text-xs text-muted-foreground">
+                                  <div>•••• {tx.cartao}</div>
+                                  <div className="text-[10px]">{tx.nomeCartao || tx.cpfCnpjOrigemDestino}</div>
+                                </TableCell>
+                              )}
+                              <TableCell>
+                                <Select value={currentCat || "__none__"} onValueChange={(val) => updateTxCategory(tx.id, val)}>
+                                  <SelectTrigger className="h-7 text-xs w-[130px]"><SelectValue placeholder="Sem categoria" /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="__none__">Sem categoria</SelectItem>
+                                    {allCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell className="text-right font-mono text-sm">
+                                <span className={isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}>
+                                  {isCredit ? "+" : "-"} {formatCurrency(isCredit ? tx.credito : tx.debito)}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={(tx.conciliado || "").toUpperCase() === "SIM" ? "default" : "secondary"} className="text-[10px]">
+                                  {tx.situacao || tx.conciliado || "—"}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              )}
+            </>
+          ) : (
+            <>
+              {/* PJ Layout - Summary cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Card>
+                  <CardContent className="pt-4 pb-3 px-4">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><TrendingUp className="h-3.5 w-3.5 text-emerald-500" />Entradas</div>
+                    <p className="text-lg font-bold text-emerald-600">{formatCurrency(totals.credito)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4 pb-3 px-4">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><TrendingDown className="h-3.5 w-3.5 text-destructive" />Saídas</div>
+                    <p className="text-lg font-bold text-destructive">{formatCurrency(totals.debito)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4 pb-3 px-4">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Wallet className="h-3.5 w-3.5" />Líquido</div>
+                    <p className={`text-lg font-bold ${totals.liquido >= 0 ? "text-emerald-600" : "text-destructive"}`}>{formatCurrency(totals.liquido)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4 pb-3 px-4">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Filter className="h-3.5 w-3.5" />Transações</div>
+                    <p className="text-lg font-bold">{totals.count}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Charts */}
+              {categoryChartData.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <Card>
+                    <CardContent className="pt-4 pb-2 px-4">
+                      <p className="text-sm font-medium mb-3">Entradas e Saídas por Categoria</p>
+                      <div className="h-[280px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={categoryChartData} margin={{ top: 5, right: 5, left: 5, bottom: 60 }}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                            <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={70} className="fill-muted-foreground" />
+                            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="fill-muted-foreground" />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar dataKey="credito" name="credito" fill="hsl(150, 60%, 45%)" radius={[3, 3, 0, 0]} />
+                            <Bar dataKey="debito" name="debito" fill="hsl(0, 65%, 55%)" radius={[3, 3, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4 pb-2 px-4">
+                      <p className="text-sm font-medium mb-3">Distribuição de Saídas por Categoria</p>
+                      <div className="h-[280px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2} dataKey="value"
+                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`} labelLine={false} style={{ fontSize: 10 }}>
+                              {pieData.map((_, index) => <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip content={<PieTooltip />} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Filters */}
+              <div className="flex flex-wrap items-center gap-2">
+                <PeriodFilter value={periodFilter} onChange={setPeriodFilter} dateStart={dateStart} dateEnd={dateEnd} onDateStartChange={setDateStart} onDateEndChange={setDateEnd} />
+                <Select value={filterTipo} onValueChange={setFilterTipo}>
+                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os tipos</SelectItem>
+                    {tipos.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={filterCategoria} onValueChange={setFilterCategoria}>
+                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas categorias</SelectItem>
+                    {allCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={filterConciliado} onValueChange={setFilterConciliado}>
+                  <SelectTrigger className="w-[140px]"><SelectValue placeholder="Conciliado" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="SIM">Conciliado</SelectItem>
+                    <SelectItem value="NÃO">Não conciliado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 w-[180px] h-9" />
+                </div>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs"><X className="h-3.5 w-3.5 mr-1" />Limpar</Button>
+                )}
+              </div>
+
+              {/* PJ Transactions table */}
+              <Card>
+                <CardContent className="p-0">
+                  <div className="max-h-[500px] overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="whitespace-nowrap">Data/Hora</TableHead>
+                          <TableHead>Histórico</TableHead>
+                          <TableHead className="whitespace-nowrap">Tipo</TableHead>
+                          <TableHead className="text-right whitespace-nowrap">Crédito</TableHead>
+                          <TableHead className="text-right whitespace-nowrap">Débito</TableHead>
+                          <TableHead className="whitespace-nowrap">CPF/CNPJ</TableHead>
+                          <TableHead className="whitespace-nowrap min-w-[140px]">Categoria</TableHead>
+                          <TableHead className="whitespace-nowrap">Conciliado</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filtered.length === 0 ? (
+                          <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma transação encontrada</TableCell></TableRow>
+                        ) : (
+                          filtered.map((tx) => {
+                            const tipoTx = detectTipo(tx.historico);
+                            const currentCat = tx.categoriaCustom || tx.categoriaOriginal;
+                            return (
+                              <TableRow key={tx.id}>
+                                <TableCell className="whitespace-nowrap text-xs">{formatDate(txDate(tx))}</TableCell>
+                                <TableCell className="text-xs max-w-[280px] truncate" title={tx.historico}>{tx.historico}</TableCell>
+                                <TableCell><Badge variant="outline" className="text-[10px] whitespace-nowrap">{tipoTx}</Badge></TableCell>
+                                <TableCell className="text-right text-xs text-emerald-600 font-medium whitespace-nowrap">{tx.credito > 0 ? formatCurrency(tx.credito) : ""}</TableCell>
+                                <TableCell className="text-right text-xs text-destructive font-medium whitespace-nowrap">{tx.debito > 0 ? formatCurrency(tx.debito) : ""}</TableCell>
+                                <TableCell className="text-xs whitespace-nowrap">{tx.cpfCnpjOrigemDestino}</TableCell>
+                                <TableCell>
+                                  <Select value={currentCat || "__none__"} onValueChange={(val) => updateTxCategory(tx.id, val)}>
+                                    <SelectTrigger className="h-7 text-xs w-[130px]"><SelectValue placeholder="Sem categoria" /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="__none__">Sem categoria</SelectItem>
+                                      {allCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={(tx.conciliado || "").toUpperCase() === "SIM" ? "default" : "secondary"} className="text-[10px]">{tx.conciliado || "—"}</Badge>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </>
       )}
 
