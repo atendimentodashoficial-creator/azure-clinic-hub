@@ -457,12 +457,7 @@ Deno.serve(async (req) => {
   const isCronRequest = CRON_SECRET && cronHeader === CRON_SECRET;
   const isServiceRoleRequest = SERVICE_ROLE_KEY && (authToken === SERVICE_ROLE_KEY || apikeyHeader === SERVICE_ROLE_KEY);
 
-  // TEMP MITIGATION: disable scheduled/machine execution to relieve backend load during incidents
-  if (isCronRequest || isServiceRoleRequest) {
-    return new Response(JSON.stringify({ success: true, skipped: true, reason: "cron_temporarily_disabled" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  // Cron mitigation removed — cron re-enabled
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     global: {
