@@ -302,40 +302,53 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
     toast.success(`Categoria aplicada a ${matchingIds.length} transações`);
   };
 
-  const addCategory = () => {
+  const addCategory = async () => {
     const name = newCatName.trim();
     if (!name) return;
     if (customCategories.includes(name)) { toast.error("Categoria já existe"); return; }
-    setCustomCategories(prev => [...prev, name].sort());
-    setNewCatName("");
-    markDirty();
-    toast.success("Categoria criada");
+    try {
+      await createCategoria.mutateAsync({ nome: name });
+      setNewCatName("");
+      toast.success("Categoria criada");
+    } catch { toast.error("Erro ao criar categoria"); }
   };
 
-  const startEditCat = (cat: string) => { setEditingCat(cat); setEditCatName(cat); };
+  const startEditCat = (cat: string) => {
+    const dbCat = categoriasDB.find(c => c.nome === cat);
+    setEditingCat(cat);
+    setEditCatName(cat);
+    setEditingCatId(dbCat?.id || null);
+  };
 
-  const saveEditCat = () => {
+  const saveEditCat = async () => {
     const name = editCatName.trim();
-    if (!name || !editingCat) return;
+    if (!name || !editingCat || !editingCatId) return;
     if (name !== editingCat && customCategories.includes(name)) { toast.error("Categoria já existe"); return; }
-    setCustomCategories(prev => prev.map(c => c === editingCat ? name : c).sort());
-    const newMap = { ...txCategoryMap };
-    for (const key in newMap) { if (newMap[key] === editingCat) newMap[key] = name; }
-    setTxCategoryMap(newMap);
-    setTransactions(prev => prev.map(tx => tx.categoriaCustom === editingCat ? { ...tx, categoriaCustom: name } : tx));
-    setEditingCat(null);
-    markDirty();
-    toast.success("Categoria atualizada");
+    try {
+      await updateCategoria.mutateAsync({ id: editingCatId, nome: name });
+      const newMap = { ...txCategoryMap };
+      for (const key in newMap) { if (newMap[key] === editingCat) newMap[key] = name; }
+      setTxCategoryMap(newMap);
+      setTransactions(prev => prev.map(tx => tx.categoriaCustom === editingCat ? { ...tx, categoriaCustom: name } : tx));
+      setEditingCat(null);
+      setEditingCatId(null);
+      markDirty();
+      toast.success("Categoria atualizada");
+    } catch { toast.error("Erro ao atualizar categoria"); }
   };
 
-  const deleteCategory = (cat: string) => {
-    setCustomCategories(prev => prev.filter(c => c !== cat));
-    const newMap = { ...txCategoryMap };
-    for (const key in newMap) { if (newMap[key] === cat) delete newMap[key]; }
-    setTxCategoryMap(newMap);
-    setTransactions(prev => prev.map(tx => tx.categoriaCustom === cat ? { ...tx, categoriaCustom: "" } : tx));
-    markDirty();
-    toast.success("Categoria removida");
+  const deleteCategory = async (cat: string) => {
+    const dbCat = categoriasDB.find(c => c.nome === cat);
+    if (!dbCat) return;
+    try {
+      await deleteCategoriaMutation.mutateAsync(dbCat.id);
+      const newMap = { ...txCategoryMap };
+      for (const key in newMap) { if (newMap[key] === cat) delete newMap[key]; }
+      setTxCategoryMap(newMap);
+      setTransactions(prev => prev.map(tx => tx.categoriaCustom === cat ? { ...tx, categoriaCustom: "" } : tx));
+      markDirty();
+      toast.success("Categoria removida");
+    } catch { toast.error("Erro ao remover categoria"); }
   };
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
