@@ -288,6 +288,10 @@ export function ContaSimpleConfig() {
             <Building2 className="h-4 w-4" />
             Conta PJ
           </TabsTrigger>
+          <TabsTrigger value="extrato-cartao" className="gap-1.5">
+            <FileText className="h-4 w-4" />
+            Extrato Cartão
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="config" className="space-y-4">
