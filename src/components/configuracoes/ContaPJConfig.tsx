@@ -551,6 +551,23 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
     return { total: list.length, debito: totalDebito, conciliadas, canceladas };
   }, [cardFiltered, filtered, tipo]);
 
+  // Chart data for cartão mode (uses cardFiltered)
+  const cardCategoryChartData = useMemo(() => {
+    if (tipo !== "cartao") return [];
+    const map: Record<string, { credito: number; debito: number }> = {};
+    cardFiltered.forEach(tx => {
+      const cat = tx.categoriaCustom || tx.categoriaOriginal || "Sem categoria";
+      if (!map[cat]) map[cat] = { credito: 0, debito: 0 };
+      map[cat].credito += tx.credito;
+      map[cat].debito += tx.debito;
+    });
+    return Object.entries(map)
+      .map(([name, vals]) => ({ name, credito: vals.credito, debito: vals.debito, total: vals.credito + vals.debito }))
+      .sort((a, b) => b.total - a.total);
+  }, [cardFiltered, tipo]);
+
+  const cardPieData = useMemo(() => cardCategoryChartData.filter(d => d.debito > 0).map(d => ({ name: d.name, value: d.debito })), [cardCategoryChartData]);
+
   const hasActiveFilters = filterTipo !== "all" || filterConciliado !== "all" || filterCategoria !== "all" || searchTerm !== "";
   const clearFilters = () => { setFilterTipo("all"); setFilterConciliado("all"); setFilterCategoria("all"); setSearchTerm(""); };
 
