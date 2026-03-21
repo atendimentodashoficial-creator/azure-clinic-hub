@@ -57,9 +57,18 @@ function parseExcelDate(val: unknown): Date | null {
     const date = new Date((val - 25569) * 86400 * 1000);
     return isNaN(date.getTime()) ? null : date;
   }
-  const str = String(val);
-  const match = str.match(/(\d{2})\/(\d{2})\/(\d{4})\s*(\d{2}):(\d{2}):(\d{2})/);
-  if (match) return new Date(+match[3], +match[2] - 1, +match[1], +match[4], +match[5], +match[6]);
+  const str = String(val).trim();
+  const match = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+  if (match) {
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const year = Number(match[3]);
+    const hours = Number(match[4] ?? 0);
+    const minutes = Number(match[5] ?? 0);
+    const seconds = Number(match[6] ?? 0);
+    const parsed = new Date(year, month - 1, day, hours, minutes, seconds);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
   const d = new Date(str);
   return isNaN(d.getTime()) ? null : d;
 }
@@ -175,6 +184,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
     setTxCategoryMap(d.tx_categorias_map || {});
     setFileName(d.arquivo_nome);
     setActiveExtratoId(extratoId);
+    setSelectedCard(null);
     setHasUnsavedChanges(false);
     setLoading(false);
   };
@@ -416,6 +426,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
         parsed.sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime());
         setTransactions(parsed);
         setActiveExtratoId(null);
+        setSelectedCard(null);
         setHasUnsavedChanges(false);
         // Auto-open save dialog
         setShowSaveDialog(true);
@@ -453,7 +464,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
     const endOfPeriod = new Date(dateEnd.getFullYear(), dateEnd.getMonth(), dateEnd.getDate(), 23, 59, 59, 999);
     return transactions.filter((tx) => {
       const d = txDate(tx);
-      if (d < startOfPeriod || d > endOfPeriod) return false;
+      if (tipo !== "cartao" && (d < startOfPeriod || d > endOfPeriod)) return false;
       if (filterTipo !== "all" && detectTipo(tx.historico) !== filterTipo) return false;
       if (filterConciliado !== "all" && (tx.conciliado || "").toUpperCase() !== filterConciliado) return false;
       if (filterCategoria !== "all") {
@@ -467,7 +478,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
       }
       return true;
     });
-  }, [transactions, dateStart, dateEnd, filterTipo, filterConciliado, filterCategoria, searchTerm]);
+  }, [transactions, dateStart, dateEnd, filterTipo, filterConciliado, filterCategoria, searchTerm, tipo]);
 
   const totals = useMemo(() => {
     const totalCredito = filtered.reduce((s, t) => s + t.credito, 0);
