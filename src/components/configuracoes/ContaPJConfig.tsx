@@ -451,7 +451,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
       const d = txDate(tx);
       if (d < startOfPeriod || d > endOfPeriod) return false;
       if (filterTipo !== "all" && detectTipo(tx.historico) !== filterTipo) return false;
-      if (filterConciliado !== "all" && tx.conciliado.toUpperCase() !== filterConciliado) return false;
+      if (filterConciliado !== "all" && (tx.conciliado || "").toUpperCase() !== filterConciliado) return false;
       if (filterCategoria !== "all") {
         if ((tx.categoriaCustom || tx.categoriaOriginal) !== filterCategoria) return false;
       }
@@ -767,7 +767,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
                               </Select>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={tx.conciliado.toUpperCase() === "SIM" ? "default" : "secondary"} className="text-[10px]">{tx.conciliado || "—"}</Badge>
+                              <Badge variant={(tx.conciliado || "").toUpperCase() === "SIM" ? "default" : "secondary"} className="text-[10px]">{tx.conciliado || "—"}</Badge>
                             </TableCell>
                           </TableRow>
                         );
