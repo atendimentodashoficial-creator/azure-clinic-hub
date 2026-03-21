@@ -13,6 +13,7 @@ import { PeriodFilter, usePeriodFilter } from "@/components/filters/PeriodFilter
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useOwnerId } from "@/hooks/useOwnerId";
+import { useCategoriasDespesas, useCreateCategoriaDespesa, useUpdateCategoriaDespesa, useDeleteCategoriaDespesa } from "@/hooks/useCategoriasDespesas";
 import * as XLSX from "xlsx";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -120,11 +121,17 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
   const [filterCategoria, setFilterCategoria] = useState("all");
   const { periodFilter, setPeriodFilter, dateStart, setDateStart, dateEnd, setDateEnd } = usePeriodFilter("max");
 
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  // Global shared categories from categorias_despesas table
+  const { data: categoriasDB = [] } = useCategoriasDespesas();
+  const createCategoria = useCreateCategoriaDespesa();
+  const updateCategoria = useUpdateCategoriaDespesa();
+  const deleteCategoriaMutation = useDeleteCategoriaDespesa();
+
   const [showCatDialog, setShowCatDialog] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [editingCat, setEditingCat] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [txCategoryMap, setTxCategoryMap] = useState<Record<string, string>>({});
 
   // Saved extratos
@@ -144,7 +151,10 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
   // Card-specific state (for tipo === "cartao")
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
-  // Load saved extratos list
+  // Derive customCategories from DB for compatibility
+  const customCategories = useMemo(() => categoriasDB.map(c => c.nome).sort(), [categoriasDB]);
+
+
   useEffect(() => {
     if (!ownerId) return;
     loadExtratosList();
@@ -180,7 +190,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
 
     const d = data as any;
     setTransactions(d.transacoes || []);
-    setCustomCategories(d.categorias_custom || []);
+    // Categories now come from global categorias_despesas table
     setTxCategoryMap(d.tx_categorias_map || {});
     setFileName(d.arquivo_nome);
     setActiveExtratoId(extratoId);
@@ -248,7 +258,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
       setActiveExtratoId(null);
       setTransactions([]);
       setFileName(null);
-      setCustomCategories([]);
+      // Categories are global, no need to clear
       setTxCategoryMap({});
     }
     setShowDeleteConfirm(null);
@@ -292,40 +302,53 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
     toast.success(`Categoria aplicada a ${matchingIds.length} transações`);
   };
 
-  const addCategory = () => {
+  const addCategory = async () => {
     const name = newCatName.trim();
     if (!name) return;
     if (customCategories.includes(name)) { toast.error("Categoria já existe"); return; }
-    setCustomCategories(prev => [...prev, name].sort());
-    setNewCatName("");
-    markDirty();
-    toast.success("Categoria criada");
+    try {
+      await createCategoria.mutateAsync({ nome: name });
+      setNewCatName("");
+      toast.success("Categoria criada");
+    } catch { toast.error("Erro ao criar categoria"); }
   };
 
-  const startEditCat = (cat: string) => { setEditingCat(cat); setEditCatName(cat); };
+  const startEditCat = (cat: string) => {
+    const dbCat = categoriasDB.find(c => c.nome === cat);
+    setEditingCat(cat);
+    setEditCatName(cat);
+    setEditingCatId(dbCat?.id || null);
+  };
 
-  const saveEditCat = () => {
+  const saveEditCat = async () => {
     const name = editCatName.trim();
-    if (!name || !editingCat) return;
+    if (!name || !editingCat || !editingCatId) return;
     if (name !== editingCat && customCategories.includes(name)) { toast.error("Categoria já existe"); return; }
-    setCustomCategories(prev => prev.map(c => c === editingCat ? name : c).sort());
-    const newMap = { ...txCategoryMap };
-    for (const key in newMap) { if (newMap[key] === editingCat) newMap[key] = name; }
-    setTxCategoryMap(newMap);
-    setTransactions(prev => prev.map(tx => tx.categoriaCustom === editingCat ? { ...tx, categoriaCustom: name } : tx));
-    setEditingCat(null);
-    markDirty();
-    toast.success("Categoria atualizada");
+    try {
+      await updateCategoria.mutateAsync({ id: editingCatId, nome: name });
+      const newMap = { ...txCategoryMap };
+      for (const key in newMap) { if (newMap[key] === editingCat) newMap[key] = name; }
+      setTxCategoryMap(newMap);
+      setTransactions(prev => prev.map(tx => tx.categoriaCustom === editingCat ? { ...tx, categoriaCustom: name } : tx));
+      setEditingCat(null);
+      setEditingCatId(null);
+      markDirty();
+      toast.success("Categoria atualizada");
+    } catch { toast.error("Erro ao atualizar categoria"); }
   };
 
-  const deleteCategory = (cat: string) => {
-    setCustomCategories(prev => prev.filter(c => c !== cat));
-    const newMap = { ...txCategoryMap };
-    for (const key in newMap) { if (newMap[key] === cat) delete newMap[key]; }
-    setTxCategoryMap(newMap);
-    setTransactions(prev => prev.map(tx => tx.categoriaCustom === cat ? { ...tx, categoriaCustom: "" } : tx));
-    markDirty();
-    toast.success("Categoria removida");
+  const deleteCategory = async (cat: string) => {
+    const dbCat = categoriasDB.find(c => c.nome === cat);
+    if (!dbCat) return;
+    try {
+      await deleteCategoriaMutation.mutateAsync(dbCat.id);
+      const newMap = { ...txCategoryMap };
+      for (const key in newMap) { if (newMap[key] === cat) delete newMap[key]; }
+      setTxCategoryMap(newMap);
+      setTransactions(prev => prev.map(tx => tx.categoriaCustom === cat ? { ...tx, categoriaCustom: "" } : tx));
+      markDirty();
+      toast.success("Categoria removida");
+    } catch { toast.error("Erro ao remover categoria"); }
   };
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -527,6 +550,23 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
     const canceladas = list.filter(t => (t.situacao || "").toLowerCase().includes("cancel")).length;
     return { total: list.length, debito: totalDebito, conciliadas, canceladas };
   }, [cardFiltered, filtered, tipo]);
+
+  // Chart data for cartão mode (uses cardFiltered)
+  const cardCategoryChartData = useMemo(() => {
+    if (tipo !== "cartao") return [];
+    const map: Record<string, { credito: number; debito: number }> = {};
+    cardFiltered.forEach(tx => {
+      const cat = tx.categoriaCustom || tx.categoriaOriginal || "Sem categoria";
+      if (!map[cat]) map[cat] = { credito: 0, debito: 0 };
+      map[cat].credito += tx.credito;
+      map[cat].debito += tx.debito;
+    });
+    return Object.entries(map)
+      .map(([name, vals]) => ({ name, credito: vals.credito, debito: vals.debito, total: vals.credito + vals.debito }))
+      .sort((a, b) => b.total - a.total);
+  }, [cardFiltered, tipo]);
+
+  const cardPieData = useMemo(() => cardCategoryChartData.filter(d => d.debito > 0).map(d => ({ name: d.name, value: d.debito })), [cardCategoryChartData]);
 
   const hasActiveFilters = filterTipo !== "all" || filterConciliado !== "all" || filterCategoria !== "all" || searchTerm !== "";
   const clearFilters = () => { setFilterTipo("all"); setFilterConciliado("all"); setFilterCategoria("all"); setSearchTerm(""); };
@@ -735,7 +775,45 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
                 </Card>
               </div>
 
-              {/* Filters */}
+              {/* Charts */}
+              {cardCategoryChartData.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <Card>
+                    <CardContent className="pt-4 pb-2 px-4">
+                      <p className="text-sm font-medium mb-3">Entradas e Saídas por Categoria</p>
+                      <div className="h-[280px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={cardCategoryChartData} margin={{ top: 5, right: 5, left: 5, bottom: 60 }}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                            <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={70} className="fill-muted-foreground" />
+                            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="fill-muted-foreground" />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar dataKey="credito" name="credito" fill="hsl(150, 60%, 45%)" radius={[3, 3, 0, 0]} />
+                            <Bar dataKey="debito" name="debito" fill="hsl(0, 65%, 55%)" radius={[3, 3, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4 pb-2 px-4">
+                      <p className="text-sm font-medium mb-3">Distribuição de Saídas por Categoria</p>
+                      <div className="h-[280px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={cardPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2} dataKey="value"
+                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`} labelLine={false} style={{ fontSize: 10 }}>
+                              {cardPieData.map((_, index) => <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip content={<PieTooltip />} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
               <Card className="p-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="relative flex-1 min-w-[200px]">
