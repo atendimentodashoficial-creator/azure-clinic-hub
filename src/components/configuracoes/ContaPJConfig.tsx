@@ -767,7 +767,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
                               </Select>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={tx.conciliado.toUpperCase() === "SIM" ? "default" : "secondary"} className="text-[10px]">{tx.conciliado || "—"}</Badge>
+                              <Badge variant={(tx.conciliado || "").toUpperCase() === "SIM" ? "default" : "secondary"} className="text-[10px]">{tx.conciliado || "—"}</Badge>
                             </TableCell>
                           </TableRow>
                         );
