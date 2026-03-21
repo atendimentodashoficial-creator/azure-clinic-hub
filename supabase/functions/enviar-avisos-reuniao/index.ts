@@ -433,10 +433,7 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // INCIDENT MITIGATION: temporarily bypass scheduler execution to relieve backend/database pressure.
-  return new Response(JSON.stringify({ success: true, skipped: true, reason: "scheduler_temporarily_disabled" }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  // Incident mitigation removed — scheduler re-enabled
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
   const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -460,12 +457,7 @@ Deno.serve(async (req) => {
   const isCronRequest = CRON_SECRET && cronHeader === CRON_SECRET;
   const isServiceRoleRequest = SERVICE_ROLE_KEY && (authToken === SERVICE_ROLE_KEY || apikeyHeader === SERVICE_ROLE_KEY);
 
-  // TEMP MITIGATION: disable scheduled/machine execution to relieve backend load during incidents
-  if (isCronRequest || isServiceRoleRequest) {
-    return new Response(JSON.stringify({ success: true, skipped: true, reason: "cron_temporarily_disabled" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  // Cron mitigation removed — cron re-enabled
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     global: {
