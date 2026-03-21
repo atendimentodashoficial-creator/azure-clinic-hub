@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
-import { Upload, FileSpreadsheet, TrendingUp, TrendingDown, Wallet, Filter, X, Search, Plus, Pencil, Trash2, Tag } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { Upload, FileSpreadsheet, TrendingUp, TrendingDown, Wallet, Filter, X, Search, Plus, Pencil, Trash2, Tag, Save, FolderOpen, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { PeriodFilter, usePeriodFilter } from "@/components/filters/PeriodFilter";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useOwnerId } from "@/hooks/useOwnerId";
 import * as XLSX from "xlsx";
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export interface TransacaoPJ {
   id: string;
-  dataHora: Date;
+  dataHora: string; // ISO string for serialization
   historico: string;
   cartao: string;
   nomeCartao: string;
@@ -31,6 +33,13 @@ export interface TransacaoPJ {
   cotacaoDolar: number;
   cpfCnpjOrigemDestino: string;
   conciliado: string;
+}
+
+interface SavedExtrato {
+  id: string;
+  nome: string;
+  arquivo_nome: string | null;
+  created_at: string;
 }
 
 function parseCurrency(val: unknown): number {
@@ -49,9 +58,7 @@ function parseExcelDate(val: unknown): Date | null {
   }
   const str = String(val);
   const match = str.match(/(\d{2})\/(\d{2})\/(\d{4})\s*(\d{2}):(\d{2}):(\d{2})/);
-  if (match) {
-    return new Date(+match[3], +match[2] - 1, +match[1], +match[4], +match[5], +match[6]);
-  }
+  if (match) return new Date(+match[3], +match[2] - 1, +match[1], +match[4], +match[5], +match[6]);
   const d = new Date(str);
   return isNaN(d.getTime()) ? null : d;
 }
@@ -76,103 +83,180 @@ function formatDate(date: Date): string {
   return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-const STORAGE_KEY_CATEGORIES = "conta-pj-categorias";
-const STORAGE_KEY_TX_CATEGORIES = "conta-pj-tx-categorias";
-
-function loadCustomCategories(): string[] {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY_CATEGORIES);
-    return saved ? JSON.parse(saved) : [];
-  } catch { return []; }
-}
-
-function saveCustomCategories(cats: string[]) {
-  localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(cats));
-}
-
-function loadTxCategories(): Record<string, string> {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY_TX_CATEGORIES);
-    return saved ? JSON.parse(saved) : {};
-  } catch { return {}; }
-}
-
-function saveTxCategories(map: Record<string, string>) {
-  localStorage.setItem(STORAGE_KEY_TX_CATEGORIES, JSON.stringify(map));
+function txDate(tx: TransacaoPJ): Date {
+  return new Date(tx.dataHora);
 }
 
 const CHART_COLORS = [
-  "hsl(var(--primary))",
-  "hsl(210, 70%, 55%)",
-  "hsl(150, 60%, 45%)",
-  "hsl(45, 80%, 50%)",
-  "hsl(0, 65%, 55%)",
-  "hsl(280, 60%, 55%)",
-  "hsl(30, 70%, 50%)",
-  "hsl(190, 60%, 45%)",
-  "hsl(330, 60%, 55%)",
-  "hsl(120, 50%, 40%)",
-  "hsl(60, 70%, 45%)",
-  "hsl(240, 50%, 55%)",
+  "hsl(var(--primary))", "hsl(210, 70%, 55%)", "hsl(150, 60%, 45%)", "hsl(45, 80%, 50%)",
+  "hsl(0, 65%, 55%)", "hsl(280, 60%, 55%)", "hsl(30, 70%, 50%)", "hsl(190, 60%, 45%)",
+  "hsl(330, 60%, 55%)", "hsl(120, 50%, 40%)", "hsl(60, 70%, 45%)", "hsl(240, 50%, 55%)",
 ];
 
 export function ContaPJConfig() {
+  const { ownerId } = useOwnerId();
   const [transactions, setTransactions] = useState<TransacaoPJ[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTipo, setFilterTipo] = useState("all");
   const [filterConciliado, setFilterConciliado] = useState("all");
   const [filterCategoria, setFilterCategoria] = useState("all");
   const { periodFilter, setPeriodFilter, dateStart, setDateStart, dateEnd, setDateEnd } = usePeriodFilter("max");
 
-  const [customCategories, setCustomCategories] = useState<string[]>(loadCustomCategories);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [showCatDialog, setShowCatDialog] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [editingCat, setEditingCat] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
+  const [txCategoryMap, setTxCategoryMap] = useState<Record<string, string>>({});
 
-  const [txCategoryMap, setTxCategoryMap] = useState<Record<string, string>>(loadTxCategories);
+  // Saved extratos
+  const [savedExtratos, setSavedExtratos] = useState<SavedExtrato[]>([]);
+  const [activeExtratoId, setActiveExtratoId] = useState<string | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [saveNome, setSaveNome] = useState("");
+  const [loadingExtratos, setLoadingExtratos] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Bulk category dialog
   const [bulkDialog, setBulkDialog] = useState<{
-    open: boolean;
-    cpfCnpj: string;
-    category: string;
-    matchingIds: string[];
+    open: boolean; cpfCnpj: string; category: string; matchingIds: string[];
   }>({ open: false, cpfCnpj: "", category: "", matchingIds: [] });
+
+  // Load saved extratos list
+  useEffect(() => {
+    if (!ownerId) return;
+    loadExtratosList();
+  }, [ownerId]);
+
+  const loadExtratosList = async () => {
+    if (!ownerId) return;
+    setLoadingExtratos(true);
+    const { data } = await supabase
+      .from("conta_pj_extratos")
+      .select("id, nome, arquivo_nome, created_at")
+      .eq("user_id", ownerId)
+      .order("created_at", { ascending: false });
+    setSavedExtratos((data as any[]) || []);
+    setLoadingExtratos(false);
+  };
+
+  // Load a specific extrato
+  const loadExtrato = async (extratoId: string) => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("conta_pj_extratos")
+      .select("*")
+      .eq("id", extratoId)
+      .single();
+
+    if (error || !data) {
+      toast.error("Erro ao carregar extrato");
+      setLoading(false);
+      return;
+    }
+
+    const d = data as any;
+    setTransactions(d.transacoes || []);
+    setCustomCategories(d.categorias_custom || []);
+    setTxCategoryMap(d.tx_categorias_map || {});
+    setFileName(d.arquivo_nome);
+    setActiveExtratoId(extratoId);
+    setHasUnsavedChanges(false);
+    setLoading(false);
+  };
+
+  // Auto-save current extrato
+  const saveCurrentExtrato = async () => {
+    if (!activeExtratoId || !ownerId) return;
+    setSaving(true);
+    await supabase
+      .from("conta_pj_extratos")
+      .update({
+        transacoes: transactions as any,
+        categorias_custom: customCategories as any,
+        tx_categorias_map: txCategoryMap as any,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", activeExtratoId);
+    setSaving(false);
+    setHasUnsavedChanges(false);
+    toast.success("Extrato salvo");
+  };
+
+  // Save as new
+  const saveAsNew = async () => {
+    if (!ownerId || !saveNome.trim()) return;
+    setSaving(true);
+    const { data, error } = await supabase
+      .from("conta_pj_extratos")
+      .insert({
+        user_id: ownerId,
+        nome: saveNome.trim(),
+        arquivo_nome: fileName,
+        transacoes: transactions as any,
+        categorias_custom: customCategories as any,
+        tx_categorias_map: txCategoryMap as any,
+      })
+      .select("id, nome, arquivo_nome, created_at")
+      .single();
+
+    if (error) {
+      toast.error("Erro ao salvar");
+      setSaving(false);
+      return;
+    }
+
+    const d = data as any;
+    setSavedExtratos(prev => [d, ...prev]);
+    setActiveExtratoId(d.id);
+    setHasUnsavedChanges(false);
+    setShowSaveDialog(false);
+    setSaveNome("");
+    setSaving(false);
+    toast.success("Extrato salvo com sucesso");
+  };
+
+  const deleteExtrato = async (id: string) => {
+    await supabase.from("conta_pj_extratos").delete().eq("id", id);
+    setSavedExtratos(prev => prev.filter(e => e.id !== id));
+    if (activeExtratoId === id) {
+      setActiveExtratoId(null);
+      setTransactions([]);
+      setFileName(null);
+      setCustomCategories([]);
+      setTxCategoryMap({});
+    }
+    setShowDeleteConfirm(null);
+    toast.success("Extrato excluído");
+  };
+
+  const markDirty = () => {
+    if (activeExtratoId) setHasUnsavedChanges(true);
+  };
 
   const applyCategory = (txId: string, category: string) => {
     const cat = category === "__none__" ? "" : category;
     const newMap = { ...txCategoryMap, [txId]: cat };
     setTxCategoryMap(newMap);
-    saveTxCategories(newMap);
-    setTransactions(prev => prev.map(tx =>
-      tx.id === txId ? { ...tx, categoriaCustom: cat } : tx
-    ));
+    setTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, categoriaCustom: cat } : tx));
+    markDirty();
   };
 
   const updateTxCategory = (txId: string, category: string) => {
     applyCategory(txId, category);
-
-    // Check if there are other transactions with the same CPF/CNPJ
     const tx = transactions.find(t => t.id === txId);
     if (!tx || !tx.cpfCnpjOrigemDestino.trim()) return;
-
     const cat = category === "__none__" ? "" : category;
     const sameDoc = transactions.filter(
-      t => t.id !== txId &&
-        t.cpfCnpjOrigemDestino.trim() === tx.cpfCnpjOrigemDestino.trim() &&
+      t => t.id !== txId && t.cpfCnpjOrigemDestino.trim() === tx.cpfCnpjOrigemDestino.trim() &&
         (t.categoriaCustom || t.categoriaOriginal) !== cat
     );
-
     if (sameDoc.length > 0) {
-      setBulkDialog({
-        open: true,
-        cpfCnpj: tx.cpfCnpjOrigemDestino.trim(),
-        category: cat,
-        matchingIds: sameDoc.map(t => t.id),
-      });
+      setBulkDialog({ open: true, cpfCnpj: tx.cpfCnpjOrigemDestino.trim(), category: cat, matchingIds: sameDoc.map(t => t.id) });
     }
   };
 
@@ -181,11 +265,9 @@ export function ContaPJConfig() {
     const newMap = { ...txCategoryMap };
     matchingIds.forEach(id => { newMap[id] = category; });
     setTxCategoryMap(newMap);
-    saveTxCategories(newMap);
-    setTransactions(prev => prev.map(tx =>
-      matchingIds.includes(tx.id) ? { ...tx, categoriaCustom: category } : tx
-    ));
+    setTransactions(prev => prev.map(tx => matchingIds.includes(tx.id) ? { ...tx, categoriaCustom: category } : tx));
     setBulkDialog({ open: false, cpfCnpj: "", category: "", matchingIds: [] });
+    markDirty();
     toast.success(`Categoria aplicada a ${matchingIds.length} transações`);
   };
 
@@ -193,10 +275,9 @@ export function ContaPJConfig() {
     const name = newCatName.trim();
     if (!name) return;
     if (customCategories.includes(name)) { toast.error("Categoria já existe"); return; }
-    const updated = [...customCategories, name].sort();
-    setCustomCategories(updated);
-    saveCustomCategories(updated);
+    setCustomCategories(prev => [...prev, name].sort());
     setNewCatName("");
+    markDirty();
     toast.success("Categoria criada");
   };
 
@@ -206,31 +287,23 @@ export function ContaPJConfig() {
     const name = editCatName.trim();
     if (!name || !editingCat) return;
     if (name !== editingCat && customCategories.includes(name)) { toast.error("Categoria já existe"); return; }
-    const updated = customCategories.map(c => c === editingCat ? name : c).sort();
-    setCustomCategories(updated);
-    saveCustomCategories(updated);
+    setCustomCategories(prev => prev.map(c => c === editingCat ? name : c).sort());
     const newMap = { ...txCategoryMap };
     for (const key in newMap) { if (newMap[key] === editingCat) newMap[key] = name; }
     setTxCategoryMap(newMap);
-    saveTxCategories(newMap);
-    setTransactions(prev => prev.map(tx =>
-      tx.categoriaCustom === editingCat ? { ...tx, categoriaCustom: name } : tx
-    ));
+    setTransactions(prev => prev.map(tx => tx.categoriaCustom === editingCat ? { ...tx, categoriaCustom: name } : tx));
     setEditingCat(null);
+    markDirty();
     toast.success("Categoria atualizada");
   };
 
   const deleteCategory = (cat: string) => {
-    const updated = customCategories.filter(c => c !== cat);
-    setCustomCategories(updated);
-    saveCustomCategories(updated);
+    setCustomCategories(prev => prev.filter(c => c !== cat));
     const newMap = { ...txCategoryMap };
     for (const key in newMap) { if (newMap[key] === cat) delete newMap[key]; }
     setTxCategoryMap(newMap);
-    saveTxCategories(newMap);
-    setTransactions(prev => prev.map(tx =>
-      tx.categoriaCustom === cat ? { ...tx, categoriaCustom: "" } : tx
-    ));
+    setTransactions(prev => prev.map(tx => tx.categoriaCustom === cat ? { ...tx, categoriaCustom: "" } : tx));
+    markDirty();
     toast.success("Categoria removida");
   };
 
@@ -250,20 +323,14 @@ export function ContaPJConfig() {
 
         let headerIdx = -1;
         for (let i = 0; i < Math.min(rows.length, 20); i++) {
-          const row = rows[i];
-          if (Array.isArray(row) && row.some((c) => String(c).toLowerCase().includes("data hora"))) {
+          if (Array.isArray(rows[i]) && rows[i].some((c) => String(c).toLowerCase().includes("data hora"))) {
             headerIdx = i;
             break;
           }
         }
 
-        if (headerIdx === -1) {
-          alert("Formato de arquivo não reconhecido.");
-          setLoading(false);
-          return;
-        }
+        if (headerIdx === -1) { toast.error("Formato não reconhecido"); setLoading(false); return; }
 
-        const savedMap = loadTxCategories();
         const parsed: TransacaoPJ[] = [];
         for (let i = headerIdx + 1; i < rows.length; i++) {
           const row = rows[i] as unknown[];
@@ -273,7 +340,7 @@ export function ContaPJConfig() {
           const id = `${dt.getTime()}-${i}`;
           parsed.push({
             id,
-            dataHora: dt,
+            dataHora: dt.toISOString(),
             historico: String(row[1] ?? ""),
             cartao: String(row[2] ?? ""),
             nomeCartao: String(row[3] ?? ""),
@@ -283,7 +350,7 @@ export function ContaPJConfig() {
             situacao: String(row[7] ?? ""),
             descricao: String(row[8] ?? ""),
             categoriaOriginal: String(row[9] ?? ""),
-            categoriaCustom: savedMap[id] || String(row[9] ?? ""),
+            categoriaCustom: String(row[9] ?? ""),
             centroCusto: String(row[10] ?? ""),
             valorIOF: parseCurrency(row[11]),
             cotacaoDolar: parseCurrency(row[12]),
@@ -292,11 +359,22 @@ export function ContaPJConfig() {
           });
         }
 
-        parsed.sort((a, b) => b.dataHora.getTime() - a.dataHora.getTime());
+        parsed.sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime());
         setTransactions(parsed);
+        setActiveExtratoId(null);
+        setHasUnsavedChanges(false);
+        // Auto-open save dialog
+        setShowSaveDialog(true);
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        if (parsed.length > 0) {
+          const d = new Date(parsed[Math.floor(parsed.length / 2)].dataHora);
+          setSaveNome(`${monthNames[d.getMonth()]} ${d.getFullYear()}`);
+        } else {
+          setSaveNome(file.name.replace(/\.[^.]+$/, ""));
+        }
       } catch (err) {
         console.error("Erro ao processar arquivo:", err);
-        alert("Erro ao processar o arquivo.");
+        toast.error("Erro ao processar o arquivo.");
       } finally {
         setLoading(false);
       }
@@ -319,23 +397,19 @@ export function ContaPJConfig() {
   const filtered = useMemo(() => {
     const startOfPeriod = new Date(dateStart.getFullYear(), dateStart.getMonth(), dateStart.getDate(), 0, 0, 0);
     const endOfPeriod = new Date(dateEnd.getFullYear(), dateEnd.getMonth(), dateEnd.getDate(), 23, 59, 59, 999);
-
     return transactions.filter((tx) => {
-      if (tx.dataHora < startOfPeriod || tx.dataHora > endOfPeriod) return false;
+      const d = txDate(tx);
+      if (d < startOfPeriod || d > endOfPeriod) return false;
       if (filterTipo !== "all" && detectTipo(tx.historico) !== filterTipo) return false;
       if (filterConciliado !== "all" && tx.conciliado.toUpperCase() !== filterConciliado) return false;
       if (filterCategoria !== "all") {
-        const cat = tx.categoriaCustom || tx.categoriaOriginal;
-        if (cat !== filterCategoria) return false;
+        if ((tx.categoriaCustom || tx.categoriaOriginal) !== filterCategoria) return false;
       }
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
-        const match =
-          tx.historico.toLowerCase().includes(term) ||
-          tx.cpfCnpjOrigemDestino.toLowerCase().includes(term) ||
-          tx.descricao.toLowerCase().includes(term) ||
-          (tx.categoriaCustom || tx.categoriaOriginal).toLowerCase().includes(term);
-        if (!match) return false;
+        if (!(tx.historico.toLowerCase().includes(term) || tx.cpfCnpjOrigemDestino.toLowerCase().includes(term) ||
+          tx.descricao.toLowerCase().includes(term) || (tx.categoriaCustom || tx.categoriaOriginal).toLowerCase().includes(term)))
+          return false;
       }
       return true;
     });
@@ -347,7 +421,6 @@ export function ContaPJConfig() {
     return { credito: totalCredito, debito: totalDebito, liquido: totalCredito - totalDebito, count: filtered.length };
   }, [filtered]);
 
-  // Chart data by category
   const categoryChartData = useMemo(() => {
     const map: Record<string, { credito: number; debito: number }> = {};
     filtered.forEach(tx => {
@@ -361,20 +434,10 @@ export function ContaPJConfig() {
       .sort((a, b) => b.total - a.total);
   }, [filtered]);
 
-  const pieData = useMemo(() => {
-    return categoryChartData
-      .filter(d => d.debito > 0)
-      .map(d => ({ name: d.name, value: d.debito }));
-  }, [categoryChartData]);
+  const pieData = useMemo(() => categoryChartData.filter(d => d.debito > 0).map(d => ({ name: d.name, value: d.debito })), [categoryChartData]);
 
   const hasActiveFilters = filterTipo !== "all" || filterConciliado !== "all" || filterCategoria !== "all" || searchTerm !== "";
-
-  const clearFilters = () => {
-    setFilterTipo("all");
-    setFilterConciliado("all");
-    setFilterCategoria("all");
-    setSearchTerm("");
-  };
+  const clearFilters = () => { setFilterTipo("all"); setFilterConciliado("all"); setFilterCategoria("all"); setSearchTerm(""); };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
@@ -382,9 +445,7 @@ export function ContaPJConfig() {
       <div className="rounded-lg border bg-background p-2.5 shadow-xl text-xs">
         <p className="font-medium mb-1">{label}</p>
         {payload.map((p: any, i: number) => (
-          <p key={i} style={{ color: p.color }}>
-            {p.name === "credito" ? "Entradas" : "Saídas"}: {formatCurrency(p.value)}
-          </p>
+          <p key={i} style={{ color: p.color }}>{p.name === "credito" ? "Entradas" : "Saídas"}: {formatCurrency(p.value)}</p>
         ))}
       </div>
     );
@@ -402,18 +463,56 @@ export function ContaPJConfig() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {/* Saved extratos selector */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          {fileName && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <FileSpreadsheet className="h-4 w-4" />
-              <span>{fileName}</span>
-              <Badge variant="secondary">{transactions.length} transações</Badge>
+        <div className="flex items-center gap-2 flex-wrap">
+          <FolderOpen className="h-4 w-4 text-muted-foreground" />
+          {loadingExtratos ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : savedExtratos.length > 0 ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              {savedExtratos.map(ext => (
+                <div key={ext.id} className="flex items-center gap-0.5">
+                  <Button
+                    variant={activeExtratoId === ext.id ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => loadExtrato(ext.id)}
+                  >
+                    {ext.nome}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                    onClick={() => setShowDeleteConfirm(ext.id)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
             </div>
+          ) : (
+            <span className="text-xs text-muted-foreground">Nenhum extrato salvo</span>
           )}
         </div>
         <div className="flex items-center gap-2">
+          {transactions.length > 0 && (
+            <>
+              {hasUnsavedChanges && activeExtratoId && (
+                <Button variant="default" size="sm" onClick={saveCurrentExtrato} disabled={saving}>
+                  {saving ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+                  Salvar
+                </Button>
+              )}
+              {!activeExtratoId && (
+                <Button variant="default" size="sm" onClick={() => setShowSaveDialog(true)}>
+                  <Save className="h-3.5 w-3.5 mr-1.5" />
+                  Salvar extrato
+                </Button>
+              )}
+            </>
+          )}
           <Button variant="outline" size="sm" onClick={() => setShowCatDialog(true)}>
             <Tag className="h-3.5 w-3.5 mr-1.5" />
             Categorias
@@ -451,49 +550,46 @@ export function ContaPJConfig() {
 
       {loading && (
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       )}
 
       {transactions.length > 0 && (
         <>
+          {/* Active extrato info */}
+          {(fileName || activeExtratoId) && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <FileSpreadsheet className="h-4 w-4" />
+              {activeExtratoId && <Badge variant="secondary">{savedExtratos.find(e => e.id === activeExtratoId)?.nome}</Badge>}
+              {fileName && <span className="text-xs">{fileName}</span>}
+              <Badge variant="outline">{transactions.length} transações</Badge>
+              {hasUnsavedChanges && <Badge variant="destructive" className="text-[10px]">Não salvo</Badge>}
+            </div>
+          )}
+
           {/* Summary cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Card>
               <CardContent className="pt-4 pb-3 px-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                  <TrendingUp className="h-3.5 w-3.5 text-green-500" />
-                  Entradas
-                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><TrendingUp className="h-3.5 w-3.5 text-green-500" />Entradas</div>
                 <p className="text-lg font-bold text-green-600">{formatCurrency(totals.credito)}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-4 pb-3 px-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                  <TrendingDown className="h-3.5 w-3.5 text-red-500" />
-                  Saídas
-                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><TrendingDown className="h-3.5 w-3.5 text-red-500" />Saídas</div>
                 <p className="text-lg font-bold text-red-600">{formatCurrency(totals.debito)}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-4 pb-3 px-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                  <Wallet className="h-3.5 w-3.5" />
-                  Líquido
-                </div>
-                <p className={`text-lg font-bold ${totals.liquido >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {formatCurrency(totals.liquido)}
-                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Wallet className="h-3.5 w-3.5" />Líquido</div>
+                <p className={`text-lg font-bold ${totals.liquido >= 0 ? "text-green-600" : "text-red-600"}`}>{formatCurrency(totals.liquido)}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-4 pb-3 px-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                  <Filter className="h-3.5 w-3.5" />
-                  Transações
-                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Filter className="h-3.5 w-3.5" />Transações</div>
                 <p className="text-lg font-bold">{totals.count}</p>
               </CardContent>
             </Card>
@@ -502,7 +598,6 @@ export function ContaPJConfig() {
           {/* Charts */}
           {categoryChartData.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Bar Chart */}
               <Card>
                 <CardContent className="pt-4 pb-2 px-4">
                   <p className="text-sm font-medium mb-3">Entradas e Saídas por Categoria</p>
@@ -510,19 +605,8 @@ export function ContaPJConfig() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={categoryChartData} margin={{ top: 5, right: 5, left: 5, bottom: 60 }}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                        <XAxis
-                          dataKey="name"
-                          tick={{ fontSize: 10 }}
-                          angle={-45}
-                          textAnchor="end"
-                          height={70}
-                          className="fill-muted-foreground"
-                        />
-                        <YAxis
-                          tick={{ fontSize: 10 }}
-                          tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                          className="fill-muted-foreground"
-                        />
+                        <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={70} className="fill-muted-foreground" />
+                        <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="fill-muted-foreground" />
                         <Tooltip content={<CustomTooltip />} />
                         <Bar dataKey="credito" name="credito" fill="hsl(150, 60%, 45%)" radius={[3, 3, 0, 0]} />
                         <Bar dataKey="debito" name="debito" fill="hsl(0, 65%, 55%)" radius={[3, 3, 0, 0]} />
@@ -531,29 +615,15 @@ export function ContaPJConfig() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Pie Chart */}
               <Card>
                 <CardContent className="pt-4 pb-2 px-4">
                   <p className="text-sm font-medium mb-3">Distribuição de Saídas por Categoria</p>
                   <div className="h-[280px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={50}
-                          outerRadius={90}
-                          paddingAngle={2}
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                          labelLine={false}
-                          style={{ fontSize: 10 }}
-                        >
-                          {pieData.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                          ))}
+                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2} dataKey="value"
+                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`} labelLine={false} style={{ fontSize: 10 }}>
+                          {pieData.map((_, index) => <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
                         </Pie>
                         <Tooltip content={<PieTooltip />} />
                       </PieChart>
@@ -566,14 +636,7 @@ export function ContaPJConfig() {
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-2">
-            <PeriodFilter
-              value={periodFilter}
-              onChange={setPeriodFilter}
-              dateStart={dateStart}
-              dateEnd={dateEnd}
-              onDateStartChange={setDateStart}
-              onDateEndChange={setDateEnd}
-            />
+            <PeriodFilter value={periodFilter} onChange={setPeriodFilter} dateStart={dateStart} dateEnd={dateEnd} onDateStartChange={setDateStart} onDateEndChange={setDateEnd} />
             <Select value={filterTipo} onValueChange={setFilterTipo}>
               <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
               <SelectContent>
@@ -601,10 +664,7 @@ export function ContaPJConfig() {
               <Input placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 w-[180px] h-9" />
             </div>
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
-                <X className="h-3.5 w-3.5 mr-1" />
-                Limpar
-              </Button>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs"><X className="h-3.5 w-3.5 mr-1" />Limpar</Button>
             )}
           </div>
 
@@ -627,54 +687,30 @@ export function ContaPJConfig() {
                   </TableHeader>
                   <TableBody>
                     {filtered.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                          Nenhuma transação encontrada
-                        </TableCell>
-                      </TableRow>
+                      <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma transação encontrada</TableCell></TableRow>
                     ) : (
                       filtered.map((tx) => {
                         const tipo = detectTipo(tx.historico);
                         const currentCat = tx.categoriaCustom || tx.categoriaOriginal;
                         return (
                           <TableRow key={tx.id}>
-                            <TableCell className="whitespace-nowrap text-xs">{formatDate(tx.dataHora)}</TableCell>
-                            <TableCell className="text-xs max-w-[280px] truncate" title={tx.historico}>
-                              {tx.historico}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-[10px] whitespace-nowrap">{tipo}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right text-xs text-green-600 font-medium whitespace-nowrap">
-                              {tx.credito > 0 ? formatCurrency(tx.credito) : ""}
-                            </TableCell>
-                            <TableCell className="text-right text-xs text-red-600 font-medium whitespace-nowrap">
-                              {tx.debito > 0 ? formatCurrency(tx.debito) : ""}
-                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-xs">{formatDate(txDate(tx))}</TableCell>
+                            <TableCell className="text-xs max-w-[280px] truncate" title={tx.historico}>{tx.historico}</TableCell>
+                            <TableCell><Badge variant="outline" className="text-[10px] whitespace-nowrap">{tipo}</Badge></TableCell>
+                            <TableCell className="text-right text-xs text-green-600 font-medium whitespace-nowrap">{tx.credito > 0 ? formatCurrency(tx.credito) : ""}</TableCell>
+                            <TableCell className="text-right text-xs text-red-600 font-medium whitespace-nowrap">{tx.debito > 0 ? formatCurrency(tx.debito) : ""}</TableCell>
                             <TableCell className="text-xs whitespace-nowrap">{tx.cpfCnpjOrigemDestino}</TableCell>
                             <TableCell>
-                              <Select
-                                value={currentCat || "__none__"}
-                                onValueChange={(val) => updateTxCategory(tx.id, val)}
-                              >
-                                <SelectTrigger className="h-7 text-xs w-[130px]">
-                                  <SelectValue placeholder="Sem categoria" />
-                                </SelectTrigger>
+                              <Select value={currentCat || "__none__"} onValueChange={(val) => updateTxCategory(tx.id, val)}>
+                                <SelectTrigger className="h-7 text-xs w-[130px]"><SelectValue placeholder="Sem categoria" /></SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="__none__">Sem categoria</SelectItem>
-                                  {allCategories.map((c) => (
-                                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                                  ))}
+                                  {allCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                                 </SelectContent>
                               </Select>
                             </TableCell>
                             <TableCell>
-                              <Badge
-                                variant={tx.conciliado.toUpperCase() === "SIM" ? "default" : "secondary"}
-                                className="text-[10px]"
-                              >
-                                {tx.conciliado || "—"}
-                              </Badge>
+                              <Badge variant={tx.conciliado.toUpperCase() === "SIM" ? "default" : "secondary"} className="text-[10px]">{tx.conciliado || "—"}</Badge>
                             </TableCell>
                           </TableRow>
                         );
@@ -688,6 +724,45 @@ export function ContaPJConfig() {
         </>
       )}
 
+      {/* Save dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Salvar Extrato</DialogTitle>
+            <DialogDescription>Dê um nome para identificar este extrato (ex: Janeiro 2026)</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nome</Label>
+              <Input value={saveNome} onChange={(e) => setSaveNome(e.target.value)} placeholder="Ex: Janeiro 2026" onKeyDown={(e) => e.key === "Enter" && saveAsNew()} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>Cancelar</Button>
+            <Button onClick={saveAsNew} disabled={saving || !saveNome.trim()}>
+              {saving ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Save className="h-4 w-4 mr-1.5" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirm dialog */}
+      <Dialog open={!!showDeleteConfirm} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Excluir extrato?</DialogTitle>
+            <DialogDescription>
+              Deseja excluir o extrato "<strong>{savedExtratos.find(e => e.id === showDeleteConfirm)?.nome}</strong>"? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={() => showDeleteConfirm && deleteExtrato(showDeleteConfirm)}>Excluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Bulk category dialog */}
       <Dialog open={bulkDialog.open} onOpenChange={(open) => !open && setBulkDialog(prev => ({ ...prev, open: false }))}>
         <DialogContent className="max-w-sm">
@@ -699,12 +774,8 @@ export function ContaPJConfig() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkDialog(prev => ({ ...prev, open: false }))}>
-              Não, apenas esta
-            </Button>
-            <Button onClick={applyBulkCategory}>
-              Sim, aplicar a todas
-            </Button>
+            <Button variant="outline" onClick={() => setBulkDialog(prev => ({ ...prev, open: false }))}>Não, apenas esta</Button>
+            <Button onClick={applyBulkCategory}>Sim, aplicar a todas</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -712,53 +783,30 @@ export function ContaPJConfig() {
       {/* Categories management dialog */}
       <Dialog open={showCatDialog} onOpenChange={setShowCatDialog}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Gerenciar Categorias</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Gerenciar Categorias</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="flex gap-2">
-              <Input
-                placeholder="Nova categoria..."
-                value={newCatName}
-                onChange={(e) => setNewCatName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addCategory()}
-              />
-              <Button size="sm" onClick={addCategory} disabled={!newCatName.trim()}>
-                <Plus className="h-4 w-4" />
-              </Button>
+              <Input placeholder="Nova categoria..." value={newCatName} onChange={(e) => setNewCatName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCategory()} />
+              <Button size="sm" onClick={addCategory} disabled={!newCatName.trim()}><Plus className="h-4 w-4" /></Button>
             </div>
             <div className="max-h-[300px] overflow-y-auto space-y-1">
               {customCategories.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Nenhuma categoria criada. Adicione acima.
-                </p>
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma categoria criada. Adicione acima.</p>
               ) : (
                 customCategories.map((cat) => (
                   <div key={cat} className="flex items-center justify-between px-3 py-2 rounded-md hover:bg-muted/50">
                     {editingCat === cat ? (
                       <div className="flex items-center gap-2 flex-1">
-                        <Input
-                          value={editCatName}
-                          onChange={(e) => setEditCatName(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && saveEditCat()}
-                          className="h-7 text-sm"
-                          autoFocus
-                        />
+                        <Input value={editCatName} onChange={(e) => setEditCatName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && saveEditCat()} className="h-7 text-sm" autoFocus />
                         <Button variant="ghost" size="sm" className="h-7 px-2" onClick={saveEditCat}>OK</Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setEditingCat(null)}>
-                          <X className="h-3 w-3" />
-                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setEditingCat(null)}><X className="h-3 w-3" /></Button>
                       </div>
                     ) : (
                       <>
                         <span className="text-sm">{cat}</span>
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => startEditCat(cat)}>
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => deleteCategory(cat)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => startEditCat(cat)}><Pencil className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => deleteCategory(cat)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </>
                     )}
