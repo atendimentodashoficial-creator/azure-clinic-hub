@@ -1,0 +1,1 @@
+UPDATE avisos_reuniao SET next_check_at = now(), last_check_at = NULL WHERE id = 'c95c4c99-07dd-4ef0-b3d5-f0cdf3bf2ebe';
