@@ -144,6 +144,7 @@ export function ContaPJConfig({ tipo = "pj", label = "Conta PJ" }: ContaPJConfig
       .from("conta_pj_extratos")
       .select("id, nome, arquivo_nome, created_at")
       .eq("user_id", ownerId)
+      .eq("tipo", tipo)
       .order("created_at", { ascending: false });
     setSavedExtratos((data as any[]) || []);
     setLoadingExtratos(false);
