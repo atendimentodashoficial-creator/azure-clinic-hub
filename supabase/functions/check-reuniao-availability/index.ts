@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
 
     const { data: reunioesExistentes } = await supabase
       .from("reunioes")
-      .select("id, data_reuniao, duracao_minutos, profissional_id, status")
+      .select("id, data_reuniao, duracao_minutos, profissional_id, participantes, status")
       .eq("user_id", userId)
       .in("status", ["agendado", "confirmado"])
       .gte("data_reuniao", startISO)
