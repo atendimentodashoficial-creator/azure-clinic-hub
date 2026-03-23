@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
 
     const { data: reunioesExistentes } = await supabase
       .from("reunioes")
-      .select("id, data_reuniao, duracao_minutos, profissional_id, status")
+      .select("id, data_reuniao, duracao_minutos, profissional_id, participantes, status")
       .eq("user_id", userId)
       .in("status", ["agendado", "confirmado"])
       .gte("data_reuniao", startISO)
@@ -160,7 +160,17 @@ Deno.serve(async (req) => {
     for (const membro of membrosFiltradosPorCargo) {
       const membroEscalas = (escalas || []).filter((e: any) => e.membro_id === membro.id);
       const membroAusencias = (ausencias || []).filter((a: any) => a.membro_id === membro.id);
-      const membroReunioes = (reunioesExistentes || []).filter((r: any) => r.profissional_id === membro.id);
+      // Match reuniões by profissional_id OR by member name in participantes array
+      const membroReunioes = (reunioesExistentes || []).filter((r: any) => {
+        if (r.profissional_id === membro.id) return true;
+        // Fallback: check if member name appears in participantes
+        if (!r.profissional_id && Array.isArray(r.participantes)) {
+          return r.participantes.some((p: string) => 
+            normalizeText(p) === normalizeText(membro.nome)
+          );
+        }
+        return false;
+      });
 
       const currentDate = new Date(startDate);
       while (currentDate <= endDate) {
