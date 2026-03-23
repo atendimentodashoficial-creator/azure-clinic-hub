@@ -328,13 +328,20 @@ Deno.serve(async (req) => {
 
     const { data: conflicting } = await supabase
       .from("reunioes")
-      .select("id, data_reuniao, duracao_minutos")
-      .eq("user_id", targetUserId)
+      .select("id, data_reuniao, duracao_minutos, participantes, profissional_id")
+      .eq("user_id", ownerUserId)
       .in("status", ["agendado", "confirmado"])
       .gte("data_reuniao", new Date(startDate.getTime() - 24 * 60 * 60 * 1000).toISOString())
       .lte("data_reuniao", new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString());
 
-    const hasConflict = (conflicting || []).some((r: any) => {
+    const memberNameNorm = normalizeText(member.nome);
+    const hasConflict = (conflicting || []).filter((r: any) => {
+      if (r.profissional_id === member.id) return true;
+      if (!r.profissional_id && Array.isArray(r.participantes)) {
+        return r.participantes.some((p: string) => normalizeText(p) === memberNameNorm);
+      }
+      return false;
+    }).some((r: any) => {
       const rStart = new Date(r.data_reuniao).getTime();
       const rEnd = rStart + ((r.duracao_minutos || 60) * 60 * 1000);
       return startDate.getTime() < rEnd && endDate.getTime() > rStart;
