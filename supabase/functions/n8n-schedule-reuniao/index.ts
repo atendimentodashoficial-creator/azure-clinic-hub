@@ -348,8 +348,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 5. Resolve profissional_id
-    let profissionalId: string | null = null;
+    // 5. Resolve profissional_id — use membro_id directly (tarefas_membros.id)
+    // This ensures check-reuniao-availability can match reuniões to members
+    let profissionalId: string | null = member.id || null;
+    // Also try to find in profissionais table as secondary reference
     if (member.email) {
       const { data: prof } = await supabase
         .from("profissionais")
@@ -357,7 +359,7 @@ Deno.serve(async (req) => {
         .eq("user_id", targetUserId)
         .eq("email", member.email)
         .maybeSingle();
-      profissionalId = prof?.id || null;
+      if (prof?.id) profissionalId = prof.id;
     }
 
     // 6. Resolve cliente_id
