@@ -263,28 +263,37 @@ Deno.serve(async (req) => {
       for (const mid of membrosDisponiveis) {
         const { data: memberData } = await supabase
           .from("tarefas_membros")
-          .select("auth_user_id, email")
+          .select("auth_user_id, email, nome")
           .eq("id", mid)
           .single();
 
-        const memberUserId = memberData?.auth_user_id || ownerUserId;
-
+        // Query all owner reunioes for the day
         const { data: memberDayMeetings } = await supabase
           .from("reunioes")
-          .select("id, data_reuniao, duracao_minutos")
-          .eq("user_id", memberUserId)
+          .select("id, data_reuniao, duracao_minutos, participantes, profissional_id")
+          .eq("user_id", ownerUserId)
           .in("status", ["agendado", "confirmado"])
           .gte("data_reuniao", dayStartISO)
           .lte("data_reuniao", dayEndISO);
 
-        const hasConflict = (memberDayMeetings || []).some((r: any) => {
+        // Filter to only this member's reunioes
+        const memberNameNorm = normalizeText(memberData?.nome || "");
+        const thisMemberMeetings = (memberDayMeetings || []).filter((r: any) => {
+          if (r.profissional_id === mid) return true;
+          if (!r.profissional_id && Array.isArray(r.participantes)) {
+            return r.participantes.some((p: string) => normalizeText(p) === memberNameNorm);
+          }
+          return false;
+        });
+
+        const hasConflict = thisMemberMeetings.some((r: any) => {
           const rStart = new Date(r.data_reuniao).getTime();
           const rEnd = rStart + ((r.duracao_minutos || 60) * 60 * 1000);
           return startDate2.getTime() < rEnd && endDate2.getTime() > rStart;
         });
 
         if (!hasConflict) {
-          candidates.push({ membroId: mid, meetingCount: (memberDayMeetings || []).length });
+          candidates.push({ membroId: mid, meetingCount: thisMemberMeetings.length });
         }
       }
 
