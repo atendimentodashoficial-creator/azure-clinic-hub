@@ -9,6 +9,7 @@ import { ResetDataConfig } from "@/components/configuracoes/ResetDataConfig";
 import { TiposReuniaoConfig } from "@/components/configuracoes/TiposReuniaoConfig";
 import { ContaSimpleConfig } from "@/components/configuracoes/ContaSimpleConfig";
 import { ExportarDadosConfig } from "@/components/configuracoes/ExportarDadosConfig";
+import { ImportarDadosConfig } from "@/components/configuracoes/ImportarDadosConfig";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
 
 const tabOptions = [
