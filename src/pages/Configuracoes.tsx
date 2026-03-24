@@ -1,4 +1,4 @@
-import { Settings, Video, MessageSquare, Link, RotateCcw, CreditCard, Download } from "lucide-react";
+import { Settings, Video, MessageSquare, Link, RotateCcw, CreditCard, Download, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
