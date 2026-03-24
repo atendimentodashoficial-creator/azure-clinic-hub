@@ -17,6 +17,7 @@ const tabOptions = [
   { value: "conexoes", label: "Conexões", icon: Link },
   { value: "conta-simples", label: "Conta Simples", icon: CreditCard },
   { value: "reset", label: "Reset", icon: RotateCcw },
+  { value: "exportar", label: "Exportar Dados", icon: Download },
 ];
 
 export default function Configuracoes() {
