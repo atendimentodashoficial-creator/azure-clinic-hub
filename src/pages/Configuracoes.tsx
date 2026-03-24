@@ -88,6 +88,10 @@ export default function Configuracoes() {
         <TabsContent value="exportar">
           <ExportarDadosConfig />
         </TabsContent>
+
+        <TabsContent value="importar">
+          <ImportarDadosConfig />
+        </TabsContent>
       </Tabs>
     </div>
   );
