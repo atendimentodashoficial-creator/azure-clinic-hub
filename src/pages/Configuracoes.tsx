@@ -1,4 +1,4 @@
-import { Settings, Video, MessageSquare, Link, RotateCcw, CreditCard } from "lucide-react";
+import { Settings, Video, MessageSquare, Link, RotateCcw, CreditCard, Download } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -8,6 +8,7 @@ import Conexoes from "./Conexoes";
 import { ResetDataConfig } from "@/components/configuracoes/ResetDataConfig";
 import { TiposReuniaoConfig } from "@/components/configuracoes/TiposReuniaoConfig";
 import { ContaSimpleConfig } from "@/components/configuracoes/ContaSimpleConfig";
+import { ExportarDadosConfig } from "@/components/configuracoes/ExportarDadosConfig";
 import { useTabPersistence } from "@/hooks/useTabPersistence";
 
 const tabOptions = [
@@ -16,6 +17,7 @@ const tabOptions = [
   { value: "conexoes", label: "Conexões", icon: Link },
   { value: "conta-simples", label: "Conta Simples", icon: CreditCard },
   { value: "reset", label: "Reset", icon: RotateCcw },
+  { value: "exportar", label: "Exportar Dados", icon: Download },
 ];
 
 export default function Configuracoes() {
@@ -79,6 +81,10 @@ export default function Configuracoes() {
 
         <TabsContent value="reset">
           <ResetDataConfig />
+        </TabsContent>
+
+        <TabsContent value="exportar">
+          <ExportarDadosConfig />
         </TabsContent>
       </Tabs>
     </div>
