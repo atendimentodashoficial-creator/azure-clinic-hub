@@ -364,10 +364,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 5. Resolve profissional_id — use membro_id directly (tarefas_membros.id)
-    // This ensures check-reuniao-availability can match reuniões to members
-    let profissionalId: string | null = member.id || null;
-    // Also try to find in profissionais table as secondary reference
+    // 5. Resolve profissional_id (FK -> profissionais.id)
+    // Never use tarefas_membros.id here, because it breaks reunioes_profissional_id_fkey.
+    let profissionalId: string | null = null;
+
     if (member.email) {
       const { data: prof } = await supabase
         .from("profissionais")
@@ -376,6 +376,13 @@ Deno.serve(async (req) => {
         .eq("email", member.email)
         .maybeSingle();
       if (prof?.id) profissionalId = prof.id;
+    }
+
+    if (!profissionalId) {
+      console.warn(
+        "[n8n-schedule-reuniao] profissional_id not found in profissionais; creating reunião without profissional_id to avoid FK failure",
+        { memberId: member.id, memberEmail: member.email, targetUserId },
+      );
     }
 
     // 6. Resolve cliente_id
