@@ -82,6 +82,10 @@ export default function Configuracoes() {
         <TabsContent value="reset">
           <ResetDataConfig />
         </TabsContent>
+
+        <TabsContent value="exportar">
+          <ExportarDadosConfig />
+        </TabsContent>
       </Tabs>
     </div>
   );
