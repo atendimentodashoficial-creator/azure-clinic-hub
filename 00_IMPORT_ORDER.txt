@@ -1,0 +1,16 @@
+=== ORDEM DE IMPORTAÇÃO DA MIGRAÇÃO ===
+
+1. 01_enums.sql           → Tipos enum customizados
+2. 02_tables.sql          → Criação de todas as tabelas
+3. 03_constraints.sql     → Primary keys e constraints
+4. 04_foreign_keys.sql    → Chaves estrangeiras
+5. 05_functions.sql       → Funções do banco de dados
+6. 06_triggers.sql        → Triggers
+7. 07_rls.sql             → Row Level Security policies
+8. 08_views.sql           → Views
+9. 09_indexes.sql         → Índices
+10. 10_storage_buckets.sql → Buckets de armazenamento
+11. Importar CSVs do diretório data/
+12. Copiar edge_functions/ para supabase/functions/
+13. Configurar secrets conforme SECRETS_NEEDED.txt
+14. Deploy das edge functions: supabase functions deploy

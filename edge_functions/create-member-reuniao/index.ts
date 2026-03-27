@@ -1,0 +1,457 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: "Não autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const supabaseAuth = createClient(supabaseUrl, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const {
+      data: { user: caller },
+      error: callerError,
+    } = await supabaseAuth.auth.getUser();
+
+    if (callerError || !caller) {
+      return new Response(JSON.stringify({ success: false, error: "Não autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { memberId, titulo, dataHora, duracao = 60, clienteNome, clienteTelefone, tipoReuniaoId } = await req.json();
+
+    if (!memberId || !titulo || !dataHora) {
+      return new Response(JSON.stringify({ success: false, error: "Dados obrigatórios ausentes" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Resolve owner context: admin uses own id; funcionário uses linked owner id
+    const { data: callerMembership } = await supabaseAdmin
+      .from("tarefas_membros")
+      .select("user_id")
+      .eq("auth_user_id", caller.id)
+      .maybeSingle();
+
+    const ownerUserId = (callerMembership as any)?.user_id || caller.id;
+
+    const { data: member, error: memberError } = await supabaseAdmin
+      .from("tarefas_membros")
+      .select("id, user_id, nome, email, auth_user_id")
+      .eq("id", memberId)
+      .eq("user_id", ownerUserId)
+      .maybeSingle();
+
+    if (memberError) {
+      throw memberError;
+    }
+
+    if (!member) {
+      return new Response(JSON.stringify({ success: false, error: "Membro não encontrado para este workspace" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const targetUserId = member.auth_user_id || ownerUserId;
+
+    // --- Server-side conflict check ---
+    const startDate = new Date(dataHora);
+    const endDate = new Date(startDate.getTime() + (duracao || 60) * 60 * 1000);
+
+    const { data: conflicting } = await supabaseAdmin
+      .from("reunioes")
+      .select("id, data_reuniao, duracao_minutos")
+      .eq("user_id", targetUserId)
+      .in("status", ["agendado", "confirmado"])
+      .gte("data_reuniao", new Date(startDate.getTime() - 24 * 60 * 60 * 1000).toISOString())
+      .lte("data_reuniao", new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString());
+
+    const hasConflict = (conflicting || []).some(r => {
+      const rStart = new Date(r.data_reuniao).getTime();
+      const rEnd = rStart + ((r.duracao_minutos || 60) * 60 * 1000);
+      return startDate.getTime() < rEnd && endDate.getTime() > rStart;
+    });
+
+    if (hasConflict) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Este profissional já possui uma reunião neste horário" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let profissionalId: string | null = null;
+    if (member.email) {
+      const { data: profissional } = await supabaseAdmin
+        .from("profissionais")
+        .select("id")
+        .eq("user_id", targetUserId)
+        .eq("email", member.email)
+        .maybeSingle();
+      profissionalId = profissional?.id || null;
+    }
+
+    let clienteId: string | null = null;
+    if (clienteTelefone) {
+      const { data: lead } = await supabaseAdmin
+        .from("leads")
+        .select("id")
+        .eq("user_id", targetUserId)
+        .is("deleted_at", null)
+        .eq("telefone", clienteTelefone)
+        .maybeSingle();
+      clienteId = lead?.id || null;
+    }
+
+    const participantes = [clienteNome || "Cliente", member.nome].filter(Boolean);
+
+    // Resolve qual conta Google Calendar usar para gerar Meet
+    const calendarCandidateIds = new Set<string>();
+    calendarCandidateIds.add(targetUserId);
+    calendarCandidateIds.add(caller.id);
+    if (member.auth_user_id) {
+      calendarCandidateIds.add(member.auth_user_id);
+    }
+
+    if (member.email) {
+      const { data: memberProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("email", member.email)
+        .maybeSingle();
+
+      if (memberProfile?.id) {
+        calendarCandidateIds.add(memberProfile.id);
+      }
+    }
+
+    let calendarOwnerUserId: string | null = null;
+    let gcalConfig: any = null;
+
+    // 1) Try specific candidates first
+    for (const candidateUserId of calendarCandidateIds) {
+      const { data: candidateConfig } = await supabaseAdmin
+        .from("google_calendar_config")
+        .select("access_token, refresh_token, client_id, client_secret, token_expires_at, calendar_id, user_id")
+        .eq("user_id", candidateUserId)
+        .maybeSingle();
+
+      if (candidateConfig?.access_token) {
+        gcalConfig = candidateConfig;
+        calendarOwnerUserId = candidateConfig.user_id;
+        break;
+      }
+    }
+
+    // 2) Fallback: pick ANY valid Google Calendar config
+    if (!gcalConfig) {
+      console.log("No specific GCal config found, searching globally...");
+      const { data: anyConfig } = await supabaseAdmin
+        .from("google_calendar_config")
+        .select("access_token, refresh_token, client_id, client_secret, token_expires_at, calendar_id, user_id")
+        .not("access_token", "is", null)
+        .limit(1)
+        .maybeSingle();
+
+      if (anyConfig?.access_token) {
+        gcalConfig = anyConfig;
+        calendarOwnerUserId = anyConfig.user_id;
+        console.log("Using global GCal config from user:", calendarOwnerUserId);
+      }
+    }
+
+    let meetLink: string | null = null;
+    let googleEventId: string | null = null;
+
+    if (gcalConfig?.access_token && calendarOwnerUserId) {
+      try {
+        let accessToken = gcalConfig.access_token;
+
+        if (gcalConfig.token_expires_at && new Date(gcalConfig.token_expires_at) <= new Date()) {
+          console.log("Google token expired, refreshing...");
+          const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: gcalConfig.client_id,
+              client_secret: gcalConfig.client_secret,
+              refresh_token: gcalConfig.refresh_token,
+              grant_type: "refresh_token",
+            }),
+          });
+
+          const refreshData = await refreshResponse.json();
+          if (refreshResponse.ok) {
+            accessToken = refreshData.access_token;
+            const expiresAt = new Date(Date.now() + refreshData.expires_in * 1000).toISOString();
+            await supabaseAdmin
+              .from("google_calendar_config")
+              .update({ access_token: accessToken, token_expires_at: expiresAt, updated_at: new Date().toISOString() })
+              .eq("user_id", calendarOwnerUserId);
+          } else {
+            console.error("Token refresh failed:", refreshData);
+          }
+        }
+
+        const startDate = new Date(dataHora);
+        const endDate = new Date(startDate.getTime() + (duracao || 60) * 60 * 1000);
+
+        const eventBody = {
+          summary: titulo,
+          description: `Reunião agendada via CRM - ${clienteNome || "Cliente"}`,
+          start: { dateTime: startDate.toISOString(), timeZone: "America/Sao_Paulo" },
+          end: { dateTime: endDate.toISOString(), timeZone: "America/Sao_Paulo" },
+          conferenceData: {
+            createRequest: {
+              requestId: crypto.randomUUID(),
+              conferenceSolutionKey: { type: "hangoutsMeet" },
+            },
+          },
+        };
+
+        const calendarId = gcalConfig.calendar_id || "primary";
+        const eventResponse = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=none`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(eventBody),
+          }
+        );
+
+        const eventData = await eventResponse.json();
+        if (eventResponse.ok) {
+          googleEventId = eventData.id;
+          meetLink = eventData.conferenceData?.entryPoints?.find(
+            (ep: { entryPointType: string }) => ep.entryPointType === "video"
+          )?.uri || null;
+          console.log("Google Calendar event created with Meet link:", meetLink);
+        } else {
+          console.error("Google Calendar event creation failed:", eventData);
+        }
+      } catch (gcalError) {
+        console.error("Error creating Google Calendar event:", gcalError);
+      }
+    }
+
+    const fallbackMeetLink = `https://meet.jit.si/reuniao-${targetUserId.slice(0, 8)}-${Date.now()}`;
+    const finalMeetLink = meetLink || fallbackMeetLink;
+
+    const { data: reuniao, error: reuniaoError } = await supabaseAdmin
+      .from("reunioes")
+      .insert({
+        user_id: targetUserId,
+        titulo,
+        data_reuniao: dataHora,
+        duracao_minutos: duracao,
+        cliente_telefone: clienteTelefone || null,
+        cliente_id: clienteId,
+        profissional_id: profissionalId,
+        status: "agendado",
+        participantes,
+        meet_link: finalMeetLink,
+        google_event_id: googleEventId,
+        tipo_reuniao_id: tipoReuniaoId || null,
+      })
+      .select("id")
+      .single();
+
+    if (reuniaoError || !reuniao) {
+      throw reuniaoError || new Error("Falha ao criar reunião");
+    }
+
+    // --- Server-side kanban auto-move on meeting creation ---
+    if (clienteTelefone) {
+      const last8 = clienteTelefone.replace(/\D/g, '').slice(-8);
+      if (last8.length === 8) {
+        console.log("[KanbanAutoMove-Server] Moving cards for last8:", last8, "ownerUserId:", ownerUserId);
+
+        // WhatsApp kanban auto-move (create chat if needed)
+        try {
+          const { data: waConfig } = await supabaseAdmin
+            .from("whatsapp_kanban_config")
+            .select("auto_move_reuniao_column_id")
+            .eq("user_id", ownerUserId)
+            .maybeSingle();
+
+          const waTargetCol = (waConfig as any)?.auto_move_reuniao_column_id;
+          if (waTargetCol) {
+            let { data: waChats } = await supabaseAdmin
+              .from("whatsapp_chats")
+              .select("id")
+              .eq("user_id", ownerUserId)
+              .is("deleted_at", null)
+              .like("normalized_number", `%${last8}`);
+
+            // If no WA chat exists, create one so card appears in WhatsApp tab
+            if (!waChats || waChats.length === 0) {
+              const { data: tombstone } = await supabaseAdmin
+                .from("whatsapp_chat_deletions")
+                .select("id")
+                .eq("user_id", ownerUserId)
+                .eq("phone_last8", last8)
+                .maybeSingle();
+
+              if (!tombstone) {
+                const phoneClean = clienteTelefone.replace(/\D/g, '');
+                const { data: newChat, error: newChatErr } = await supabaseAdmin
+                  .from("whatsapp_chats")
+                  .insert({
+                    user_id: ownerUserId,
+                    chat_id: `${phoneClean}@s.whatsapp.net`,
+                    contact_name: clienteNome || "Cliente",
+                    contact_number: phoneClean,
+                    normalized_number: phoneClean,
+                    last_message: `Reunião "${titulo}" agendada`,
+                    last_message_time: new Date().toISOString(),
+                  })
+                  .select("id")
+                  .single();
+
+                if (!newChatErr && newChat) {
+                  waChats = [newChat];
+                  console.log("[KanbanAutoMove-Server] Created WA chat:", newChat.id);
+                } else {
+                  console.error("[KanbanAutoMove-Server] Error creating WA chat:", newChatErr);
+                }
+              }
+            }
+
+            for (const chat of (waChats || [])) {
+              const { data: entry } = await supabaseAdmin
+                .from("whatsapp_chat_kanban")
+                .select("id")
+                .eq("chat_id", chat.id)
+                .maybeSingle();
+
+              if (entry) {
+                await supabaseAdmin
+                  .from("whatsapp_chat_kanban")
+                  .update({ column_id: waTargetCol, updated_at: new Date().toISOString() })
+                  .eq("id", entry.id);
+              } else {
+                await supabaseAdmin.from("whatsapp_chat_kanban").insert({
+                  user_id: ownerUserId,
+                  chat_id: chat.id,
+                  column_id: waTargetCol,
+                });
+              }
+              console.log("[KanbanAutoMove-Server] WA chat moved:", chat.id);
+            }
+          }
+        } catch (waErr) {
+          console.error("[KanbanAutoMove-Server] WA error:", waErr);
+        }
+
+        // Disparos kanban auto-move
+        try {
+          const { data: dispConfig } = await supabaseAdmin
+            .from("disparos_kanban_config")
+            .select("auto_move_reuniao_column_id")
+            .eq("user_id", ownerUserId)
+            .maybeSingle();
+
+          const dispTargetCol = (dispConfig as any)?.auto_move_reuniao_column_id;
+          if (dispTargetCol) {
+            const { data: dispChats } = await supabaseAdmin
+              .from("disparos_chats")
+              .select("id")
+              .eq("user_id", ownerUserId)
+              .is("deleted_at", null)
+              .like("normalized_number", `%${last8}`);
+
+            for (const chat of (dispChats || [])) {
+              const { data: entry } = await supabaseAdmin
+                .from("disparos_chat_kanban")
+                .select("id")
+                .eq("chat_id", chat.id)
+                .maybeSingle();
+
+              if (entry) {
+                await supabaseAdmin
+                  .from("disparos_chat_kanban")
+                  .update({ column_id: dispTargetCol, updated_at: new Date().toISOString() })
+                  .eq("id", entry.id);
+              } else {
+                await supabaseAdmin.from("disparos_chat_kanban").insert({
+                  user_id: ownerUserId,
+                  chat_id: chat.id,
+                  column_id: dispTargetCol,
+                });
+              }
+              console.log("[KanbanAutoMove-Server] Disparos chat moved:", chat.id);
+            }
+          }
+        } catch (dispErr) {
+          console.error("[KanbanAutoMove-Server] Disparos error:", dispErr);
+        }
+      }
+    }
+
+    // Fire-and-forget: don't await the notification to avoid timeout
+    if (clienteTelefone) {
+      const notifyPromise = fetch(`${supabaseUrl}/functions/v1/enviar-aviso-reuniao-imediato`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({
+          reuniaoId: reuniao.id,
+          userId: targetUserId,
+          clienteTelefone,
+          clienteNome,
+          tipo: "imediato",
+        }),
+      }).catch(err => console.error("Erro ao disparar aviso imediato:", err));
+
+      try {
+        (globalThis as any).EdgeRuntime?.waitUntil?.(notifyPromise);
+      } catch {
+        // fallback: promise already running in background
+      }
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, reuniaoId: reuniao.id, targetUserId, meetLinkGenerated: !!finalMeetLink, meetLink: finalMeetLink }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Unexpected error in create-member-reuniao:", error);
+    return new Response(
+      JSON.stringify({ success: false, error: (error as Error).message || "Erro interno" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
